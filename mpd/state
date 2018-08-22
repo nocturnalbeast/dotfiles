@@ -1,0 +1,35 @@
+sw_volume: 100
+audio_device_state:1:ALSA device
+audio_device_state:1:my_fifo
+state: play
+current: 19
+time: 0.220000
+random: 1
+repeat: 0
+single: 0
+consume: 0
+crossfade: 0
+mixrampdb: 0.000000
+mixrampdelay: -1.000000
+playlist_begin
+0:Bastille - Bad Blood/Pompeii.flac
+1:Black Eyed Peas - The E.N.D/I Gotta Feeling (David Guetta's FMIF remix).flac
+2:Chef - Soundtrack/Hot 8 Brass Band - Sexual Healing.flac
+3:Chef - Soundtrack/Courtney John - Lucky Man.flac
+4:Armin Van Buuren - Intense/Love Never Came.mp3
+5:Daft Punk - Alive 2007/Face to Face _ Short Circuit.flac
+6:Daft Punk - Alive 2007/Television Rules the Nation _ Crescendolls.flac
+7:Daft Punk - Alive 2007/Aerodynamic Beats _ Gabrielle - Forget About the World (Daft Punk remix).flac
+8:David Guetta - Nothing But The Beat Ultimate/CD1/Titanium.flac
+9:Avicii - Discography/(2012) I Could Be The One/I Could Be the One (Audrio remix).flac
+10:Darude - Sandstorm/Sandstorm (radio edit).flac
+11:Ed Sheeran - X [Wembley Edition]/Take It Back.flac
+12:Ed Sheeran - X [Wembley Edition]/Tenerife Sea.flac
+13:Green Day - iUno!/Stay the Night.flac
+14:Green Day - iDos!/Amy.flac
+15:Hindi Movie Albums/Other Tracks/Bombay Rockers - Rock Tha Party.mp3
+16:Hindi Movie Albums/Other Tracks/Can't Get Enough (feat. Iceberg Slimm).mp3
+17:Hindi Movie Albums/Other Tracks/Chup Chup Ke (Film Version).mp3
+18:Hindi Movie Albums/Other Tracks/Emosanal Aattyachar (Brass Band Version).mp3
+19:Hindi Movie Albums/Other Tracks/Ek Ajnabi (Mama Told Me).mp3
+playlist_end
