@@ -16,9 +16,8 @@ allowUpscale = true
 showAllDesktops = true
 showUnmapped = true
 preferredIconSize = 32
-clientDisplayModes = thumbnail icon filled none
-iconFillSpec = orig mid mid #383838
-fillSpec = orig mid mid #EFF0F1
+iconFillSpec = orig mid mid #e2e2e2
+fillSpec = orig mid mid #e2e2e2
 background =
 
 [xinerama]
@@ -40,12 +39,12 @@ followsMouse = true
 offsetX = 20
 offsetY = 20
 align = left
-border = #EFF0F1
-background = #212121
+border = #000000
+background = #090909
 opacity = 240
-text = #EFF0F1
+text = #E0E0E0
 textShadow = none
-font = Ubuntu 10
+font = Overpass 9
 
 [bindings]
 miwMouse1 = focus
