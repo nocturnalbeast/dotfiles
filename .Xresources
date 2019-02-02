@@ -6,38 +6,38 @@ Xft*hintstyle:  hintfull
 Xft*lcdfilter:  lcddefault
 
 ! special
-*.foreground:   #ededed
-*.background:   #090909
-*.cursorColor:  #d0d0d0
+*.foreground:   #eaeaea
+*.background:   #181818
+*.cursorColor:  #eaeaea
 
 ! black
-*.color0:       #070707
-*.color8:       #535353
+*.color0:       #2d2d2d
+*.color8:       #5f5f5f
 
 ! red
-*.color1:       #d70005
-*.color9:       #fb0007
+*.color1:       #e84f4f
+*.color9:       #d23d3d
 
 ! green
-*.color2:       #1cd915
-*.color10:      #22ff18
+*.color2:       #b7ce42
+*.color10:      #bde077
 
 ! yellow
-*.color3:       #d9bd26
-*.color11:      #fedc2b
+*.color3:       #fea63c
+*.color11:      #ffe863
 
 ! blue
-*.color4:       #5665ff
-*.color12:      #9fa9ff
+*.color4:       #66aabb
+*.color12:      #aaccbb
 
 ! magenta
-*.color5:       #b052da
-*.color13:      #e09aff
+*.color5:       #b7416e
+*.color13:      #e16a98
 
 ! cyan
-*.color6:       #50d2da
-*.color14:      #8df9ff
+*.color6:       #6d878d
+*.color14:      #42717b
 
 ! white
-*.color7:       #e0e0e0
-*.color15:      #f2f2f2
+*.color7:       #e8e8e8
+*.color15:      #d1d1d1

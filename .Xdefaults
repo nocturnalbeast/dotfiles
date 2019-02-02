@@ -1,12 +1,13 @@
 !! Appearance
 urxvt.scrollBar: False
-!! urxvt.letterSpace: -1
+urxvt.lineSpace: 3
+urxvt.letterSpace: -1
 
 !! Fonts
-urxvt.font: xft:Iosevka Nerd Font Mono:pixelsize=18
-urxvt.boldFont: xft:Iosevka Nerd Font Mono:pixelsize=18:Bold
-urxvt.italicFont: xft:Iosevka Nerd Font Mono:pixelsize=18:Italic
-urxvt.boldItalicFont: xft:Iosevka Nerd Font Mono:pixelsize=18:Bold:Italic
+urxvt.font: xft:Iosevka Nerd Font Mono:pixelsize=15:minspace=False
+urxvt.boldFont: xft:Iosevka Nerd Font Mono:pixelsize=15:Bold:minspace=False
+urxvt.italicFont: xft:Iosevka Nerd Font Mono:pixelsize=15:Italic:minspace=False
+urxvt.boldItalicFont: xft:Iosevka Nerd Font Mono:pixelsize=15:Bold:Italic:minspace=False
 
 !! Increase history size
 urxvt.saveLines: 1000000
