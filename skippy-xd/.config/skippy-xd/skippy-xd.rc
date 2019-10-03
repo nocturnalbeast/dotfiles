@@ -1,0 +1,55 @@
+; skippy-xd config
+; Current theme:
+; blak-en-whyt
+
+[general]
+distance = 35
+useNetWMFullscreen = true
+ignoreSkipTaskbar = true
+updateFreq = 10.0
+lazyTrans = false
+pipePath = /tmp/skippy-xd-fifo
+movePointerOnStart = true
+movePointerOnSelect = true
+movePointerOnRaise = true
+switchDesktopOnActivate = true
+useNameWindowPixmap = false
+forceNameWindowPixmap = false
+includeFrame = true
+allowUpscale = true
+showAllDesktops = true
+showUnmapped = true
+preferredIconSize = 32
+iconFillSpec = orig mid mid #e2e2e2
+fillSpec = orig mid mid #e2e2e2
+
+[xinerama]
+showAll = true
+
+[normal]
+tint = #000000
+tintOpacity = 60
+opacity = 250
+
+[highlight]
+tint = #000000
+tintOpacity = 0
+opacity = 250
+
+[tooltip]
+show = true
+followsMouse = true
+offsetX = 20
+offsetY = 20
+align = left
+border = #000000
+background = #090909
+opacity = 240
+text = #E0E0E0
+textShadow = none
+font = SF Pro Display:Medium:pixelsize=15
+
+[bindings]
+miwMouse1 = focus
+miwMouse2 = close-ewmh
+miwMouse3 = iconify

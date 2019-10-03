@@ -1,0 +1,63 @@
+<?xml encoding="UTF-8" version="1.0"?>
+<actions>
+<action>
+	<icon>utilities-terminal</icon>
+	<name>Open terminal here</name>
+	<unique-id>1554524954640257-1</unique-id>
+	<command>exo-open --working-directory %f --launch TerminalEmulator</command>
+	<description>Open a terminal in the current working directory</description>
+	<patterns>*</patterns>
+	<startup-notify/>
+	<directories/>
+</action>
+<action>
+	<icon>gvim</icon>
+	<name>Open in VIM</name>
+	<unique-id>1554524954640265-2</unique-id>
+	<command>termite -e &quot;nvim %f&quot;</command>
+	<description>Open in VIM</description>
+	<patterns>*</patterns>
+	<other-files/>
+	<text-files/>
+</action>
+<action>
+	<icon>catfish</icon>
+	<name>Search</name>
+	<unique-id>1554524954640272-3</unique-id>
+	<command>catfish --path=%f</command>
+	<description>Search for files and subdirectories within the current folder</description>
+	<patterns>*</patterns>
+	<directories/>
+	<audio-files/>
+	<image-files/>
+	<other-files/>
+	<text-files/>
+	<video-files/>
+</action>
+<action>
+	<icon>pdfmod</icon>
+	<name>Convert to PDF</name>
+	<unique-id>1554524954640276-4</unique-id>
+	<command>libreoffice --headless --convert-to pdf %f --outdir %d</command>
+	<description>Convert document files to the PDF format</description>
+	<patterns>*.docx;*.doc;*.pptx;*.ppt;*.pptm;*.odt;*.odp</patterns>
+	<other-files/>
+</action>
+<action>
+	<icon>folder-open</icon>
+	<name>Flatten folder</name>
+	<unique-id>1555711553268379-1</unique-id>
+	<command>find . -mindepth 2 -type f -exec mv &quot;{}&quot; . \; &amp;&amp; find . -type d -empty -delete</command>
+	<description>Moves all files from sub-folders to parent (current) folder, then removes all empty folders inside the current folder.</description>
+	<patterns>*</patterns>
+	<directories/>
+</action>
+<action>
+	<icon></icon>
+	<name>Slugify filename</name>
+	<unique-id>1555711660894220-2</unique-id>
+	<command>for file in %N; do mv &quot;$file&quot; &quot;$(echo &quot;$file&quot; | tr -s &apos; &apos; | tr &apos; A-Z&apos; &apos;-a-z&apos; | tr -s &apos;-&apos; | tr -c &apos;[:alnum:][:cntrl:].&apos; &apos;-&apos;)&quot;; done</command>
+	<description>Rename the currently selected files, making the filenames lower-case &amp; replacing spaces with dashes.</description>
+	<patterns>*</patterns>
+</action>
+</actions>

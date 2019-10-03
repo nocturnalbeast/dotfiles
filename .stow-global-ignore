@@ -1,0 +1,7 @@
+# stow ignore entries - just to ignore all the git additions
+
+\.git
+\.gitignore
+^/README.*
+^/LICENSE.*
+^/COPYING

@@ -1,0 +1,285 @@
+# i3 config
+# Current theme:
+# blak-en-whyt
+
+
+#############################################################################
+# Autostart
+#############################################################################
+
+# run with reload
+exec_always --no-startup-id nitrogen --restore
+exec_always --no-startup-id xrdb -load ~/.Xresources
+
+# run on first start
+exec --no-startup-id compton -b --config ~/.config/compton.conf
+exec --no-startup-id ~/.config/scripts/polybar-start.sh
+exec --no-startup-id ~/.config/scripts/dunst-start.sh
+exec --no-startup-id mpd ~/.config/mpd/mpd.conf
+exec --no-startup-id greenclip daemon
+exec --no-startup-id light-locker
+#exec --no-startup-id conky -c ./.config/conky/conkyrc
+
+# polkit, required for authentication
+exec --no-startup-id /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+
+## keyring for storing saved passwords
+#exec --no-startup-id gnome-keyring-daemon --start --components=pkcs11
+
+
+#############################################################################
+# Colors,borders and such.
+#############################################################################
+
+# Xresources      var      value       fallback
+set_from_resource $bg      background  #181818
+set_from_resource $fg      foreground  #EAEAEA
+set_from_resource $black   color0      #2D2D2D
+set_from_resource $red     color1      #E84F4F
+set_from_resource $green   color2      #B7CE42
+set_from_resource $yellow  color3      #FEA63C
+set_from_resource $blue    color4      #66AABB
+set_from_resource $purple  color5      #B7416E
+set_from_resource $cyan    color6      #6D878D
+set_from_resource $grey    color7      #E8E8E8
+
+# class                 bd    bg  txt    ind    child_bd
+client.focused          $grey $bg $fg    $black $grey
+client.unfocused        $grey $bg $black $bg    $bg
+client.focused_inactive $grey $bg $black $bg    $bg
+client.urgent           $red  $bg $red   $red   $red
+client.placeholder      $grey $bg $bg    $bg    $bg
+client.background       $bg
+
+# font for window titles and i3 bar
+font pango:SF Pro Display Medium 11
+
+# borders
+new_window pixel 2
+new_float pixel 2
+
+# gaps
+set $default_gaps_inner 12
+set $default_gaps_outer 0
+gaps inner $default_gaps_inner
+gaps outer $default_gaps_outer
+
+# focus behavior
+focus_follows_mouse no
+
+
+#############################################################################
+# Workspaces its keybindings, and application-specific workspace assignments
+#############################################################################
+
+# workspace names
+set $ws1 I
+set $ws2 II
+set $ws3 III
+set $ws4 IV
+set $ws5 V
+set $ws6 VI
+set $ws7 VII
+set $ws8 VIII
+set $ws9 IX
+set $ws10 X
+
+# switch to workspace
+bindsym $Mod+1 workspace $ws1
+bindsym $Mod+2 workspace $ws2
+bindsym $Mod+3 workspace $ws3
+bindsym $Mod+4 workspace $ws4
+bindsym $Mod+5 workspace $ws5
+bindsym $Mod+6 workspace $ws6
+bindsym $Mod+7 workspace $ws7
+bindsym $Mod+8 workspace $ws8
+bindsym $Mod+9 workspace $ws9
+bindsym $Mod+0 workspace $ws10
+
+# move focused container to workspace
+bindsym $Mod+Shift+1 move container to workspace $ws1
+bindsym $Mod+Shift+2 move container to workspace $ws2
+bindsym $Mod+Shift+3 move container to workspace $ws3
+bindsym $Mod+Shift+4 move container to workspace $ws4
+bindsym $Mod+Shift+5 move container to workspace $ws5
+bindsym $Mod+Shift+6 move container to workspace $ws6
+bindsym $Mod+Shift+7 move container to workspace $ws7
+bindsym $Mod+Shift+8 move container to workspace $ws8
+bindsym $Mod+Shift+9 move container to workspace $ws9
+bindsym $Mod+Shift+0 move container to workspace $ws10
+
+# application specific workspace assignments
+assign [class="(?i)(?:urxvt)"] $ws1
+assign [class="(?i)(?:termite)"] $ws1
+assign [class="(?i)(?:firefox)"] $ws2
+assign [class="(?i)(?:subl)"] $ws3
+assign [class="(?i)(?:code)"] $ws3
+assign [class="(?i)(?:thunar)"] $ws4
+assign [class="(?i)(?:vlc)"] $ws5
+assign [class="(?i)(?:mpv)"] $ws5
+assign [class="(?i)(?:office)"] $ws6
+assign [class="(?i)(?:qpdfview)"] $ws6
+assign [class="(?i)(?:pinta)"] $ws7
+assign [class="(?i)(?:inkscape)"] $ws7
+assign [class="(?i)(?:gimp)"] $ws7
+
+
+#############################################################################
+# Main keybindings and application-specific keybindings
+#############################################################################
+
+# Modifier key, now set to super/windows key
+set $Mod Mod4
+
+# applications
+bindsym $Mod+s exec --no-startup-id subl
+bindsym $Mod+n exec --no-startup-id termite -e nvim -t "NeoVim"
+bindsym $Mod+t exec exo-open --launch TerminalEmulator
+bindsym $Mod+w exec exo-open --launch WebBrowser
+bindsym $Mod+e exec exo-open --launch FileManager
+
+# win+tab functionality with skippy-xd
+bindsym $Mod+Tab exec --no-startup-id skippy-xd
+
+# using rofi with a wrapper for some basic stuff
+bindsym $Mod+a exec --no-startup-id ~/.config/scripts/rofi-wrapper.sh -r
+bindsym $Mod+l exec --no-startup-id ~/.config/scripts/rofi-wrapper.sh -p
+bindsym $Mod+Shift+Tab exec --no-startup-id ~/.config/scripts/rofi-wrapper.sh -w
+bindsym $Mod+x exec --no-startup-id ~/.config/scripts/rofi-wrapper.sh -c
+bindsym $Mod+b exec --no-startup-id ~/.config/scripts/rofi-wrapper.sh -b
+
+# mouse + Modifier to drag floating windows
+floating_modifier $Mod
+
+# kill focused window
+bindsym $Mod+q kill
+
+# reload and restart
+bindsym $Mod+Shift+c reload
+bindsym $Mod+Shift+r restart
+
+# keybindings for those special keys on your keyboard
+bindsym XF86AudioLowerVolume exec --no-startup-id amixer -q sset Master 5%-
+bindsym XF86AudioRaiseVolume exec --no-startup-id amixer -q sset Master 5%+
+bindsym XF86AudioMute exec --no-startup-id amixer -q sset Master toggle
+bindsym XF86AudioPlay exec --no-startup-id mpc toggle
+bindsym XF86AudioStop exec --no-startup-id mpc stop
+bindsym XF86AudioNext exec --no-startup-id mpc next
+bindsym XF86AudioPrev exec --no-startup-id mpc prev
+
+# keybinding for screenshots
+bindsym --release Print exec --no-startup-id scrot '%d-%m-%Y_%H:%M:%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+bindsym --release $Mod+Print exec --no-startup-id scrot --focused '%d-%m-%Y_%H:%M:%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+
+
+#############################################################################
+# Window management keybindings
+#############################################################################
+
+# change focus
+bindsym $Mod+Left focus left
+bindsym $Mod+Down focus down
+bindsym $Mod+Up focus up
+bindsym $Mod+Right focus right
+
+# move focused window
+bindsym $Mod+Shift+Left move left
+bindsym $Mod+Shift+Down move down
+bindsym $Mod+Shift+Up move up
+bindsym $Mod+Shift+Right move right
+
+# container layout splitting
+bindsym $Mod+h split h
+bindsym $Mod+v split v
+
+# enter fullscreen mode on the focused window
+bindsym $Mod+f fullscreen toggle
+
+# toggle tiling / floating
+bindsym $Mod+Shift+space floating toggle
+
+
+#############################################################################
+# Extra window management rules
+#############################################################################
+
+# for specific applications
+for_window [class="(?i)(?:qt5ct)"] floating enable, focus
+for_window [class="(?i)(?:pinentry)"] floating enable, focus
+for_window [class="(?i)(?:nitrogen)"] floating enable, focus
+for_window [class="(?i)(?:lxappearance)"] floating enable, focus
+for_window [class="(?i)(?:urxvt)"] focus
+for_window [class="(?i)(?:termite)"] focus
+for_window [class="(?i)(?:firefox)"] focus
+for_window [class="(?i)(?:subl)"] focus
+for_window [class="(?i)(?:code)"] focus
+for_window [class="(?i)(?:thunar)"] focus
+for_window [class="(?i)(?:vlc)"] focus
+for_window [class="(?i)(?:mpv)"] focus
+for_window [class="(?i)(?:office)"] focus
+for_window [class="(?i)(?:qpdfview)"] focus
+for_window [class="(?i)(?:pinta)"] focus
+for_window [class="(?i)(?:inkscape)"] focus
+for_window [class="(?i)(?:gimp)"] focus
+
+# for all kinds of windows that's supposed to "float"
+for_window [title="(?i)(?:copying|deleting|moving)"] floating enable
+for_window [window_role="(?i)(?:pop-up|setup)"] floating enable
+for_window [window_role="pop-up"] floating enable
+for_window [window_role="bubble"] floating enable
+for_window [window_role="task_dialog"] floating enable
+for_window [window_role="dialog"] floating enable
+for_window [window_role="menu"] floating enable
+for_window [window_role="Preferences"] floating enable
+
+
+#############################################################################
+# Extra window management keybindings
+#############################################################################
+
+# change between layouts
+bindsym $Mod+Shift+t layout tabbed
+bindsym $Mod+Shift+s layout stacking
+bindsym $Mod+Shift+h layout toggle split
+default_orientation horizontal
+
+# change focus between tiling / floating windows
+bindsym $Mod+space focus Mode_toggle
+bindsym $Mod+p focus parent
+bindsym $Mod+c focus child
+
+
+#############################################################################
+# Modes to manage windows and its keybindings
+#############################################################################
+
+# mode to resize window layout
+mode "resize" {
+    bindsym Left resize shrink width 5 px or 5 ppt
+    bindsym Down resize grow height 5 px or 5 ppt
+    bindsym Up resize shrink height 5 px or 5 ppt
+    bindsym Right resize grow width 5 px or 5 ppt
+
+    bindsym Return Mode "default"
+    bindsym Escape Mode "default"
+    bindsym $Mod+r Mode "default"
+}
+
+# mode to modify gaps
+mode "gaps" {
+    bindsym Up gaps inner all plus 10
+    bindsym Down gaps inner all minus 10
+    bindsym e gaps inner all set 45
+    bindsym r gaps inner all set 12
+    bindsym Control+Up gaps outer all plus 10
+    bindsym Control+Down gaps outer all minus 10
+    bindsym Control+e gaps outer all set 45
+    bindsym Control+r gaps outer all set 0
+
+    bindsym Return Mode "default"
+    bindsym Escape Mode "default"
+    bindsym $Mod+g Mode "default"
+}
+
+bindsym $Mod+r mode "resize"
+bindsym $Mod+g mode "gaps"

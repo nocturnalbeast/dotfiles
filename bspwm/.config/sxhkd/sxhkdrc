@@ -1,0 +1,186 @@
+####### simple x hotkey daemon keybindings
+
+
+### window & workspace cycling keybindings
+
+# switch to (and send windows to) workspace
+alt + {_,shift + }{1-9,0}
+	bspc {desktop -f,node -d} '^{1-9,10}'
+
+# cycling between last used windows/workspaces
+alt + {grave,Tab}
+	bspc {node,desktop} -f last
+
+# cycle between all available workspaces
+alt + {a,d}
+	bspc desktop -f {prev,next}
+
+# normal direction-bound focus changing of windows
+alt + {_,shift + }{Left,Down,Up,Right,h,j,k,l}
+	bspc node -{f,s} {west,south,north,east,west,south,north,east}
+
+# cycle between all windows in a workspace
+alt + {_,shift + }c
+    bspc node -f {next,prev}.local
+
+# history-aware cycling of windows (across workspaces)
+alt + {o,i}
+	bspc wm -h off; \
+	bspc node {older,newer} -f; \
+	bspc wm -h on
+
+
+### killing windows
+
+# close/kill focused window
+alt + {_,shift + }q
+	bspc node -{c,k}; bspc node -f last   
+
+# close/kill focused window but don't go back to the previous window
+super + {_,shift + }q
+	bspc node -{c,k}
+
+
+### window size and layout manipulation
+
+# change window mode
+alt + {t,shift + t,s,f}
+	bspc node -t {tiled,pseudo_tiled,floating,fullscreen}
+
+# alternate between the tiled and monocle layout
+alt + m
+	bspc desktop -l next
+
+# swap the focused window with the biggest window in the current workspace
+alt + b
+	bspc node -s biggest.local
+
+# rotate the workspace layout
+alt + r
+	bspc node @/ -R 90
+
+# expand a window by moving one of its side outward
+super + alt + {Left,Down,Up,Right,h,j,k,l}
+	bspc node -z {left -20 0,bottom 0 20,top 0 -20,right 20 0,left -20 0,bottom 0 20,top 0 -20,right 20 0}
+
+# contract a window by moving one of its side inward
+super + alt + shift + {Left,Down,Up,Right,h,j,k,l}
+	bspc node -z {right -20 0,top 0 20,bottom 0 -20,left 20 0,right -20 0,top 0 20,bottom 0 -20,left 20 0}
+
+# move a floating window
+super + {Left,Down,Up,Right,h,j,k,l}
+	bspc node -v {-20 0,0 20,0 -20,20 0,-20 0,0 20,0 -20,20 0}
+
+
+### keybindings for different rofi modes
+
+# rofi run mode
+super + a
+	~/.config/scripts/rofi-wrapper.sh -r
+
+# rofi power dialog mode
+super + p
+    ~/.config/scripts/rofi-wrapper.sh -p
+
+# rofi window list mode
+super + Tab
+    ~/.config/scripts/rofi-wrapper.sh -w
+
+# rofi calculator mode
+super + c
+    ~/.config/scripts/rofi-wrapper.sh -c
+
+# rofi clipboard mode
+super + b
+    ~/.config/scripts/rofi-wrapper.sh -b
+
+
+### keybindings for most used applications
+
+# launch terminal
+super + t
+	termite
+
+# launch code editor
+super + s
+	subl
+
+# launch web browser
+super + w
+	firefox
+
+# launch file explorer
+super + e
+	thunar
+
+
+### keybindings for most used terminal applications
+
+# launch code editor (vim)
+super + v
+    termite -e nvim -t "NeoVim"
+
+# launch music player
+super + m
+	termite -e ncmpcpp -t "ncmpcpp"
+
+# launch podcast manager
+super + n
+	termite -e castero -t "castero"
+
+# launch process manager
+super + g
+	termite -e gotop -t "gotop"
+
+# launch feed reader
+super + r
+	termite -e newsboat -t "Newsboat"
+
+
+### keyboard function keys/special keys keybindings
+
+# decrease volume
+XF86AudioLowerVolume
+	amixer -q sset Master 5%-
+
+# increase volume
+XF86AudioRaiseVolume
+	amixer -q sset Master 5%+
+
+# toggle mute
+XF86AudioMute
+	amixer -q sset Master toggle
+
+# tell mpd to play/pause
+XF86AudioPlay
+	mpc toggle
+
+# tell mpd to stop
+XF86AudioStop
+	mpc stop
+
+# tell mpd to skip to the next song
+XF86AudioNext
+	mpc next
+
+# tell mpd to go back to the previous song
+XF86AudioPrev
+	mpc prev
+
+
+### keybindings for taking screenshots
+
+# print screen key to take screenshot of the current workspace
+Print
+	scrot '%d-%m-%Y_%H:%M:%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+
+# combining that with alt to take screenshot of the focused window
+alt + Print
+	scrot --focused '%d-%m-%Y_%H:%M:%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+
+
+### reloading keybindings
+
+# make sxhkd reload its config file
+alt + Escape
+	pkill -USR1 -x sxhkd
