@@ -18,7 +18,7 @@ content-background = #99191919
 content-foreground = #CCFFFFFF
 
 workspace-focused = ${colors.header-foreground}
-workspace-urgent = #E84F4F
+workspace-urgent = #CC6666
 workspace-normal = #ACFFFFFF
 
 
@@ -33,7 +33,7 @@ content-background = #99FAFAFA
 content-foreground = #CC000000
 
 workspace-focused = ${colors.header-foreground}
-workspace-urgent = #E84F4F
+workspace-urgent = #CC6666
 workspace-normal = #AC000000
 
 

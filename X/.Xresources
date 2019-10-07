@@ -11,38 +11,39 @@ Xft.hintstyle:  hintslight
 Xft.lcdfilter:  lcddefault
 
 ! special
-*.foreground:   #eaeaea
-*.background:   #181818
-*.cursorColor:  #eaeaea
+*.foreground:   #ffffff
+*.background:   #0a0a0a
+*.cursorColor:  #ffffff
 
 ! black
-*.color0:       #2d2d2d
-*.color8:       #5f5f5f
+*.color0:       #666666
+*.color8:       #999999
 
 ! red
-*.color1:       #e84f4f
-*.color9:       #d23d3d
+*.color1:       #cc6666
+*.color9:       #ff9999
 
 ! green
-*.color2:       #b7ce42
-*.color10:      #bde077
+*.color2:       #66cc99
+*.color10:      #99ffcc
 
 ! yellow
-*.color3:       #fea63c
-*.color11:      #ffe863
+*.color3:       #cc9966
+*.color11:      #ffcc99
 
 ! blue
-*.color4:       #66aabb
-*.color12:      #aaccbb
+*.color4:       #6699cc
+*.color12:      #99ccff
 
 ! magenta
-*.color5:       #b7416e
-*.color13:      #e16a98
+*.color5:       #cc6699
+*.color13:      #ff99cc
 
 ! cyan
-*.color6:       #6d878d
-*.color14:      #42717b
+*.color6:       #66cccc
+*.color14:      #99ffff
 
 ! white
-*.color7:       #e8e8e8
-*.color15:      #d1d1d1
+*.color7:       #cccccc
+*.color15:      #ffffff
+

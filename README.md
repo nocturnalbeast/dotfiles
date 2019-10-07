@@ -1,4 +1,4 @@
-<h1 align="center">
+<h2 align="center">
 
     ██████╗  ██████╗ ████████╗███████╗██╗██╗     ███████╗███████╗
     ██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝██║██║     ██╔════╝██╔════╝
@@ -7,7 +7,7 @@
     ██████╔╝╚██████╔╝   ██║   ██║     ██║███████╗███████╗███████║
     ╚═════╝  ╚═════╝    ╚═╝   ╚═╝     ╚═╝╚══════╝╚══════╝╚══════╝
 
-</h1>
+</h2>
 
 ![nocturnalbeast's dotfiles](https://github.com/nocturnalbeast/dotfiles/raw/master/.screenshots/main.png)
 
@@ -60,7 +60,6 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [libqalculate](https://github.com/Qalculate/libqalculate) - CLI for Qalculate! used in rofi with a helper script.
     * [greenclip](https://github.com/erebe/greenclip) - Simple clipboard manager to be integrated with rofi. 
   * [nitrogen](https://github.com/l3ib/nitrogen) - Background browser and setter for X windows.
-  * [skippy-xd](https://github.com/richardgv/skippy-xd) - A full-screen, exposé-style standalone task switcher for X11.
   * [thunar](https://git.xfce.org/xfce/thunar/) - Modern, fast and easy-to-use file manager.
   * [firefox](https://www.mozilla.org/firefox/) - I use [MaterialFox](https://github.com/muckSponge/MaterialFox) with my Firefox installation. There's a script (inside the ```scripts``` directory) that helps to install it.
 
@@ -69,7 +68,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
   * [San Francisco Pro Display](https://github.com/sahibjotsaggu/San-Francisco-Pro-Fonts) - Apple's default system UI font for their platforms.
   * [nerd-fonts](https://github.com/ryanoasis/nerd-fonts) - A collection of developer targeted fonts, patched with lots of glyphs/icons.
   * [fontconfig](https://gitlab.freedesktop.org/fontconfig/fontconfig) - Font configuration that dictates hinting and antialiasing options for font rendering.
-  * colorscheme - Slightly modified version of an old colorscheme I found [here](http://dotshare.it/dots/160/).
+  * colorscheme - Based on the visibone color scheme from [here](http://dotshare.it/dots/27/).
   * [Tela-grey](https://github.com/vinceliuice/Tela-icon-theme) - A modern icon set that fits well with my theme.
   * [Super Flat Remix](https://github.com/daniruiz/flat-remix-gtk) - A modern dark theme for the GTK applications that I use.
   * wallpapers - Some monochrome ones that I found from [WallHaven](https://alpha.wallhaven.cc). Links are given below.

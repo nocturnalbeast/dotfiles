@@ -3,10 +3,10 @@
 /* Modified version for blak-en-whyt by nocturnalbeast */
 
 *{
-  bg:   rgba (  24,  24,  24,  70 % );
+  bg:   rgba (  18,  18,  18,  70 % );
   fg:   rgba ( 239, 239, 239, 100 % );
-  red:  rgba ( 220,  50,  47, 100 % );
-  blue: rgba (  38, 139, 210, 100 % );
+  red:  rgba ( 204, 102, 102, 100 % );
+  blue: rgba ( 102, 153, 204, 100 % );
   urgent-foreground:          @red;
   active-foreground:          @blue;
   selected-urgent-foreground: @bg;
