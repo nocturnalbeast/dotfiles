@@ -52,7 +52,8 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
   * [neofetch](https://github.com/dylanaraps/neofetch) - A command-line system information tool written in Bash.
 
 * GUI
-  * [i3-gaps](https://github.com/Airblader/i3) - A fork of i3 with more features, including support for gaps in window layouts.
+  * [bspwm](https://github.com/baskerville/bspwm) - The binary-space partitioning window manager.
+  * [sxhkd](https://github.com/baskerville/sxhkd) - Simple X hotkey daemon.
   * [polybar](https://github.com/jaagr/polybar) - A fast and easy-to-use status bar.
   * [compton](https://github.com/tryone144/compton) - A compositor for X11. (fork with that sexy dual kawase blur mode)
   * [rofi](https://github.com/davatorium/rofi) - A window switcher, application launcher, and dmenu replacement.
@@ -78,6 +79,8 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [w_four](https://alpha.wallhaven.cc/wallpaper/727255) 
     * [w_five](https://alpha.wallhaven.cc/wallpaper/742779) 
 
+* Some alternative configs are also present in this repo that aren't used in the default setup. They are listed below:
+  * [i3-gaps](https://github.com/Airblader/i3) - A fork of i3 with more features, including support for gaps in window layouts.
 
 ## Screenshots
 <div align="center">
