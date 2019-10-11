@@ -37,7 +37,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [zsh-completions](github.com/zsh-users/zsh-completions) - Additional completion definitions for Z shell.
     * [fast-syntax-highlighting](https://github.com/zdharma/fast-syntax-highlighting) - Faster syntax highlighting for Z shell.
     * [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) - FISH-like autosuggestions for Z shell.
-    * [zsh-history-substring-search](https://github.com/zsh-users/zsh-history-substring-search) - Z shell port of FISH history search.
+    * [history-search-multi-word](https://github.com/zdharma/history-search-multi-word) - Multi-word, syntax-highlighted history searches for Z shell.
     * [enhancd](https://github.com/b4b4r07/enhancd) - Better cd command with customizable interactive filter.
     * [LS_COLORS](https://github.com/trapd00r/LS_COLORS) - A collection of LS_COLORS used to colorize output of ls command.
     * [exa](https://github.com/ogham/exa) - Replacement for ls written in Rust.
@@ -49,7 +49,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [git-extras](https://github.com/tj/git-extras) - Adds extra commands to git, including repo summary, repl and more.
     * [git-cal](https://github.com/k4rthik/git-cal) - Github-like contributions chart in the terminal.
     * [thefuck](https://github.com/nvbn/thefuck) - Program that corrects previous mistyped command.
-    * [powerlevel10k](https://github.com/romkatv/powerlevel10k) - Reimplementation of Powerlevel9K theme, with additional Lean mode.
+    * [spaceship-prompt](https://github.com/maximbaz/spaceship-prompt) - A prompt for astronauts - asynchronous version. 
   * [termite](https://github.com/thestinger/termite/) - A keyboard centric VTE-based terminal, aimed at use within a window manager with tiling and/or tabbing support.
   * [neovim](https://github.com/neovim/neovim) - VIM fork focused on extensibility and usability.
     * [vim-plug](https://github.com/junegunn/vim-plug) - A minimalist VIM plugin manager.
