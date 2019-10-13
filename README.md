@@ -32,6 +32,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
 ## Details
 
 * CLI
+  * [st](https://github.com/nocturnalbeast/st) - My fork of suckless.org's simple terminal emulator.
   * [zsh](https://sourceforge.net/projects/zsh) - A powerful alternative shell.
     * [zplugin](https://github.com/zdharma/zplugin) - Fast Z shell plugin manager with advanced reporting, services and more.
     * [zsh-completions](github.com/zsh-users/zsh-completions) - Additional completion definitions for Z shell.
@@ -41,7 +42,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [enhancd](https://github.com/b4b4r07/enhancd) - Better cd command with customizable interactive filter.
     * [LS_COLORS](https://github.com/trapd00r/LS_COLORS) - A collection of LS_COLORS used to colorize output of ls command.
     * [exa](https://github.com/ogham/exa) - Replacement for ls written in Rust.
-    * [pygmentize](http://pygments.org/) - Python syntax highlighter - used for auto-syntax highlighting of cat files.
+    * [bat](https://github.com/sharkdp/bat) - A cat clone with syntax highlighting and Git integration.
     * [warhol](https://github.com/unixorn/warhol.plugin.zsh) - Colorize output of common commands.
     * [zsh-colored-man-pages](https://github.com/ael-code/zsh-colored-man-pages) - Colorize options and such in man pages.
     * [zsh-diff-so-fancy](https://github.com/zdharma/zsh-diff-so-fancy) - Supercharged git diff with better highlighting.
@@ -50,18 +51,21 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [git-cal](https://github.com/k4rthik/git-cal) - Github-like contributions chart in the terminal.
     * [thefuck](https://github.com/nvbn/thefuck) - Program that corrects previous mistyped command.
     * [spaceship-prompt](https://github.com/maximbaz/spaceship-prompt) - A prompt for astronauts - asynchronous version. 
-  * [termite](https://github.com/thestinger/termite/) - A keyboard centric VTE-based terminal, aimed at use within a window manager with tiling and/or tabbing support.
   * [neovim](https://github.com/neovim/neovim) - VIM fork focused on extensibility and usability.
     * [vim-plug](https://github.com/junegunn/vim-plug) - A minimalist VIM plugin manager.
-    * [vim-surround](https://github.com/tpope/vim-surround) - Quoting/parenthesizing made simple.
-    * [nerdtree](https://github.com/scrooloose/nerdtree) - A tree explorer plugin for VIM.
-    * [deoplete](https://github.com/Shougo/deoplete.nvim) - Dark powered asynchronous completion framework for neovim/Vim8.
-    * [syntastic](https://github.com/vim-syntastic/syntastic) - Syntax checking hacks for VIM.
-    * [nerdcommenter](https://github.com/scrooloose/nerdcommenter) - VIM plugin for intensely orgamsic commenting.
+    * [vim-sensible](https://github.com/tpope/vim-sensible) - Sensible defaults for VIM.
+    * [ale](https://github.com/dense-analysis/ale) - Asynchronous Linting Engine fo VIM.
+    * [goyo](https://github.com/junegunn/goyo.vim) - Distraction-free writing in VIM.
+    * [limelight](https://github.com/junegunn/limelight.vim) - Selective highlighting in VIM. (used in tandem with goyo)
+    * [lightline](https://github.com/itchyny/lightline.vim) - A light and configurable statusline/tabline plugin for VIM.
+    * [vim-startify](https://github.com/mhinz/vim-startify) - The fancy startscreen for VIM.
     * [vim-polyglot](https://github.com/sheerun/vim-polyglot) - A solid language pack for VIM.
-    * [vim-airline](https://github.com/vim-airline/vim-airline) - Lean & mean status/tabline for vim that's light as air.
-    * [neverland-vim-theme](https://github.com/trapd00r/neverland-vim-theme) - A colorscheme that doesn't suck.
+    * [nerdcommenter](https://github.com/scrooloose/nerdcommenter) - VIM plugin for intensely orgamsic commenting.
+    * [vim-surround](https://github.com/tpope/vim-surround) - Quoting/parenthesizing made simple.
+    * [challenger-deep-theme](https://github.com/challenger-deep-theme/vim) - Dark colorscheme for VIM.
     * [vim-devicons](https://github.com/ryanoasis/vim-devicons) - VIM plugin that adds file type glyphs/icons to popular VIM plugins.
+    * [fzf](https://github.com/junegunn/fzf) - Fuzzy finding for VIM.
+    * [vim-gitgutter](https://github.com/airblade/vim-gitgutter) - VIM plugin that shows git diff in the sign column.
   * [mpd](https://github.com/MusicPlayerDaemon/MPD) - Music Player Daemon - a daemon for playing music of various formats.
   * [ncmpcpp](https://github.com/arybczak/ncmpcpp) - Featureful ncurses based MPD client inspired by ncmpc.
   * [mpc](https://github.com/MusicPlayerDaemon/mpc) - Command line client for mpd. (used in custom polybar controls)
@@ -99,6 +103,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
 
 * Some alternative configs are also present in this repo that aren't used in the default setup. They are listed below:
   * [i3-gaps](https://github.com/Airblader/i3) - A fork of i3 with more features, including support for gaps in window layouts.
+  * [termite](https://github.com/thestinger/termite/) - A keyboard centric VTE-based terminal, aimed at use within a window manager with tiling and/or tabbing support.
 
 ## Screenshots
 <div align="center">

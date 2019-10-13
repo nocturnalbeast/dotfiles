@@ -13,7 +13,7 @@ autoload -Uz _zplugin
 # helpful exports and aliases
 export EDITOR="vim"
 alias ls="exa -bh --color=auto"
-alias ccat="pygmentize -O style=native -g"
+alias cat="bat"
 alias vim="nvim"
 
 # all the plugins
