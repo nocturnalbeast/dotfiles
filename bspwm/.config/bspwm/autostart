@@ -9,7 +9,7 @@ sxhkd &
 # restore the wallpaper
 nitrogen --restore &
 # launch compositor
-compton --config ~/.config/compton.conf &
+picom --config ~/.config/picom/picom.conf &
 # launch system bars
 ~/.config/scripts/polybar-start.sh &
 # launch notification daemon
