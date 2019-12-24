@@ -38,7 +38,7 @@ workspace-normal = #AC000000
 
 
 [margins]
-bar-width = 1366
+bar-width = 1360
 bar-height = 27
 
 vert-margin-outer = 12
