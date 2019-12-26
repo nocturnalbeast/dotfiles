@@ -101,10 +101,6 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [w_four](https://alpha.wallhaven.cc/wallpaper/727255) 
     * [w_five](https://alpha.wallhaven.cc/wallpaper/742779) 
 
-* Some alternative configs are also present in this repo that aren't used in the default setup. They are listed below:
-  * [i3-gaps](https://github.com/Airblader/i3) - A fork of i3 with more features, including support for gaps in window layouts.
-  * [termite](https://github.com/thestinger/termite/) - A keyboard centric VTE-based terminal, aimed at use within a window manager with tiling and/or tabbing support.
-
 ## Screenshots
 <div align="center">
   <img src="https://github.com/nocturnalbeast/dotfiles/raw/master/.screenshots/code.png">
