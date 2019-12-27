@@ -24,7 +24,7 @@ workspace-normal = #ACFFFFFF
 
 [colors-alt]
 background = #00000000
-border = ${colors.background}
+border = ${colors-alt.background}
 foreground = #FAFAFA
 
 header-background = #FAFAFA
@@ -32,7 +32,7 @@ header-foreground = #DD000000
 content-background = #99FAFAFA
 content-foreground = #CC000000
 
-workspace-focused = ${colors.header-foreground}
+workspace-focused = ${colors-alt.header-foreground}
 workspace-urgent = #CC6666
 workspace-normal = #AC000000
 
@@ -66,7 +66,7 @@ background = ${colors.background}
 foreground = ${colors.foreground}
 
 font-0 = "SF Pro Display:style=Medium:pixelsize=11;2"
-font-1 = "Overpass Nerd Font Mono:style=Bold:pixelsize=11;2"
+font-1 = "Symbols Nerd Font:style=2048-em:pixelsize=11;2"
 
 module-margin = ${margins.horz-margin-inter}
 
@@ -92,7 +92,7 @@ background = ${colors.background}
 foreground = ${colors.foreground}
 
 font-0 = "SF Pro Display:style=Medium:pixelsize=11;2"
-font-1 = "Overpass Nerd Font Mono:style=Bold:pixelsize=11;2"
+font-1 = "Symbols Nerd Font:style=2048-em:pixelsize=11;2"
 
 module-margin = ${margins.horz-margin-inter}
 
@@ -141,18 +141,18 @@ label-empty-padding = 4
 label-visible-padding = 4
 label-urgent-padding = 4
 
-format-prefix-background = ${colors.header-background}
-format-prefix-foreground = ${colors.header-foreground}
-label-mode-background = ${colors.header-background}
-label-mode-foreground = ${colors.header-foreground}
-label-focused-background = ${colors.content-background}
-label-focused-foreground = ${colors.workspace-focused}
-label-occupied-background = ${colors.content-background}
-label-occupied-foreground = ${colors.workspace-normal}
-label-empty-background = ${colors.content-background}
-label-empty-foreground = ${colors.workspace-normal}
-label-urgent-background = ${colors.content-background}
-label-urgent-foreground = ${colors.workspace-urgent}
+format-prefix-background = ${colors-alt.header-background}
+format-prefix-foreground = ${colors-alt.header-foreground}
+label-mode-background = ${colors-alt.header-background}
+label-mode-foreground = ${colors-alt.header-foreground}
+label-focused-background = ${colors-alt.content-background}
+label-focused-foreground = ${colors-alt.workspace-focused}
+label-occupied-background = ${colors-alt.content-background}
+label-occupied-foreground = ${colors-alt.workspace-normal}
+label-empty-background = ${colors-alt.content-background}
+label-empty-foreground = ${colors-alt.workspace-normal}
+label-urgent-background = ${colors-alt.content-background}
+label-urgent-foreground = ${colors-alt.workspace-urgent}
 
 [module/xwindow]
 type = internal/xwindow
@@ -164,10 +164,10 @@ label-maxlen = 200
 label-padding = ${margins.horz-padding-intra}
 ;format-margin = ${margins.horz-margin-intra}
 
-format-prefix-background = ${colors.header-background}
-format-prefix-foreground = ${colors.header-foreground}
-format-background = ${colors.content-background}
-format-foreground = ${colors.content-foreground}
+format-prefix-background = ${colors-alt.header-background}
+format-prefix-foreground = ${colors-alt.header-foreground}
+format-background = ${colors-alt.content-background}
+format-foreground = ${colors-alt.content-foreground}
 
 
 [module/power-menu]
@@ -193,16 +193,16 @@ menu-0-1-exec = "shutdown -r now"
 menu-0-2 = "  ⏾  "
 menu-0-2-exec = "systemctl suspend"
 
-label-close-background = ${colors.header-background}
-label-close-foreground = ${colors.header-foreground}
-label-open-background = ${colors.header-background}
-label-open-foreground = ${colors.header-foreground}
-menu-0-0-background = ${colors.content-background}
-menu-0-0-foreground = ${colors.content-foreground}
-menu-0-1-background = ${colors.content-background}
-menu-0-1-foreground = ${colors.content-foreground}
-menu-0-2-background = ${colors.content-background}
-menu-0-2-foreground = ${colors.content-foreground}
+label-close-background = ${colors-alt.header-background}
+label-close-foreground = ${colors-alt.header-foreground}
+label-open-background = ${colors-alt.header-background}
+label-open-foreground = ${colors-alt.header-foreground}
+menu-0-0-background = ${colors-alt.content-background}
+menu-0-0-foreground = ${colors-alt.content-foreground}
+menu-0-1-background = ${colors-alt.content-background}
+menu-0-1-foreground = ${colors-alt.content-foreground}
+menu-0-2-background = ${colors-alt.content-background}
+menu-0-2-foreground = ${colors-alt.content-foreground}
 
 
 [module/app-launcher]
@@ -223,10 +223,10 @@ menu-0-2-padding = ${margins.horz-padding-intra}
 menu-0-3-padding = ${margins.horz-padding-intra}
 
 menu-0-0 = "    "
-menu-0-0-exec = "urxvt &"
+menu-0-0-exec = "st &"
 
 menu-0-1 = "    "
-menu-0-1-exec = "firefox &"
+menu-0-1-exec = "qutebrowser &"
 
 menu-0-2 = "    "
 menu-0-2-exec = "subl3 &"
@@ -321,16 +321,16 @@ type = internal/xkeyboard
 blacklist-0 = scroll lock
 
 format-suffix = "    "
-format = <label-layout> <label-indicator>
+format = <label-layout><label-indicator>
 label-layout = "  %name%  "
-label-indicator = " %name% "
+label-indicator-on = "  %name%  "
 
 format-suffix-margin-right = ${margins.horz-padding-intra}
 
 format-suffix-background = ${colors-alt.header-background}
 format-suffix-foreground = ${colors-alt.header-foreground}
-label-indicator-background = ${colors-alt.header-background}
-label-indicator-foreground = ${colors-alt.header-foreground}
+label-indicator-on-background = ${colors-alt.header-background}
+label-indicator-on-foreground = ${colors-alt.header-foreground}
 label-layout-background = ${colors-alt.content-background}
 label-layout-foreground = ${colors-alt.content-foreground}
 
