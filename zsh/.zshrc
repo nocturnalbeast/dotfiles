@@ -11,10 +11,14 @@ autoload -Uz _zplugin
 (( ${+_comps} )) && _comps[zplugin]=_zplugin
 
 # helpful exports and aliases
-export EDITOR="vim"
-alias ls="exa -bh --color=auto"
+export EDITOR="nvim"
+alias ls="exa -bh --color=auto --icons"
+alias ll="exa -bhl --color=auto --icons"
+alias lt="exa -bh --tree --color=auto --icons"
+alias lal="exa -bhal --color=auto --icons"
 alias cat="bat"
 alias vim="nvim"
+alias vi="nvim"
 
 # all the plugins
 
@@ -28,6 +32,8 @@ zplugin light zdharma/fast-syntax-highlighting
 # autosuggestions
 zplugin ice wait atload"_zsh_autosuggest_start"
 zplugin light zsh-users/zsh-autosuggestions
+export ZSH_AUTOSUGGEST_STRATEGY=( history match_prev_cmd completion )
+export ZSH_AUTOSUGGEST_USE_ASYNC=1
 
 # better ctrl+r with multi-word search
 zplugin ice lucid wait"0b" compile'{hsmw-*,test/*}'
@@ -37,10 +43,9 @@ zplugin light zdharma/history-search-multi-word
 zplugin ice wait"0b" lucid 
 zplugin light b4b4r07/enhancd 
 export ENHANCD_FILTER=fzy
-export ENHANCD_DISABLE_HOME=1
 
 # time for some rainbows
-zplugin ice pick"c.zsh" atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' 
+zplugin ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
 zplugin light trapd00r/LS_COLORS
 
 zplugin light unixorn/warhol.plugin.zsh
@@ -74,4 +79,5 @@ zplugin snippet https://github.com/docker/cli/blob/master/contrib/completion/zsh
 zplugin ice depth'1' lucid pick"async.zsh"
 zplugin light mafredri/zsh-async
 zplugin light maximbaz/spaceship-prompt
+[[ -f ~/.sspromptrc ]] && source ~/.sspromptrc
 
