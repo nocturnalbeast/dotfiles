@@ -46,7 +46,7 @@
     sort = yes
     sticky_history = yes
     history_length = 20
-    browser = /usr/bin/firefox -new-tab
+    browser = /usr/bin/qutebrowser
     always_run_script = true
     startup_notification = false
     verbosity = mesg

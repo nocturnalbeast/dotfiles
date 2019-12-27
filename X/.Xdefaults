@@ -20,7 +20,7 @@ urxvt.saveLines:            1000000
 urxvt.perl-ext-common:      default,matcher,font-size
 
 !! open urls in browser with ctrl-click
-urxvt.urlLauncher:          /usr/bin/firefox
+urxvt.urlLauncher:          /usr/bin/qutebrowser
 urxvt.matcher.button:       C1
 
 !! change font size on ctrl-plus/minus
