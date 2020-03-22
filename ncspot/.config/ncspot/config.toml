@@ -1,0 +1,18 @@
+use_nerdfont       = true
+
+[theme]
+primary            = "light white"
+secondary          = "light black"
+title              = "green"
+playing            = "#202020"
+playing_bg         = "green"
+highlight          = "black"
+highlight_bg       = "light white"
+error              = "light white"
+error_bg           = "red"
+statusbar          = "#202020"
+statusbar_progress = "green"
+statusbar_bg       = "green"
+cmdline            = "light white"
+cmdline_bg         = "green"
+
