@@ -1,83 +1,101 @@
 #!/bin/zsh
 
-# install zplugin if not installed
-if [ ! -d "${HOME}/.zplugin" ]; then 
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zdharma/zplugin/master/doc/install.sh)"
+# install zinit if not installed
+if [ ! -d "${HOME}/.zinit" ]; then 
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zdharma/zinit/master/doc/install.sh)"
 fi
 
-# zplugin init
-source "${HOME}/.zplugin/bin/zplugin.zsh"
-autoload -Uz _zplugin
-(( ${+_comps} )) && _comps[zplugin]=_zplugin
+# added by zinit's installer
+if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
+    print -P "%F{33}▓▒░ %F{220}Installing DHARMA Initiative Plugin Manager (zdharma/zinit)…%f"
+    command mkdir -p "$HOME/.zinit" && command chmod g-rwX "$HOME/.zinit"
+    command git clone https://github.com/zdharma/zinit "$HOME/.zinit/bin" && \
+        print -P "%F{33}▓▒░ %F{34}Installation successful.%f%b" || \
+        print -P "%F{160}▓▒░ The clone has failed.%f%b"
+fi
+
+# zinit start
+source "$HOME/.zinit/bin/zinit.zsh"
+autoload -Uz _zinit
+(( ${+_comps} )) && _comps[zinit]=_zinit
+
+# plugins for zinit
+zinit light-mode for \
+    zinit-zsh/z-a-patch-dl \
+    zinit-zsh/z-a-as-monitor \
+    zinit-zsh/z-a-bin-gem-node
 
 # helpful exports and aliases
 export EDITOR="nvim"
 alias ls="exa -bh --color=auto --icons"
 alias ll="exa -bhl --color=auto --icons"
 alias lt="exa -bh --tree --color=auto --icons"
-alias lal="exa -bhal --color=auto --icons"
+alias lal="exa -bhal --color-auto --icons"
 alias cat="bat"
 alias vim="nvim"
 alias vi="nvim"
 
-# all the plugins
+# user plugins
+zinit wait lucid for \
+    atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
+        zdharma/fast-syntax-highlighting \
+    blockf \
+	zsh-users/zsh-completions \
+    atload"!_zsh_autosuggest_start" \
+        zsh-users/zsh-autosuggestions
 
-# completions
-zplugin ice wait blockf atpull'zplugin creinstall -q .'
-zplugin light zsh-users/zsh-completions
-
-# syntax highlighting
-zplugin light zdharma/fast-syntax-highlighting
-
-# autosuggestions
-zplugin ice wait atload"_zsh_autosuggest_start"
-zplugin light zsh-users/zsh-autosuggestions
 export ZSH_AUTOSUGGEST_STRATEGY=( history match_prev_cmd completion )
 export ZSH_AUTOSUGGEST_USE_ASYNC=1
 
-# better ctrl+r with multi-word search
-zplugin ice lucid wait"0b" compile'{hsmw-*,test/*}'
-zplugin light zdharma/history-search-multi-word
+zinit ice nocompile:! pick:c.zsh atpull:%atclone atclone:'dircolors -b LS_COLORS > c.zsh'
+zinit light trapd00r/LS_COLORS
 
-# better cd command with fuzzy matching
-zplugin ice wait"0b" lucid 
-zplugin light b4b4r07/enhancd 
-export ENHANCD_FILTER=fzy
+zinit light unixorn/warhol.plugin.zsh
 
-# time for some rainbows
-zplugin ice atclone"dircolors -b LS_COLORS > c.zsh" atpull'%atclone' pick"c.zsh"
-zplugin light trapd00r/LS_COLORS
+zinit light ael-code/zsh-colored-man-pages
 
-zplugin light unixorn/warhol.plugin.zsh
+zinit ice atclone'./init.sh' nocompile'!' wait'!0'
+zinit light b4b4r07/enhancd
 
-zplugin light ael-code/zsh-colored-man-pages
+zinit ice wait'1' lucid
+zinit light laggardkernel/zsh-thefuck
 
-# supercharge git
-zplugin ice wait"2" lucid as"program" pick"bin/git-dsf"
-zplugin light zdharma/zsh-diff-so-fancy
+zinit wait"1" lucid as"program" pick"$ZPFX/bin/fzy*" \
+    atclone"cp contrib/fzy-* $ZPFX/bin/" \
+    make"!PREFIX=$ZPFX install" for \
+    	jhawthorn/fzy
 
-zplugin ice wait"2" lucid as"program" pick"$ZPFX/bin/git-now" make"prefix=$ZPFX install"
-zplugin light iwata/git-now
+zinit ice wait"1" lucid compile'{hsmw-*,test/*}'
+zinit light zdharma/history-search-multi-word
 
-zplugin ice wait"2" lucid as"program" pick"$ZPFX/bin/git-alias" make"PREFIX=$ZPFX" nocompile
-zplugin light tj/git-extras
+zinit wait"2" lucid as"null" from"gh-r" for \
+    mv"exa* -> exa" sbin  ogham/exa \
+    mv"fd* -> fd" sbin"fd/fd"  @sharkdp/fd \
+    sbin junegunn/fzf-bin
 
-zplugin ice wait"2" lucid as"program" atclone'perl Makefile.PL PREFIX=$ZPFX' atpull'%atclone' \
-            make'install' pick"$ZPFX/bin/git-cal"
-            zplugin light k4rthik/git-cal
+zinit wait"2" lucid for \
+    atinit"forgit_ignore='fgi'" \
+    	wfxr/forgit
 
-# correcting wrong commands
-zplugin ice wait'1' lucid
-zplugin light laggardkernel/zsh-thefuck
-eval $(thefuck --alias wtf)
+zinit wait"2" lucid as"null" \
+    atclone'perl Makefile.PL PREFIX=$ZPFX' \
+    atpull'%atclone' make sbin"git-cal" for \
+        k4rthik/git-cal
 
-# docker completions
-zplugin ice as"completion"
-zplugin snippet https://github.com/docker/cli/blob/master/contrib/completion/zsh/_docker
+zinit as"null" wait"3" lucid for \
+    sbin Fakerr/git-recall \
+    sbin paulirish/git-open \
+    sbin paulirish/git-recent \
+    sbin davidosomething/git-my \
+    sbin atload"export _MENU_THEME=legacy" \
+    	arzzen/git-quick-stats \
+    sbin iwata/git-now \
+    make"PREFIX=$ZPFX" tj/git-extras \
+    sbin"bin/git-dsf;bin/diff-so-fancy" zdharma/zsh-diff-so-fancy \
+    sbin"git-url;git-guclone" make"GITURL_NO_CGITURL=1" zdharma/git-url
 
-# theme - spaceship prompt - the async version
-zplugin ice depth'1' lucid pick"async.zsh"
-zplugin light mafredri/zsh-async
-zplugin light maximbaz/spaceship-prompt
-[[ -f ~/.sspromptrc ]] && source ~/.sspromptrc
-
+# prompt theme
+zinit ice depth=1 atload'!source ~/.p10k.zsh' lucid nocd
+zinit light romkatv/powerlevel10k
+### End of Zinit's installer chunk
+### End of Zinit's installer chunk
