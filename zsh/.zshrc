@@ -27,8 +27,19 @@ zinit light-mode for \
 
 # helpful exports and aliases
 export EDITOR="nvim"
+export BROWSER="qutebrowser"
+
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CACHE_HOME="$HOME/.cache"
+
+export XAUTHORITY="$XDG_RUNTIME_DIR/Xauthority"
+export GTK2_RC_FILES="$XDG_CONFIG_HOME/gtk-2.0/gtkrc"
+export LESSHSTFILE=-
+
 alias ls="exa -bh --color=auto --icons"
 alias ll="exa -bhl --color=auto --icons"
+alias la="exa -bha --color=auto --icons"
 alias lt="exa -bh --tree --color=auto --icons"
 alias lal="exa -bhal --color=auto --icons"
 alias cat="bat"
@@ -56,8 +67,9 @@ zinit light ael-code/zsh-colored-man-pages
 
 zinit ice atclone'./init.sh' nocompile'!' wait'!0'
 zinit light b4b4r07/enhancd
+export ENHANCD_DIR="$HOME/.cache/.enhancd"
 
-zinit ice wait'1' lucid
+zinit ice wait"1" lucid
 zinit light laggardkernel/zsh-thefuck
 
 zinit wait"1" lucid as"program" pick"$ZPFX/bin/fzy*" \
@@ -97,5 +109,3 @@ zinit as"null" wait"3" lucid for \
 # prompt theme
 zinit ice depth=1 atload'!source ~/.p10k.zsh' lucid nocd
 zinit light romkatv/powerlevel10k
-### End of Zinit's installer chunk
-### End of Zinit's installer chunk

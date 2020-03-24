@@ -3,7 +3,7 @@
 # bspwm autostart script
 
 # load colors
-xrdb -load ~/.Xresources &
+xrdb -load ~/.config/X11/.Xresources &
 # load keybindings
 sxhkd &
 # restore the wallpaper

@@ -95,6 +95,7 @@ autocmd! User GoyoLeave Limelight!
 let g:limelight_conceal_guifg = 'Gray'
 let g:limelight_priority = -1
 
+
 " ligntline-ale specific settings
 let g:lightline.component_expand = {
       \  'linter_checking': 'lightline#ale#checking',
