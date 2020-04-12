@@ -66,7 +66,7 @@ background = ${colors.background}
 foreground = ${colors.foreground}
 
 font-0 = "SF Pro Display:style=Medium:pixelsize=11;2"
-font-1 = "Symbols Nerd Font:style=2048-em:pixelsize=11;2"
+font-1 = "Ubuntu Nerd Font:style=Medium:pixelsize=11;2"
 
 module-margin = ${margins.horz-margin-inter}
 
@@ -75,6 +75,7 @@ modules-right = power-menu
 
 override-redirect = true
 wm-restack = bspwm
+enable-ipc = true
 
 
 [bar/bottombar]
@@ -92,7 +93,7 @@ background = ${colors.background}
 foreground = ${colors.foreground}
 
 font-0 = "SF Pro Display:style=Medium:pixelsize=11;2"
-font-1 = "Symbols Nerd Font:style=2048-em:pixelsize=11;2"
+font-1 = "Ubuntu Nerd Font:style=Medium:pixelsize=11;2"
 
 module-margin = ${margins.horz-margin-inter}
 
@@ -101,6 +102,7 @@ modules-right = keyboard date time volume
 
 override-redirect = true
 wm-restack = bspwm
+enable-ipc = true
 
 
 [module/bspwm]
@@ -111,7 +113,7 @@ index-sort = true
 enable-click = true
 enable-scroll = true
 
-format-prefix = "    "
+format-prefix = "    "
 format = <label-mode> <label-state>
 
 label-focused = %icon%
@@ -225,11 +227,11 @@ menu-0-3-padding = ${margins.horz-padding-intra}
 menu-0-0 = "    "
 menu-0-0-exec = "st &"
 
-menu-0-1 = "    "
+menu-0-1 = "    "
 menu-0-1-exec = "qutebrowser &"
 
-menu-0-2 = "    "
-menu-0-2-exec = "subl3 &"
+menu-0-2 = "    "
+menu-0-2-exec = "st -t NeoVim -e nvim &"
 
 menu-0-3 = "    "
 menu-0-3-exec = "thunar &"

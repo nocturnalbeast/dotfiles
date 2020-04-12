@@ -19,6 +19,7 @@ bspc config gapless_monocle         false
 bspc config focus_by_distance       true
 bspc config history_aware_focus     true
 bspc config focus_follows_pointer   false
+bspc config ignore_ewmh_focus       true
 
 # color settings
 bspc config focused_border_color    "#1A1A1A"
@@ -43,37 +44,20 @@ bspc rule -a st                     follow=on
 bspc desktop II -l monocle
 bspc desktop VII -l monocle
 # application-specific workspace assignments
-bspc rule -a Firefox                desktop='^2' follow=on
-bspc rule -a Iceweasel              desktop='^2' follow=on
-bspc rule -a qutebrowser            desktop='^2' follow=on
-bspc rule -a Sublime_text           desktop='^3' follow=on
-bspc rule -a code                   desktop='^3' follow=on
-bspc rule -a Neovim                 desktop='^3' follow=on
-bspc rule -a Atom                   desktop='^3' follow=on
-bspc rule -a Brackets               desktop='^3' follow=on
-bspc rule -a Eclipse                desktop='^3' follow=on
-bspc rule -a LightTable             desktop='^3' follow=on
-bspc rule -a Ltbin                  desktop='^3' follow=on
-bspc rule -a Gvim                   desktop='^3' follow=on
-bspc rule -a Thunar                 desktop='^4' follow=on
-bspc rule -a Pcmanfm                desktop='^4' follow=on
-bspc rule -a Nautilus               desktop='^4' follow=on
-bspc rule -a ranger                 desktop='^4' follow=on
-bspc rule -a Gparted                desktop='^4' follow=on
-bspc rule -a mpv                    desktop='^5' follow=on
-bspc rule -a mplayer2               desktop='^5' follow=on
-bspc rule -a Vlc                    desktop='^5' follow=on
-bspc rule -a libreoffice            desktop='^6' follow=on
-bspc rule -a qpdfview               desktop='^6' follow=on
-bspc rule -a Zathura                desktop='^6' follow=on state=tiled
-bspc rule -a Abiword                desktop='^6' follow=on
-bspc rule -a Gimp                   desktop='^7' follow=on
-bspc rule -a Gimp-2.8               desktop='^7' follow=on
-bspc rule -a Pinta                  desktop='^7' follow=on
-bspc rule -a Inkscape               desktop='^7' follow=on
-bspc rule -a Handbrake              desktop='^7' follow=on
-bspc rule -a TelegramDesktop        desktop='^8' follow=on
-bspc rule -a "Syncthing GTK"        desktop='^8' follow=on
-bspc rule -a Transmission-gtk       desktop='^8' follow=on
-bspc rule -a Uget-gtk               desktop='^8' follow=on
-bspc rule -a gotop                  desktop='^9' follow=on
+bspc rule -a qutebrowser             desktop='^2' follow=on
+bspc rule -a st:Neovim               desktop='^3' follow=on
+bspc rule -a Thunar                  desktop='^4' follow=on
+bspc rule -a Gparted                 desktop='^4' follow=on
+bspc rule -a mpv                     desktop='^5' follow=on
+bspc rule -a libreoffice             desktop='^6' follow=on
+bspc rula -a libreoffice-startcenter desktop='^6' follow=on
+bspc rule -a Zathura                 desktop='^6' follow=on state=tiled
+bspc rule -a Gimp                    desktop='^7' follow=on
+bspc rule -a Gimp-2.8                desktop='^7' follow=on
+bspc rule -a Pinta                   desktop='^7' follow=on
+bspc rule -a Inkscape                desktop='^7' follow=on
+bspc rule -a TelegramDesktop         desktop='^8' follow=on
+bspc rule -a "Syncthing GTK"         desktop='^8' follow=on
+bspc rule -a Transmission-gtk        desktop='^8' follow=on
+bspc rule -a Uget-gtk                desktop='^8' follow=on
+bspc rule -a st:gotop                desktop='^9' follow=on

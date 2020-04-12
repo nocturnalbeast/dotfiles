@@ -3,11 +3,11 @@
 
 ### window & workspace cycling keybindings
 
-# switch to (and send windows to) workspace
-alt + {_,shift + }{1-9,0}
+# switch to workspace, use shift to send focused window to workspace 
+alt + {_,shift} + {1-9,0}
     bspc {desktop -f,node -d} '^{1-9,10}'
 
-# cycling between last used windows/workspaces
+# cycle between last used windows/workspaces
 alt + {grave,Tab}
     bspc {node,desktop} -f last
 
@@ -15,15 +15,15 @@ alt + {grave,Tab}
 alt + {a,d}
     bspc desktop -f {prev,next}
 
-# normal direction-bound focus changing of windows
-alt + {_,shift + }{Left,Down,Up,Right,h,j,k,l}
+# change focus to window in specified direction
+alt + {_,shift} + {Left,Down,Up,Right,h,j,k,l}
     bspc node -{f,s} {west,south,north,east,west,south,north,east}
 
-# cycle between all windows in a workspace
-alt + {_,shift + }c
+# cycle between all windows in a workspace, use shift to reverse order
+alt + {_,shift} + c
     bspc node -f {next,prev}.local
 
-# history-aware cycling of windows (across workspaces)
+# cycle between windows across workspaces in order of history
 alt + {o,i}
     bspc wm -h off; \
     bspc node {older,newer} -f; \
@@ -32,40 +32,36 @@ alt + {o,i}
 
 ### killing windows
 
-# close/kill focused window
-alt + {_,shift + }q
+# close focused window, use shift to kill
+alt + {_,shift} + q
     bspc node -{c,k}; bspc node -f last   
 
-# close/kill focused window but don't go back to the previous window
-super + {_,shift + }q
+# close focused window but don't go back to the previous window, use shift to kill
+super + {_,shift} + q
     bspc node -{c,k}
 
 
 ### window size and layout manipulation
 
-# change window mode
+# change mode of the focused window
 alt + {t,shift + t,s,f}
     bspc node -t {tiled,pseudo_tiled,floating,fullscreen}
 
-# alternate between the tiled and monocle layout
+# cycle through layouts on the active workspace
 alt + m
     bspc desktop -l next
 
-# swap the focused window with the biggest window in the current workspace
+# swap the focused window with the biggest window in the active workspace
 alt + b
     bspc node -s biggest.local
 
-# rotate the workspace layout
+# rotate window layout of the active workspace
 alt + r
     bspc node @/ -R 90
 
-# expand a window by moving one of its side outward
+# resize the active window to the given direction
 super + alt + {Left,Down,Up,Right,h,j,k,l}
-    bspc node -z {left -20 0,bottom 0 20,top 0 -20,right 20 0,left -20 0,bottom 0 20,top 0 -20,right 20 0}
-
-# contract a window by moving one of its side inward
-super + alt + shift + {Left,Down,Up,Right,h,j,k,l}
-    bspc node -z {right -20 0,top 0 20,bottom 0 -20,left 20 0,right -20 0,top 0 20,bottom 0 -20,left 20 0}
+    ~/.config/scripts/bspwm-resize.sh {west,south,north,east,west,south,north,east} 20
 
 # move a floating window
 super + {Left,Down,Up,Right,h,j,k,l}
@@ -99,15 +95,15 @@ super + b
 
 # launch terminal
 super + t
-    st
-
-# launch code editor
-super + s
-    subl
+    st -t "Terminal"
 
 # launch web browser
 super + w
     qutebrowser
+
+# launch web browser (incognito mode)
+super + shift + w
+    qutebrowser --temp-basedir -s content.private_browsing true
 
 # launch file explorer
 super + e
@@ -118,23 +114,27 @@ super + e
 
 # launch code editor (vim)
 super + v
-    st -e nvim -t "NeoVim"
+    st -t "Neovim" -e nvim
 
 # launch music player
 super + m
-    st -e ncmpcpp -t "ncmpcpp"
+    st -t "Music" -e ncmpcpp
+
+# launch spotify client
+super + s
+    st -t "Spotify" -e ncspot
 
 # launch podcast manager
-super + n
-    st -e castero -t "castero"
+super + d
+    st -t "Podcasts" -e castero
 
 # launch process manager
 super + g
-    st -e gotop -t "gotop"
+    st -t "System Monitor" -e gotop
 
 # launch feed reader
-super + r
-    st -e newsboat -t "Newsboat"
+super + n
+    st -t "News" -e newsboat
 
 
 ### keyboard function keys/special keys keybindings
@@ -151,36 +151,44 @@ XF86AudioRaiseVolume
 XF86AudioMute
     amixer -q sset Master toggle
 
-# tell mpd to play/pause
+# play/pause mpd
 XF86AudioPlay
     mpc toggle
 
-# tell mpd to stop
+# stop mpd
 XF86AudioStop
     mpc stop
 
-# tell mpd to skip to the next song
+# skip to the next track in mpd
 XF86AudioNext
     mpc next
 
-# tell mpd to go back to the previous song
+# go back to the previous track in mpd
 XF86AudioPrev
     mpc prev
 
 
 ### keybindings for taking screenshots
 
-# print screen key to take screenshot of the current workspace
+# take a screenshot of the current workspace
 Print
     scrot '%d-%m-%Y_%H:%M:%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
 
-# combining that with alt to take screenshot of the focused window
+# take a screenshot of the focused window
 alt + Print
     scrot --focused '%d-%m-%Y_%H:%M:%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
 
 
-### reloading keybindings
+### misc keybindings
 
-# make sxhkd reload its config file
+# reload simple x hotkey daemon
 alt + Escape
     pkill -USR1 -x sxhkd
+
+# reload bspwm
+alt + shift + Escape
+    ~/.config/scripts/reload-bspwm.sh
+
+# show help dialog for keybindings if needed
+alt + slash
+    ~/.config/scripts/show-keybindings.sh
