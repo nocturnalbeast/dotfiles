@@ -3,3 +3,6 @@ mpd/.config/mpd/pid
 mpd/.config/mpd/state
 mpd/.config/mpd/sticker.sql
 thunar/.config/Thunar/accels.scm
+gtk/.config/gtk-2.0/gtkfilechooser.ini
+ncspot/.config/ncspot/credentials.toml
+nvim/.config/nvim/.netrwhist
