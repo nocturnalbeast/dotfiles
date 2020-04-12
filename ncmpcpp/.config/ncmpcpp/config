@@ -20,7 +20,7 @@ progressbar_elapsed_color = "blue"
 
 # playlist song list formatting
 song_list_format = "$1• $8%t $1by $5%a$5 $R$1%l"
-now_playing_prefix = "$b$5> "
+now_playing_prefix = "$b$5❯"
 now_playing_suffix = "$8$/b"
 
 # now playing song line formatting
@@ -34,7 +34,7 @@ color1 = "white"
 color2 = "black"
 
 # other options
-mouse_support = "yes"
+mouse_support = "no"
 header_visibility = "no"
 statusbar_visibility = "yes"
 playlist_display_mode = "columns" (classic/columns)

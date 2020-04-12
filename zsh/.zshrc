@@ -25,6 +25,11 @@ zinit light-mode for \
     zinit-zsh/z-a-as-monitor \
     zinit-zsh/z-a-bin-gem-node
 
+# setting up history file
+[ -z "$HISTFILE" ] && HISTFILE="$HOME/.cache/shell_history"
+HISTSIZE=50000
+SAVEHIST=10000
+
 # helpful exports and aliases
 export EDITOR="nvim"
 export BROWSER="qutebrowser"
@@ -33,7 +38,6 @@ export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"
 
-export XAUTHORITY="$XDG_RUNTIME_DIR/Xauthority"
 export GTK2_RC_FILES="$XDG_CONFIG_HOME/gtk-2.0/gtkrc"
 export LESSHSTFILE=-
 
@@ -45,6 +49,43 @@ alias lal="exa -bhal --color=auto --icons"
 alias cat="bat"
 alias vim="nvim"
 alias vi="nvim"
+
+alias l="exa -bh --color=auto --icons"
+alias v="nvim"
+alias g="gotop"
+alias c="bat"
+
+# fix keybindings (note that plugins can override these)
+if (( ${+terminfo[smkx]} )) && (( ${+terminfo[rmkx]} )); then
+    function zle-line-init () { echoti smkx }
+    function zle-line-finish () { echoti rmkx }
+    zle -N zle-line-init
+    zle -N zle-line-finish
+fi
+
+typeset -g -A key
+
+key[Home]="$terminfo[khome]"
+key[End]="$terminfo[kend]"
+key[Insert]="$terminfo[kich1]"
+key[Backspace]="$terminfo[kbs]"
+key[Delete]="$terminfo[kdch1]"
+key[Up]="$terminfo[kcuu1]"
+key[Down]="$terminfo[kcud1]"
+key[Left]="$terminfo[kcub1]"
+key[Right]="$terminfo[kcuf1]"
+key[PageUp]="$terminfo[kpp]"
+key[PageDown]="$terminfo[knp]"
+
+[[ -n "$key[Home]" ]] && bindkey - "$key[Home]" beginning-of-line
+[[ -n "$key[End]" ]] && bindkey - "$key[End]" end-of-line
+[[ -n "$key[Insert]" ]] && bindkey - "$key[Insert]" overwrite-mode
+[[ -n "$key[Backspace]" ]] && bindkey - "$key[Backspace]" backward-delete-char
+[[ -n "$key[Delete]" ]] && bindkey - "$key[Delete]" delete-char
+[[ -n "$key[Up]" ]] && bindkey - "$key[Up]" up-line-or-history
+[[ -n "$key[Down]" ]] && bindkey - "$key[Down]" down-line-or-history
+[[ -n "$key[Left]" ]] && bindkey - "$key[Left]" backward-char
+[[ -n "$key[Right]" ]] && bindkey - "$key[Right]" forward-char
 
 # user plugins
 zinit wait lucid for \
