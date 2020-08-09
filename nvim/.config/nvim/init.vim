@@ -70,7 +70,7 @@ Plug 'mhinz/vim-startify'
 Plug 'sheerun/vim-polyglot'
 Plug 'scrooloose/nerdcommenter'
 Plug 'tpope/vim-surround'
-Plug 'challenger-deep-theme/vim', { 'as': 'challenger-deep' }
+Plug 'joshdick/onedark.vim'
 Plug 'ryanoasis/vim-devicons'
 Plug 'junegunn/fzf'
 Plug 'airblade/vim-gitgutter'
@@ -78,14 +78,21 @@ Plug 'airblade/vim-gitgutter'
 call plug#end()
 
 
-" color settings
-if has('nvim') || has('termguicolors')
-  set termguicolors
+" theme settings
+if (has("nvim"))
+    let $NVIM_TUI_ENABLE_TRUE_COLOR = 1
+endif
+if (has("termguicolors"))
+    set termguicolors
 endif
 
 syntax enable
-colorscheme challenger_deep
-let g:lightline = { 'colorscheme': 'challenger_deep' }
+colorscheme onedark
+let g:lightline = {
+    \  'colorscheme': 'onedark',
+    \  'separator': { 'left': '', 'right': '' },
+    \  'subseparator': { 'left': '', 'right': '' }
+    \ }
 
 
 " limelight specific settings
@@ -96,26 +103,28 @@ let g:limelight_conceal_guifg = 'Gray'
 let g:limelight_priority = -1
 
 
-" ligntline-ale specific settings
+" lightline specific settings
 let g:lightline.component_expand = {
-      \  'linter_checking': 'lightline#ale#checking',
-      \  'linter_warnings': 'lightline#ale#warnings',
-      \  'linter_errors': 'lightline#ale#errors',
-      \  'linter_ok': 'lightline#ale#ok',
-      \ }
+    \  'linter_checking': 'lightline#ale#checking',
+    \  'linter_warnings': 'lightline#ale#warnings',
+    \  'linter_errors': 'lightline#ale#errors',
+    \  'linter_ok': 'lightline#ale#ok'
+    \ }
 
 let g:lightline.component_type = {
-      \     'linter_checking': 'left',
-      \     'linter_warnings': 'warning',
-      \     'linter_errors': 'error',
-      \     'linter_ok': 'left',
-      \ }
+    \  'linter_checking': 'left',
+    \  'linter_warnings': 'warning',
+    \  'linter_errors': 'error',
+    \  'linter_ok': 'left'
+    \ }
 
-let g:lightline.active = { 'right': [ 
-      \      [ 'lineinfo' ],
-      \      [ 'fileformat', 'fileencoding' ],
-      \      [ 'linter_checking', 'linter_errors', 'linter_warnings', 'linter_ok' ]
-      \ ] }
+let g:lightline.active = {
+    \  'right': [
+    \   [ 'lineinfo' ],
+    \   [ 'fileformat', 'fileencoding' ],
+    \   [ 'linter_checking', 'linter_errors', 'linter_warnings', 'linter_ok' ]
+    \  ]
+    \ }
 
 let g:lightline#ale#indicator_checking = "\uf110"
 let g:lightline#ale#indicator_warnings = "\uf071"
