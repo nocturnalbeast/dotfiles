@@ -46,6 +46,7 @@ alias ll="exa -bhl --color=auto --icons"
 alias la="exa -bha --color=auto --icons"
 alias lt="exa -bh --tree --color=auto --icons"
 alias lal="exa -bhal --color=auto --icons"
+alias grep="grep --color=auto"
 alias cat="bat"
 alias vim="nvim"
 alias vi="nvim"
@@ -54,6 +55,32 @@ alias l="exa -bh --color=auto --icons"
 alias v="nvim"
 alias g="gotop"
 alias c="bat"
+
+# prompt behavior
+setopt autocd
+setopt histignoredups
+setopt histignorespace
+setopt histexpiredupsfirst
+setopt incappendhistory
+# have highlighting on selected completion
+zstyle ':completion:*:*:*:*:*' menu select
+# case and hyphen insensitive completion matching
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z-_}={A-Za-z_-}' 'r:|=*' 'l:|=* r:|=*'
+# process listing completion
+zstyle ':completion:*:*:kill:*' sort false
+zstyle ':completion:*processes' list-colors '=(#b) #([0-9]#)*=0=31;31'
+zstyle ':completion:*processes' command 'ps --forest -U '${USERNAME}' -o pid,args | sed "/ps --forest -U '${USERNAME}' -o pid,args/d"'
+zstyle ':completion:*:processes-names' command "ps -U '${USERNAME}' -o comm"
+# job numbers
+zstyle ':completion:*:jobs' numbers true
+# man page completion
+zstyle ':completion:*:manuals' separate-sections true
+zstyle ':completion:*:manuals.*' insert-sections true
+# complete current dir and parent dir (only when . is already in the command)
+zstyle ':completion:*' special-dirs true
+# enable caching for completions
+zstyle ':completion::complete:*' use-cache 1
+zstyle ':completion::complete:*' cache-path $ZSH_CACHE_DIR
 
 # fix keybindings (note that plugins can override these)
 if (( ${+terminfo[smkx]} )) && (( ${+terminfo[rmkx]} )); then
@@ -87,6 +114,14 @@ key[PageDown]="$terminfo[knp]"
 [[ -n "$key[Left]" ]] && bindkey - "$key[Left]" backward-char
 [[ -n "$key[Right]" ]] && bindkey - "$key[Right]" forward-char
 
+# ctrl+[left,right] for moving one word at a time
+bindkey "\e[1;5C" forward-word
+bindkey "\e[1;5D" backward-word
+# ctrl+delete to delete the word in front of the cursor
+bindkey "\e[3;5~" kill-word
+# ctrl+backspace to delete the word behind the cursor
+bindkey '^H' backward-kill-word
+
 # user plugins
 zinit wait lucid for \
     atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
@@ -101,6 +136,7 @@ export ZSH_AUTOSUGGEST_USE_ASYNC=1
 
 zinit ice nocompile:! pick:c.zsh atpull:%atclone atclone:'dircolors -b LS_COLORS > c.zsh'
 zinit light trapd00r/LS_COLORS
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 
 zinit light unixorn/warhol.plugin.zsh
 
@@ -136,7 +172,6 @@ zinit wait"2" lucid as"null" \
         k4rthik/git-cal
 
 zinit as"null" wait"3" lucid for \
-    sbin Fakerr/git-recall \
     sbin paulirish/git-open \
     sbin paulirish/git-recent \
     sbin davidosomething/git-my \
