@@ -23,4 +23,6 @@ light-locker &
 # launch polkit agent for user authentication
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 # launch clean-fullscreen script
-~/.config/scripts/clean-fullscreen.sh
+~/.config/scripts/clean-fullscreen.sh &
+# launch unclutter to hide cursor when inactive
+unclutter &

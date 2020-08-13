@@ -8,9 +8,10 @@
 # default 10-workspace setup
 bspc monitor -d I II III IV V VI VII VIII IX X
 
-# default border width and window gap are good
+# spacing and borders
 bspc config border_width            2
-bspc config window_gap              12
+bspc config window_gap              6
+bspc config top_padding             30
 
 # behavior settings
 bspc config split_ratio             0.5
