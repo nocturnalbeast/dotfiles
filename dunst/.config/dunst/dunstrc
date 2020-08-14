@@ -1,83 +1,81 @@
-# dunst config
-# current theme:
-# blak-en-whyt
+#    _             _
+#  _| |_ _ ___ ___| |_
+# | . | | |   |_ -|  _|
+# |___|___|_|_|___|_|
+#
+
 
 [global]
-    
-    ### Geometry & Appearance ###
+# geometry and appearance
+monitor                 = 0
+title                   = Dunst
+class                   = Dunst
+geometry                = "300x10-12+42"
+indicate_hidden         = yes
+shrink                  = no
+transparency            = 30
+notification_height     = 0
+separator_height        = 2
+padding                 = 8
+horizontal_padding      = 8
+frame_width             = 2
+frame_color             = "#AAAAAA"
+corner_radius           = 0
+separator_color         = frame
+idle_threshold          = 120
 
-    monitor = 0
-    title = Dunst
-    class = Dunst
-    geometry = "300x10-12+12"
-    indicate_hidden = yes
-    shrink = no
-    transparency = 25
-    notification_height = 0
-    separator_height = 2
-    padding = 8
-    horizontal_padding = 8
-    frame_width = 2
-    frame_color = "#181818"
-    corner_radius = 0
-    separator_color = frame
-    idle_threshold = 120
+# text formatting
+font                    = Iosevka Aile 11
+line_height             = 1.2
+markup                  = full
+format                  = "<b>%a:%s</b>\n%b"
+alignment               = left
+show_age_threshold      = 60
+word_wrap               = yes
+ellipsize               = middle
+ignore_newline          = no
+stack_duplicates        = true
+hide_duplicate_count    = false
+show_indicators         = yes
+icon_position           = left
+max_icon_size           = 32
 
-    ### Content ###
+# behavior
+follow                  = keyboard
+sort                    = yes
+sticky_history          = yes
+history_length          = 20
+browser                 = /usr/bin/qutebrowser
+always_run_script       = true
+startup_notification    = false
+verbosity               = mesg
+force_xinerama          = false
+mouse_left_click        = close_current
+mouse_middle_click      = do_action
+mouse_right_click       = close_all
 
-    font = SF Pro Display 12
-    line_height = 1.2
-    markup = full
-    format = "<b>%a:%s</b>\n%b"
-    alignment = left
-    show_age_threshold = 60
-    word_wrap = yes
-    ellipsize = middle
-    ignore_newline = no
-    stack_duplicates = true
-    hide_duplicate_count = false
-    show_indicators = yes
-    icon_position = left
-    max_icon_size = 32
-
-    ### Behavior ###
-
-    follow = keyboard
-    sort = yes
-    sticky_history = yes
-    history_length = 20
-    browser = /usr/bin/qutebrowser
-    always_run_script = true
-    startup_notification = false
-    verbosity = mesg
-    force_xinerama = false
-    mouse_left_click = close_current
-    mouse_middle_click = do_action
-    mouse_right_click = close_all
 
 [experimental]
-    per_monitor_dpi = false
+per_monitor_dpi         = false
 
-[shortcuts]
-    close = ctrl+space
-    close_all = ctrl+shift+space
-    history = ctrl+grave
-    context = ctrl+shift+period
 
 [urgency_low]
-    background = "#eaeaea"
-    foreground = "#5f5f5f"
-    timeout = 10
-    icon = ~/.icons/Paper-Vimix/other/actions/dialog-information.svg
+background              = "#303030"
+foreground              = "#BFBFBF"
+timeout                 = 2
+icon                    = ~/.config/dunst/icons/info.svg
+
+
 [urgency_normal]
-    background = "#eaeaea"
-    foreground = "#181818"
-    timeout = 10
-    icon = ~/.icons/Paper-Vimix/other/actions/dialog-warning.svg
+background              = "#303030"
+foreground              = "#FFFFFF"
+timeout                 = 5
+icon                    = ~/.config/dunst/icons/warning.svg
+
 
 [urgency_critical]
-    background = "#d23d3d"
-    foreground = "#eaeaea"
-    frame_color = "#e84f4f"
-    timeout = 0
-    icon = ~/.icons/Paper-Vimix/other/actions/dialog-error.svg
+background              = "#D23D3D"
+foreground              = "#FFFFFF"
+frame_color             = "#E84F4F"
+timeout                 = 0
+icon                    = ~/.config/dunst/icons/error.svg
