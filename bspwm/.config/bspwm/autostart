@@ -1,6 +1,10 @@
 #!/bin/sh
 
-# bspwm autostart script
+# _                                   _           _           _
+#| |_ ___ ___ _ _ _ _____ ___ ___ _ _| |_ ___ ___| |_ ___ ___| |_
+#| . |_ -| . | | | |     |___| .'| | |  _| . |_ -|  _| .'|  _|  _|
+#|___|___|  _|_____|_|_|_|   |__,|___|_| |___|___|_| |__,|_| |_|
+#        |_|
 
 # load colors
 xrdb -load ~/.config/X11/.Xresources &
@@ -9,13 +13,13 @@ sxhkd &
 # restore the wallpaper
 nitrogen --restore &
 # launch compositor
-picom --config ~/.config/picom/picom.conf &
+picom &
 # launch system bars
 ~/.config/scripts/polybar-start.sh &
 # launch notification daemon
 ~/.config/scripts/dunst-start.sh &
 # launch music player server
-mpd ~/.config/mpd/mpd.conf &
+mpd &
 # launch clipboard manager
 greenclip daemon &
 # launch screen autolocker
@@ -26,3 +30,5 @@ light-locker &
 ~/.config/scripts/clean-fullscreen.sh &
 # launch unclutter to hide cursor when inactive
 unclutter &
+# launch kunst to grab album art on play and notify on song change
+~/.config/scripts/kunst-mod.sh --notify &

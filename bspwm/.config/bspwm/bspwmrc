@@ -1,6 +1,10 @@
 #!/bin/sh
 
-# bspwm config
+#  _
+# | |_ ___ ___ _ _ _ _____
+# | . |_ -| . | | | |     |
+# |___|___|  _|_____|_|_|_|
+#         |_|
 
 # launch the autostart script
 ~/.config/bspwm/autostart &
@@ -38,8 +42,6 @@ bspc rule -a "*:floating"           state=floating center=on
 # specific rule for conky
 bspc rule -a Conky                  sticky=on manage=off lower=on
 # allow terminals to be launched on any workspace even if the default one for terminals is the first one
-bspc rule -a urxvt                  follow=on
-bspc rule -a termite                follow=on
 bspc rule -a st                     follow=on
 # prefer monocle (fullscreen) layout for certain workspaces
 bspc desktop II -l monocle

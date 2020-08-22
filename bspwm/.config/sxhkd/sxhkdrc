@@ -1,5 +1,7 @@
-####### simple x hotkey daemon keybindings
-
+#          _   _     _
+#  ___ _ _| |_| |_ _| |
+# |_ -|_'_|   | '_| . |
+# |___|_,_|_|_|_,_|___|
 
 ### window & workspace cycling keybindings
 
@@ -118,7 +120,7 @@ super + v
 
 # launch music player
 super + m
-    st -t "Music" -e ncmpcpp
+    st -t "Music" -e ~/.config/scripts/ncmpcpp-ueberzug.sh
 
 # launch spotify client
 super + s
