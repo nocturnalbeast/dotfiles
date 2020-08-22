@@ -216,10 +216,15 @@ main() {
             notify-send -a "Now Playing" "$TRACK" "by $ARTIST" -i "$COVER"
         fi
 
-		# Waiting for an event from mpd; play/pause/next/previous
+		# Waiting for an event from mpd; next/previous
 		# this is lets kunst use less CPU :)
+        # we don't necessarily need to update album art when
+        # the song pauses/plays, only when it changes,
+        # so we keep track of the current song and compare it
+        # on every player event update
+        CURRENT_SONG=$( mpc status | head -1 )
 		while true; do
-		    mpc idle player &>/dev/null && (mpc status | grep "\[playing\]" &>/dev/null) && break
+            mpc idle player &>/dev/null && (mpc status | grep "\[playing\]" &>/dev/null) && [ "$CURRENT_SONG" != "$( mpc status | head -1 )" ] && break
 		done
         [ ! "$SILENT" ] && echo "kunst: received event from mpd"
 	done
