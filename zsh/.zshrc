@@ -1,11 +1,11 @@
 #!/bin/zsh
 
-# install zinit if not installed
-if [ ! -d "${HOME}/.zinit" ]; then 
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/zdharma/zinit/master/doc/install.sh)"
-fi
+#          _
+#  ___ ___| |_
+# |- _|_ -|   |
+# |___|___|_|_|
 
-# added by zinit's installer
+# install zinit if not installed
 if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
     print -P "%F{33}▓▒░ %F{220}Installing DHARMA Initiative Plugin Manager (zdharma/zinit)…%f"
     command mkdir -p "$HOME/.zinit" && command chmod g-rwX "$HOME/.zinit"
@@ -40,6 +40,8 @@ export XDG_CACHE_HOME="$HOME/.cache"
 
 export GTK2_RC_FILES="$XDG_CONFIG_HOME/gtk-2.0/gtkrc"
 export LESSHSTFILE=-
+
+export WORDCHARS="*?_[]~=&;!#$%^(){}"
 
 alias ls="exa -bh --color=auto --icons"
 alias ll="exa -bhl --color=auto --icons"
@@ -90,6 +92,11 @@ if (( ${+terminfo[smkx]} )) && (( ${+terminfo[rmkx]} )); then
     zle -N zle-line-finish
 fi
 
+autoload -Uz up-line-or-beginning-search
+autoload -Uz down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+
 typeset -g -A key
 
 key[Home]="$terminfo[khome]"
@@ -114,13 +121,21 @@ key[PageDown]="$terminfo[knp]"
 [[ -n "$key[Left]" ]] && bindkey - "$key[Left]" backward-char
 [[ -n "$key[Right]" ]] && bindkey - "$key[Right]" forward-char
 
+function __load_hss_keys() {
+    [[ -n "$key[PageUp]" ]] && bindkey - "$key[PageUp]" history-substring-search-up
+    [[ -n "$key[PageDown]" ]] && bindkey - "$key[PageDown]" history-substring-search-down
+    bindkey - '^P' history-substring-search-up
+    bindkey - '^N' history-substring-search-down
+}
+
+# now for the ones that terminfo can't handle
 # ctrl+[left,right] for moving one word at a time
-bindkey "\e[1;5C" forward-word
 bindkey "\e[1;5D" backward-word
-# ctrl+delete to delete the word in front of the cursor
-bindkey "\e[3;5~" kill-word
+bindkey "\e[1;5C" forward-word
 # ctrl+backspace to delete the word behind the cursor
 bindkey '^H' backward-kill-word
+# ctrl+delete to delete the word in front of the cursor
+bindkey "\e[3;5~" kill-word
 
 # user plugins
 zinit wait lucid for \
@@ -156,6 +171,9 @@ zinit wait"1" lucid as"program" pick"$ZPFX/bin/fzy*" \
 
 zinit ice wait"1" lucid compile'{hsmw-*,test/*}'
 zinit light zdharma/history-search-multi-word
+
+zinit ice wait"1" lucid atload'__load_hss_keys'
+zinit light zsh-users/zsh-history-substring-search
 
 zinit wait"2" lucid as"null" from"gh-r" for \
     mv"exa* -> exa" sbin  ogham/exa \
