@@ -28,8 +28,8 @@ optional arguments:
 
 
 # Parse the arguments
-options=$(getopt -o h --long size:,music_dir:,version,force-online,silent,notify,help -- "$@")
-eval set -- "$options"
+OPTIONS=$(getopt -o h --long size:,music_dir:,version,force-online,silent,notify,help -- "$@")
+eval set -- "$OPTIONS"
 
 while true; do
     case "$1" in
@@ -175,10 +175,10 @@ pre_exit() {
 }
 
 main() {
-    dependencies=(convert bash ffmpeg mpc jq mpd)
-    for dependency in "${dependencies[@]}"; do
-        type -p "$dependency" &>/dev/null || {
-            echo "error: Could not find '${dependency}', is it installed?" >&2
+    DEPENDENCIES=(convert bash ffmpeg mpc jq mpd)
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &>/dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
             exit 1
         }
     done
@@ -211,9 +211,18 @@ main() {
 		fi
 
         if [ "$NOTIFICATION" == true ]; then
-            ARTIST=$(mpc current | cut -f 1 -d -)
-            TRACK=$(mpc current | cut -f 2 -d -)
-            notify-send -a "Now Playing" "$TRACK" "by $ARTIST" -i "$COVER"
+            TITLE=$( mpc current --format "[%title%]" )
+            if [ "$TITLE" != "" ]; then
+                ALBUM=$( mpc current --format "[%album%]" )
+                ARTIST=$( mpc current --format "[%artist%]" )
+                if [ "$ALBUM" = "$TITLE" ]; then
+                    notify-send -a "Now Playing" " $TITLE" "by $ARTIST" -i "$COVER"
+                else
+                    notify-send -a "Now Playing" " $TITLE" "from $ALBUM by $ARTIST" -i "$COVER"
+                fi
+            else
+                notify-send -a "Now Playing" " $( mpc current --format '[%file%]' )" "" -i "$COVER"
+            fi
         fi
 
 		# Waiting for an event from mpd; next/previous
