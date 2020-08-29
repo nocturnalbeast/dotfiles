@@ -1,4 +1,7 @@
-" neovim config
+"                  _
+"  ___ ___ ___ _ _|_|_____
+" |   | -_| . | | | |     |
+" |_|_|___|___|\_/|_|_|_|_|
 
 
 " no need for backwards compatibility
@@ -10,6 +13,7 @@ set noshowmode
 set noruler
 set laststatus=0
 set noshowcmd
+set shortmess+=F
 
 
 " no jumping to the opening brace
@@ -74,6 +78,7 @@ Plug 'joshdick/onedark.vim'
 Plug 'ryanoasis/vim-devicons'
 Plug 'junegunn/fzf'
 Plug 'airblade/vim-gitgutter'
+Plug 'godlygeek/tabular'
 
 call plug#end()
 
@@ -142,5 +147,3 @@ highlight Normal ctermbg=none
 highlight NonText ctermbg=none
 highlight Normal guibg=none
 highlight NonText guibg=none
-
-
