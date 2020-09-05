@@ -149,6 +149,7 @@ modules-right = sep volume sep datetime
 
 override-redirect = true
 enable-ipc = true
+wm-restack = ${env:WINDOW_MANAGER}
 
 
 [bar/monbar]
@@ -175,6 +176,7 @@ modules-right = sep fs-root sep fs-home sep network-speed network-status
 
 override-redirect = true
 enable-ipc = true
+wm-restack = ${env:WINDOW_MANAGER}
 
 
 ;
