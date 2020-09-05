@@ -1,0 +1,24 @@
+#    _
+#  _| |_____ ___ ___ _ _
+# | . |     | -_|   | | |
+# |___|_|_|_|___|_|_|___|
+
+
+# vertical padding
+VPAD=6
+# horizontal padding
+HPAD=6
+# bar height
+HEIGHT=24
+# normal colors
+BG_CLR="#9A9A9A"
+FG_CLR="#FFFFFF"
+# selected item colors
+SELBG_CLR="#000000"
+SELFG_CLR="#DADADA"
+# highlight colors
+HLBG_CLR="#9A9A9A"
+HLFG_CLR="#000000"
+# selected item highlight colors
+SELHLBG_CLR="#000000"
+SELHLFG_CLR="#FF6666"
