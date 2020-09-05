@@ -38,10 +38,6 @@ alt + {o,i}
 alt + {_,shift} + q
     bspc node -{c,k}; bspc node -f last   
 
-# close focused window but don't go back to the previous window, use shift to kill
-super + {_,shift} + q
-    bspc node -{c,k}
-
 
 ### window size and layout manipulation
 
@@ -70,27 +66,51 @@ super + {Left,Down,Up,Right,h,j,k,l}
     bspc node -v {-20 0,0 20,0 -20,20 0,-20 0,0 20,0 -20,20 0}
 
 
-### keybindings for different rofi modes
+### keybindings for different dmenu scripts
 
-# rofi run mode
+# app menu
 super + a
-    ~/.config/scripts/rofi-wrapper.sh -r
+    ~/.config/scripts/dmenu/apps.sh launch
 
-# rofi power dialog mode
+# app menu - refresh entries
+super + shift + a
+    ~/.config/scripts/dmenu/apps.sh refresh
+
+# power menu
 super + p
-    ~/.config/scripts/rofi-wrapper.sh -p
+    ~/.config/scripts/dmenu/power.sh
 
-# rofi window list mode
+# window menu
 super + Tab
-    ~/.config/scripts/rofi-wrapper.sh -w
+    ~/.config/scripts/dmenu/window.sh
 
-# rofi calculator mode
+# workspace menu
+super + grave
+    ~/.config/scripts/dmenu/workspace.sh
+
+# calculator menu
 super + c
-    ~/.config/scripts/rofi-wrapper.sh -c
+    ~/.config/scripts/dmenu/calc.sh
 
-# rofi clipboard mode
+# kill menu
+super + q
+    ~/.config/scripts/dmenu/kill.sh
+
+# clipboard menu
 super + b
-    ~/.config/scripts/rofi-wrapper.sh -b
+    ~/.config/scripts/dmenu/clipboard.sh
+
+# online search menu
+super + o
+    ~/.config/scripts/dmenu/surfraw.sh
+
+# video menu
+super + y
+    ~/.config/scripts/dmenu/video.sh
+
+# music menu
+super + shift + m
+    ~/.config/scripts/dmenu/mpd.sh
 
 
 ### keybindings for most used applications
@@ -184,12 +204,12 @@ alt + Print
 ### misc keybindings
 
 # reload simple x hotkey daemon
-alt + Escape
+alt + shift + Escape
     pkill -USR1 -x sxhkd
 
 # reload bspwm
-alt + shift + Escape
-    ~/.config/scripts/reload-bspwm.sh
+alt + Escape
+    bspc wm --restart
 
 # show help dialog for keybindings if needed
 alt + slash

@@ -21,7 +21,7 @@ picom &
 # launch music player server
 mpd &
 # launch clipboard manager
-greenclip daemon &
+clipmenud &
 # launch screen autolocker
 light-locker &
 # launch polkit agent for user authentication
