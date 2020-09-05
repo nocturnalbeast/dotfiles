@@ -202,6 +202,21 @@ main() {
             printf '%*s\n' "${COLUMNS:-$(tput cols)}" '' | tr ' ' -
         fi
 
+        if [ "$FIRST_RUN" != true ] && [ "$NOTIFICATION" == true ]; then
+            TITLE=$( mpc current --format "[%title%]" )
+            if [ "$TITLE" != "" ]; then
+                ALBUM=$( mpc current --format "[%album%]" )
+                ARTIST=$( mpc current --format "[%artist%]" )
+                if [ "$ALBUM" = "$TITLE" ]; then
+                    notify-send -u low -a "Now Playing" " $TITLE" "by $ARTIST" -i "$COVER"
+                else
+                    notify-send -u low -a "Now Playing" " $TITLE" "from $ALBUM by $ARTIST" -i "$COVER"
+                fi
+            else
+                notify-send -u low -a "Now Playing" " $( mpc current --format '[%file%]' )" "" -i "$COVER"
+            fi
+        fi
+
 		if [ "$FIRST_RUN" == true ]; then
 			FIRST_RUN=false
 
@@ -209,21 +224,6 @@ main() {
 			# sxiv when the user exits the script
 			echo $! >/tmp/kunst.pid
 		fi
-
-        if [ "$NOTIFICATION" == true ]; then
-            TITLE=$( mpc current --format "[%title%]" )
-            if [ "$TITLE" != "" ]; then
-                ALBUM=$( mpc current --format "[%album%]" )
-                ARTIST=$( mpc current --format "[%artist%]" )
-                if [ "$ALBUM" = "$TITLE" ]; then
-                    notify-send -a "Now Playing" " $TITLE" "by $ARTIST" -i "$COVER"
-                else
-                    notify-send -a "Now Playing" " $TITLE" "from $ALBUM by $ARTIST" -i "$COVER"
-                fi
-            else
-                notify-send -a "Now Playing" " $( mpc current --format '[%file%]' )" "" -i "$COVER"
-            fi
-        fi
 
 		# Waiting for an event from mpd; next/previous
 		# this is lets kunst use less CPU :)
