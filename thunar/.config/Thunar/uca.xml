@@ -12,10 +12,10 @@
 </action>
 <action>
 	<icon>gvim</icon>
-	<name>Open in VIM</name>
+	<name>Open with VIM</name>
 	<unique-id>1554524954640265-2</unique-id>
-	<command>termite -e &quot;nvim %f&quot;</command>
-	<description>Open in VIM</description>
+	<command>st -e nvim %f</command>
+	<description>Opens the file in VIM</description>
 	<patterns>*</patterns>
 	<other-files/>
 	<text-files/>
