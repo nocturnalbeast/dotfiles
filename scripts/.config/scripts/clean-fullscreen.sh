@@ -90,6 +90,7 @@ do
       HideBar
     # Otherwise show the bar
     else
+      HideBar
       ShowBar
     fi
   fi
