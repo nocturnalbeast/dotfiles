@@ -100,6 +100,10 @@ super + q
 super + b
     ~/.config/scripts/dmenu/clipboard.sh
 
+# clipboard delete menu
+super + shift + b
+    ~/.config/scripts/dmenu/clipdelete.sh
+
 # online search menu
 super + o
     ~/.config/scripts/dmenu/surfraw.sh
