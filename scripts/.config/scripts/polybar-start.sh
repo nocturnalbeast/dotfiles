@@ -4,7 +4,7 @@ BARONE="mainbar"
 BARTWO="monbar"
 
 # get the name of the window manager
-WM=$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )
+export WINDOW_MANAGER=$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )
 
 # terminate already running bar instances
 killall -q polybar
@@ -13,9 +13,11 @@ killall -q polybar
 while pgrep -u $UID -x polybar >/dev/null 2>&1; do sleep 1; done
 
 # then launch bars
-for m in $( polybar --list-monitors | cut -d: -f1 ); do
-    MONITOR=$m WINDOW_MANAGER=$WM polybar $BARONE & 
-    MONITOR=$m WINDOW_MANAGER=$WM polybar $BARTWO &
+for M in $( polybar --list-monitors | cut -d: -f1 ); do
+    # get the width of the monitor
+    RES_X=$( xrandr | grep $( polybar --list-monitors | cut -f 1 -d : ) | grep -Eo '([0-9]+x[0-9]+\+[0-9]+\+[0-9]+)' )
+    MONITOR=$M BAR_WIDTH=$RES_X polybar $BARONE &
+    MONITOR=$M BAR_WIDTH=$RES_X polybar $BARTWO &
 done
 
 # get the process ID of the second bar

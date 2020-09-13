@@ -73,7 +73,7 @@ inherit = colors-dark
 
 
 [margins]
-bar-width = 1360
+bar-width = ${env:BAR_WIDTH}
 bar-height = 24
 
 vert-margin = 6
