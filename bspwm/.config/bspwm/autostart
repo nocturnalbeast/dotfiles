@@ -19,7 +19,7 @@ picom &
 # launch notification daemon
 ~/.config/scripts/dunst-start.sh &
 # launch music player server
-mpd &
+mopidy &
 # launch clipboard manager
 clipmenud &
 # launch screen autolocker
