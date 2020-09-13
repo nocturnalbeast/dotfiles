@@ -811,12 +811,11 @@ type = internal/network
 interval = 2
 
 interface = ${sysvars.network-interface}
-udspeed-minwidth = 5
 
 format-connected = <label-connected>
 format-disconnected = <label-disconnected>
 
-label-connected = %upspeed% | %downspeed%
+label-connected = %upspeed:4% | %downspeed:4%
 label-disconnected = 
 
 format-connected-padding = ${margins.content-padding}
