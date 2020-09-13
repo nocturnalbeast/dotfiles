@@ -107,7 +107,12 @@ mpd-port = 6600
 temp-therm-zone = 0
 temp-hwmon-path = /sys/devices/platform/coretemp.0/hwmon/hwmon1/temp2_input
 
-network-interface = ens34
+battery-id = BAT0
+adapter-id = ADP0
+
+backlight-card = intel_backlight
+
+network-interface = wlp2s0
 
 
 ;
@@ -530,6 +535,95 @@ format-muted-background = ${active-colors.content-background}
 format-muted-foreground = ${active-colors.content-foreground}
 
 
+[module/backlight]
+type = internal/backlight
+
+card = ${sysvars.backlight-card}
+enable-scroll = true
+
+format = "<label><ramp>"
+
+label = %percentage%%
+
+label-padding = ${margins.content-padding}
+ramp-padding = ${margins.header-padding}
+
+ramp-background = ${active-colors.header-background}
+ramp-foreground = ${active-colors.header-foreground}
+label-background = ${active-colors.content-background}
+label-foreground = ${active-colors.content-foreground}
+
+ramp-0 = 
+ramp-1 = 
+ramp-2 = 
+ramp-3 = 
+ramp-4 = 
+ramp-5 = 
+ramp=6 = 
+
+
+[module/battery]
+type = internal/battery
+
+battery = ${sysvars.battery-id}
+adapter = ${sysvars.adapter-id}
+
+poll-interval = 60
+
+time-format = %H:%M
+
+format-charging = <label-charging><animation-charging>
+format-discharging = <label-discharging><ramp-capacity>
+format-full = <label-full><ramp-capacity>
+
+label-charging = %percentage%% [%time% till full]
+label-discharging = %percentage%% [%time% left]
+label-full = %percentage%%
+
+ramp-capacity-0 = 
+ramp-capacity-1 = 
+ramp-capacity-2 = 
+ramp-capacity-3 = 
+ramp-capacity-4 = 
+ramp-capacity-5 = 
+ramp-capacity-6 = 
+ramp-capacity-7 = 
+ramp-capacity-8 = 
+ramp-capacity-9 = 
+ramp-capacity-10 = 
+
+animation-charging-0 = 
+animation-charging-1 = 
+animation-charging-2 = 
+animation-charging-3 = 
+animation-charging-4 = 
+animation-charging-5 = 
+animation-charging-6 = 
+animation-charging-7 = 
+animation-charging-8 = 
+animation-charging-9 = 
+animation-charging-10 = 
+
+animation-charging-framerate = 750
+
+label-charging-padding = ${margins.content-padding}
+label-discharging-padding = ${margins.content-padding}
+label-full-padding = ${margins.content-padding}
+ramp-capacity-padding = ${margins.header-padding}
+animation-charging-padding = ${margins.header-padding}
+
+label-charging-background = ${active-colors.content-background}
+label-charging-foreground = ${active-colors.content-foreground}
+label-discharging-background = ${active-colors.content-background}
+label-discharging-foreground = ${active-colors.content-foreground}
+label-full-background = ${active-colors.content-background}
+label-full-foreground = ${active-colors.content-foreground}
+ramp-capacity-background = ${active-colors.header-background}
+ramp-capacity-foreground = ${active-colors.header-foreground}
+animation-charging-background = ${active-colors.header-background}
+animation-charging-foreground = ${active-colors.header-foreground}
+
+
 [module/cpu]
 type = internal/cpu
 
@@ -637,17 +731,26 @@ mount-0 = /
 fixed-values = true
 
 format-mounted = <label-mounted>
+format-unmounted = <label-unmounted>
 label-mounted = %percentage_free%% of %total%
+label-unmounted = N/A
 
 format-mounted-suffix = 
+format-unmounted-suffix = 
 
 format-mounted-suffix-padding = ${margins.header-padding}
+format-unmounted-suffix-padding = ${margins.header-padding}
 label-mounted-padding = ${margins.content-padding}
+label-unmounted-padding = ${margins.content-padding}
 
 format-mounted-suffix-background = ${active-colors.header-background}
+format-unmounted-suffix-background = ${active-colors.header-background}
 format-mounted-suffix-foreground = ${active-colors.header-foreground}
+format-unmounted-suffix-foreground = ${active-colors.header-foreground}
 label-mounted-background = ${active-colors.content-background}
+label-unmounted-background = ${active-colors.content-background}
 label-mounted-foreground = ${active-colors.content-foreground}
+label-unmounted-foreground = ${active-colors.content-foreground}
 
 
 [module/fs-home]
@@ -659,16 +762,26 @@ mount-0 = /home
 fixed-values = true
 
 format-mounted = <label-mounted>
+format-unmounted = <label-unmounted>
 label-mounted = %percentage_free%% of %total%
+label-unmounted = N/A
+
 format-mounted-suffix = 
+format-unmounted-suffix = 
 
 format-mounted-suffix-padding = ${margins.header-padding}
+format-unmounted-suffix-padding = ${margins.header-padding}
 label-mounted-padding = ${margins.content-padding}
+label-unmounted-padding = ${margins.content-padding}
 
 format-mounted-suffix-background = ${active-colors.header-background}
+format-unmounted-suffix-background = ${active-colors.header-background}
 format-mounted-suffix-foreground = ${active-colors.header-foreground}
+format-unmounted-suffix-foreground = ${active-colors.header-foreground}
 label-mounted-background = ${active-colors.content-background}
+label-unmounted-background = ${active-colors.content-background}
 label-mounted-foreground = ${active-colors.content-foreground}
+label-unmounted-foreground = ${active-colors.content-foreground}
 
 
 [module/network-status]
