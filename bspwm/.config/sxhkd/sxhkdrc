@@ -146,16 +146,12 @@ super + v
 super + m
     st -t "Music" -e ~/.config/scripts/ncmpcpp-ueberzug.sh
 
-# launch spotify client
-super + s
-    st -t "Spotify" -e ncspot
-
 # launch podcast manager
 super + d
     st -t "Podcasts" -e castero
 
 # launch process manager
-super + g
+super + s
     st -t "System Monitor" -e gotop
 
 # launch feed reader
