@@ -3,6 +3,9 @@
 # |_|_|___|_|_|_|  _|___|  _|  _|
 #               |_|     |_| |_|
 
+# directories
+ncmpcpp_directory = ~/.config/.ncmpcpp
+lyrics_directory = ~/.cache/.lyrics
 
 # formatting strings
 song_list_format                    = " $8{%t}|{%f}$9 $R$5%a$9 $b¦$/b $7%l$9 "

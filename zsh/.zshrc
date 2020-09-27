@@ -5,19 +5,31 @@
 # |- _|_ -|   |
 # |___|___|_|_|
 
+# set zdotdir before starting
+export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+
 # install zinit if not installed
-if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
+if [[ ! -f $ZDOTDIR/zinit/bin/zinit.zsh ]]; then
     print -P "%F{33}▓▒░ %F{220}Installing DHARMA Initiative Plugin Manager (zdharma/zinit)…%f"
-    command mkdir -p "$HOME/.zinit" && command chmod g-rwX "$HOME/.zinit"
-    command git clone https://github.com/zdharma/zinit "$HOME/.zinit/bin" && \
+    command mkdir -p "$ZDOTDIR/zinit" && command chmod g-rwX "$ZDOTDIR/zinit"
+    command git clone https://github.com/zdharma/zinit "$ZDOTDIR/zinit/bin" && \
         print -P "%F{33}▓▒░ %F{34}Installation successful.%f%b" || \
         print -P "%F{160}▓▒░ The clone has failed.%f%b"
 fi
 
-# zinit start
-source "$HOME/.zinit/bin/zinit.zsh"
+# start zinit
+source "$ZDOTDIR/zinit/bin/zinit.zsh"
 autoload -Uz _zinit
 (( ${+_comps} )) && _comps[zinit]=_zinit
+
+# set zinit paths
+export ZINIT[BIN_DIR]="$ZDOTDIR/zinit/bin"
+export ZINIT[HOME_DIR]="$ZDOTDIR/zinit"
+export ZINIT[PLUGINS_DIR]="$ZDOTDIR/zinit/plugins"
+export ZINIT[COMPLETIONS_DIR]="$ZDOTDIR/zinit/completions"
+export ZINIT[SNIPPETS_DIR]="$ZDOTDIR/zinit/snippets"
+export ZINIT[ZCOMPDUMP_PATH]="$ZDOTDIR/zinit/.zcompdump"
+export ZPFX="$ZDOTDIR/zinit/polaris"
 
 # plugins for zinit
 zinit light-mode for \
@@ -30,33 +42,14 @@ zinit light-mode for \
 HISTSIZE=50000
 SAVEHIST=10000
 
-# helpful exports and aliases
-export EDITOR="nvim"
-export BROWSER="qutebrowser"
-
-export XDG_DATA_HOME="$HOME/.local/share"
-export XDG_CONFIG_HOME="$HOME/.config"
-export XDG_CACHE_HOME="$HOME/.cache"
-
-export GTK2_RC_FILES="$XDG_CONFIG_HOME/gtk-2.0/gtkrc"
-export LESSHSTFILE=-
-
+# specifying delimiters between words
 export WORDCHARS="*?_[]~=&;!#$%^(){}"
 
-alias ls="exa -bh --color=auto --icons"
-alias ll="exa -bhl --color=auto --icons"
-alias la="exa -bha --color=auto --icons"
-alias lt="exa -bh --tree --color=auto --icons"
-alias lal="exa -bhal --color=auto --icons"
-alias grep="grep --color=auto"
-alias cat="bat"
-alias vim="nvim"
-alias vi="nvim"
+# import environment variables
+source "$HOME/.config/shell/env"
 
-alias l="exa -bh --color=auto --icons"
-alias v="nvim"
-alias g="gotop"
-alias c="bat"
+# import aliases
+source "$HOME/.config/shell/aliases"
 
 # prompt behavior
 setopt autocd
@@ -145,7 +138,6 @@ zinit wait lucid for \
 	zsh-users/zsh-completions \
     atload"!_zsh_autosuggest_start" \
         zsh-users/zsh-autosuggestions
-
 export ZSH_AUTOSUGGEST_STRATEGY=( history match_prev_cmd completion )
 export ZSH_AUTOSUGGEST_USE_ASYNC=1
 
@@ -159,7 +151,7 @@ zinit light ael-code/zsh-colored-man-pages
 
 zinit ice atclone'./init.sh' nocompile'!' wait'!0'
 zinit light b4b4r07/enhancd
-export ENHANCD_DIR="$HOME/.cache/.enhancd"
+export ENHANCD_DIR="$HOME/.cache/enhancd"
 
 zinit ice wait"1" lucid
 zinit light laggardkernel/zsh-thefuck

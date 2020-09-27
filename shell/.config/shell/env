@@ -1,0 +1,50 @@
+#  ___ ___ _ _
+# | -_|   | | |
+# |___|_|_|\_/
+
+if [ "$( basename $SHELL )" = "zsh" ]; then
+    typeset -U PATH path
+fi
+
+# set XDG spec paths
+set -a; source ~/.config/user-dirs.dirs; set +a
+export XDG_DATA_HOME=${XDG_DATA_HOME:="$HOME/.local/share"}
+export XDG_CACHE_HOME=${XDG_CACHE_HOME:="$HOME/.cache"}
+export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:="$HOME/.config"}
+
+# disable history for less command
+export LESSHISTFILE=-
+
+# fix qt/gtk scaling
+export QT_AUTO_SCREEN_SCALE_FACTOR=0
+export QT_SCALE_FACTOR=1
+export QT_SCREEN_SCALE_FACTORS="1;1;1"
+export GDK_SCALE=1
+export GDK_DPI_SCALE=1
+
+# move everything into XDG dirs
+export XINITRC="$XDG_CONFIG_HOME/X11/xinitrc"
+export XSERVERRC="$XDG_CONFIG_HOME/X11/xserverrc"
+export GEM_PATH="$XDG_DATA_HOME/ruby/gems"
+export GEM_SPEC_CACHE="$XDG_DATA_HOME/ruby/specs"
+export GEM_HOME="$XDG_DATA_HOME/ruby/gems"
+export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
+export GOPATH="$XDG_DATA_HOME/go"
+export GNUPGHOME="$XDG_DATA_HOME/gnupg"
+export _JAVA_OPTIONS=-Djava.util.prefs.userRoot="$XDG_CONFIG_HOME/java"
+export GTK2_RC_FILES="$XDG_CONFIG_HOME/gtk-2.0/gtkrc"
+export CARGO_HOME="$XDG_DATA_HOME/cargo"
+
+# defining applications
+export EDITOR="nvim"
+export VISUAL="nvim"
+export BROWSER="qutebrowser"
+export READER="zathura"
+export TERMINAL="st"
+export VIDEO="mpv"
+export IMAGE="pqiv"
+export PAGER="less"
+
+# clipmenu options
+export CM_DIR="$XDG_RUNTIME_DIR"
+export CM_HISTLENGTH=5
