@@ -135,7 +135,7 @@ zinit wait lucid for \
     atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
         zdharma/fast-syntax-highlighting \
     blockf \
-	zsh-users/zsh-completions \
+        zsh-users/zsh-completions \
     atload"!_zsh_autosuggest_start" \
         zsh-users/zsh-autosuggestions
 export ZSH_AUTOSUGGEST_STRATEGY=( history match_prev_cmd completion )
@@ -159,7 +159,7 @@ zinit light laggardkernel/zsh-thefuck
 zinit wait"1" lucid as"program" pick"$ZPFX/bin/fzy*" \
     atclone"cp contrib/fzy-* $ZPFX/bin/" \
     make"!PREFIX=$ZPFX install" for \
-    	jhawthorn/fzy
+        jhawthorn/fzy
 
 zinit ice wait"1" lucid compile'{hsmw-*,test/*}'
 zinit light zdharma/history-search-multi-word
@@ -174,7 +174,7 @@ zinit wait"2" lucid as"null" from"gh-r" for \
 
 zinit wait"2" lucid for \
     atinit"forgit_ignore='fgi'" \
-    	wfxr/forgit
+        wfxr/forgit
 
 zinit wait"2" lucid as"null" \
     atclone'perl Makefile.PL PREFIX=$ZPFX' \
@@ -186,7 +186,7 @@ zinit as"null" wait"3" lucid for \
     sbin paulirish/git-recent \
     sbin davidosomething/git-my \
     sbin atload"export _MENU_THEME=legacy" \
-    	arzzen/git-quick-stats \
+        arzzen/git-quick-stats \
     sbin iwata/git-now \
     make"PREFIX=$ZPFX" tj/git-extras \
     sbin"bin/git-dsf;bin/diff-so-fancy" zdharma/zsh-diff-so-fancy \

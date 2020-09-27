@@ -10,7 +10,7 @@ static int fuzzy = 1;
 
 /* -fn option overrides fonts[0]; default X11 font or font set */
 static const char *fonts[] = {
-	"Iosevka Aile Medium:size=10",
+    "Iosevka Aile Medium:size=10",
     "monospace:size=10"
 };
 
@@ -19,11 +19,11 @@ static const char *prompt = NULL;
 
 static const char *colors[SchemeLast][2] = {
                             /*    fg          bg     */
-	[SchemeNorm] =           { "#FFFFFF", "#9A9A9A" },
-	[SchemeSel] =            { "#DADADA", "#000000" },
-	[SchemeSelHighlight] =   { "#FF6666", "#000000" },
-	[SchemeNormHighlight] =  { "#000000", "#9A9A9A" },
-	[SchemeOut] =            { "#000000", "#00ffff" },
+    [SchemeNorm] =           { "#FFFFFF", "#9A9A9A" },
+    [SchemeSel] =            { "#DADADA", "#000000" },
+    [SchemeSelHighlight] =   { "#FF6666", "#000000" },
+    [SchemeNormHighlight] =  { "#000000", "#9A9A9A" },
+    [SchemeOut] =            { "#000000", "#00ffff" },
 };
 
 /* -l option; if nonzero, dmenu uses vertical list with given number of lines */

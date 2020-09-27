@@ -42,8 +42,8 @@ while true; do
             MUSIC_DIR=$1
             ;;
         -h|--help)
-		    show_help
-			exit
+            show_help
+            exit
             ;;
         --force-online)
             ONLINE_ALBUM_ART=true
@@ -70,47 +70,46 @@ read -r -d '' MUSIC_NOTE << EOF
 EOF
 
 is_connected() {
-	# Check if internet is connected. We are using api.deezer.com to test
-	# if the internet is connected because if api.deezer.com is down or
-	# the internet is not connected this script will work as expected
-	if ping -q -c 1 -W 1 api.deezer.com >/dev/null; then
-		connected=true
-	else
+    # Check if internet is connected. We are using api.deezer.com to test
+    # if the internet is connected because if api.deezer.com is down or
+    # the internet is not connected this script will work as expected
+    if ping -q -c 1 -W 1 api.deezer.com >/dev/null; then
+        connected=true
+    else
         [ ! "$SILENT" ] && echo "kunst: unable to check online for the album art"
-		connected=false
-	fi
+        connected=false
+    fi
 }
 
 
 get_cover_online() {
-	# Check if connected to internet
-	is_connected
+    # Check if connected to internet
+    is_connected
 
-	if [ "$connected" == false ];then
-		ARTLESS=true
-		return
-	fi
+    if [ "$connected" == false ];then
+        ARTLESS=true
+        return
+    fi
 
     # If the current playing song ends with .mp3 or something similar, remove
     # it before searching for the album art because including the file extension
     # reduces the chance of good results in the search query
     QUERY=$(mpc current | sed 's/\.[^.]*$//' | iconv -t ascii//TRANSLIT -f utf8)
 
-	# Try to get the album cover online from api.deezer.com
-	API_URL="https://api.deezer.com/search/autocomplete?q=$QUERY" && API_URL=${API_URL//' '/'%20'}
+    # Try to get the album cover online from api.deezer.com
+    API_URL="https://api.deezer.com/search/autocomplete?q=$QUERY" && API_URL=${API_URL//' '/'%20'}
 
-	# Extract the albumcover from the json returned
-	IMG_URL=$(curl -s "$API_URL" | jq -r '.tracks.data[0].album.cover_big')
+    # Extract the albumcover from the json returned
+    IMG_URL=$(curl -s "$API_URL" | jq -r '.tracks.data[0].album.cover_big')
 
-	if [ "$IMG_URL" = '' ] || [ "$IMG_URL" = 'null' ];then
+    if [ "$IMG_URL" = '' ] || [ "$IMG_URL" = 'null' ];then
         [ ! "$SILENT" ] && echo "error: cover not found online"
-		ARTLESS=true
-	else
+        ARTLESS=true
+    else
         [ ! "$SILENT" ] && echo "kunst: cover found online"
-		curl -o "$COVER" -s "$IMG_URL"
-		ARTLESS=false
-	fi
-
+        curl -o "$COVER" -s "$IMG_URL"
+        ARTLESS=false
+    fi
 }
 
 find_album_art(){
@@ -118,27 +117,27 @@ find_album_art(){
     # regardless if the curent song has an embedded album art or not
     if [ "$ONLINE_ALBUM_ART" == true ];then
         [ ! "$SILENT" ] && echo "kunst: getting cover from internet"
-		get_cover_online
+        get_cover_online
         return
     fi
 
-	# Extract the album art from the mp3 file and dont show the messsy
-	# output of ffmpeg
-	ffmpeg -i "$MUSIC_DIR$(mpc current -f %file%)" "$COVER" -y &> /dev/null
+    # Extract the album art from the mp3 file and dont show the messsy
+    # output of ffmpeg
+    ffmpeg -i "$MUSIC_DIR$(mpc current -f %file%)" "$COVER" -y &> /dev/null
 
-	# Get the status of the previous command
-	STATUS=$?
+    # Get the status of the previous command
+    STATUS=$?
 
-	# Check if the file has a embbeded album art
-	if [ "$STATUS" -eq 0 ];then
+    # Check if the file has a embbeded album art
+    if [ "$STATUS" -eq 0 ];then
         [ ! "$SILENT" ] && echo "kunst: extracted album art"
-		ARTLESS=false
-	else
+        ARTLESS=false
+    else
         DIR="$MUSIC_DIR$(dirname "$(mpc current -f %file%)")"
         [ ! "$SILENT" ] && echo "kunst: inspecting $DIR"
 
-		# Check if there is an album cover/art in the folder.
-		# Look at issue #9 for more details
+        # Check if there is an album cover/art in the folder.
+        # Look at issue #9 for more details
         for CANDIDATE in "$DIR/cover."{png,jpg}; do
             if [ -f "$CANDIDATE" ]; then
                 STATUS=0
@@ -149,29 +148,29 @@ find_album_art(){
         done
     fi
 
-	if [ "$STATUS" -ne 0 ];then
+    if [ "$STATUS" -ne 0 ];then
         [ ! "$SILENT" ] && echo "error: file does not have an album art"
-		get_cover_online
-	fi
+        get_cover_online
+    fi
 }
 
 
 update_cover() {
     find_album_art
 
-	if [ "$ARTLESS" == false ]; then
-		convert "$COVER" -resize "$SIZE" "$COVER" &> /dev/null
+    if [ "$ARTLESS" == false ]; then
+        convert "$COVER" -resize "$SIZE" "$COVER" &> /dev/null
         [ ! "$SILENT" ] && echo "kunst: resized album art to $SIZE"
-	fi
+    fi
 }
 
 pre_exit() {
-	# Get the proccess ID of kunst and kill it.
+    # Get the proccess ID of kunst and kill it.
     # We are dumping the output of kill to /dev/null
     # because if the user quits sxiv before they
     # exit kunst, an error will be shown
     # from kill and we dont want that
-	kill -9 "$(cat /tmp/kunst.pid)" &>/dev/null
+    kill -9 "$(cat /tmp/kunst.pid)" &>/dev/null
 }
 
 main() {
@@ -186,16 +185,16 @@ main() {
     [ "$KUNST_MUSIC_DIR" != "" ] && MUSIC_DIR="$KUNST_MUSIC_DIR"
     [ "$KUNST_SIZE" != "" ] && SIZE="$KUNST_SIZE"
 
-	# Flag to run some commands only once in the loop
-	FIRST_RUN=true
+    # Flag to run some commands only once in the loop
+    FIRST_RUN=true
 
-	while true; do
-		update_cover
+    while true; do
+        update_cover
 
-		if [ "$ARTLESS" == true ];then
-			# Decode the base64 encoded image and save it
-			echo "$MUSIC_NOTE" | base64 --decode > "$COVER"
-		fi
+        if [ "$ARTLESS" == true ];then
+            # Decode the base64 encoded image and save it
+            echo "$MUSIC_NOTE" | base64 --decode > "$COVER"
+        fi
 
         if [ ! "$SILENT" ];then
             echo "kunst: swapped album art to $(mpc current)"
@@ -217,26 +216,24 @@ main() {
             fi
         fi
 
-		if [ "$FIRST_RUN" == true ]; then
-			FIRST_RUN=false
+        if [ "$FIRST_RUN" == true ]; then
+            FIRST_RUN=false
+            # Save the process ID
+            echo $! >/tmp/kunst.pid
+        fi
 
-			# Save the process ID so that we can kill
-			# sxiv when the user exits the script
-			echo $! >/tmp/kunst.pid
-		fi
-
-		# Waiting for an event from mpd; next/previous
-		# this is lets kunst use less CPU :)
+        # Waiting for an event from mpd; next/previous
+        # this is lets kunst use less CPU :)
         # we don't necessarily need to update album art when
         # the song pauses/plays, only when it changes,
         # so we keep track of the current song and compare it
         # on every player event update
         CURRENT_SONG=$( mpc status | head -1 )
-		while true; do
+        while true; do
             mpc idle player &>/dev/null && (mpc status | grep "\[playing\]" &>/dev/null) && [ "$CURRENT_SONG" != "$( mpc status | head -1 )" ] && break
-		done
+        done
         [ ! "$SILENT" ] && echo "kunst: received event from mpd"
-	done
+    done
 }
 
 trap pre_exit EXIT
