@@ -3,13 +3,7 @@
 # Source: cleanfullscreen from https://github.com/brodierobertson/cleanfullscreen
 # modified ShowBar function to show only one bar instead of all of them
 
-HideBar() {
-  polybar-msg cmd hide
-}
-
-ShowBar() {
-  polybar-msg -p $( pgrep polybar | head -1 ) cmd show &>/dev/null
-}
+source ~/.config/scripts/polybar-helper.sh
 
 HideNodes() {
   for node in $1; do
@@ -37,12 +31,12 @@ do
   if [ "$State" = "fullscreen" ] && [ "$Active" = "on" ]; then
     # Only consider nodes on primary monitor
     if [ "$PrimaryMonitor" = "$Monitor" ]; then
-      HideBar
+      bar_hide_all
     fi
       HideTiled "$Desktop"
   else
     if [ "$PrimaryMonitor" = "$Monitor" ]; then
-      ShowBar
+      bar_show_first
     fi
     ShowNodes "$Desktop"
   fi
@@ -55,7 +49,7 @@ do
   # Show bar if no nodes are fullscreen on current desktop
   if [ "$Monitor" = "$PrimaryMonitor" ] && \
     [ -z "$(bspc query -N -n .fullscreen -d "$Desktop")" ]; then
-    ShowBar
+    bar_show_first
   fi
   ShowNodes "$Desktop"
 done &
@@ -67,7 +61,7 @@ do
   if [ -n "$(bspc query -N -n "$SrcNode".fullscreen)" ]; then
     ShowNodes "$SrcDesktop"
     HideTiled "$DestDesktop"
-    ShowBar
+    bar_show_first
   fi
 
   # Hide any fullscreen nodes on destination desktop
@@ -87,11 +81,11 @@ do
   if [ "$PrimaryMonitor" = "$Monitor" ]; then
     # Hide bar if desktop contains fullscreen node
     if [ -n "$FullscreenNode" ]; then
-      HideBar
+      bar_show_first
     # Otherwise show the bar
     else
-      HideBar
-      ShowBar
+      bar_hide_second
+      bar_show_first
     fi
   fi
 done &

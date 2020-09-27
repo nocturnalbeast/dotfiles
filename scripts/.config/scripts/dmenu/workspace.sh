@@ -1,8 +1,9 @@
 #!/bin/bash
 
 source ~/.config/scripts/dmenu-helper.sh
-hide_bars
-trap show_one_bar EXIT
+source ~/.config/scripts/polybar-helper.sh
+bar_hide_active
+trap bar_show_first EXIT
 
 DEPENDENCIES=(wmctrl)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do

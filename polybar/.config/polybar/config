@@ -121,7 +121,7 @@ network-interface = wlp2s0
 ; This section defines the bars. Since certain modules are grouped together to
 ; look like a single module, module-margin is not used. Rather, individual
 ; separators are specified in between each 'perceived module'.
-; For the main bar, the wm-icon, wm-name and window modules are made to look
+; For the main bar, the wksp-icon, wksp-name and window modules are made to look
 ; and function like one single module, which is the case with the set of mpd
 ; modules as well.
 ; For the monitoring bar, the network module and the cpu module is split over
@@ -132,6 +132,8 @@ network-interface = wlp2s0
 [bar/mainbar]
 monitor = ${env:MONITOR}
 bottom = false
+
+wm-name = polybar-mainbar
 
 height = ${margins.bar-height}
 width = ${margins.bar-width}
@@ -148,7 +150,7 @@ font-1 = ${fonts.glyph-font}
 
 module-margin = 0
 
-modules-left = barswitch sep wm-icon cnt-space wm-name window cnt-space sep
+modules-left = barswitch sep wksp-icon cnt-space wksp-name window cnt-space sep
 modules-center = mpd-artist mpd-prev mpd-playpause mpd-next mpd-track
 modules-right = sep volume sep datetime
 
@@ -160,6 +162,8 @@ wm-restack = ${env:WINDOW_MANAGER}
 [bar/monbar]
 monitor = ${env:MONITOR}
 bottom = false
+
+wm-name = polybar-monbar
 
 height = ${margins.bar-height}
 width = ${margins.bar-width}
@@ -242,7 +246,7 @@ content-background = ${active-colors.header-background}
 content-foreground = ${active-colors.header-foreground}
 
 
-[module/wm-icon]
+[module/wksp-icon]
 type = internal/xworkspaces
 
 pin-workspaces = true
@@ -274,7 +278,7 @@ format-background = ${active-colors.header-background}
 format-foreground = ${active-colors.header-foreground}
 
 
-[module/wm-name]
+[module/wksp-name]
 type = internal/xworkspaces
 
 pin-workspaces = true

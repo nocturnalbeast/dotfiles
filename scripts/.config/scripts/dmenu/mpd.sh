@@ -13,8 +13,9 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
 done
 
 source ~/.config/scripts/dmenu-helper.sh
-hide_bars
-trap show_one_bar EXIT
+source ~/.config/scripts/polybar-helper.sh
+bar_hide_active
+trap bar_show_first EXIT
 
 # mpd music directory - leave this blank to default to the directory present in mpd.conf
 MUSIC_DIR=""

@@ -4,8 +4,9 @@
 # adapted to match setup and added styling snippets
 
 source ~/.config/scripts/dmenu-helper.sh
-hide_bars
-trap show_one_bar EXIT
+source ~/.config/scripts/polybar-helper.sh
+bar_hide_active
+trap bar_show_first EXIT
 
 MAIN_MENU="⏻ Shutdown\n⏼ Reboot\n⏾ Sleep\n Lock\n Clear pending"
 DELAY_MENU="now\n+60\n+45\n+30\n+15\n+10\n+5\n+3\n+2\n+1"

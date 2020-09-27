@@ -9,14 +9,15 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
 done
 
 source ~/.config/scripts/dmenu-helper.sh
-hide_bars
-trap show_one_bar EXIT
+source ~/.config/scripts/polybar-helper.sh
+bar_hide_active
+trap bar_show_first EXIT
 
 # external downloader args 
 ED_ARGS="-c -j 3 -x 3 -s 3 -k 1M"
 
 # destination folder
-DEST_DIR="$HOME/Videos/downloaded"
+DEST_DIR="$XDG_VIDEOS_DIR/downloaded"
 
 # use regex to match possible urls from clipboard history
 URL=$( menu " 輸 Select URL: " "$( clipdel ".*" | xargs -0 | grep -Eo "(((http|magnet|https|ftp|gopher)|mailto):(//|\?)?[^ <>\"\t]*|(www|ftp)[0-9]?\\.[-a-z0-9.]+)[^ .,;\\n\r<\">\\):]?[^, <>\"\]*[^ .,;\\n\r<\">\\):]" )")
