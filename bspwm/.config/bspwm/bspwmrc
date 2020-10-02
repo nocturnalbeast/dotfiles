@@ -7,7 +7,7 @@
 #         |_|
 
 # launch the autostart script
-~/.config/bspwm/autostart &
+~/.config/wm/autostart &
 
 # default 10-workspace setup
 bspc monitor -d I II III IV V VI VII VIII IX X
@@ -21,10 +21,9 @@ bspc config top_padding             30
 bspc config split_ratio             0.5
 bspc config borderless_monocle      true
 bspc config gapless_monocle         false
-bspc config focus_by_distance       true
-bspc config history_aware_focus     true
 bspc config focus_follows_pointer   false
 bspc config ignore_ewmh_focus       true
+bspc config automatic_scheme        alternate
 
 # color settings
 bspc config focused_border_color    "#1A1A1A"
@@ -53,7 +52,7 @@ bspc rule -a Thunar                  desktop='^4' follow=on
 bspc rule -a Gparted                 desktop='^4' follow=on
 bspc rule -a mpv                     desktop='^5' follow=on
 bspc rule -a libreoffice             desktop='^6' follow=on
-bspc rula -a libreoffice-startcenter desktop='^6' follow=on
+bspc rule -a libreoffice-startcenter desktop='^6' follow=on
 bspc rule -a Zathura                 desktop='^6' follow=on state=tiled
 bspc rule -a Gimp                    desktop='^7' follow=on
 bspc rule -a Gimp-2.8                desktop='^7' follow=on

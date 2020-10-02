@@ -238,7 +238,7 @@ type = custom/text
 
 content = 
 
-click-left = polybar-msg cmd toggle
+click-left = ~/.config/scripts/polybar-helper.sh switch
 
 content-padding = ${margins.header-padding}
 

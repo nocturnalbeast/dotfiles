@@ -9,7 +9,6 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
 done
 
 source ~/.config/scripts/dmenu-helper.sh
-source ~/.config/scripts/polybar-helper.sh
 
 # the location of the frecency history file
 HISTORY_LOC="$HOME/.cache/frecency_launcher/history"
@@ -53,8 +52,8 @@ function refresh_hfile() {
 # function to launch applications
 function launch_application() {
     # polybar control
-    bar_hide_active
-    trap bar_show_first EXIT
+    ~/.config/scripts/polybar-helper.sh disable
+    trap "~/.config/scripts/polybar-helper.sh enable" EXIT
     # get the selected application via menu prompt
     local SEL_APP="$( menu "   " "$( cut -f 2- -d ' ' "$HISTORY_LOC" )" )"
     # if nothing chosen, then exit

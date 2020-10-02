@@ -1,9 +1,8 @@
 #!/bin/bash
 
 source ~/.config/scripts/dmenu-helper.sh
-source ~/.config/scripts/polybar-helper.sh
-bar_hide_active
-trap bar_show_first EXIT
+~/.config/scripts/polybar-helper.sh disable
+trap "~/.config/scripts/polybar-helper.sh enable" EXIT
 
 SELECTION=$( menu " ﮊ  " "$( ps -e -o pid,user,cmd | tail -n +2 | awk '{print $1":"$2":"substr($0, index($0,$3))}' )" )
 

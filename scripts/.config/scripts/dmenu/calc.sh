@@ -12,9 +12,8 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
 done
 
 source ~/.config/scripts/dmenu-helper.sh
-source ~/.config/scripts/polybar-helper.sh
-bar_hide_active
-trap bar_show_first EXIT
+~/.config/scripts/polybar-helper.sh disable
+trap "~/.config/scripts/polybar-helper.sh enable" EXIT
 
 ANSWER=$( echo "$@" | bc -l | sed '/\./ s/\.\{0,1\}0\{1,\}$//' )
 ACTION=$( menu "  $ANSWER " " Copy to clipboard\n Clear" )

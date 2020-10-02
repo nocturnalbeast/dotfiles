@@ -17,9 +17,13 @@ alt + {grave,Tab}
 alt + {a,d}
     bspc desktop -f {prev,next}
 
-# change focus to window in specified direction
-alt + {_,shift} + {Left,Down,Up,Right,h,j,k,l}
-    bspc node -{f,s} {west,south,north,east,west,south,north,east}
+# change focus to window in specified direction - if tiled move window in given direction
+alt + {Left,Down,Up,Right,h,j,k,l}
+    ~/.config/scripts/bspwm-focus.sh {west,south,north,east,west,south,north,east}
+
+# switch with window in specified direction
+alt + shift + {Left,Down,Up,Right,h,j,k,l}
+    bspc node -s {west,south,north,east,west,south,north,east}
 
 # cycle between all windows in a workspace, use shift to reverse order
 alt + {_,shift} + c
@@ -42,15 +46,19 @@ alt + {_,shift} + q
 ### window size and layout manipulation
 
 # change mode of the focused window
-alt + {t,shift + t,s,f}
-    bspc node -t {tiled,pseudo_tiled,floating,fullscreen}
+alt + {t,g,f}
+    ~/.config/scripts/bspwm-mode.sh {pseudo_tiled,floating,fullscreen}
 
 # cycle through layouts on the active workspace
 alt + m
     bspc desktop -l next
 
-# swap the focused window with the biggest window in the active workspace
+# focus on the biggest window in the active workspace
 alt + b
+    bspc node -f biggest.local
+
+# swap the focused window with the biggest window in the active workspace
+alt + shift + b
     bspc node -s biggest.local
 
 # rotate window layout of the active workspace
@@ -58,12 +66,16 @@ alt + r
     bspc node @/ -R 90
 
 # resize the active window to the given direction
-super + alt + {Left,Down,Up,Right,h,j,k,l}
+super + {Left,Down,Up,Right,h,j,k,l}
     ~/.config/scripts/bspwm-resize.sh {west,south,north,east,west,south,north,east} 20
 
-# move a floating window
-super + {Left,Down,Up,Right,h,j,k,l}
-    bspc node -v {-20 0,0 20,0 -20,20 0,-20 0,0 20,0 -20,20 0}
+# toggle between bars
+alt + p
+    ~/.config/scripts/polybar-helper.sh switch
+
+# toggle between global visible state of bar
+alt + shift + p
+    ~/.config/scripts/polybar-helper.sh pad_toggle && ~/.config/scripts/polybar-helper.sh toggle
 
 
 ### keybindings for different dmenu scripts
@@ -189,6 +201,13 @@ XF86AudioNext
 XF86AudioPrev
     mpc prev
 
+# increase brightness of the display
+XF86MonBrightnessUp
+    xbacklight -inc 10
+
+# decrease brightness of the display
+XF86MonBrightnessDown
+    xbacklight -dec 10
 
 ### keybindings for taking screenshots
 
@@ -213,4 +232,4 @@ alt + Escape
 
 # show help dialog for keybindings if needed
 alt + slash
-    ~/.config/scripts/show-keybindings.sh
+    ~/.config/scripts/dmenu/bspwm-keybindings.sh

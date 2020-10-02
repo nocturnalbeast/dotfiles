@@ -5,10 +5,10 @@ dir=$1
 
 # find current window mode
 is_tiled() {
-bspc query -T -n | grep -q '"state":"tiled"'
+    bspc query -T -n | grep -q '"state":"tiled"'
 }
 
-# if the window is floating, move it
+# if the window is floating, resize it
 if ! is_tiled; then
     # only parse input if window is floating, tiled windows accept input as is
     case "$dir" in
@@ -25,8 +25,7 @@ if ! is_tiled; then
         sign="+"
         ;;
     esac
-xdo resize ${switch} ${sign}${size}
-
+    xdo resize ${switch} ${sign}${size}
 # otherwise, window is tiled: switch with window in given direction
 else
     case "$dir" in

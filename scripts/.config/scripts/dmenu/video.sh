@@ -9,9 +9,8 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
 done
 
 source ~/.config/scripts/dmenu-helper.sh
-source ~/.config/scripts/polybar-helper.sh
-bar_hide_active
-trap bar_show_first EXIT
+~/.config/scripts/polybar-helper.sh disable
+trap "~/.config/scripts/polybar-helper.sh enable" EXIT
 
 # external downloader args 
 ED_ARGS="-c -j 3 -x 3 -s 3 -k 1M"

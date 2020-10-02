@@ -9,9 +9,8 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
 done
 
 source ~/.config/scripts/dmenu-helper.sh
-source ~/.config/scripts/polybar-helper.sh
-bar_hide_active
-trap bar_show_first EXIT
+~/.config/scripts/polybar-helper.sh disable
+trap "~/.config/scripts/polybar-helper.sh enable" EXIT
 
 REGEX=$( clipdel ".*" | dmenu $( get_options ) -l 10 -p " 﫧  " )
 [[ "$REGEX" == "" ]] && exit 0

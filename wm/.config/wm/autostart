@@ -1,10 +1,9 @@
 #!/bin/sh
 
-# _                                   _           _           _
-#| |_ ___ ___ _ _ _ _____ ___ ___ _ _| |_ ___ ___| |_ ___ ___| |_
-#| . |_ -| . | | | |     |___| .'| | |  _| . |_ -|  _| .'|  _|  _|
-#|___|___|  _|_____|_|_|_|   |__,|___|_| |___|___|_| |__,|_| |_|
-#        |_|
+#          _           _           _
+#  ___ _ _| |_ ___ ___| |_ ___ ___| |_
+# | .'| | |  _| . |_ -|  _| .'|  _|  _|
+# |__,|___|_| |___|___|_| |__,|_| |_|
 
 # load colors
 xrdb -load ~/.config/X11/.Xresources &
@@ -13,7 +12,7 @@ sxhkd &
 # restore the wallpaper
 nitrogen --restore &
 # launch compositor
-picom &
+picom --experimental-backends &
 # launch system bars
 ~/.config/scripts/polybar-start.sh &
 # launch notification daemon
@@ -26,9 +25,9 @@ clipmenud &
 light-locker &
 # launch polkit agent for user authentication
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
-# launch clean-fullscreen script
-~/.config/scripts/clean-fullscreen.sh &
 # launch unclutter to hide cursor when inactive
 unclutter &
 # launch kunst to grab album art on play and notify on song change
 ~/.config/scripts/kunst-mod.sh --notify &
+# set numlock key to off
+numlockx off &
