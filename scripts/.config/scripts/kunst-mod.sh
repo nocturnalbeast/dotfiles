@@ -207,12 +207,12 @@ main() {
                 ALBUM=$( mpc current --format "[%album%]" )
                 ARTIST=$( mpc current --format "[%artist%]" )
                 if [ "$ALBUM" = "$TITLE" ]; then
-                    notify-send -u low -a "Now Playing" " $TITLE" "by $ARTIST" -i "$COVER"
+                    notify-send -u low "Playing $TITLE" "by <b>$ARTIST</b>" -i "$COVER"
                 else
-                    notify-send -u low -a "Now Playing" " $TITLE" "from $ALBUM by $ARTIST" -i "$COVER"
+                    notify-send -u low "Playing $TITLE" "from <i>$ALBUM</i> by <b>$ARTIST</b>" -i "$COVER"
                 fi
             else
-                notify-send -u low -a "Now Playing" " $( mpc current --format '[%file%]' )" "" -i "$COVER"
+                notify-send -u low "Playing $( mpc current --format '[%file%]' )" -i "$COVER"
             fi
         fi
 

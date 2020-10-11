@@ -175,15 +175,15 @@ super + n
 
 # decrease volume
 XF86AudioLowerVolume
-    amixer -q sset Master 5%-
+    ~/.config/scripts/change-volume.sh down
 
 # increase volume
 XF86AudioRaiseVolume
-    amixer -q sset Master 5%+
+    ~/.config/scripts/change-volume.sh up
 
 # toggle mute
 XF86AudioMute
-    amixer -q sset Master toggle
+    ~/.config/scripts/change-volume.sh mute
 
 # play/pause mpd
 XF86AudioPlay
@@ -203,11 +203,11 @@ XF86AudioPrev
 
 # increase brightness of the display
 XF86MonBrightnessUp
-    xbacklight -inc 10
+    ~/.config/scripts/change-brightness.sh up
 
 # decrease brightness of the display
 XF86MonBrightnessDown
-    xbacklight -dec 10
+    ~/.config/scripts/change-brightness.sh down
 
 ### keybindings for taking screenshots
 

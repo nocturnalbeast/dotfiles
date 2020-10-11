@@ -12,5 +12,5 @@ PROC=$(cut -d : -f 1 <<< "$SELECTION")
 NAME=$(cut -d : -f 3- <<< "$SELECTION")
 [[ -z "$PROC" ]] && exit
 
-notify-send -u normal -a "System" "Killing PID $PROC" "$NAME"
+notify-send -u normal "Killing process $PROC" "$NAME" 
 kill "$PROC"

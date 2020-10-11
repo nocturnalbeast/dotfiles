@@ -6,6 +6,7 @@ usage() {
     echo "$(basename $0) : polybar helper script"
     echo " Possible operations: "
     echo "  init        : Initialize state file (used right after starting polybar)."
+    echo "  get_state   : Returns the global state of the bars (are they hidden or not?)"
     echo "  switch      : Switch the active bar."
     echo "  enable      : Show the active bar."
     echo "  disable     : Hide the active bar."
@@ -57,16 +58,23 @@ enable_bars() {
     fi
 }
 
+are_bars_hidden() {
+    STATE="$( for WID in $( xdotool search --class "Polybar" ); do xwininfo -id "0x$( printf "%x" "$WID" )"; done | grep "Map State: " | uniq | wc -l )"
+    if [[ "$STATE" == "2" ]]; then
+        echo "no"
+    else
+        echo "yes"
+    fi
+}
 disable_bars() {
     polybar-msg cmd hide
 }
 
 toggle_bars() {
-    STATE="$( for WID in $( xdotool search --class "Polybar" ); do xwininfo -id "0x$( printf "%x" "$WID" )"; done | grep "Map State: " | uniq | wc -l )"
-    if [[ "$STATE" == "2" ]]; then
-        disable_bars
-    else
+    if [[ "$( are_bars_hidden )" == "yes" ]]; then
         enable_bars
+    else
+        disable_bars
     fi
 }
 
@@ -94,6 +102,7 @@ toggle_padding() {
 
 case $1 in
     init) init_state; exit 0;;
+    get_state) are_bars_hidden; exit 0;;
     switch) switch_bar; exit 0;;
     enable) enable_bars; exit 0;;
     disable) disable_bars; exit 0;;

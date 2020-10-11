@@ -29,22 +29,24 @@ VNAME=$( youtube-dl -e "$URL" )
 ACTION=$( menu " 輸 What to do with this URL? " "契 Stream\n Open in browser\n Download" )
 [ "$ACTION" == "" ] && exit 0
 
+ICON="~/.config/dunst/icons/video.svg"
+
 case "$ACTION" in
     '契 Stream')
         # if streaming, send a notification
-        notify-send -a "Video" " Opening URL" "$VNAME"
+        notify-send "Opening video in player:" "$VNAME" -i "$ICON"
         # and then open in mpv
         mpv "$URL" &
         ;;
     ' Open in browser')
         # if opening in browser, send a notification
-        notify-send -a "Video" " Opening URL in browser" "$VNAME"
+        notify-send "Opening video in browser:" "$VNAME" -i "$ICON"
         # and use xdg-open to open in default browser
         xdg-open "$URL" &
         ;;
     ' Download')
         # if downloading the video, send a notification
-        notify-send -a "Video" " Fetching available formats"
+        notify-send "Fetching available formats..." -i "$ICON"
         # get the available formats
         AVAIL_FMTS=$( youtube-dl -F "$URL" | tail -n +4 | sed 's/audio only/audio/g; s/ \+/,/g' | tr -s ',' ':' )
         # clean up the format a bit and then show all of them for selection
@@ -55,11 +57,11 @@ case "$ACTION" in
         [ ! -d "$DEST_DIR" ] && mkdir -p "$DEST_DIR"
         # then download in the preferred quality
         if [ "$ED_ARGS" == "" ]; then
-            youtube-dl -f $QUALITY -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c "$URL"
+            youtube-dl -f $QUALITY -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c "$URL" &
         else
-            youtube-dl -f $QUALITY -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c --external-downloader-args "$ED_ARGS" "$URL"
+            youtube-dl -f $QUALITY -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c --external-downloader-args "$ED_ARGS" "$URL" &
         fi
         # and show a notification once done
-        notify-send -a "Video" " Download completed" "$VNAME"
+        notify-send "Download completed:" "$VNAME" -i "$ICON"
         ;;
 esac

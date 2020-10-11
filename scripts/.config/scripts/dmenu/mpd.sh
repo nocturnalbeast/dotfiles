@@ -82,33 +82,15 @@ case "$ACTION" in
                 ALBUM=$( mpc current --format "[%album%]" )
                 ARTIST=$( mpc current --format "[%artist%]" )
                 if [ "$ALBUM" = "$TITLE" ]; then
-                    notify-send -a "Now Playing" " $TITLE" "by $ARTIST" -i "$COVER"
+                    notify-send "Playing $TITLE" "by <b>$ARTIST</b>" -i "$COVER"
                 else
-                    notify-send -a "Now Playing" " $TITLE" "from $ALBUM by $ARTIST" -i "$COVER"
+                    notify-send "Playing $TITLE" "from <i>$ALBUM</i> by <b>$ARTIST</b>" -i "$COVER"
                 fi
             else
-                notify-send -a "Now Playing" " $( mpc current --format '[%file%]' )" "" -i "$COVER"
+                notify-send "Playing $( mpc current --format '[%file%]' )" -i "$COVER"
             fi
         else
-            notify-send -a "Music" "No playback"
-        fi
-        ;;
-    ' Current')
-        if [ "$( mpc status | wc -l )" != "1" ]; then
-            TITLE=$( mpc current --format "[%title%]" )
-            if [ "$TITLE" != "" ]; then
-                ALBUM=$( mpc current --format "[%album%]" )
-                ARTIST=$( mpc current --format "[%artist%]" )
-                if [ "$ALBUM" = "$TITLE" ]; then
-                    notify-send -a "Now Playing" " $TITLE" "by $ARTIST" -i "$COVER"
-                else
-                    notify-send -a "Now Playing" " $TITLE" "from $ALBUM by $ARTIST" -i "$COVER"
-                fi
-            else
-                notify-send -a "Now Playing" " $( mpc current --format '[%file%]' )" "" -i "$COVER"
-            fi
-        else
-            notify-send -a "Music" "No playback"
+            notify-send "Music: No playback"
         fi
         ;;
     ' Add folder')
@@ -162,7 +144,7 @@ case "$ACTION" in
                 ;;
             '裸 Clear')
                 mpc -q clear
-                notify-send -a "Music" " Cleared playlist"
+                notify-send "Music: Cleared playlist"
                 ;;
             '祝 Load')
                 PLAYLIST=$( menu "  Load: " "$( mpc lsplaylists )" )
@@ -170,21 +152,21 @@ case "$ACTION" in
                     mpc -q stop
                     mpc -q clear
                     mpc -q load "$PLAYLIST"
-                    notify-send -a "Music" " Playlist loaded" "$PLAYLIST"
+                    notify-send "Music: Playlist loaded" "$PLAYLIST"
                 fi
                 ;;
             ' Save')
                 PLAYLIST=$( menu "  Save: " "$( mpc lsplaylists )" )
                 if [[ -n "$PLAYLIST" ]]; then
                     mpc save "$PLAYLIST"
-                    notify-send -a "Music" " Playlist saved" "$PLAYLIST"
+                    notify-send "Music: Playlist saved" "$PLAYLIST"
                 fi
                 ;;
             ' Delete')
                 PLAYLIST=$( menu "  Delete: " "$( mpc lsplaylists )" )
                 if [[ -n "$PLAYLIST" ]]; then
                     mpc rm "$PLAYLIST"
-                    notify-send -a "Music" " Playlist deleted" "$PLAYLIST"
+                    notify-send "Music: Playlist deleted" "$PLAYLIST"
                 fi
                 ;;
         esac
@@ -210,19 +192,19 @@ case "$ACTION" in
             if [[ "$HOW" == "auto" ]]; then
                 lyrics "$( mpc current --format "[%artist%]" )" "$( mpc current --format "[%title%]" )" >> "$LYRICS_FILE"
                 if [[ $? -ne 0 ]]; then
-                    notify-send -a "Music" " Lyrics not found" "$SONG"
+                    notify-send "Lyrics not found for the song:" "$SONG"
                 fi
             else
                 touch "$LYRICS_FILE"
                 $E_COMMAND "$LYRICS_FILE" &
             fi
-            notify-send -a "Music" " Created lyrics file" "$LYRICS_FILE"
+            notify-send "Saved lyrics file for the song:" "$SONG at <u>$LYRICS_FILE</u>."
         else
             $E_COMMAND "$LYRICS_FILE" &
         fi
         ;;
     '勒 Rescan')
-        notify-send -a "Music" " Updating database"
+        notify-send "Music: Updating database"
         mpc -q update
         ;;
 esac

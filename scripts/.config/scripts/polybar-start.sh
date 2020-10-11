@@ -23,11 +23,13 @@ for M in $( polybar --list-monitors | cut -d: -f1 ); do
     MONITOR=$M BAR_WIDTH=$RES_X polybar $BARTWO &
 done
 
-# get the process ID of the second bar
-BARTWO_PID=$!
+# wait till all the bars have launched
+for BPID in $( pidof polybar ); do
+    until ls /tmp/polybar_mqueue.$BPID >/dev/null 2>&1; do sleep 2; done
+done
 
-# wait till the second bar has launched
-while ! ls /tmp/polybar_mqueue.$BARTWO_PID >/dev/null 2>&1; do sleep 1; done
+# get the process ID of the second bar
+BARTWO_PID=$( ps ax | grep "polybar $BARTWO" | grep -v grep | awk '{print $1};' )
 
 # then hide the second bar, showing only the first bar
 polybar-msg -p $BARTWO_PID cmd hide >/dev/null 2>&1
