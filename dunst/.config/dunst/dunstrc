@@ -10,7 +10,7 @@
 monitor                 = 0
 title                   = Dunst
 class                   = Dunst
-geometry                = "300x10-12+42"
+geometry                = "300x10-6-6"
 indicate_hidden         = yes
 shrink                  = no
 transparency            = 50

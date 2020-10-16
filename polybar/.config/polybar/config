@@ -86,8 +86,8 @@ content-padding = 2
 
 
 [fonts]
-display-font = "Iosevka Aile:style=Medium:pixelsize=11;3"
-glyph-font = "Iosevka Term:pixelsize=18;4"
+display-font = "Iosevka Aile:style=Medium:pixelsize=11:antialias=true:autohint=true;3"
+glyph-font = "Iosevka Term:pixelsize=18:antialias=true;4"
 
 
 [sysvars]
@@ -181,6 +181,7 @@ font-1 = ${fonts.glyph-font}
 module-margin = 0
 
 modules-left = barswitch sep cpu cpucores cnt-space sep mem sep temp sep
+modules-center = backlight sep battery
 modules-right = sep fs-root sep fs-home sep network-speed network-status
 
 override-redirect = true
@@ -576,9 +577,9 @@ poll-interval = 60
 
 time-format = %H:%M
 
-format-charging = <label-charging><animation-charging>
-format-discharging = <label-discharging><ramp-capacity>
-format-full = <label-full><ramp-capacity>
+format-charging = <animation-charging><label-charging>
+format-discharging = <ramp-capacity><label-discharging>
+format-full = <ramp-capacity><label-full>
 
 label-charging = %percentage%% [%time% till full]
 label-discharging = %percentage%% [%time% left]
@@ -676,7 +677,7 @@ interval = 1
 
 format = <label>
 format-prefix = 
-label = "%gb_used%/%gb_total% | %gb_swap_used%/%gb_swap_total%"
+label = %gb_used%/%gb_total%
 
 format-prefix-padding = ${margins.header-padding}
 label-padding = ${margins.content-padding}
