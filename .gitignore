@@ -1,3 +1,4 @@
 thunar/.config/Thunar/accels.scm
 gtk/.config/gtk-2.0/gtkfilechooser.ini
 nvim/.config/nvim/.netrwhist
+gtk/.config/gtk-3.0/bookmarks
