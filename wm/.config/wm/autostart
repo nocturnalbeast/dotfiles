@@ -7,14 +7,10 @@
 
 # load colors
 xrdb -load ~/.config/X11/.Xresources &
-# load keybindings
-sxhkd &
 # restore the wallpaper
 nitrogen --restore &
 # launch compositor
 picom --experimental-backends &
-# launch system bars
-~/.config/scripts/polybar-start.sh &
 # launch notification daemon
 ~/.config/scripts/dunst-start.sh &
 # launch music player server
@@ -25,6 +21,8 @@ clipmenud &
 light-locker &
 # launch polkit agent for user authentication
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+# launch system bars
+~/.config/scripts/polybar-start.sh &
 # launch unclutter to hide cursor when inactive
 unclutter &
 # launch kunst to grab album art on play and notify on song change

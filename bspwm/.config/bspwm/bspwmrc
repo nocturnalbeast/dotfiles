@@ -8,6 +8,8 @@
 
 # launch the autostart script
 ~/.config/wm/autostart &
+# launch simple x hotkey daemon
+sxhkd -c ~/.config/sxhkd/sxhkdrc &
 
 # default 10-workspace setup
 bspc monitor -d I II III IV V VI VII VIII IX X
