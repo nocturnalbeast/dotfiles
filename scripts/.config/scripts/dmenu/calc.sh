@@ -11,12 +11,10 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-source ~/.config/scripts/dmenu-helper.sh
-~/.config/scripts/polybar-helper.sh disable
-trap "~/.config/scripts/polybar-helper.sh enable" EXIT
+MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
 
 ANSWER=$( echo "$@" | bc -l | sed '/\./ s/\.\{0,1\}0\{1,\}$//' )
-ACTION=$( menu "  $ANSWER " " Copy to clipboard\n Clear" )
+ACTION=$( $MENU "  $ANSWER " " Copy to clipboard\n Clear" )
 
 case $ACTION in
     " Clear") $0 ;;

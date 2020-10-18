@@ -4,7 +4,6 @@
 # removed image retrieval, which is then offloaded to kunst-mod.sh
 
 # SETTINGS
-music_library="$HOME/Music"
 image_path="/tmp/mpd_albumart.jpg"
 padding_top=0
 padding_bottom=2

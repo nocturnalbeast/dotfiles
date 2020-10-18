@@ -1,14 +1,12 @@
 #!/bin/bash
 
-source ~/.config/scripts/dmenu-helper.sh
-~/.config/scripts/polybar-helper.sh disable
-trap "~/.config/scripts/polybar-helper.sh enable" EXIT
+MENU="$HOME/.config/scripts/dmenu-helper.sh custom_menu"
+ICON="$XDG_CONFIG_HOME/dunst/icons/keyboard.svg"
+SXHKDRC_PATH="$XDG_CONFIG_HOME/sxhkd/sxhkdrc"
 
-ICON="~/.config/dunst/icons/keyboard.svg"
+ENTRIES="$( awk '/^[A-Za-z]/ && last {print $0,"::",last} {last=""} /^#/{last=$0}' "$SXHKDRC_PATH" | column -t -s '::' | sed 's/#/->/' )"
 
-ENTRIES=$( cat ~/.config/sxhkd/sxhkdrc | awk '/^[A-Za-z]/ && last {print $0,"::",last} {last=""} /^#/{last=$0}' | column -t -s '::' )
-
-SEL_KEYBIND=$( echo "$ENTRIES" | dmenu $( get_options ) -l 10 -p "   " )
+SEL_KEYBIND="$( $MENU "-l 5" "   " "$ENTRIES" )"
 [[ "$SEL_KEYBIND" == "" ]] && exit 0
 
-notify-send -t 5000 "Selected keybind:" "$( echo "$SEL_KEYBIND" | tr -s "[:blank:]" " " | sed 's/\(.*\) # \([^ ]*\)/<b>\1<\/b>\n\2/' )" -i "$ICON"
+notify-send -t 5000 "Selected keybind:" "$( echo "$SEL_KEYBIND" | tr -s "[:blank:]" " " | sed 's/\(.*\) -> \([^ ]*\)/<b>\1<\/b>\n\2/' )" -i "$ICON"

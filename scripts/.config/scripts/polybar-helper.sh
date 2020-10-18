@@ -1,6 +1,6 @@
 #!/bin/bash
 
-STATE_FILE="$HOME/.cache/bar_state"
+STATE_FILE="$XDG_CACHE_HOME/bar_state"
 
 usage() {
     echo "$(basename $0) : polybar helper script"
@@ -41,20 +41,36 @@ init_state() {
     printf "%s\n" "${ALL_STATES[@]}" > "$STATE_FILE"
 }
 
-get_padding() {
-    WINDOW_MANAGER=$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )
-    [[ "$WINDOW_MANAGER" == "bspwm" ]] && bspc config top_padding
+# wm-specific functions - define one for every wm that we use
+# this is kinda hacky, i guess
+bspwm_get_padding() {
+    bspc config top_padding
 }
 
+bspwm_enable_padding() {
+    bspc config top_padding "$( grep -Eo "bspc config top_padding\s+[0-9]+" "$XDG_CONFIG_HOME/bspwm/bspwmrc" | tr -s ' ' | cut -f 4 -d ' ' )"
+}
+
+bspwm_disable_padding() {
+    bspc config top_padding 0
+}
+
+# now for the wrapper functions that invoke the functions above based on which wm we're running
+get_window_manager() { wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p"; }
+get_padding() { $( get_window_manager )_get_padding 2>/dev/null; }
+enable_padding() { $( get_window_manager )_enable_padding 2>/dev/null; }
+disable_padding() { $( get_window_manager )_disable_padding 2>/dev/null; }
+toggle_padding() { [[ "$( get_padding )" != "0" ]] && disable_padding 2>/dev/null || enable_padding 2>/dev/null; }
+
 switch_bar() {
-    polybar-msg cmd toggle
+    polybar-msg cmd toggle 2>&1 >/dev/null
     sed -i 's/visible/@@/gi; s/hidden/visible/gi; s/@@/hidden/gi' "$STATE_FILE"
 }
 
 enable_bars() {
     if [[ "$( get_padding )" != "0" ]]; then
         PID_ACTIVE="$( grep "visible$" "$STATE_FILE" | cut -f 3 -d : )"
-        polybar-msg -p "$PID_ACTIVE" cmd show
+        polybar-msg -p "$PID_ACTIVE" cmd show 2>&1 >/dev/null
     fi
 }
 
@@ -66,8 +82,9 @@ are_bars_hidden() {
         echo "yes"
     fi
 }
+
 disable_bars() {
-    polybar-msg cmd hide
+    polybar-msg cmd hide 2>&1 >/dev/null
 }
 
 toggle_bars() {
@@ -75,28 +92,6 @@ toggle_bars() {
         enable_bars
     else
         disable_bars
-    fi
-}
-
-enable_padding() {
-    WINDOW_MANAGER=$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )
-    [[ "$WINDOW_MANAGER" == "bspwm" ]] && bspc config top_padding "$( grep -Eo "bspc config top_padding\s+[0-9]+" ~/.config/bspwm/bspwmrc | tr -s ' ' | cut -f 4 -d ' ' )"
-}
-
-disable_padding() {
-    WINDOW_MANAGER=$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )
-    [[ "$WINDOW_MANAGER" == "bspwm" ]] && bspc config top_padding 0
-}
-
-toggle_padding() {
-    WINDOW_MANAGER=$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )
-    if [[ "$WINDOW_MANAGER" == "bspwm" ]]; then
-        CURR_PADDING="$( bspc config top_padding )"
-        if [[ "$CURR_PADDING" != "0" ]]; then
-            bspc config top_padding 0
-        else
-            bspc config top_padding "$( grep -Eo "bspc config top_padding\s+[0-9]+" ~/.config/bspwm/bspwmrc | tr -s ' ' | cut -f 4 -d ' ' )"
-        fi
     fi
 }
 

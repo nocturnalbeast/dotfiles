@@ -1,32 +1,16 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-size=${2:-'20'}
-dir=$1
+SIZE=${2:-'20'}
+DIRECTION=$1
 
-# find current window mode
-is_tiled() {
-    bspc query -T -n | grep -q '"state":"tiled"'
-}
-
-# if the window is floating, move it
-if ! is_tiled; then
-    # only parse input if window is floating, tiled windows accept input as is
-    case "$dir" in
-        west) switch="-x"
-        sign="-"
-        ;;
-        east) switch="-x"
-        sign="+"
-        ;;
-        north) switch="-y"
-        sign="-"
-        ;;
-        south) switch="-y"
-        sign="+"
-        ;;
+if ! $( bspc query -T -n | grep -q '"state":"tiled"' ); then
+    case "$DIRECTION" in
+        west) FLAG="-x -";;
+        east) FLAG="-x +";;
+        north) FLAG="-y -";;
+        south) FLAG="-y +";;
     esac
-    xdo move ${switch} ${sign}${size}
-# otherwise, window is tiled: just move to the direction given, disregarding the size
+    xdo move ${FLAG}${SIZE}
 else
     bspc node -f $1
 fi

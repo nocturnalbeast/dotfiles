@@ -1,0 +1,118 @@
+colors:
+  background_color: "0f0f0f"
+
+  red: "ff5e5e"
+  green: "74ff5e"
+  yellow: "ffff5e"
+  blue: "5e74ff"
+  magenta: "ff5eea"
+  cyan: "4fd8d8"
+  lightred: "ffa1a1"
+  lightgreen: "adffa1"
+  lightyellow: "ffffa1"
+  lightblue: "a1adff"
+  lightmagenta: "ffa1f2"
+  lightcyan: "a0ffff"
+  
+  grey: "888888"
+  lightgrey: "aaaaaa"
+  darkgrey: "666666"
+
+  white: "ffffff"
+  black: "000000"
+
+
+core:
+  regular_file: {}
+
+  directory:
+    foreground: cyan
+
+  executable_file:
+    foreground: magenta
+    font-style: bold
+
+  symlink:
+    foreground: magenta
+
+  broken_symlink:
+    foreground: black
+    background: red
+  missing_symlink_target:
+    foreground: black
+    background: red
+
+  fifo:
+    foreground: black
+    background: cyan
+
+  socket:
+    foreground: black
+    background: magenta
+
+  character_device:
+    foreground: magenta
+    background: darkgrey
+
+  block_device:
+    foreground: cyan
+    background: darkgrey
+
+  normal_text:
+    {}
+
+  sticky:
+    {}
+
+  sticky_other_writable:
+    {}
+
+  other_writable:
+    {}
+
+text:
+  special:
+    foreground: black
+    background: yellow
+
+  todo:
+    font-style: bold
+
+  licenses:
+    foreground: lightgrey
+
+  configuration:
+    foreground: green
+
+  other:
+    foreground: lightyellow
+
+markup:
+  foreground: lightyellow
+
+programming:
+  source:
+    foreground: green
+
+  tooling:
+    foreground: lightgreen
+
+    continuous-integration:
+      foreground: yellow
+
+media:
+  foreground: blue
+
+office:
+  foreground: yellow
+
+archives:
+  foreground: lightred
+  font-style: underline
+
+executable:
+  foreground: lightblue
+  font-style: bold
+
+unimportant:
+  foreground: darkgrey

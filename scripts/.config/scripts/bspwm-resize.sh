@@ -1,41 +1,21 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-size=${2:-'10'}
-dir=$1
+SIZE=${2:-'20'}
+DIRECTION=$1
 
-# find current window mode
-is_tiled() {
-    bspc query -T -n | grep -q '"state":"tiled"'
-}
-
-# if the window is floating, resize it
-if ! is_tiled; then
-    # only parse input if window is floating, tiled windows accept input as is
-    case "$dir" in
-        west) switch="-w"
-        sign="-"
-        ;;
-        east) switch="-w"
-        sign="+"
-        ;;
-        north) switch="-h"
-        sign="-"
-        ;;
-        south) switch="-h"
-        sign="+"
-        ;;
+if ! $( bspc query -T -n | grep -q '"state":"tiled"' ); then
+    case "$DIRECTION" in
+        west) FLAG="-x -";;
+        east) FLAG="-x +";;
+        north) FLAG="-y -";;
+        south) FLAG="-y +";;
     esac
-    xdo resize ${switch} ${sign}${size}
-# otherwise, window is tiled: switch with window in given direction
+    xdo resize ${FLAG}${SIZE}
 else
-    case "$dir" in
-        west) bspc node @west -r -$size || bspc node @east -r -${size}
-        ;;
-        east) bspc node @west -r +$size || bspc node @east -r +${size}
-        ;;
-        north) bspc node @south -r -$size || bspc node @north -r -${size}
-        ;;
-        south) bspc node @south -r +$size || bspc node @north -r +${size}
-        ;;
+    case "$DIRECTION" in
+        west) bspc node @west -r -${SIZE} || bspc node @east -r -${SIZE};;
+        east) bspc node @west -r +${SIZE} || bspc node @east -r +${SIZE};;
+        north) bspc node @south -r -${SIZE} || bspc node @north -r -${SIZE};;
+        south) bspc node @south -r +${SIZE} || bspc node @north -r +${SIZE};;
     esac
 fi

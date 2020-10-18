@@ -3,21 +3,19 @@
 # Source: shutdownmenu from https://github.com/MaryHal/dmenu-suite
 # adapted to match setup and added styling snippets
 
-source ~/.config/scripts/dmenu-helper.sh
-~/.config/scripts/polybar-helper.sh disable
-trap "~/.config/scripts/polybar-helper.sh enable" EXIT
+MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
 
 MAIN_MENU="⏻ Shutdown\n⏼ Reboot\n⏾ Sleep\n Lock\n Clear pending"
 DELAY_MENU="now\n+60\n+45\n+30\n+15\n+10\n+5\n+3\n+2\n+1"
 
-ACTION=$( menu " 漣  " "$MAIN_MENU" )
+ACTION=$( $MENU " 漣  " "$MAIN_MENU" )
 [ -z "$ACTION" ] && exit
 
 ICON="~/.config/dunst/icons/power.svg"
 
 case "$ACTION" in
     '⏻ Shutdown')
-        DELAY=$( menu "Delay: " "$DELAY_MENU" )
+        DELAY=$( $MENU "Delay: " "$DELAY_MENU" )
         [ -z "$DELAY" ] && exit
         if [ "$DELAY" == "now" ]; then
             notify-send -u normal "Shutting down now..." -i "$ICON"
@@ -27,7 +25,7 @@ case "$ACTION" in
         shutdown -P "$DELAY"
         ;;
     '⏼ Reboot')
-        DELAY=$( menu "Delay: " "$DELAY_MENU" )
+        DELAY=$( $MENU "Delay: " "$DELAY_MENU" )
         [ -z "$DELAY" ] && exit
         if [ "$DELAY" == "now" ]; then
             notify-send -u normal "Rebooting now..." -i "$ICON"

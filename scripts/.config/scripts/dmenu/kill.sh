@@ -1,10 +1,8 @@
 #!/bin/bash
 
-source ~/.config/scripts/dmenu-helper.sh
-~/.config/scripts/polybar-helper.sh disable
-trap "~/.config/scripts/polybar-helper.sh enable" EXIT
+MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
 
-SELECTION=$( menu " ﮊ  " "$( ps -e -o pid,user,cmd | tail -n +2 | awk '{print $1":"$2":"substr($0, index($0,$3))}' )" )
+SELECTION=$( $MENU " ﮊ  " "$( ps -e -o pid,user,cmd | tail -n +2 | awk '{print $1":"$2":"substr($0, index($0,$3))}' )" )
 
 [[ -z "$SELECTION" ]] && exit
 

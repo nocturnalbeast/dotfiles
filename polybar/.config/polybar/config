@@ -414,6 +414,7 @@ content-padding = ${margins.header-padding}
 [module/mpd-playpause]
 type = custom/script
 
+tail = true
 interval = 1
 exec = ~/.config/scripts/mpd-togglebutton.sh
 

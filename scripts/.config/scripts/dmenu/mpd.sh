@@ -12,12 +12,9 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-source ~/.config/scripts/dmenu-helper.sh
-~/.config/scripts/polybar-helper.sh disable
-trap "~/.config/scripts/polybar-helper.sh enable" EXIT
+MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
 
-# mpd music directory - leave this blank to default to the directory present in mpd.conf
-MUSIC_DIR=""
+MUSIC_DIR="$XDG_MUSIC_DIR"
 # current image cover art location
 COVER="/tmp/mpd_albumart.jpg"
 # editor command
@@ -30,12 +27,10 @@ RANDOM_STATE=$( echo "$STATES" | cut -f 2 -d ' ' )
 SINGLE_STATE=$( echo "$STATES" | cut -f 3 -d ' ' )
 CONSUME_STATE=$( echo "$STATES" | cut -f 4 -d ' ' )
 
-[[ $MUSIC_DIR == "" ]] && MUSIC_DIR=$( grep '^music_directory' ~/.config/mpd/mpd.conf | awk '{print $2}' | tr -d \'\" )
-
 # menu options
 MAIN_MENU="契 Play\n Pause\n栗 Stop\n玲 Previous\n怜 Next\n Seek\n菱 Replay\n Select\n Current\n Add folder\n Add songs\n蘿 Playlist\n列 Random [$RANDOM_STATE]\n凌 Repeat [$REPEAT_STATE]\n Single [$SINGLE_STATE]\n裸 Consume [$CONSUME_STATE]\n Lyrics\n勒 Rescan"
 
-ACTION=$( menu "   " "$MAIN_MENU" )
+ACTION=$( $MENU "   " "$MAIN_MENU" )
 case "$ACTION" in
     '契 Play')
         mpc -q toggle
@@ -54,7 +49,7 @@ case "$ACTION" in
         ;;
     ' Seek')
         SEEK_OPTS="0%\n10%\n20%\n30%\n40%\n50%\n60%\n70%\n80%\n90%"
-        POSITION=$( menu "  Seek: " "$SEEK_OPTS" )
+        POSITION=$( $MENU "  Seek: " "$SEEK_OPTS" )
         if [[ -n "$POSITION" ]]; then
             mpc -q seek "$POSITION"
         fi
@@ -65,7 +60,7 @@ case "$ACTION" in
         ;;
     ' Select')
         CANDIDATES=$( mpc playlist --format '%position%  [%title%|%file%]' )
-        SELECTION=$( menu "  Song:" "$CANDIDATES" )
+        SELECTION=$( $MENU "  Song:" "$CANDIDATES" )
 
         # only select song if not in consume ("playback queue") mode
         if [[ "$CONSUME_STATE" != "on" ]]; then
@@ -97,7 +92,7 @@ case "$ACTION" in
         pushd $MUSIC_DIR > /dev/null
         MUSIC_DIR_LIST=$( find . -type d | sed -e 's!^\./!!' )
         popd > /dev/null
-        QUERY=$( menu "  Folder:" "$MUSIC_DIR_LIST" )
+        QUERY=$( $MENU "  Folder:" "$MUSIC_DIR_LIST" )
 
         if [[ -n "$QUERY" ]]; then
             mpc ls "$QUERY" | mpc -q add
@@ -105,16 +100,16 @@ case "$ACTION" in
         ;;
     ' Add songs')
         FLTR_OPTS="any\nartist\nalbum\ntitle\ntrack\nname\ngenre\ndate\ncomposer\nperformer\ncomment\ndisc\nfilename"
-        FLTR_TYPE=$( menu "  Filter type:" "$FLTR_OPTS" )
+        FLTR_TYPE=$( $MENU "  Filter type:" "$FLTR_OPTS" )
         [[ -z "$FLTR_TYPE" ]] && exit
-        QUERY=$( menu "  Query [$FLTR_TYPE]:" "" )
+        QUERY=$( $MENU "  Query [$FLTR_TYPE]:" "" )
 
         FLTR_LIST=$( mpc search "$FLTR_TYPE" "$QUERY" )
 
         COUNT=0
         SELECTION="a"
         while [[ -n "$SELECTION" ]]; do
-            SELECTION=$( menu "  Results [$COUNT]:" "$FLTR_LIST" )
+            SELECTION=$( $MENU "  Results [$COUNT]:" "$FLTR_LIST" )
             echo " $SELECTION"
             if [[ -n "$SELECTION" ]]; then
                 mpc -q add "$SELECTION"
@@ -124,7 +119,7 @@ case "$ACTION" in
         ;;
     '蘿 Playlist')
         PLIST_OPTS="螺 Add all available\n羅 Remove a song\n裸 Clear\n祝 Load\n Save\n Delete"
-        ACTION=$( menu "Option: " "$PLIST_OPTS" )
+        ACTION=$( $MENU "Option: " "$PLIST_OPTS" )
         case "$ACTION" in
             '螺 Add all available')
                 mpc -q update
@@ -134,7 +129,7 @@ case "$ACTION" in
                 SELECTION="a"
                 while [[ -n "$SELECTION" ]]; do
                     CANDIDATES=$( mpc playlist --format '%position%  [%title%|%file%]' )
-                    SELECTION=$( menu "  Song:" "$CANDIDATES" )
+                    SELECTION=$( $MENU "  Song:" "$CANDIDATES" )
 
                     if [[ -n "$SELECTION" ]]; then
                         NUM_SONG=$(awk '{print $1}' <<< "$SELECTION")
@@ -147,7 +142,7 @@ case "$ACTION" in
                 notify-send "Music: Cleared playlist"
                 ;;
             '祝 Load')
-                PLAYLIST=$( menu "  Load: " "$( mpc lsplaylists )" )
+                PLAYLIST=$( $MENU "  Load: " "$( mpc lsplaylists )" )
                 if [[ -n "PLAYLIST" ]]; then
                     mpc -q stop
                     mpc -q clear
@@ -156,14 +151,14 @@ case "$ACTION" in
                 fi
                 ;;
             ' Save')
-                PLAYLIST=$( menu "  Save: " "$( mpc lsplaylists )" )
+                PLAYLIST=$( $MENU "  Save: " "$( mpc lsplaylists )" )
                 if [[ -n "$PLAYLIST" ]]; then
                     mpc save "$PLAYLIST"
                     notify-send "Music: Playlist saved" "$PLAYLIST"
                 fi
                 ;;
             ' Delete')
-                PLAYLIST=$( menu "  Delete: " "$( mpc lsplaylists )" )
+                PLAYLIST=$( $MENU "  Delete: " "$( mpc lsplaylists )" )
                 if [[ -n "$PLAYLIST" ]]; then
                     mpc rm "$PLAYLIST"
                     notify-send "Music: Playlist deleted" "$PLAYLIST"
@@ -188,17 +183,19 @@ case "$ACTION" in
         LYRICS_FILE="$HOME/.lyrics/$SONG.txt"
 
         if [[ ! -f "$LYRICS_FILE" ]]; then
-            HOW=$( menu "  Create lyrics? " "auto\nmanual" )
+            HOW=$( $MENU "  Create lyrics? " "auto\nmanual" )
             if [[ "$HOW" == "auto" ]]; then
                 lyrics "$( mpc current --format "[%artist%]" )" "$( mpc current --format "[%title%]" )" >> "$LYRICS_FILE"
                 if [[ $? -ne 0 ]]; then
                     notify-send "Lyrics not found for the song:" "$SONG"
+                else
+                    notify-send "Saved lyrics file for the song:" "$SONG at <u>$LYRICS_FILE</u>."
                 fi
             else
                 touch "$LYRICS_FILE"
                 $E_COMMAND "$LYRICS_FILE" &
+                notify-send "Created lyrics file for the song:" "$SONG at <u>$LYRICS_FILE</u>."
             fi
-            notify-send "Saved lyrics file for the song:" "$SONG at <u>$LYRICS_FILE</u>."
         else
             $E_COMMAND "$LYRICS_FILE" &
         fi
@@ -206,5 +203,7 @@ case "$ACTION" in
     '勒 Rescan')
         notify-send "Music: Updating database"
         mpc -q update
+        # apparently, since the command above doesn't update mopidy we run mopidy update
+        mopidy local scan 2>&1 >/dev/null
         ;;
 esac

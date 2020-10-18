@@ -11,19 +11,17 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-source ~/.config/scripts/dmenu-helper.sh
-~/.config/scripts/polybar-helper.sh disable
-trap "~/.config/scripts/polybar-helper.sh enable" EXIT
+MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
 
 SEARCH_ELVI=$( echo "${@:1}" )
 SEARCH_TERM=$( echo "${@:2}" )
 
 if [[ -z "$SEARCH_ELVI" ]]; then
-    ACTION=$( menu "  Engine: " "$( surfraw -elvi | awk -F'-' '{print $1}' | sed '/:/d' | awk '{$1=$1};1' )" )
+    ACTION=$( $MENU "  Engine: " "$( surfraw -elvi | awk -F'-' '{print $1}' | sed '/:/d' | awk '{$1=$1};1' )" )
 elif [[ -z "$SEARCH_TERM" ]]; then
-    ACTION=$( menu "  Search $SEARCH_ELVI: " "" )
+    ACTION=$( $MENU "  Search $SEARCH_ELVI: " "" )
 else
-    surfraw $SEARCH_ELVI
+    surfraw $SEARCH_ELVI &
 fi
 
 case $ACTION in

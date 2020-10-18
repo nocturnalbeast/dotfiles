@@ -8,9 +8,7 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-source ~/.config/scripts/dmenu-helper.sh
-~/.config/scripts/polybar-helper.sh disable
-trap "~/.config/scripts/polybar-helper.sh enable" EXIT
+MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
 
 IFS=$'\n'
 WKSP_NAMES=($( wmctrl -d | awk '{print $9};' ))
@@ -21,5 +19,5 @@ for IDX in ${!WINDOWS[*]}; do
     WIDS+=("$( echo "${WINDOWS[$IDX]}" | cut -f 1 -d : )")
 done
 
-SEL_WNUM=$( menu "   " "$( printf '%s\n' "${WINDOWS_WWN[@]}" )" | cut -f 1 -d . )
+SEL_WNUM=$( $MENU "   " "$( printf '%s\n' "${WINDOWS_WWN[@]}" )" | cut -f 1 -d . )
 [ "$SEL_WNUM" != "" ] && wmctrl -ia "${WIDS[$SEL_WNUM]}" &

@@ -9,15 +9,17 @@
 alt + {_,shift} + {1-9,0}
     bspc {desktop -f,node -d} '^{1-9,10}'
 
-# cycle between last used windows/workspaces
-alt + {grave,Tab}
-    bspc {node,desktop} -f last
+# cycle between last used windows across workspaces
+alt + {_,shift} + Tab
+    bspc wm -h off; \
+    bspc node {older,newer} -f; \
+    bspc wm -h on
 
 # cycle between all available workspaces
-alt + {a,d}
-    bspc desktop -f {prev,next}
+alt + {_,shift} + grave
+    bspc desktop -f {next,prev}
 
-# change focus to window in specified direction - if tiled move window in given direction
+# change focus to window in specified direction - if floating move window in given direction
 alt + {Left,Down,Up,Right,h,j,k,l}
     ~/.config/scripts/bspwm-focus.sh {west,south,north,east,west,south,north,east}
 
@@ -29,14 +31,8 @@ alt + shift + {Left,Down,Up,Right,h,j,k,l}
 alt + {_,shift} + c
     bspc node -f {next,prev}.local
 
-# cycle between windows across workspaces in order of history
-alt + {o,i}
-    bspc wm -h off; \
-    bspc node {older,newer} -f; \
-    bspc wm -h on
 
-
-### killing windows
+### closing/killing windows
 
 # close focused window, use shift to kill
 alt + {_,shift} + q
@@ -46,35 +42,31 @@ alt + {_,shift} + q
 ### window size and layout manipulation
 
 # change mode of the focused window
-alt + {t,g,f}
+alt + {s,d,f}
     ~/.config/scripts/bspwm-mode.sh {pseudo_tiled,floating,fullscreen}
 
 # cycle through layouts on the active workspace
 alt + m
     bspc desktop -l next
 
-# focus on the biggest window in the active workspace
-alt + b
-    bspc node -f biggest.local
+# focus on / swap with the biggest window in the active workspace
+alt + {_,shift} + b
+    bspc node -{f,s} biggest.local
 
-# swap the focused window with the biggest window in the active workspace
-alt + shift + b
-    bspc node -s biggest.local
-
-# rotate window layout of the active workspace
-alt + r
-    bspc node @/ -R 90
+# rotate window layout of the active workspace, shift to reverse direction
+alt + {_,shift} + r
+    bspc node @/ -R {+,-}90
 
 # resize the active window to the given direction
 super + {Left,Down,Up,Right,h,j,k,l}
     ~/.config/scripts/bspwm-resize.sh {west,south,north,east,west,south,north,east} 20
 
 # toggle between bars
-alt + p
+alt + t
     ~/.config/scripts/polybar-helper.sh switch
 
 # toggle between global visible state of bar
-alt + shift + p
+alt + shift + t
     ~/.config/scripts/polybar-helper.sh pad_toggle && ~/.config/scripts/polybar-helper.sh toggle
 
 
@@ -116,12 +108,12 @@ super + b
 super + shift + b
     ~/.config/scripts/dmenu/clipdelete.sh
 
-# online search menu
+# web search menu
 super + o
     ~/.config/scripts/dmenu/surfraw.sh
 
 # video menu
-super + y
+super + i
     ~/.config/scripts/dmenu/video.sh
 
 # music menu
@@ -159,7 +151,7 @@ super + m
     st -t "Music" -e ~/.config/scripts/ncmpcpp-ueberzug.sh
 
 # launch podcast manager
-super + d
+super + u
     st -t "Podcasts" -e castero
 
 # launch process manager
@@ -203,31 +195,31 @@ XF86AudioPrev
 
 # increase brightness of the display
 XF86MonBrightnessUp
-    ~/.config/scripts/change-brightness.sh up
+    ~/.config/scripts/change-brightness.sh increase
 
 # decrease brightness of the display
 XF86MonBrightnessDown
-    ~/.config/scripts/change-brightness.sh down
+    ~/.config/scripts/change-brightness.sh decrease
 
 ### keybindings for taking screenshots
 
 # take a screenshot of the current workspace
 Print
-    scrot '%d-%m-%Y_%H:%M:%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+    ~/.config/scripts/screenshot.sh full
 
 # take a screenshot of the focused window
 alt + Print
-    scrot --focused '%d-%m-%Y_%H:%M:%S_$wx$h.png' -e 'mv $f ~/Pictures/Screenshots'
+    ~/.config/scripts/screenshot.sh window
 
 
 ### misc keybindings
 
 # reload simple x hotkey daemon
-alt + shift + Escape
+alt + Escape
     pkill -USR1 -x sxhkd
 
 # reload bspwm
-alt + Escape
+alt + shift + Escape
     bspc wm --restart
 
 # show help dialog for keybindings if needed
