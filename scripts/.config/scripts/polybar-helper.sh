@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 STATE_FILE="$XDG_CACHE_HOME/bar_state"
 

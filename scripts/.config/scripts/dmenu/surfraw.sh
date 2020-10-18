@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Source: menu-surfraw from https://github.com/TomboFry/menu-surfraw
 # simplified script for use with only dmenu, added styling snippets

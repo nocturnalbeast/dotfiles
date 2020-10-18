@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 DEPENDENCIES=(gtk-launch)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do

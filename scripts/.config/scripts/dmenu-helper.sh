@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 DMENU_SCRIPT_DIR="$HOME/.config/scripts/dmenu"
 DMENU_STYLERC_PATH="$XDG_CONFIG_HOME/dmenu/stylerc"

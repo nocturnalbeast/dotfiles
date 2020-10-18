@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 BARONE="mainbar"
 BARTWO="monbar"

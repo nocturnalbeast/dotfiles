@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
 

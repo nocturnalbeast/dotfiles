@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # terminate notify-osd instances
 killall -q notify-osd

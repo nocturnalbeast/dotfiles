@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 SCREENSHOTS_DIR="$XDG_PICTURES_DIR/screenshots"
 [ ! -d "$SCREENSHOTS_DIR" ] && mkdir -p "$SCREENSHOTS_DIR"

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Source: ncmpcpp-ueberzug from https://github.com/alnj/ncmpcpp-ueberzug
 

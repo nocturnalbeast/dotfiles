@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Source : volumeControl.sh from https://gist.github.com/Blaradox/030f06d165a82583ae817ee954438f2e
 # modified styling, a bit of cleanup and integrate with polybar global visibility

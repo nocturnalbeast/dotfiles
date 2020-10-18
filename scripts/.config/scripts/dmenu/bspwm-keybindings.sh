@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 MENU="$HOME/.config/scripts/dmenu-helper.sh custom_menu"
 ICON="$XDG_CONFIG_HOME/dunst/icons/keyboard.svg"

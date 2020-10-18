@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Source: menu-calc from https://github.com/onespaceman/menu-calc
 # added dependency checking script and some styling

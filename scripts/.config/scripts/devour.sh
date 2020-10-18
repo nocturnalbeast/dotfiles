@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Source: devour.sh from https://github.com/salman-abedin/devour.sh
 

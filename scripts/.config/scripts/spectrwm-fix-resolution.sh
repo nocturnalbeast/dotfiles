@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # paths to config files
 POLYBAR_CONFIG_PATH="$XDG_CONFIG_HOME/polybar/config"

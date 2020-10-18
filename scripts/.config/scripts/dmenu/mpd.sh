@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Source: mpdmenu from https://github.com/MaryHal/dmenu-suite
 # reworked some stuff, added dependency checking script and some styling

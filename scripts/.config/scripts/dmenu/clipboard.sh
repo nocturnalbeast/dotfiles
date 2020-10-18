@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 DEPENDENCIES=(clipmenu)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do

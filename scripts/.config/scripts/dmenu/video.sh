@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 DEPENDENCIES=(youtube-dl clipmenu mpc)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do

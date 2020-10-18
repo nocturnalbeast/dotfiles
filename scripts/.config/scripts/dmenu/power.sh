@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Source: shutdownmenu from https://github.com/MaryHal/dmenu-suite
 # adapted to match setup and added styling snippets
