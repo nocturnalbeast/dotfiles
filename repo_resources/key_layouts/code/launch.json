@@ -1,0 +1,191 @@
+[
+  [
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7,
+      "f": 2
+    },
+    "wksp menu\n\n\n\n~",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\n1",
+    "\n\n\n\n2",
+    "\n\n\n\n3",
+    "\n\n\n\n4",
+    "\n\n\n\n5",
+    "\n\n\n\n6",
+    "\n\n\n\n7",
+    "\n\n\n\n8",
+    "\n\n\n\n9",
+    "\n\n\n\n0",
+    {
+      "a": 4
+    },
+    "_\n-",
+    "+\n=",
+    {
+      "w": 2
+    },
+    "Backspace"
+  ],
+  [
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7,
+      "w": 1.5
+    },
+    "window menu\n\n\n\nTab",
+    "kill menu\n\n\n\nQ",
+    "browser / private mode\n\n\n\nW",
+    "file explorer\n\n\n\nE",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nR",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff"
+    },
+    "terminal\n\n\n\nT",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nY",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff"
+    },
+    "podcast listener\n\n\n\nU",
+    "web video menu\n\n\n\nI",
+    "web search menu\n\n\n\nO",
+    "power menu\n\n\n\nP",
+    {
+      "c": "#cccccc",
+      "t": "#000000",
+      "a": 4
+    },
+    "{\n[",
+    "}\n]",
+    {
+      "w": 1.5
+    },
+    "|\n\\"
+  ],
+  [
+    {
+      "w": 1.75
+    },
+    "Caps Lock",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7
+    },
+    "app menu / refresh\n\n\n\nA",
+    "system monitor\n\n\n\nS",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nD",
+    "\n\n\n\nF",
+    "\n\n\n\nG",
+    "\n\n\n\nH",
+    "\n\n\n\nJ",
+    "\n\n\n\nK",
+    "\n\n\n\nL",
+    {
+      "a": 4
+    },
+    ":\n;",
+    "\"\n'",
+    {
+      "w": 2.25
+    },
+    "Enter"
+  ],
+  [
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7,
+      "w": 2.25
+    },
+    "alternate action modifier\n\n\n\nShift",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nZ",
+    "\n\n\n\nX",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff"
+    },
+    "calc menu\n\n\n\nC",
+    "editor\n\n\n\nV",
+    "clip board / delete menu\n\n\n\nB",
+    "news reader\n\n\n\nN",
+    "music player / menu\n\n\n\nM",
+    {
+      "c": "#cccccc",
+      "t": "#000000",
+      "a": 4
+    },
+    "<\n,",
+    ">\n.",
+    "?\n/",
+    {
+      "w": 2.75
+    },
+    "Shift"
+  ],
+  [
+    {
+      "w": 1.25
+    },
+    "Ctrl",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7,
+      "w": 1.25
+    },
+    "main modifier\n\n\n\nWin",
+    {
+      "c": "#cccccc",
+      "t": "#000000",
+      "a": 4,
+      "w": 1.25
+    },
+    "Alt",
+    {
+      "a": 7,
+      "w": 6.25
+    },
+    "",
+    {
+      "a": 4,
+      "w": 1.25
+    },
+    "Alt",
+    {
+      "w": 1.25
+    },
+    "Win",
+    {
+      "w": 1.25
+    },
+    "Menu",
+    {
+      "w": 1.25
+    },
+    "Ctrl"
+  ]
+]

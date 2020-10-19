@@ -1,0 +1,213 @@
+[
+  [
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7,
+      "f": 2
+    },
+    "cycle wksp\n\n\n\n~",
+    "wksp 1\n\n\n\n1",
+    "wksp 2\n\n\n\n2",
+    "wksp 3\n\n\n\n3",
+    "wksp 4\n\n\n\n4",
+    "wksp 5\n\n\n\n5",
+    "wksp 6\n\n\n\n6",
+    "wksp 7\n\n\n\n7",
+    "wksp 8\n\n\n\n8",
+    "wksp 9\n\n\n\n9",
+    "wksp 10\n\n\n\n0",
+    {
+      "c": "#cccccc",
+      "t": "#000000",
+      "a": 4
+    },
+    "_\n-",
+    "+\n=",
+    {
+      "w": 2
+    },
+    "Backspace"
+  ],
+  [
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7,
+      "w": 1.5
+    },
+    "cycle windows\n\n\n\nTab",
+    "close / kill\n\n\n\nQ",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nW",
+    "\n\n\n\nE",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff"
+    },
+    "rotate layout\n\n\n\nR",
+    "switch / hide bar\n\n\n\nT",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nY",
+    "\n\n\n\nU",
+    "\n\n\n\nI",
+    "\n\n\n\nO",
+    "\n\n\n\nP",
+    {
+      "a": 4
+    },
+    "{\n[",
+    "}\n]",
+    {
+      "w": 1.5
+    },
+    "|\n\\"
+  ],
+  [
+    {
+      "w": 1.75
+    },
+    "Caps Lock",
+    {
+      "a": 7
+    },
+    "\n\n\n\nA",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff"
+    },
+    "pseudo tiled\n\n\n\nS",
+    "float\n\n\n\nD",
+    "full screen\n\n\n\nF",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nG",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff"
+    },
+    "focus / move left\n\n\n\nH",
+    "focus / move down\n\n\n\nJ",
+    "focus / move up\n\n\n\nK",
+    "focus / move right\n\n\n\nL",
+    {
+      "c": "#cccccc",
+      "t": "#000000",
+      "a": 4
+    },
+    ":\n;",
+    "\"\n'",
+    {
+      "w": 2.25
+    },
+    "Enter"
+  ],
+  [
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7,
+      "w": 2.25
+    },
+    "alternate action / reverse cycle direction modifier\n\n\n\nShift",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nZ",
+    "\n\n\n\nX",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff"
+    },
+    "cycle window\n\n\n\nC",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nV",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff"
+    },
+    "biggest window\n\n\n\nB",
+    {
+      "c": "#cccccc",
+      "t": "#000000"
+    },
+    "\n\n\n\nN",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff"
+    },
+    "switch layout\n\n\n\nM",
+    {
+      "c": "#cccccc",
+      "t": "#000000",
+      "a": 4
+    },
+    "<\n,",
+    ">\n.",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7
+    },
+    "layout help menu\n\n\n\n/",
+    {
+      "c": "#cccccc",
+      "t": "#000000",
+      "a": 4,
+      "w": 2.75
+    },
+    "Shift"
+  ],
+  [
+    {
+      "w": 1.25
+    },
+    "Ctrl",
+    {
+      "c": "#5c5c5c",
+      "t": "#ffffff",
+      "a": 7,
+      "w": 1.25
+    },
+    "resize modifier\n\n\n\nWin",
+    {
+      "w": 1.25
+    },
+    "main modifier\n\n\n\nAlt",
+    {
+      "c": "#cccccc",
+      "t": "#000000",
+      "w": 6.25
+    },
+    "",
+    {
+      "a": 4,
+      "w": 1.25
+    },
+    "Alt",
+    {
+      "w": 1.25
+    },
+    "Win",
+    {
+      "w": 1.25
+    },
+    "Menu",
+    {
+      "w": 1.25
+    },
+    "Ctrl"
+  ]
+]
