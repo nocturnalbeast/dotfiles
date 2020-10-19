@@ -14,6 +14,7 @@ usage() {
     echo "  pad_enable  : Enable top padding reserved by the window manager."
     echo "  pad_disable : Disable top padding reserved by the window manager."
     echo "  pad_toggle  : Toggle top padding reserved by the window manager."
+    echo "  toggle_all  : Toggle both padding and bar visibility."
 }
 
 get_bars() {
@@ -53,6 +54,18 @@ bspwm_enable_padding() {
 
 bspwm_disable_padding() {
     bspc config top_padding 0
+}
+
+spectrwm_get_padding() {
+    sed -n "s/^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:\(.*\)/\1/p" ~/.config/spectrwm/spectrwm.conf | rev | cut -f 1 -d '+' | rev
+}
+
+spectrwm_enable_padding() {
+    ~/.config/scripts/spectrwm-region-helper.sh
+}
+
+spectrwm_disable_padding() {
+    ~/.config/scripts/spectrwm-region-helper.sh disable_padding
 }
 
 # now for the wrapper functions that invoke the functions above based on which wm we're running
@@ -95,6 +108,16 @@ toggle_bars() {
     fi
 }
 
+toggle_all() {
+    if [[ "$( are_bars_hidden )" == "yes" ]] && [[ "$( get_padding )" == "0" ]]; then
+        enable_padding
+        enable_bars
+    else
+        disable_bars
+        disable_padding
+    fi
+}
+
 case $1 in
     init) init_state; exit 0;;
     get_state) are_bars_hidden; exit 0;;
@@ -105,5 +128,6 @@ case $1 in
     pad_enable) enable_padding; exit 0;;
     pad_disable) disable_padding; exit 0;;
     pad_toggle) toggle_padding; exit 0;;
+    toggle_all) toggle_all; exit 0;;
     *) echo "Unknown operation: $1"; usage; exit 1;;
 esac

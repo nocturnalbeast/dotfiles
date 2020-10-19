@@ -67,7 +67,7 @@ alt + t
 
 # toggle between global visible state of bar
 alt + shift + t
-    ~/.config/scripts/polybar-helper.sh pad_toggle && ~/.config/scripts/polybar-helper.sh toggle
+    ~/.config/scripts/polybar-helper.sh toggle_all
 
 
 ### keybindings for different dmenu scripts
