@@ -16,7 +16,7 @@ get_options() {
     # import the variables from stylerc
     source "$DMENU_STYLERC_PATH"
     # define options to be passed to dmenu
-    WIDTH=$(( $( xdpyinfo | awk '/dimensions/{print $2}' | cut -f 1 -d 'x' ) - 2 * 6 ))=
+    WIDTH=$(( $( xdpyinfo | awk '/dimensions/{print $2}' | cut -f 1 -d 'x' ) - 2 * $HPAD ))
     echo "-x $HPAD -y $VPAD -h $HEIGHT -wd $WIDTH -nb $BG_CLR -nf $FG_CLR -sb $SELBG_CLR -sf $SELFG_CLR -nhb $HLBG_CLR -nhf $HLFG_CLR -shb $SELHLBG_CLR -shf $SELHLFG_CLR"
 }
 
