@@ -11,7 +11,7 @@ DELAY_MENU="now\n+60\n+45\n+30\n+15\n+10\n+5\n+3\n+2\n+1"
 ACTION=$( $MENU " 漣  " "$MAIN_MENU" )
 [ -z "$ACTION" ] && exit
 
-ICON="~/.config/dunst/icons/power.svg"
+ICON="$HOME/.config/dunst/icons/power.svg"
 
 case "$ACTION" in
     '⏻ Shutdown')

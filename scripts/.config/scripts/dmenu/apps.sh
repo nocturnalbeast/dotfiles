@@ -19,7 +19,7 @@ PATHS_INCLUDE="$HOME/.local/share/applications|/usr/share/applications"
 PATHS_EXCLUDE="/tmp"
 
 function usage() {
-    echo "$(basename $0) : dmenu frecency launcher script"
+    echo "$(basename "$0") : dmenu frecency launcher script"
     echo " Possible operations: "
     echo "  rebuild : Discard history and regenerate application index."
     echo "  refresh : Refresh the application index without discarding history."
@@ -28,19 +28,19 @@ function usage() {
 
 # one-liner to get all apps in the format we need
 function get_apps() {
-    echo "$( find / -iname "*.desktop" 2>>/dev/null | grep -vE "$PATHS_EXCLUDE" | grep -E "$PATHS_INCLUDE" | xargs -n 1 basename | sort | uniq | sort | xargs -n 1 echo "00000.0000000000" | sed 's/\.desktop$//' )"
+    find / -iname "*.desktop" 2>>/dev/null | grep -vE "$PATHS_EXCLUDE" | grep -E "$PATHS_INCLUDE" | xargs -n 1 basename | sort | uniq | sort | xargs -n 1 echo "00000.0000000000" | sed 's/\.desktop$//'
 }
 
 # one-liner to get a listing of all new apps in the format we need
 function get_new_apps() {
-    comm -23 <( echo -e "$( get_apps | cut -f 2- -d ' ' | sort | uniq | sort )" ) <( echo -e "$( cut -f 2- -d ' ' "$HISTORY_LOC" | sort | uniq | sort )" ) | xargs -n 1 echo "00000.0000000000"
+    comm -23 <( get_apps | cut -f 2- -d ' ' | sort | uniq | sort ) <( cut -f 2- -d ' ' "$HISTORY_LOC" | sort | uniq | sort ) | xargs -n 1 echo "00000.0000000000"
 }
 
 # function to rebuild the history file, disregarding the existing file
 function rebuild_hfile() {
-    rm -rf "$( dirname $HISTORY_LOC )"
-    mkdir -p "$( dirname $HISTORY_LOC )"
-    echo "$( get_apps )" > "$HISTORY_LOC"
+    rm -rf "$( dirname "$HISTORY_LOC" )"
+    mkdir -p "$( dirname "$HISTORY_LOC" )"
+    get_apps > "$HISTORY_LOC"
 }
 
 # function to refresh the history file without losing history
@@ -57,12 +57,12 @@ function launch_application() {
     [[ "$SEL_APP" == "" ]] && exit 0
     # next, get the entry and its corresponding fields from the history file
     local SEL_ENT="$( grep -E "^[0-9]{5}\.[0-9]{10} $SEL_APP$" "$HISTORY_LOC" )"
-    local APP_NAME=$( echo "$SEL_ENT" | cut -f 2- -d " " )
-    local APP_FREQ=$( echo "$SEL_ENT" | cut -f 1 -d "." )
+    local APP_NAME="$( echo "$SEL_ENT" | cut -f 2- -d " " )"
+    local APP_FREQ="$( echo "$SEL_ENT" | cut -f 1 -d "." )"
     # we discard the earlier timestamp and replace it with this
-    local APP_LSTL=$( date +%s )
+    local APP_LSTL="$( date +%s )"
     # increment the frequency counter for the application selected
-    APP_FREQ=$( printf %05.0f $(( $APP_FREQ + 1 )) )
+    APP_FREQ="$( printf %05.0f $(( $APP_FREQ + 1 )) )"
     # launch the app
     gtk-launch "$APP_NAME"
     # create the updated entry and save it to the history file

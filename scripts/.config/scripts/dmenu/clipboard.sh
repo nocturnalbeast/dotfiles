@@ -10,7 +10,7 @@ done
 
 MENU_OPTS="$( $HOME/.config/scripts/dmenu-helper.sh get_options )"
 
-~/.config/scripts/polybar-helper.sh disable 2>&1 >/dev/null
-trap "~/.config/scripts/polybar-helper.sh enable 2>&1 >/dev/null" EXIT
+~/.config/scripts/polybar-helper.sh disable >/dev/null 2>&1
+trap "~/.config/scripts/polybar-helper.sh enable >/dev/null 2>&1" EXIT
 
 clipmenu $MENU_OPTS -p "   "

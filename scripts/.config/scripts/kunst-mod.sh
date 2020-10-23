@@ -6,7 +6,6 @@
 COVER=/tmp/mpd_albumart.jpg
 MUSIC_DIR=~/Music/
 SIZE=250x250
-POSITION="+0+0"
 ONLINE_ALBUM_ART=false
 
 show_help() {

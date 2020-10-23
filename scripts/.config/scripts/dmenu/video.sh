@@ -19,6 +19,9 @@ SEARCH_RESULT_NUM="5"
 # destination folder
 DEST_DIR="$XDG_VIDEOS_DIR/downloaded"
 
+# notification icon
+ICON="$HOME/.config/dunst/icons/video.svg"
+
 MAIN_ACTION="$( $MENU " 輸 " " Use link from clipboard\n Search for a video" )"
 [ "$MAIN_ACTION" == "" ] && exit 0
 
@@ -58,8 +61,6 @@ VNAME="$( youtube-dl -e "$URL" )"
 LINK_ACTION="$( $MENU " 輸 What to do with this URL? " "契 Stream\n Open in browser\n Download\n Queue audio in player" )"
 [ "$LINK_ACTION" == "" ] && exit 0
 
-ICON="~/.config/dunst/icons/video.svg"
-
 case "$LINK_ACTION" in
     '契 Stream')
         # if streaming, send a notification
@@ -86,9 +87,9 @@ case "$LINK_ACTION" in
         [ ! -d "$DEST_DIR" ] && mkdir -p "$DEST_DIR"
         # then download in the preferred quality
         if [ "$ED_ARGS" == "" ]; then
-            youtube-dl -f $QUALITY -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c "$URL" &
+            youtube-dl -f "$QUALITY" -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c "$URL" &
         else
-            youtube-dl -f $QUALITY -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c --external-downloader-args "$ED_ARGS" "$URL" &
+            youtube-dl -f "$QUALITY" -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c --external-downloader-args "$ED_ARGS" "$URL" &
         fi
         # and show a notification once done
         notify-send "Download completed:" "$VNAME" -i "$ICON"

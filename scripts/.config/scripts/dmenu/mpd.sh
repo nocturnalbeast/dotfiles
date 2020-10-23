@@ -143,7 +143,7 @@ case "$ACTION" in
                 ;;
             '祝 Load')
                 PLAYLIST=$( $MENU "  Load: " "$( mpc lsplaylists )" )
-                if [[ -n "PLAYLIST" ]]; then
+                if [[ -n "$PLAYLIST" ]]; then
                     mpc -q stop
                     mpc -q clear
                     mpc -q load "$PLAYLIST"
@@ -204,6 +204,6 @@ case "$ACTION" in
         notify-send "Music: Updating database"
         mpc -q update
         # apparently, since the command above doesn't update mopidy we run mopidy update
-        mopidy local scan 2>&1 >/dev/null
+        mopidy local scan >/dev/null 2>&1
         ;;
 esac

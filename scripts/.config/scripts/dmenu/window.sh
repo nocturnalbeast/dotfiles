@@ -10,10 +10,8 @@ done
 
 MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
 
-IFS=$'\n'
-WKSP_NAMES=($( wmctrl -d | awk '{print $9};' ))
-WINDOWS=($( wmctrl -l | awk '{print $1":"$2":"substr($0, index($0,$4))};' ))
-unset IFS
+mapfile -t WINDOWS < <( wmctrl -l | awk '{print $1":"$2":"substr($0, index($0,$4))};' )
+
 for IDX in ${!WINDOWS[*]}; do
     WINDOWS_WWN+=("$IDX. $( wmctrl -d | grep "^$( echo "${WINDOWS[$IDX]}" | cut -f 2 -d : )" | awk '{print $9}' ):$( echo "${WINDOWS[$IDX]}" | cut -f 3 -d : )")
     WIDS+=("$( echo "${WINDOWS[$IDX]}" | cut -f 1 -d : )")

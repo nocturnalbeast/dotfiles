@@ -3,7 +3,7 @@
 SIZE=${2:-'20'}
 DIRECTION=$1
 
-if ! $( bspc query -T -n | grep -q '"state":"tiled"' ); then
+if ! bspc query -T -n | grep -q '"state":"tiled"'; then
     case "$DIRECTION" in
         west) FLAG="-x -";;
         east) FLAG="-x +";;

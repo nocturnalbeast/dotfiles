@@ -18,12 +18,15 @@ These are the things that are planned to be worked on or in progress right now:
     * dalance/procs
     * dbrgn/tealdeer
  * Integrate any of the following terminal multiplexers - tmux/screen/byobu
+ * Remove independent repos for suckless tools and maintain an all-in-one patch for each tool
+ * Move `~/.icons` and `~/.themes` to `~/.local/share`
+ * Integrate MPRIS2 support
+ * Replace `kunst-mod.sh`
 
 ### In Progress
 
  * **Rewrite the README file**
  * Rework ZSH config
  * Match BASH config to the redone ZSH one
- * Shellcheck all scripts
  * Write custom qutebrowser config
  * Create a new terminal colorscheme

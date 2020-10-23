@@ -3,7 +3,7 @@
 STATE_FILE="$XDG_CACHE_HOME/bar_state"
 
 usage() {
-    echo "$(basename $0) : polybar helper script"
+    echo "$(basename "$0") : polybar helper script"
     echo " Possible operations: "
     echo "  init        : Initialize state file (used right after starting polybar)."
     echo "  get_state   : Returns the global state of the bars (are they hidden or not?)"
@@ -18,12 +18,10 @@ usage() {
 }
 
 get_bars() {
-    IFS=$'\n'
-    WIDS=($( xdotool search --class "Polybar" ))
-    unset IFS
+    mapfile -t WIDS < <( xdotool search --class "Polybar" )
     for WID in "${WIDS[@]}"; do
-        WNAME="$( xprop WM_NAME -id $WID | awk '{gsub(/[","]/,"",$3);print $3}' | sed 's/^polybar-//g' )"
-        WPID="$( xprop _NET_WM_PID -id $WID | awk '{gsub(/[","]/,"",$3);print $3}' )"
+        WNAME="$( xprop WM_NAME -id "$WID" | awk '{gsub(/[","]/,"",$3);print $3}' | sed 's/^polybar-//g' )"
+        WPID="$( xprop _NET_WM_PID -id "$WID" | awk '{gsub(/[","]/,"",$3);print $3}' )"
         echo "$WNAME:$WID:$WPID"
     done
 }
@@ -73,17 +71,23 @@ get_window_manager() { wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p"; }
 get_padding() { $( get_window_manager )_get_padding 2>/dev/null; }
 enable_padding() { $( get_window_manager )_enable_padding 2>/dev/null; }
 disable_padding() { $( get_window_manager )_disable_padding 2>/dev/null; }
-toggle_padding() { [[ "$( get_padding )" != "0" ]] && disable_padding 2>/dev/null || enable_padding 2>/dev/null; }
+toggle_padding() {
+    if [[ "$( get_padding )" != "0" ]]; then
+        disable_padding 2>/dev/null
+    else
+        enable_padding 2>/dev/null
+    fi
+}
 
 switch_bar() {
-    polybar-msg cmd toggle 2>&1 >/dev/null
+    polybar-msg cmd toggle >/dev/null 2>&1
     sed -i 's/visible/@@/gi; s/hidden/visible/gi; s/@@/hidden/gi' "$STATE_FILE"
 }
 
 enable_bars() {
     if [[ "$( get_padding )" != "0" ]]; then
         PID_ACTIVE="$( grep "visible$" "$STATE_FILE" | cut -f 3 -d : )"
-        polybar-msg -p "$PID_ACTIVE" cmd show 2>&1 >/dev/null
+        polybar-msg -p "$PID_ACTIVE" cmd show >/dev/null 2>&1
     fi
 }
 
@@ -97,7 +101,7 @@ are_bars_hidden() {
 }
 
 disable_bars() {
-    polybar-msg cmd hide 2>&1 >/dev/null
+    polybar-msg cmd hide >/dev/null 2>&1
 }
 
 toggle_bars() {

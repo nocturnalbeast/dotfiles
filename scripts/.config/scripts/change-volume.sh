@@ -12,18 +12,18 @@ function is_mute {
 }
 
 function send_notification {
-    VOLUME=`get_volume`
+    VOLUME="$( get_volume )"
     # make mute icon have precedence over all the other icons as a reminder
     if is_mute; then
-        ICON="~/.config/dunst/icons/volume_mute.svg"
+        ICON="$HOME/.config/dunst/icons/volume_mute.svg"
     elif [[ "$( get_volume )" -lt "40" ]]; then
-        ICON="~/.config/dunst/icons/volume_low.svg"
+        ICON="$HOME/.config/dunst/icons/volume_low.svg"
     elif [[ "$( get_volume )" -lt "70" ]]; then
-        ICON="~/.config/dunst/icons/volume_medium.svg"
+        ICON="$HOME/.config/dunst/icons/volume_medium.svg"
     else
-        ICON="~/.config/dunst/icons/volume_high.svg"
+        ICON="$HOME/.config/dunst/icons/volume_high.svg"
     fi
-    BAR=$(seq -s "🮂" 0 $(( VOLUME / 5 )) | sed 's/[0-9]//g')
+    BAR="$(seq -s "🮂" 0 $(( VOLUME / 5 )) | sed 's/[0-9]//g')"
     dunstify -i "$ICON" -u low -r 5556 "" "<span size='x-large'>$BAR</span>"
 }
 
