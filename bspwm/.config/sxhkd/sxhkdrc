@@ -211,6 +211,16 @@ Print
 alt + Print
     ~/.config/scripts/screenshot.sh window
 
+# take a screenshot of any selected window or region
+alt + shift + Print
+    ~/.config/scripts/screenshot.sh select
+
+### notification control
+alt + n
+    dunstctl close
+
+alt + shift + n
+    dunstctl action
 
 ### misc keybindings
 

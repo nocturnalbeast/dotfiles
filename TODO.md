@@ -6,7 +6,6 @@ These are the things that are planned to be worked on or in progress right now:
 
  * Consider migrating to yadm for bootstrapping and credential management
  * Remove .sh from scripts and add into PATH
- * Integrate flameshot for advanced screenshots
  * Rework neovim config
  * Switch to neovide for neovim
  * Use separate atload/atinit scripts for ZSH plugins
@@ -29,4 +28,3 @@ These are the things that are planned to be worked on or in progress right now:
  * Rework ZSH config
  * Match BASH config to the redone ZSH one
  * Write custom qutebrowser config
- * Create a new terminal colorscheme

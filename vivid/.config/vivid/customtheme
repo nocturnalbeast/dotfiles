@@ -1,64 +1,66 @@
 colors:
-  background_color: "0f0f0f"
+    bg: '000000'
+    fg: 'ffffff'
+    
 
-  red: "ff5e5e"
-  green: "74ff5e"
-  yellow: "ffff5e"
-  blue: "5e74ff"
-  magenta: "ff5eea"
-  cyan: "4fd8d8"
-  lightred: "ffa1a1"
-  lightgreen: "adffa1"
-  lightyellow: "ffffa1"
-  lightblue: "a1adff"
-  lightmagenta: "ffa1f2"
-  lightcyan: "a0ffff"
-  
-  grey: "888888"
-  lightgrey: "aaaaaa"
-  darkgrey: "666666"
+    black: '333333'
+    red: 'ff3333'
+    green: '33ff44'
+    yellow: 'ddff33'
+    blue: '3333ff'
+    magenta: '9933ff'
+    cyan: '33ffff'
+    white: '999999'
 
-  white: "ffffff"
-  black: "000000"
-
+    brightblack: '666666'
+    brightred: 'ff8080'
+    brightgreen: '80ff8a'
+    brightyellow: 'eaff80'
+    brightblue: '8080ff'
+    brightmagenta: 'bf80ff'
+    brightcyan: '80ffff'
+    brightwhite: 'cccccc'
 
 core:
   regular_file: {}
 
   directory:
-    foreground: cyan
+    foreground: magenta 
 
   executable_file:
-    foreground: magenta
+    foreground: red
     font-style: bold
 
   symlink:
-    foreground: magenta
+    foreground: blue
 
   broken_symlink:
-    foreground: black
+    foreground: bg
     background: red
   missing_symlink_target:
-    foreground: black
+    foreground: bg
     background: red
 
   fifo:
-    foreground: black
-    background: cyan
+    foreground: bg
+    background: blue
 
   socket:
-    foreground: black
+    foreground: bg
     background: magenta
 
   character_device:
     foreground: magenta
-    background: darkgrey
+    background: black
 
   block_device:
     foreground: cyan
-    background: darkgrey
+    background: black
 
   normal_text:
+    {}
+
+  other_writable:
     {}
 
   sticky:
@@ -67,52 +69,49 @@ core:
   sticky_other_writable:
     {}
 
-  other_writable:
-    {}
-
 text:
   special:
-    foreground: black
+    foreground: brightblack
     background: yellow
 
   todo:
     font-style: bold
 
   licenses:
-    foreground: lightgrey
+    foreground: white
 
   configuration:
-    foreground: green
+    foreground: yellow
 
   other:
-    foreground: lightyellow
+    foreground: yellow
 
 markup:
-  foreground: lightyellow
+  foreground: yellow
 
 programming:
   source:
     foreground: green
 
   tooling:
-    foreground: lightgreen
+    foreground: brightgreen
 
     continuous-integration:
-      foreground: yellow
+      foreground: green
 
 media:
-  foreground: blue
+  foreground: brightmagenta
 
 office:
-  foreground: yellow
+  foreground: red
 
 archives:
-  foreground: lightred
+  foreground: cyan
   font-style: underline
 
 executable:
-  foreground: lightblue
+  foreground: red
   font-style: bold
 
 unimportant:
-  foreground: darkgrey
+  foreground: brightblack
