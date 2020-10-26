@@ -146,13 +146,11 @@
     },
     "focus / swap master\n\n\n\nB",
     {
-      "c": "#cccccc",
-      "t": "#000000"
+      "f": 1
     },
-    "\n\n\n\nN",
+    "clear / open noti-fication\n\n\n\nN",
     {
-      "c": "#5c5c5c",
-      "t": "#ffffff"
+      "f": 2
     },
     "cycle / flip layout\n\n\n\nM",
     "add master / stack\n\n\n\n,",
