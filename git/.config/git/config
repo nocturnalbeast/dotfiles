@@ -9,7 +9,7 @@
 
 [delta]
     features = unobtrusive-line-numbers decorations
-	whitespace-error-style = 22 reverse
+    whitespace-error-style = 22 reverse
 
 [delta "unobtrusive-line-numbers"]
     line-numbers = true
@@ -20,12 +20,18 @@
     line-numbers-right-format = "{np:>4}│"
     line-numbers-left-style = white
     line-numbers-right-style = white
+    plus-style = syntax auto
+    plus-non-emph-style = syntax auto
+    plus-emph-style = syntax auto
+    minus-style = syntax auto
+    minus-non-emph-style = syntax auto
+    minus-emph-style = syntax auto
 
 [delta "decorations"]
     commit-decoration-style = bold yellow box ul
     file-style = bold cyan
-	file-modified-label = "changed:"
-	hunk-header-decoration-style = yellow box ul
+    file-modified-label = "changed:"
+    hunk-header-decoration-style = yellow box ul
 
 [alias]
     # branch
@@ -48,17 +54,17 @@
     f   = fetch
     fm  = pull
     fo  = fetch origin
-	
-	# merge
+
+    # merge
     m   = merge
     mom = merge origin/master
-	
-	# push
+
+    # push
     p   = push
     pa  = push --all
     pt  = push --tags
-	
-	# rebase
+
+    # rebase
     r   = rebase
     ra  = rebase --abort
     rc  = rebase --continue

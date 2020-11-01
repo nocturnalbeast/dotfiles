@@ -1,197 +1,455 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 
 #          _
 #  ___ ___| |_
 # |- _|_ -|   |
 # |___|___|_|_|
 
-# set zdotdir before starting
-export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 
-# install zinit if not installed
-if [[ ! -f $ZDOTDIR/zinit/bin/zinit.zsh ]]; then
-    print -P "%F{33}▓▒░ %F{220}Installing DHARMA Initiative Plugin Manager (zdharma/zinit)…%f"
-    command mkdir -p "$ZDOTDIR/zinit" && command chmod g-rwX "$ZDOTDIR/zinit"
-    command git clone https://github.com/zdharma/zinit "$ZDOTDIR/zinit/bin" && \
-        print -P "%F{33}▓▒░ %F{34}Installation successful.%f%b" || \
-        print -P "%F{160}▓▒░ The clone has failed.%f%b"
+## 1: setup plugin manager
+
+if [ -z "$ZINIT_HOME" ]; then
+    ZINIT_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/zinit"
 fi
 
-# start zinit
-source "$ZDOTDIR/zinit/bin/zinit.zsh"
+if ! test -d "$ZINIT_HOME"; then
+    mkdir -p "$ZINIT_HOME"
+    chmod g-rwX "$ZINIT_HOME"
+    git clone --depth 10 https://github.com/zdharma/zinit.git ${ZINIT_HOME}/bin
+fi
+
+typeset -gAH ZINIT
+ZINIT[HOME_DIR]="${ZINIT_HOME}"
+ZINIT[BIN_DIR]="${ZINIT[HOME_DIR]}/bin"
+ZINIT[PLUGINS_DIR]="${ZINIT[HOME_DIR]}/plugins"
+ZINIT[COMPLETIONS_DIR]="${ZINIT[HOME_DIR]}/completions"
+ZINIT[SNIPPETS_DIR]="${ZINIT[HOME_DIR]}/snippets"
+ZINIT[SERVICES_DIR]="${ZINIT[HOME_DIR]}/services"
+ZINIT[ZCOMPDUMP_PATH]="${ZINIT[HOME_DIR]}/.zcompdump"
+ZPFX="${ZINIT[HOME_DIR]}/polaris"
+
+source "$ZINIT_HOME/bin/zinit.zsh"
 autoload -Uz _zinit
 (( ${+_comps} )) && _comps[zinit]=_zinit
 
-# set zinit paths
-export ZINIT[BIN_DIR]="$ZDOTDIR/zinit/bin"
-export ZINIT[HOME_DIR]="$ZDOTDIR/zinit"
-export ZINIT[PLUGINS_DIR]="$ZDOTDIR/zinit/plugins"
-export ZINIT[COMPLETIONS_DIR]="$ZDOTDIR/zinit/completions"
-export ZINIT[SNIPPETS_DIR]="$ZDOTDIR/zinit/snippets"
-export ZINIT[ZCOMPDUMP_PATH]="$ZDOTDIR/zinit/.zcompdump"
-export ZPFX="$ZDOTDIR/zinit/polaris"
 
-# plugins for zinit
-zinit light-mode for \
-    zinit-zsh/z-a-patch-dl \
-    zinit-zsh/z-a-as-monitor \
-    zinit-zsh/z-a-bin-gem-node
+## 2: configure command history
 
-# setting up history file
 [ -z "$HISTFILE" ] && HISTFILE="$HOME/.cache/shell_history"
+HISTORY_IGNORE="(ls|clear|pwd|zsh|exit)"
 HISTSIZE=50000
-SAVEHIST=10000
+SAVEHIST=50000
 
-# specifying delimiters between words
-export WORDCHARS="*?_[]~=&;!#$%^(){}"
 
-# import environment variables
+## 3: import environment variables
+
+# all environment variables are configured here, since they are shared across all shells
 source "$HOME/.config/shell/env"
 
-# import aliases
+
+## 4: import aliases
+
+# all aliases are configured here, since they are shared across all shells
 source "$HOME/.config/shell/aliases"
 
-# prompt behavior
-setopt autocd
-setopt histignoredups
-setopt histignorespace
-setopt histexpiredupsfirst
-setopt incappendhistory
-# have highlighting on selected completion
-zstyle ':completion:*:*:*:*:*' menu select
-# case and hyphen insensitive completion matching
+
+## 5: set shell options
+
+# go into directories without requiring explicit cd command
+setopt auto_cd
+
+# better command history
+setopt append_history
+setopt inc_append_history
+setopt share_history
+setopt hist_ignore_all_dups
+setopt hist_ignore_dups
+setopt hist_ignore_space
+unsetopt hist_verify
+setopt hist_reduce_blanks
+setopt hist_save_no_dups
+setopt hist_no_store
+
+# no irritating beep
+unsetopt beep
+
+# better expansion, menus and completion
+setopt prompt_subst
+setopt list_packed
+setopt auto_param_slash
+setopt auto_remove_slash
+setopt mark_dirs
+setopt list_types
+unsetopt menu_complete
+setopt auto_list
+unsetopt list_ambiguous
+setopt auto_menu
+setopt auto_param_keys
+setopt auto_resume
+setopt complete_in_word
+setopt magic_equal_subst
+setopt path_dirs
+setopt auto_name_dirs
+setopt always_to_end
+
+# globbing
+unsetopt nomatch
+setopt glob
+setopt extended_glob
+setopt numeric_glob_sort
+
+# disable flow control
+unsetopt flow_control
+
+# enable corrections
+setopt correct
+
+# better directory stack handling
+setopt auto_pushd
+setopt pushd_ignore_dups
+setopt pushd_to_home
+setopt pushd_silent
+setopt pushdminus
+
+# other
+setopt hash_cmds
+setopt no_hup
+setopt ignore_eof
+setopt long_list_jobs
+setopt short_loops
+setopt notify
+setopt interactive_comments
+
+
+## 6: define completion behavior
+
+# enable caching
+zstyle ':completion:*' accept-exact '*(N)'
+zstyle ':completion:*' use-cache yes
+zstyle ':completion:*' cache-path $ZSH_CACHE_DIR
+
+# autocorrection
+zstyle ':completion:*' completer _complete _match _approximate
+zstyle ':completion:*:match:*' original only
+zstyle -e ':completion:*:approximate:*' max-errors 'reply=( $(( ($#PREFIX+$#SUFFIX)/3 )) numeric )'
+
+# formatting on completion
+zstyle ':completion:*:messages' format '%F{yellow} %d'
+zstyle ':completion:*:warnings' format '%B%F{red} %F{white}%d%b'
+zstyle ':completion:*:descriptions' format '%B%F{cyan} %d%f%b'
+zstyle ':completion:*:corrections' format '%B%F{green} %d ( %e) %f%b'
+
+# colorize filename completion with LS_COLORS
+zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+
+# completion grouping
+zstyle ':completion:*:matches' group 'yes'
+zstyle ':completion:*' group-name ''
+
+# sort files in completion menu by name
+zstyle ':completion:*' file-sort name
+
+# correction options
+zstyle ':completion:*:correct:*' insert-unambiguous true
+zstyle ':completion:*:correct:*' original true
+
+# show directory stack menu completion
+zstyle ':completion:*:correct:*' original true
+
+# show directory stack menu completion
+zstyle ':completion:*:*:cd:*:directory-stack' menu yes select
+
+# shell history completion options
+zstyle ':completion:*:history-words' list false
+zstyle ':completion:*:history-words' menu yes
+zstyle ':completion:*:history-words' remove-all-dups yes
+zstyle ':completion:*:history-words' stop yes
+
+# ignore certain patterns
+zstyle ':completion:*:complete:-command-::commands' ignored-patterns '*\~'
+zstyle ':completion:*:*:zcompile:*' ignored-patterns '(*~|*.zwc)'
+zstyle ':completion::(^approximate*):*:functions' ignored-patterns '_*'
+
+# case insensitive + hyphen/underscore insensitive matching
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z-_}={A-Za-z_-}' 'r:|=*' 'l:|=* r:|=*'
-# process listing completion
-zstyle ':completion:*:*:kill:*' sort false
-zstyle ':completion:*processes' list-colors '=(#b) #([0-9]#)*=0=31;31'
-zstyle ':completion:*processes' command 'ps --forest -U '${USERNAME}' -o pid,args | sed "/ps --forest -U '${USERNAME}' -o pid,args/d"'
-zstyle ':completion:*:processes-names' command "ps -U '${USERNAME}' -o comm"
-# job numbers
+
+# other completion options
+zstyle ':completion:*' menu select=2
+zstyle ':completion:*' verbose true
+zstyle -e ':completion:*' special-dirs '[[ $PREFIX = (../)#(|.|..) ]] && reply=(..)'
+zstyle ':completion:*:options' auto-description '%d'
+zstyle ':completion:*:options' description 'yes'
+zstyle ':completion:*:expand:*' tag-order all-expansions
 zstyle ':completion:*:jobs' numbers true
-# man page completion
+zstyle ':completion:*:*:-subscript-:*' tag-order indexes parameters
+zstyle ':completion:correct:' prompt 'correct to: %e'
+zstyle ':completion::complete:*' gain-privileges 1
+
+# man completion 
 zstyle ':completion:*:manuals' separate-sections true
 zstyle ':completion:*:manuals.*' insert-sections true
-# complete current dir and parent dir (only when . is already in the command)
-zstyle ':completion:*' special-dirs true
-# enable caching for completions
-zstyle ':completion::complete:*' use-cache 1
-zstyle ':completion::complete:*' cache-path $ZSH_CACHE_DIR
+zstyle ':completion:*:man:*' menu yes select
 
-# fix keybindings (note that plugins can override these)
+# process list / kill list completion
+zstyle ':completion:*:processes' command 'ps -au$USER'
+zstyle ':completion:*:*:*:*:processes' command 'ps -u $LOGNAME -o pid,user,command -w'
+zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#) ([0-9a-z-]#)*=01;36=0=01'
+zstyle ':completion:*:*:kill:*' menu yes select
+zstyle ':completion:*:*:kill:*' force-list always
+zstyle ':completion:*:*:kill:*' insert-ids single
+
+# taskwarrior completion
+zstyle ':completion:*:*:task:*' verbose yes
+zstyle ':completion:*:*:task:*:descriptions' format '%U%B%d%b%u'
+zstyle ':completion:*:*:task:*' group-name ''
+
+# make completion
+zstyle ':completion:*:make:*:targets' call-command true
+zstyle ':completion:*:make::' tag-order targets:
+zstyle ':completion:*:*:*make:*:targets' command awk \''/^[a-zA-Z0-9][^\/\t=]+:/ {print $1}'\' \$file
+
+
+## 7: define keybindings
+
 if (( ${+terminfo[smkx]} )) && (( ${+terminfo[rmkx]} )); then
-    function zle-line-init () { echoti smkx }
-    function zle-line-finish () { echoti rmkx }
+    function zle-line-init() { echoti smkx }
+    function zle-line-finish() { echoti rmkx }
     zle -N zle-line-init
     zle -N zle-line-finish
 fi
 
-autoload -Uz up-line-or-beginning-search
-autoload -Uz down-line-or-beginning-search
-zle -N up-line-or-beginning-search
-zle -N down-line-or-beginning-search
-
 typeset -g -A key
 
+# get keys from terminfo
+
+key[Insert]="$terminfo[kich1]"
+key[Delete]="$terminfo[kdch1]"
 key[Home]="$terminfo[khome]"
 key[End]="$terminfo[kend]"
-key[Insert]="$terminfo[kich1]"
-key[Backspace]="$terminfo[kbs]"
-key[Delete]="$terminfo[kdch1]"
+key[PageUp]="$terminfo[kpp]"
+key[PageDown]="$terminfo[knp]"
+
 key[Up]="$terminfo[kcuu1]"
 key[Down]="$terminfo[kcud1]"
 key[Left]="$terminfo[kcub1]"
 key[Right]="$terminfo[kcuf1]"
-key[PageUp]="$terminfo[kpp]"
-key[PageDown]="$terminfo[knp]"
 
+key[Backspace]="$terminfo[kbs]"
+key[Enter]="$terminfo[kent]"
+
+key[Function1]="$terminfo[kf1]"
+key[Function2]="$terminfo[kf2]"
+key[Function3]="$terminfo[kf3]"
+key[Function4]="$terminfo[kf4]"
+key[Function5]="$terminfo[kf5]"
+key[Function6]="$terminfo[kf6]"
+key[Function7]="$terminfo[kf7]"
+key[Function8]="$terminfo[kf8]"
+key[Function9]="$terminfo[kf9]"
+key[Function10]="$terminfo[kf10]"
+key[Function11]="$terminfo[kf11]"
+key[Function12]="$terminfo[kf12]"
+
+key[ShiftTab]="$terminfo[kcbt]"
+
+[[ -n "$key[Insert]" ]] && bindkey - "$key[Insert]" overwrite-mode
+[[ -n "$key[Delete]" ]] && bindkey - "$key[Delete]" delete-char
 [[ -n "$key[Home]" ]] && bindkey - "$key[Home]" beginning-of-line
 [[ -n "$key[End]" ]] && bindkey - "$key[End]" end-of-line
-[[ -n "$key[Insert]" ]] && bindkey - "$key[Insert]" overwrite-mode
-[[ -n "$key[Backspace]" ]] && bindkey - "$key[Backspace]" backward-delete-char
-[[ -n "$key[Delete]" ]] && bindkey - "$key[Delete]" delete-char
 [[ -n "$key[Up]" ]] && bindkey - "$key[Up]" up-line-or-history
 [[ -n "$key[Down]" ]] && bindkey - "$key[Down]" down-line-or-history
 [[ -n "$key[Left]" ]] && bindkey - "$key[Left]" backward-char
 [[ -n "$key[Right]" ]] && bindkey - "$key[Right]" forward-char
+[[ -n "$key[Backspace]" ]] && bindkey - "$key[Backspace]" backward-delete-char
+[[ -n "$key[ShiftTab]" ]] && bindkey - "$key[ShiftTab]" reverse-menu-complete
 
-function __load_hss_keys() {
-    [[ -n "$key[PageUp]" ]] && bindkey - "$key[PageUp]" history-substring-search-up
-    [[ -n "$key[PageDown]" ]] && bindkey - "$key[PageDown]" history-substring-search-down
-    bindkey - '^P' history-substring-search-up
-    bindkey - '^N' history-substring-search-down
-}
-
-# now for the ones that terminfo can't handle
+# keybindings w/o terminfo
+# NOTE: this might not work on all terminals
 # ctrl+[left,right] for moving one word at a time
 bindkey "\e[1;5D" backward-word
 bindkey "\e[1;5C" forward-word
 # ctrl+backspace to delete the word behind the cursor
-bindkey '^H' backward-kill-word
+bindkey "^H" backward-kill-word
 # ctrl+delete to delete the word in front of the cursor
 bindkey "\e[3;5~" kill-word
 
-# user plugins
-zinit wait lucid for \
-    atinit"ZINIT[COMPINIT_OPTS]=-C; zicompinit; zicdreplay" \
-        zdharma/fast-syntax-highlighting \
-    blockf \
-        zsh-users/zsh-completions \
-    atload"!_zsh_autosuggest_start" \
-        zsh-users/zsh-autosuggestions
-export ZSH_AUTOSUGGEST_STRATEGY=( history match_prev_cmd completion )
-export ZSH_AUTOSUGGEST_USE_ASYNC=1
 
-zinit ice nocompile:! pick:c.zsh atpull:%atclone atclone:'dircolors -b LS_COLORS > c.zsh'
-zinit light trapd00r/LS_COLORS
-zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+## 8: plugins
 
-zinit light unixorn/warhol.plugin.zsh
+# define hook script directories
+HOOKSCRIPT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+ATCLONE_DIR="$HOOKSCRIPT_DIR/scripts_atclone"
+ATPULL_DIR="$HOOKSCRIPT_DIR/scripts_atpull"
+ATINIT_DIR="$HOOKSCRIPT_DIR/scripts_atinit"
+ATLOAD_DIR="$HOOKSCRIPT_DIR/scripts_atload"
 
-zinit light ael-code/zsh-colored-man-pages
+# zinit annexes
+zinit light-mode for \
+        @zinit-zsh/z-a-readurl \
+        @zinit-zsh/z-a-bin-gem-node
 
-zinit ice atclone'./init.sh' nocompile'!' wait'!0'
-zinit light b4b4r07/enhancd
-export ENHANCD_DIR="$HOME/.cache/enhancd"
+# basic zsh enhancement plugins - must have in any setup
+zinit wait'1' lucid light-mode for \
+    atinit'source $ATINIT_DIR/fsyh.zsh' \
+        @zdharma/fast-syntax-highlighting \
+    atinit'source $ATINIT_DIR/autosuggestions.zsh' atload'source $ATLOAD_DIR/autosuggestions.zsh' \
+        @zsh-users/zsh-autosuggestions \
+    blockf atpull'source $ATPULL_DIR/completions.zsh' \
+        @zsh-users/zsh-completions \
+    atload'source $ATLOAD_DIR/hss.zsh' \
+        @zsh-users/zsh-history-substring-search
 
-zinit ice wait"1" lucid
-zinit light laggardkernel/zsh-thefuck
+# enhance git
+zinit wait'0' lucid light-mode for \
+    atinit'source $ATINIT_DIR/forgit.zsh' \
+        @wfxr/forgit \
+    as'program' pick'$ZPFX/bin/git-*' make'PREFIX=$ZPFX' nocompile \
+        @tj/git-extras \
+    as'program' pick'bin/git-*' nocompile \
+        @unixorn/git-extra-commands \
+    atclone'source $ATCLONE_DIR/gitcal.zsh' atpull'%atclone' make'install' sbin'bin/site_perl/git-cal' \
+        @k4rthik/git-cal \
+    sbin'git-open' \
+        @paulirish/git-open \
+    sbin'git-recent' \
+        @paulirish/git-recent \
+    sbin'git-my' \
+        @davidosomething/git-my \
+    atload'source $ATLOAD_DIR/gitcd.zsh' \
+        @viko16/gitcd.plugin.zsh
 
-zinit wait"1" lucid as"program" pick"$ZPFX/bin/fzy*" \
-    atclone"cp contrib/fzy-* $ZPFX/bin/" \
-    make"!PREFIX=$ZPFX install" for \
-        jhawthorn/fzy
+# enhance cd
+zinit wait'0' lucid light-mode for \
+        @Tarrasch/zsh-autoenv \
+    atinit'source $ATINIT_DIR/z.zsh' \
+        @agkozak/zsh-z \
+    atinit'source $ATINIT_DIR/cdgitroot.zsh' \
+        @mollifier/cd-gitroot \
+        @Tarrasch/zsh-bd \
+    atinit'source $ATINIT_DIR/marks.zsh' \
+        @jocelynmallon/zshmarks
 
-zinit ice wait"1" lucid compile'{hsmw-*,test/*}'
-zinit light zdharma/history-search-multi-word
+# colorize command output 
+zinit wait'0' lucid light-mode for \
+    as'program' atclone'$ATCLONE_DIR/grc.zsh' atpull'%atclone' compile'grc.zsh' src'grc.zsh' pick'$ZPFX/bin/grc*' \
+        @garabik/grc
 
-zinit ice wait"1" lucid atload'__load_hss_keys'
-zinit light zsh-users/zsh-history-substring-search
+# correct commands
+zinit wait'0' lucid light-mode for \
+        @laggardkernel/zsh-thefuck
 
-zinit wait"2" lucid as"null" from"gh-r" for \
-    mv"exa* -> exa" sbin  ogham/exa \
-    mv"fd* -> fd" sbin"fd/fd"  @sharkdp/fd \
-    sbin junegunn/fzf-bin
+# pair brackets and quotations
+zinit wait'0' lucid light-mode for \
+    atinit'source $ATINIT_DIR/autopair.zsh' atload'source $ATLOAD_DIR/autopair.zsh' \
+        @hlissner/zsh-autopair
 
-zinit wait"2" lucid for \
-    atinit"forgit_ignore='fgi'" \
-        wfxr/forgit
+# command to copy to clipboard
+zinit wait'0' lucid light-mode for \
+    sbin'$ZPFX/bin/yank' make'PREFIX=$ZPFX install' nocompile \
+        @mptre/yank
 
-zinit wait"2" lucid as"null" \
-    atclone'perl Makefile.PL PREFIX=$ZPFX' \
-    atpull'%atclone' make sbin"git-cal" for \
-        k4rthik/git-cal
+# use ctrl-z to jump both in and out of the program
+zinit wait'0' lucid light-mode for \
+        @mdumitru/fancy-ctrl-z
 
-zinit as"null" wait"3" lucid for \
-    sbin paulirish/git-open \
-    sbin paulirish/git-recent \
-    sbin davidosomething/git-my \
-    sbin atload"export _MENU_THEME=legacy" \
-        arzzen/git-quick-stats \
-    sbin iwata/git-now \
-    make"PREFIX=$ZPFX" tj/git-extras \
-    sbin"bin/git-dsf;bin/diff-so-fancy" zdharma/zsh-diff-so-fancy \
-    sbin"git-url;git-guclone" make"GITURL_NO_CGITURL=1" zdharma/git-url
+# emojis, cause why not?
+zinit wait'0' lucid light-mode for \
+    atinit'source $ATINIT_DIR/emojicli.zsh' \
+        @b4b4r07/emoji-cli
 
-# prompt theme
-zinit ice depth=1 atload'!source ~/.p10k.zsh' lucid nocd
-zinit light romkatv/powerlevel10k
+# remind you of your aliases
+zinit wait'0' lucid light-mode for \
+    atinit'source $ATINIT_DIR/ysu.zsh' \
+        @MichaelAquilina/zsh-you-should-use
+
+# input sudo in the current command
+zinit wait'0' lucid light-mode for \
+        OMZP::sudo
+
+# extract command
+zinit wait'0' lucid light-mode for \
+        OMZP::extract
+
+# pip completion
+zinit wait'0' lucid light-mode for \
+    as'completion' pick'_pip' atpull'source $ATPULL_DIR/pip.zsh' \
+        OMZP::pip
+
+# a ton more completions
+zinit wait'0' lucid light-mode for \
+    nocompile nocompletions \
+        @MenkeTechnologies/zsh-more-completions
+
+# programs from github releases - load binaries using zinit
+zinit wait'0' lucid from'gh-r' nocompile light-mode for \
+    bpick'gh_*.tar.gz' mv'gh*/bin/gh -> gh' sbin'gh' atload'source $ATLOAD_DIR/gh.zsh' \
+        @cli/cli \
+    bpick'hub-*' mv'hub-*/bin/hub -> hub' sbin'hub' \
+        @github/hub \
+    bpick'exa-*' mv'exa-* -> exa' sbin'exa' \
+        @ogham/exa \
+    blockf nocompletions bpick'ripgrep-*' mv'ripgrep-*/rg -> rg' sbin'rg' atclone'source $ATCLONE_DIR/ripgrep.zsh' atpull'%atclone' \
+        @BurntSushi/ripgrep \
+    blockf nocompletions bpick'fd-*' mv'fd-*/fd -> fd' sbin'fd' atclone'source $ATCLONE_DIR/fd.zsh' atpull'%atclone' \
+        @sharkdp/fd \
+    bpick'bat-*' mv'bat-*/bat -> bat' sbin'bat' \
+        @sharkdp/bat \
+    bpick'procs-*-lnx*' sbin'procs' \
+        @dalance/procs \
+    bpick'delta-*' mv'delta-*/delta -> delta' sbin'delta' \
+        @dandavison/delta \
+    pick'tldr-*' mv'tldr-* -> tldr' sbin'tldr' \
+        @dbrgn/tealdeer
+
+# completions for some of the above programs
+zinit wait'0' lucid as'completion' light-mode for \
+    mv'zsh_tealdeer -> _tldr' id-as'tealdeer-completion' \
+        https://github.com/dbrgn/tealdeer/blob/master/zsh_tealdeer \
+    mv'*zsh-completion -> _hub' id-as'hub-completion' \
+        https://github.com/github/hub/raw/master/etc/hub.zsh_completion \
+    mv'*zsh -> _exa' id-as'exa-completion' \
+        https://github.com/ogham/exa/raw/master/completions/completions.zsh
+
+# tmux - thank you @yutakatay for this one!
+if ldconfig -p | grep -q 'libevent-' && ldconfig -p | grep -q 'libncurses'; then
+    zinit wait'0' lucid from'gh-r' light-mode for \
+        bpick'tmux-*.tar.gz' sbin'tmux' atclone'source $ATCLONE_DIR/tmux.zsh' atpull'%atclone' \
+            @tmux/tmux
+elif builtin command -v tmux > /dev/null 2>&1 && test $(echo "$(tmux -V | cut -d' ' -f2) <= "2.5"" | tr -d '[:alpha:]' | bc) -eq 1; then
+    zinit wait'0' lucid from'gh-r' light-mode for \
+        bpick'*AppImage*' mv'tmux* -> tmux' sbin'tmux' \
+            @tmux/tmux
+fi
+
+# NOTE: the following may override some completion styles we've defined earlier
+#       so if fuzzy search is not important, remove the following section
+
+# fuzzy finder
+zinit wait'0' lucid from'gh-r' sbin'fzf' for \
+    atload'source $ATLOAD_DIR/fzf.zsh' \
+        @junegunn/fzf-bin
+zinit wait'0' lucid light-mode for \
+        https://github.com/junegunn/fzf/blob/master/shell/completion.zsh \
+    id-as'fzf-tmux' sbin'bin/fzf-tmux' nocompile \
+        @junegunn/fzf \
+    atload'source $ATLOAD_DIR/fzfwidgets.zsh' \
+        @ytet5uy4/fzf-widgets \
+    atinit'source $ATINIT_DIR/fz.zsh' \
+        @changyuheng/fz \
+    atload'source $ATLOAD_DIR/fzftab.zsh' \
+        @Aloxaf/fzf-tab
+
+
+## 9: prompt theme
+
+eval "$(starship init zsh)"
+if [ ! -f "$ZINIT[COMPLETIONS_DIR]/_starship" ]; then
+    starship completions zsh > "$ZINIT[COMPLETIONS_DIR]/_starship"
+fi
+
+
+## 10: post-startup actions
+
+if ! builtin command -v compinit > /dev/null 2>&1; then
+    autoload -Uz compinit && compinit -u -d "$ZINIT[ZCOMPDUMP_PATH]"
+fi

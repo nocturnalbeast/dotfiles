@@ -1,0 +1,1 @@
+alias bdgr="cd-gitroot"

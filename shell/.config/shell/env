@@ -3,14 +3,15 @@
 # |___|_|_|\_/
 
 if [ "$( basename $SHELL )" = "zsh" ]; then
-    typeset -U PATH path
+    [ ! -z "$PS1" ] && typeset -U PATH path
+    export WORDCHARS="*?[]~=&;!#$%^(){}"
 fi
 
 # set XDG spec paths
-set -a; source ~/.config/user-dirs.dirs; set +a
 export XDG_DATA_HOME=${XDG_DATA_HOME:="$HOME/.local/share"}
 export XDG_CACHE_HOME=${XDG_CACHE_HOME:="$HOME/.cache"}
 export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:="$HOME/.config"}
+set -a; source "$XDG_CONFIG_HOME/user-dirs.dirs"; set +a
 
 # disable history for less command
 export LESSHISTFILE=-
@@ -21,6 +22,10 @@ export QT_SCALE_FACTOR=1
 export QT_SCREEN_SCALE_FACTORS="1;1;1"
 export GDK_SCALE=1
 export GDK_DPI_SCALE=1
+
+# fix more qt wonkiness
+export QT_LOGGING_RULES="*.debug=false"
+export QT_STYLE_OVERRIDE="gtk2"
 
 # move everything into XDG dirs
 export XINITRC="$XDG_CONFIG_HOME/X11/xinitrc"
@@ -41,9 +46,21 @@ export VISUAL="nvim"
 export BROWSER="qutebrowser"
 export READER="zathura"
 export TERMINAL="st"
-export VIDEO="mpv"
+export MEDIA="mpv"
 export IMAGE="pqiv"
-export PAGER="less"
+
+# some pager options
+export PAGER="less -RF --mouse"
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+export BAT_PAGER="$PAGER"
+export DELTA_PAGER="$PAGER"
+
+# LS_COLORS using vivid
+if type "vivid" > /dev/null; then
+    if [ -f "$XDG_CONFIG_HOME/vivid/customtheme" ]; then
+        export LS_COLORS="$( vivid generate "$XDG_CONFIG_HOME/vivid/customtheme" )"
+    fi
+fi
 
 # clipmenu options
 export CM_DIR="$XDG_RUNTIME_DIR"

@@ -1,0 +1,214 @@
+[[columns]]
+kind = "Pid"
+style = "Yellow"
+numeric_search = true
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "User"
+style = "Green"
+numeric_search = false
+nonnumeric_search = true
+align = "Left"
+
+[[columns]]
+kind = "Separator"
+style = "White"
+numeric_search = false
+nonnumeric_search = false
+align = "Left"
+
+[[columns]]
+kind = "State"
+style = "ByState"
+numeric_search = false
+nonnumeric_search = false
+align = "Left"
+
+[[columns]]
+kind = "Nice"
+style = "Magenta"
+numeric_search = false
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "Tty"
+style = "White"
+numeric_search = false
+nonnumeric_search = false
+align = "Left"
+
+[[columns]]
+kind = "UsageCpu"
+style = "ByPercentage"
+numeric_search = false
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "UsageMem"
+style = "ByPercentage"
+numeric_search = false
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "VmPeak"
+style = "ByUnit"
+numeric_search = false
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "VmSize"
+style = "ByUnit"
+numeric_search = false
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "VmRss"
+style = "ByUnit"
+numeric_search = false
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "TcpPort"
+style = "Cyan"
+numeric_search = true
+nonnumeric_search = false
+align = "Left"
+max_width = 20
+
+[[columns]]
+kind = "UdpPort"
+style = "Cyan"
+numeric_search = true
+nonnumeric_search = false
+align = "Left"
+max_width = 20
+
+[[columns]]
+kind = "ReadBytes"
+style = "ByUnit"
+numeric_search = false
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "WriteBytes"
+style = "ByUnit"
+numeric_search = false
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "Slot"
+style = "ByUnit"
+numeric_search = false
+nonnumeric_search = false
+align = "Right"
+
+[[columns]]
+kind = "Separator"
+style = "White"
+numeric_search = false
+nonnumeric_search = false
+align = "Left"
+
+[[columns]]
+kind = "CpuTime"
+style = "Cyan"
+numeric_search = false
+nonnumeric_search = false
+align = "Left"
+
+[[columns]]
+kind = "StartTime"
+style = "Magenta"
+numeric_search = false
+nonnumeric_search = false
+align = "Left"
+
+[[columns]]
+kind = "Docker"
+style = "Green"
+numeric_search = false
+nonnumeric_search = true
+align = "Left"
+
+[[columns]]
+kind = "Separator"
+style = "White"
+numeric_search = false
+nonnumeric_search = false
+align = "Left"
+
+[[columns]]
+kind = "Command"
+style = "White"
+numeric_search = false
+nonnumeric_search = true
+align = "Left"
+
+[style]
+header = "White"
+unit = "White"
+tree = "White"
+
+[style.by_percentage]
+color_000 = "Blue"
+color_025 = "Green"
+color_050 = "Yellow"
+color_075 = "Red"
+color_100 = "Red"
+
+[style.by_state]
+color_d = "Red"
+color_r = "Green"
+color_s = "Blue"
+color_t = "Cyan"
+color_z = "Magenta"
+color_x = "Magenta"
+color_k = "Yellow"
+color_w = "Yellow"
+color_p = "Yellow"
+
+[style.by_unit]
+color_k = "Blue"
+color_m = "Green"
+color_g = "Yellow"
+color_t = "Red"
+color_p = "Red"
+color_x = "Blue"
+
+[search]
+numeric_search = "Exact"
+nonnumeric_search = "Partial"
+logic = "And"
+
+[display]
+show_self = false
+cut_to_terminal = true
+cut_to_pager = false
+cut_to_pipe = false
+color_mode = "Auto"
+separator = "│"
+ascending = "▲"
+descending = "▼"
+tree_symbols = ["│", "─", "┬", "├", "└"]
+abbr_sid = true
+
+[sort]
+column = 0
+order = "Ascending"
+
+[docker]
+path = "unix:///var/run/docker.sock"
+
+[pager]
+mode = "Always"
+command = "less -RFS --mouse"

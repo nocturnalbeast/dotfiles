@@ -22,22 +22,25 @@ if [ "$OS" = "arch" ]; then
 elif [ "$OS" = "debian" ]; then
     alias pm="sudo apt-get"
     alias pi="pm install"
-    alias pu="pm update && $PM upgrade"
+    alias pu="pm update && pm upgrade"
     alias pr="pm --purge remove"
-    alias pc="pm autoremove && $PM autoclean"
+    alias pc="pm autoremove && pm autoclean"
     alias pq="apt-cache search"
     alias pd="apt-cache show"
 fi
 
 # ls aliases
-alias ls="exa -bh --color=auto --icons"
-alias ll="exa -bhl --color=auto --icons"
-alias la="exa -bha --color=auto --icons"
-alias lt="exa -bh --tree --color=auto --icons"
-alias lal="exa -bhal --color=auto --icons"
+alias ls="exa --color=auto --icons --group-directories-first"
+alias ll="exa -bhl --color=auto --icons --group-directories-first --git"
+alias la="exa -a --color=auto --icons --group-directories-first "
+alias lt="exa -bh --tree --color=auto --icons --group-directories-first"
+alias l.="exa -d .* --color=auto --icons"
+alias lal="exa -bhal --color=auto --icons --group-directories-first --git"
 
 # make grep highlight matches
 alias grep="grep --color=auto"
+alias egrep="egrep --color=auto"
+alias fgrep="fgrep --color=auto"
 
 # use bat instead of regular cat
 alias cat="bat"
@@ -46,11 +49,27 @@ alias cat="bat"
 alias vim="nvim"
 alias vi="nvim"
 
+# don't use rm, use freedesktop.org spec trash folders instead
+alias trp="trash-put"
+alias trl="trash-list"
+alias tre="trash-empty"
+alias trr="trash-restore"
+alias trd="trash-rm"
+
 # devour script to launch gui applications
 alias dv="~/.config/scripts/devour.sh"
 
 # one-character aliases for the most used terminal applications
-alias l="exa -bh --color=auto --icons"
+alias l="exa --color=auto --icons --group-directories-first"
 alias v="nvim"
-alias g="gotop"
+alias s="gotop"
+alias g="git"
 alias c="bat"
+
+# youtube-dl aliases
+alias ytdb="youtube-dl --format bestaudio+bestvideo --no-playlist"
+alias ytda="youtube-dl --format bestaudio --extract-audio --no-playlist"
+alias ytdp="youtube-dl --format bestaudio+bestvideo --yes-playlist"
+
+# move wget-hsts file to XDG_CACHE_HOME
+alias wget="wget --hsts-file=\"$XDG_CACHE_HOME/wget-hsts\""

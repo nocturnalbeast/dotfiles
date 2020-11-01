@@ -8,7 +8,6 @@ These are the things that are planned to be worked on or in progress right now:
  * Remove .sh from scripts and add into PATH
  * Rework neovim config
  * Switch to neovide for neovim
- * Use separate atload/atinit scripts for ZSH plugins
  * Add a floating window manager as an alternative to the tiling window manager (bspwm) and the dynamic window manager (spectrwm)
  * Integrate the following commandline tools (into ZSH as well):
     * github/hub
@@ -21,10 +20,9 @@ These are the things that are planned to be worked on or in progress right now:
  * Move `~/.icons` and `~/.themes` to `~/.local/share`
  * Integrate MPRIS2 support
  * Replace `kunst-mod.sh`
+ * Create bootstrapping scripts for tools like neovim and zsh
 
 ### In Progress
 
  * **Rewrite the README file**
- * Rework ZSH config
- * Match BASH config to the redone ZSH one
  * Write custom qutebrowser config
