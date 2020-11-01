@@ -6,7 +6,7 @@ SCREENSHOTS_DIR="$XDG_PICTURES_DIR/screenshots"
 MAIM_OPTS="-o -u" 
 SLOP_OPTS="-b 2 -c 0,0,0,0.6 -q"
 
-IMAGE_PATH="$SCREENSHOTS_DIR/$( date +%Y-%m-%d_%H:%M:%S )"
+IMAGE_PATH="$SCREENSHOTS_DIR/$( date +%Y-%m-%d_%H:%M:%S ).png"
 
 STATUS="1"
 case $1 in
