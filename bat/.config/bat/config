@@ -1,3 +1,2 @@
 --theme="ansi-dark"
 --style="changes,grid,numbers,snip"
---pager="less -RF"
