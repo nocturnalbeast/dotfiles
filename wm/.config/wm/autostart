@@ -6,13 +6,13 @@
 # |__,|___|_| |___|___|_| |__,|_| |_|
 
 # load colors
-xrdb -load ~/.config/X11/.Xresources &
+xrdb -load ~/.config/X11/xresources &
 # restore the wallpaper
 nitrogen --restore &
 # launch compositor
 picom --experimental-backends &
 # launch notification daemon
-~/.config/scripts/dunst-start.sh &
+~/.config/scripts/dunst-start &
 # launch music player server
 mopidy &
 # launch clipboard manager
@@ -22,10 +22,10 @@ light-locker &
 # launch polkit agent for user authentication
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 # launch system bars
-~/.config/scripts/polybar-start.sh &
+~/.config/scripts/polybar-start &
 # launch unclutter to hide cursor when inactive
 unclutter &
 # launch kunst to grab album art on play and notify on song change
-~/.config/scripts/kunst-mod.sh --notify &
+~/.config/scripts/kunst-mod --notify &
 # set numlock key to off
 numlockx off &

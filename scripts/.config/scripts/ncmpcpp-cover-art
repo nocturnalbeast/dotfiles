@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Source: ncmpcpp-ueberzug from https://github.com/alnj/ncmpcpp-ueberzug
-# removed image retrieval, which is then offloaded to kunst-mod.sh
+# removed image retrieval, which is then offloaded to kunst-mod
 
 # SETTINGS
 image_path="/tmp/mpd_albumart.jpg"
@@ -182,7 +182,7 @@ END
     rm "/tmp/ncmpcpp_geometry.txt"
 
     if ! is_font_size_successfully_computed; then
-        echo "Failed to guess font size, try setting it in ncmpcpp_cover_art.sh settings"
+        echo "Failed to guess font size, try setting it in ncmpcpp_cover_art settings"
     fi
 }
 

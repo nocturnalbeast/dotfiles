@@ -57,7 +57,7 @@ alias trr="trash-restore"
 alias trd="trash-rm"
 
 # devour script to launch gui applications
-alias dv="~/.config/scripts/devour.sh"
+alias dv="~/.config/scripts/devour"
 
 # one-character aliases for the most used terminal applications
 alias l="exa --color=auto --icons --group-directories-first"

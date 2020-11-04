@@ -12,7 +12,7 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
+MENU="$HOME/.config/scripts/dmenu-helper run_menu"
 
 MUSIC_DIR="$XDG_MUSIC_DIR"
 # current image cover art location

@@ -33,4 +33,4 @@ case $1 in
     mute) amixer -D pulse set Master 1+ toggle > /dev/null ;;
 esac
 
-[[ "$( $HOME/.config/scripts/polybar-helper.sh get_state )" == "yes" ]] && send_notification
+[[ "$( "$HOME"/.config/scripts/polybar-helper get_state )" == "yes" ]] && send_notification

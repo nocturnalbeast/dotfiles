@@ -10,6 +10,20 @@ Xft.autohint:   false
 Xft.hintstyle:  hintslight
 Xft.lcdfilter:  lcddefault
 
+! transparency values
+*.alpha:        0.85
+*.alphaunfocus: 0.85
+
+! inner border
+*.borderpx:     4
+
+! spaces per tab
+*.tabspaces:    4
+
+! character box scale
+*.cwscale:      1
+*.chscale:      1
+
 ! special
 *.foreground:   #ffffff
 *.background:   #000000

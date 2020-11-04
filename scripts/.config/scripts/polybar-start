@@ -36,4 +36,4 @@ polybar-msg -p "$BARTWO_PID" cmd hide >/dev/null 2>&1
 
 # initialize the state file for the helper script
 rm -f ~/.cache/bar_state
-$HOME/.config/scripts/polybar-helper.sh init
+$HOME/.config/scripts/polybar-helper init

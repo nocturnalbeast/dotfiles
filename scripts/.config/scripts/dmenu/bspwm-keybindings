@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MENU="$HOME/.config/scripts/dmenu-helper.sh custom_menu"
+MENU="$HOME/.config/scripts/dmenu-helper custom_menu"
 ICON="$XDG_CONFIG_HOME/dunst/icons/keyboard.svg"
 SXHKDRC_PATH="$XDG_CONFIG_HOME/sxhkd/sxhkdrc"
 

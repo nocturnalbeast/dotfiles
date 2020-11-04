@@ -8,7 +8,7 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
+MENU="$HOME/.config/scripts/dmenu-helper run_menu"
 
 # the location of the frecency history file
 HISTORY_LOC="$HOME/.cache/frecency_launcher/history"

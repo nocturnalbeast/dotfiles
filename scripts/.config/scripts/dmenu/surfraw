@@ -11,7 +11,7 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
+MENU="$HOME/.config/scripts/dmenu-helper run_menu"
 
 SEARCH_ELVI=$( echo "${@:1}" )
 SEARCH_TERM=$( echo "${@:2}" )

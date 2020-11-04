@@ -59,11 +59,11 @@ spectrwm_get_padding() {
 }
 
 spectrwm_enable_padding() {
-    ~/.config/scripts/spectrwm-region-helper.sh
+    ~/.config/scripts/spectrwm-region-helper
 }
 
 spectrwm_disable_padding() {
-    ~/.config/scripts/spectrwm-region-helper.sh disable_padding
+    ~/.config/scripts/spectrwm-region-helper disable_padding
 }
 
 # now for the wrapper functions that invoke the functions above based on which wm we're running

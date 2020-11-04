@@ -21,8 +21,8 @@ get_options() {
 }
 
 polybar_control() {
-    $HOME/.config/scripts/polybar-helper.sh disable >/dev/null 2>&1
-    trap "$HOME/.config/scripts/polybar-helper.sh enable >/dev/null 2>&1" EXIT
+    $HOME/.config/scripts/polybar-helper disable >/dev/null 2>&1
+    trap "$HOME/.config/scripts/polybar-helper enable >/dev/null 2>&1" EXIT
 }
 
 menu() {

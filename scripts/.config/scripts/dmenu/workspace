@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-MENU="$HOME/.config/scripts/dmenu-helper.sh run_menu"
+MENU="$HOME/.config/scripts/dmenu-helper run_menu"
 
 DEPENDENCIES=(wmctrl)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do

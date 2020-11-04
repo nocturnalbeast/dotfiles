@@ -1,10 +1,12 @@
-ALIAS_FILE="$HOME/.config/shell/aliases"
-ENV_FILE="$HOME/.config/shell/env"
+#!/usr/bin/env sh
+
+ALIAS_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases"
+ENV_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/shell/env"
 
 if [ -f "$ENV_FILE" ]; then
-    source "$ENV_FILE"
+    . "$ENV_FILE"
 fi
 
 if [ -f "$ALIAS_FILE" ]; then
-    source "$ALIAS_FILE"
+    . "$ALIAS_FILE"
 fi

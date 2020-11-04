@@ -8,7 +8,7 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-MENU="$HOME/.config/scripts/dmenu-helper.sh custom_menu"
+MENU="$HOME/.config/scripts/dmenu-helper custom_menu"
 
 REGEX=$( $MENU "-l $CM_HISTLENGTH" " 﫧  " "$( clipdel ".*" )" )
 [[ "$REGEX" == "" ]] && exit 0
