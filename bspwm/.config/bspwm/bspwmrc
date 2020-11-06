@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 #  _
 # | |_ ___ ___ _ _ _ _____
@@ -7,9 +7,9 @@
 #         |_|
 
 # launch the autostart script
-~/.config/wm/autostart &
+"${XDG_CONFIG_HOME:-$HOME/.config}"/wm/autostart &
 # launch simple x hotkey daemon
-sxhkd -c ~/.config/sxhkd/sxhkdrc &
+sxhkd -c "${XDG_CONFIG_HOME:-$HOME/.config}/sxhkd/sxhkdrc" &
 
 # default 10-workspace setup
 bspc monitor -d I II III IV V VI VII VIII IX X
@@ -38,10 +38,9 @@ bspc config presel_feedback_color   "#1A1A1A"
 
 # rules for windows that are supposed to float
 bspc rule -a nitrogen               state=floating center=on
+bspc rule -a sxiv                   state=floating center=on
 bspc rule -a Lxappearance           state=floating center=on
 bspc rule -a "*:floating"           state=floating center=on
-# specific rule for conky
-bspc rule -a Conky                  sticky=on manage=off lower=on
 # allow terminals to be launched on any workspace even if the default one for terminals is the first one
 bspc rule -a st                     follow=on
 # prefer monocle (fullscreen) layout for certain workspaces
@@ -64,4 +63,4 @@ bspc rule -a TelegramDesktop         desktop='^8' follow=on
 bspc rule -a "Syncthing GTK"         desktop='^8' follow=on
 bspc rule -a Transmission-gtk        desktop='^8' follow=on
 bspc rule -a Uget-gtk                desktop='^8' follow=on
-bspc rule -a st:gotop                desktop='^9' follow=on
+bspc rule -a "System Monitor"        desktop='^9' follow=on

@@ -21,7 +21,7 @@ alt + {_,shift} + grave
 
 # change focus to window in specified direction - if floating move window in given direction
 alt + {Left,Down,Up,Right,h,j,k,l}
-    ~/.config/scripts/bspwm-focus {west,south,north,east,west,south,north,east}
+    bspwm-focus {west,south,north,east,west,south,north,east}
 
 # switch with window in specified direction
 alt + shift + {Left,Down,Up,Right,h,j,k,l}
@@ -43,7 +43,7 @@ alt + {_,shift} + q
 
 # change mode of the focused window
 alt + {s,d,f}
-    ~/.config/scripts/bspwm-mode {pseudo_tiled,floating,fullscreen}
+    bspwm-mode {pseudo_tiled,floating,fullscreen}
 
 # cycle through layouts on the active workspace
 alt + m
@@ -59,66 +59,66 @@ alt + {_,shift} + r
 
 # resize the active window to the given direction
 super + {Left,Down,Up,Right,h,j,k,l}
-    ~/.config/scripts/bspwm-resize {west,south,north,east,west,south,north,east} 20
+    bspwm-resize {west,south,north,east,west,south,north,east} 20
 
 # toggle between bars
 alt + t
-    ~/.config/scripts/polybar-helper switch
+    polybar-helper switch
 
 # toggle between global visible state of bar
 alt + shift + t
-    ~/.config/scripts/polybar-helper toggle_all
+    polybar-helper toggle_all
 
 
 ### keybindings for different dmenu scripts
 
 # app menu
 super + a
-    ~/.config/scripts/dmenu/apps launch
+    menu-apps launch
 
 # app menu - refresh entries
 super + shift + a
-    ~/.config/scripts/dmenu/apps refresh
+    menu-apps refresh
 
 # power menu
 super + p
-    ~/.config/scripts/dmenu/power
+    menu-power
 
 # window menu
 super + Tab
-    ~/.config/scripts/dmenu/window
+    menu-window
 
 # workspace menu
 super + grave
-    ~/.config/scripts/dmenu/workspace
+    menu-workspace
 
 # calculator menu
 super + c
-    ~/.config/scripts/dmenu/calc
+    menu-calc
 
 # kill menu
 super + q
-    ~/.config/scripts/dmenu/kill
+    menu-kill
 
 # clipboard menu
 super + b
-    ~/.config/scripts/dmenu/clipboard
+    menu-clipboard
 
 # clipboard delete menu
 super + shift + b
-    ~/.config/scripts/dmenu/clipdelete
+    menu-clipdelete
 
 # web search menu
 super + o
-    ~/.config/scripts/dmenu/surfraw
+    menu-surfraw
 
 # video menu
 super + i
-    ~/.config/scripts/dmenu/video
+    menu-video
 
 # music menu
 super + shift + m
-    ~/.config/scripts/dmenu/mpd
+    menu-music
 
 
 ### keybindings for most used applications
@@ -148,7 +148,7 @@ super + v
 
 # launch music player
 super + m
-    st -t "Music" -e ~/.config/scripts/ncmpcpp-ueberzug
+    st -t "Music" -e ncmpcpp-ueberzug
 
 # launch podcast manager
 super + u
@@ -167,15 +167,15 @@ super + n
 
 # decrease volume
 XF86AudioLowerVolume
-    ~/.config/scripts/change-volume down
+    change-volume down
 
 # increase volume
 XF86AudioRaiseVolume
-    ~/.config/scripts/change-volume up
+    change-volume up
 
 # toggle mute
 XF86AudioMute
-    ~/.config/scripts/change-volume mute
+    change-volume mute
 
 # play/pause mpd
 XF86AudioPlay
@@ -195,25 +195,25 @@ XF86AudioPrev
 
 # increase brightness of the display
 XF86MonBrightnessUp
-    ~/.config/scripts/change-brightness increase
+    change-brightness increase
 
 # decrease brightness of the display
 XF86MonBrightnessDown
-    ~/.config/scripts/change-brightness decrease
+    change-brightness decrease
 
 ### keybindings for taking screenshots
 
 # take a screenshot of the current workspace
 Print
-    ~/.config/scripts/screenshot full
+    screenshot full
 
 # take a screenshot of the focused window
 alt + Print
-    ~/.config/scripts/screenshot window
+    screenshot window
 
 # take a screenshot of any selected window or region
 alt + shift + Print
-    ~/.config/scripts/screenshot select
+    screenshot select
 
 ### notification control
 alt + n
@@ -234,4 +234,4 @@ alt + shift + Escape
 
 # show help dialog for keybindings if needed
 alt + slash
-    ~/.config/scripts/dmenu/bspwm-keybindings
+    menu-keybindings-bspwm

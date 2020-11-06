@@ -98,7 +98,7 @@ logout-command = "bspc quit"
 
 terminal-command = "st -t Terminal &"
 browser-command = "qutebrowser &"
-editor-command = "st -t NeoVim -e 'zsh -c nvim &"
+editor-command = "st -t Neovim -e 'zsh -c nvim' &"
 fm-command = "thunar &"
 
 mpd-host = 127.0.0.1
@@ -204,7 +204,7 @@ type = custom/script
 interval = 86400
 tail = false
 
-exec = for i in `seq $( grep '^mod-margin' ~/.config/polybar/config | tr -d ' ' | cut -f 2 -d = | grep -E '[0-9]+' )`; do echo -n ' '; done
+exec = for i in `seq $( grep '^mod-margin' "${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/config" | tr -d ' ' | cut -f 2 -d = | grep -E '[0-9]+' )`; do echo -n ' '; done
 
 format-background = ${active-colors.background}
 format-foreground = ${active-colors.foreground}
@@ -216,7 +216,7 @@ type = custom/script
 interval = 86400
 tail = false
 
-exec = for i in `seq $( grep '^header-padding' ~/.config/polybar/config | tr -d ' ' | cut -f 2 -d = | grep -E '[0-9]+' )`; do echo -n ' '; done
+exec = for i in `seq $( grep '^header-padding' "${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/config" | tr -d ' ' | cut -f 2 -d = | grep -E '[0-9]+' )`; do echo -n ' '; done
 
 format-background = ${active-colors.header-background}
 format-foreground = ${active-colors.header-foreground}
@@ -228,7 +228,7 @@ type = custom/script
 interval = 86400
 tail = false
 
-exec = for i in `seq $( grep '^content-padding' ~/.config/polybar/config | tr -d ' ' | cut -f 2 -d = | grep -E '[0-9]+' )`; do echo -n ' '; done
+exec = for i in `seq $( grep '^content-padding' "${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/config" | tr -d ' ' | cut -f 2 -d = | grep -E '[0-9]+' )`; do echo -n ' '; done
 
 format-background = ${active-colors.content-background}
 format-foreground = ${active-colors.content-foreground}
@@ -239,7 +239,7 @@ type = custom/text
 
 content = 
 
-click-left = ~/.config/scripts/polybar-helper switch
+click-left = polybar-helper switch
 
 content-padding = ${margins.header-padding}
 
@@ -416,7 +416,7 @@ type = custom/script
 
 tail = true
 interval = 1
-exec = ~/.config/scripts/mpd-togglebutton
+exec = mpd-togglebutton
 
 click-left = mpc toggle
 click-right = mpc stop

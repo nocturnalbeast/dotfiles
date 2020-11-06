@@ -53,7 +53,7 @@ startup_screen                      = visualizer
 startup_slave_screen                = playlist
 startup_slave_screen_focus          = yes
 locked_screen_width_part            = 31
-execute_on_song_change              = "sleep 2 && ~/.config/scripts/ncmpcpp-cover-art"
+execute_on_song_change              = "sleep 2 && ncmpcpp-cover-art"
 
 # others
 autocenter_mode                     = no

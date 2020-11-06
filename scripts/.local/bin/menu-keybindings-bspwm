@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 
-MENU="$HOME/.config/scripts/dmenu-helper custom_menu"
 ICON="$XDG_CONFIG_HOME/dunst/icons/keyboard.svg"
 SXHKDRC_PATH="$XDG_CONFIG_HOME/sxhkd/sxhkdrc"
 
 ENTRIES="$( awk '/^[A-Za-z]/ && last {print $0,"::",last} {last=""} /^#/{last=$0}' "$SXHKDRC_PATH" | column -t -s '::' | sed 's/#/->/' )"
 
-SEL_KEYBIND="$( $MENU "-l 5" "   " "$ENTRIES" )"
+SEL_KEYBIND="$( dmenu-helper custom_menu "-l 5" "   " "$ENTRIES" )"
 [[ "$SEL_KEYBIND" == "" ]] && exit 0
 
 notify-send -t 5000 "Selected keybind:" "$( echo "$SEL_KEYBIND" | tr -s "[:blank:]" " " | sed 's/\(.*\) -> \([^ ]*\)/<b>\1<\/b>\n\2/' )" -i "$ICON"

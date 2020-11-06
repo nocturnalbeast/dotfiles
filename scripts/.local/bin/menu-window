@@ -8,8 +8,6 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-MENU="$HOME/.config/scripts/dmenu-helper run_menu"
-
 mapfile -t WINDOWS < <( wmctrl -l | awk '{print $1":"$2":"substr($0, index($0,$4))};' )
 
 for IDX in ${!WINDOWS[*]}; do
@@ -17,5 +15,5 @@ for IDX in ${!WINDOWS[*]}; do
     WIDS+=("$( echo "${WINDOWS[$IDX]}" | cut -f 1 -d : )")
 done
 
-SEL_WNUM=$( $MENU "   " "$( printf '%s\n' "${WINDOWS_WWN[@]}" )" | cut -f 1 -d . )
+SEL_WNUM=$( dmenu-helper run_menu "   " "$( printf '%s\n' "${WINDOWS_WWN[@]}" )" | cut -f 1 -d . )
 [ "$SEL_WNUM" != "" ] && wmctrl -ia "${WIDS[$SEL_WNUM]}" &

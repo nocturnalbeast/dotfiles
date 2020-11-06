@@ -17,4 +17,4 @@ function send_notification {
 }
 
 xbacklight -${1:0:3} 5
-[[ "$( "$HOME"/.config/scripts/polybar-helper get_state )" == "yes" ]] && send_notification
+[[ "$( polybar-helper get_state )" == "yes" ]] && send_notification

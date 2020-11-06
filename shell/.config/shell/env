@@ -2,9 +2,9 @@
 # | -_|   | | |
 # |___|_|_|\_/
 
-if [ "$( basename $SHELL )" = "zsh" ]; then
-    [ ! -z "$PS1" ] && typeset -U PATH path
-    export WORDCHARS="*?[]~=&;!#$%^(){}"
+# import user scripts
+if [ -d "$HOME/.local/bin" ]; then
+    export PATH=$HOME/.local/bin:$PATH
 fi
 
 # set XDG spec paths
@@ -46,8 +46,8 @@ export VISUAL="nvim"
 export BROWSER="qutebrowser"
 export READER="zathura"
 export TERMINAL="st"
-export MEDIA="mpv"
-export IMAGE="pqiv"
+export VIDEO="mpv"
+export IMAGE="sxiv"
 
 # some pager options
 export PAGER="less -RF --mouse"

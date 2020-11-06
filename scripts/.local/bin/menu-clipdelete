@@ -8,9 +8,7 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-MENU_OPTS="$( $HOME/.config/scripts/dmenu-helper get_options )"
+REGEX=$( dmenu-helper custom_menu "-l $CM_HISTLENGTH" " 﫧  " "$( clipdel ".*" )" )
+[[ "$REGEX" == "" ]] && exit 0
 
-~/.config/scripts/polybar-helper disable >/dev/null 2>&1
-trap "~/.config/scripts/polybar-helper enable >/dev/null 2>&1" EXIT
-
-clipmenu $MENU_OPTS -p "   "
+clipdel -d "$REGEX"

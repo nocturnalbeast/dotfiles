@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-MENU="$HOME/.config/scripts/dmenu-helper run_menu"
-
-SELECTION=$( $MENU " ﮊ  " "$( ps -e -o pid,user,cmd | tail -n +2 | awk '{print $1":"$2":"substr($0, index($0,$3))}' )" )
+SELECTION=$( dmenu-helper run_menu " ﮊ  " "$( ps -e -o pid,user,cmd | tail -n +2 | awk '{print $1":"$2":"substr($0, index($0,$3))}' )" )
 
 [[ -z "$SELECTION" ]] && exit
 

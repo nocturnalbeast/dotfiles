@@ -335,6 +335,6 @@ style = "bold yellow"
 
 [custom.shellindicator]
 command = "echo ﬦ"
-when = """ test "$( basename "$SHELL" )" != "zsh" """
+when = """ test "$( basename "$0" )" != "zsh" """
 format = "([$output]($style) )"
 style = "bold cyan"

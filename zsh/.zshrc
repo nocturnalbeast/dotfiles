@@ -45,6 +45,9 @@ SAVEHIST=50000
 
 # all environment variables are configured here, since they are shared across all shells
 source "$HOME/.config/shell/env"
+# set zsh-specific variables
+[ ! -z "$PS1" ] && typeset -U PATH path
+export WORDCHARS="*?[]~=&;!#$%^(){}"
 
 
 ## 4: import aliases

@@ -11,10 +11,8 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-MENU="$HOME/.config/scripts/dmenu-helper run_menu"
-
 ANSWER=$( echo "$@" | bc -l | sed '/\./ s/\.\{0,1\}0\{1,\}$//' )
-ACTION=$( $MENU "  $ANSWER " " Copy to clipboard\n Clear" )
+ACTION=$( dmenu-helper run_menu "  $ANSWER " " Copy to clipboard\n Clear" )
 
 case $ACTION in
     " Clear") $0 ;;

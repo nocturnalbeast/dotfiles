@@ -55,15 +55,15 @@ bspwm_disable_padding() {
 }
 
 spectrwm_get_padding() {
-    sed -n "s/^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:\(.*\)/\1/p" ~/.config/spectrwm/spectrwm.conf | rev | cut -f 1 -d '+' | rev
+    sed -n "s/^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:\(.*\)/\1/p" "$XDG_CONFIG_HOME/spectrwm/spectrwm.conf" | rev | cut -f 1 -d '+' | rev
 }
 
 spectrwm_enable_padding() {
-    ~/.config/scripts/spectrwm-region-helper
+    spectrwm-region-helper
 }
 
 spectrwm_disable_padding() {
-    ~/.config/scripts/spectrwm-region-helper disable_padding
+    spectrwm-region-helper disable_padding
 }
 
 # now for the wrapper functions that invoke the functions above based on which wm we're running

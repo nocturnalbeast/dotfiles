@@ -8,8 +8,6 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-MENU="$HOME/.config/scripts/dmenu-helper run_menu"
-
 # external downloader args 
 ED_ARGS="-c -j 3 -x 3 -s 3 -k 1M"
 
@@ -22,18 +20,18 @@ DEST_DIR="$XDG_VIDEOS_DIR/downloaded"
 # notification icon
 ICON="$HOME/.config/dunst/icons/video.svg"
 
-MAIN_ACTION="$( $MENU " 輸 " " Use link from clipboard\n Search for a video" )"
+MAIN_ACTION="$( dmenu-helper run_menu " 輸 " " Use link from clipboard\n Search for a video" )"
 [ "$MAIN_ACTION" == "" ] && exit 0
 
 URL=""
 case "$MAIN_ACTION" in
     ' Use link from clipboard')
         # use regex to match possible urls from clipboard history
-        URL="$( $MENU " 輸 Select URL: " "$( clipdel ".*" | xargs -0 | grep -Eo "(((http|magnet|https|ftp|gopher)|mailto):(//|\?)?[^ <>\"\t]*|(www|ftp)[0-9]?\\.[-a-z0-9.]+)[^ .,;\\n\r<\">\\):]?[^, <>\"\]*[^ .,;\\n\r<\">\\):]" )")"
+        URL="$( dmenu-helper run_menu " 輸 Select URL: " "$( clipdel ".*" | xargs -0 | grep -Eo "(((http|magnet|https|ftp|gopher)|mailto):(//|\?)?[^ <>\"\t]*|(www|ftp)[0-9]?\\.[-a-z0-9.]+)[^ .,;\\n\r<\">\\):]?[^, <>\"\]*[^ .,;\\n\r<\">\\):]" )")"
         ;;
     ' Search for a video')
         # get a video link from from youtube from search term
-        SEARCH_QUERY="$( $MENU "  Enter search term: " "" )"
+        SEARCH_QUERY="$( dmenu-helper run_menu "  Enter search term: " "" )"
         [ "$SEARCH_QUERY" == "" ] && exit 0
         ID_ARR=()
         TITLE_ARR=()
@@ -46,7 +44,7 @@ case "$MAIN_ACTION" in
             notify-send "Failed to get search results for:" "$SEARCH_QUERY" -i "$ICON"
             exit 1
         fi
-        SEL_TITLE="$( $MENU "  Search results: " "$( for IDX in "${!TITLE_ARR[@]}"; do echo "$(( $IDX + 1 )):${TITLE_ARR[$IDX]}"; done )" )"
+        SEL_TITLE="$( dmenu-helper run_menu "  Search results: " "$( for IDX in "${!TITLE_ARR[@]}"; do echo "$(( $IDX + 1 )):${TITLE_ARR[$IDX]}"; done )" )"
         [ "$SEL_TITLE" == "" ] && exit 0
         URL="https://www.youtube.com/watch?v=${ID_ARR[$(( $( echo "$SEL_TITLE" | cut -f 1 -d : ) - 1 ))]}"
         ;;
@@ -58,7 +56,7 @@ esac
 VNAME="$( youtube-dl -e "$URL" )"
 
 # display options; whether to stream in mpv or in browser or to download
-LINK_ACTION="$( $MENU " 輸 What to do with this URL? " "契 Stream\n Open in browser\n Download\n Queue audio in player" )"
+LINK_ACTION="$( dmenu-helper run_menu " 輸 What to do with this URL? " "契 Stream\n Open in browser\n Download\n Queue audio in player" )"
 [ "$LINK_ACTION" == "" ] && exit 0
 
 case "$LINK_ACTION" in
@@ -80,7 +78,7 @@ case "$LINK_ACTION" in
         # get the available formats
         AVAIL_FMTS="$( youtube-dl -F "$URL" | tail -n +4 | sed 's/audio only/audio/g; s/ \+/,/g' | tr -s ',' ':' )"
         # clean up the format a bit and then show all of them for selection
-        QUALITY="$( $MENU " 輸 Select quality: " "$AVAIL_FMTS" | cut -f 1 -d : )"
+        QUALITY="$( dmenu-helper run_menu " 輸 Select quality: " "$AVAIL_FMTS" | cut -f 1 -d : )"
         # if nothing is selected, exit
         [ "$QUALITY" == "" ] && exit 0
         # if destination folder does not exist, create one
@@ -98,7 +96,7 @@ case "$LINK_ACTION" in
         # now that we have mopidy we can do this
         mpc add "yt:$URL"
         notify-send "Added audio to queue." -i "$ICON"
-        PN_CHOICE="$( $MENU "  Play added song now? " "yes\nno" )"
+        PN_CHOICE="$( dmenu-helper run_menu "  Play added song now? " "yes\nno" )"
         [ "$PN_CHOICE" == "yes" ] && mpc play $( mpc playlist | wc -l )
         ;;
 esac
