@@ -5,7 +5,7 @@
 
 # directories
 ncmpcpp_directory = ~/.cache/ncmpcpp
-lyrics_directory = ~/.cache/lyrics
+lyrics_directory = ~/.local/share/lyrics
 
 # formatting strings
 song_list_format                    = " $8{%t}|{%f}$9 $R$5%a$9 $b¦$/b $7%l$9 "
@@ -53,7 +53,7 @@ startup_screen                      = visualizer
 startup_slave_screen                = playlist
 startup_slave_screen_focus          = yes
 locked_screen_width_part            = 31
-execute_on_song_change              = "sleep 2 && ncmpcpp-cover-art"
+execute_on_song_change              = "ncmpcpp-cover-art"
 
 # others
 autocenter_mode                     = no

@@ -7,7 +7,7 @@ export FIFO_UEBERZUG="/tmp/mpd-ueberzug-${PPID}"
 cleanup() {
     rm "$FIFO_UEBERZUG" 2>/dev/null
     pkill -P $$ 2>/dev/null
-    pkill ncmpcpp_cover_art
+    ps aux | grep ncmpcpp-cover-art | grep -v grep | awk '{print $2}' | xargs -n 1 kill
 }
 
 pkill -P $$ 2>/dev/null

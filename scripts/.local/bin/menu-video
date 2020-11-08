@@ -20,35 +20,44 @@ DEST_DIR="$XDG_VIDEOS_DIR/downloaded"
 # notification icon
 ICON="$HOME/.config/dunst/icons/video.svg"
 
-MAIN_ACTION="$( dmenu-helper run_menu " 輸 " " Use link from clipboard\n Search for a video" )"
-[ "$MAIN_ACTION" == "" ] && exit 0
+# url filtering regex
+URL_REGEX="(((http|magnet|https|ftp|gopher)|mailto):(//|\?)?[^ <>\"\t]*|(www|ftp)[0-9]?\\.[-a-z0-9.]+)[^ .,;\\n\r<\">\\):]?[^, <>\"\]*[^ .,;\\n\r<\">\\):]"
 
-URL=""
-case "$MAIN_ACTION" in
-    ' Use link from clipboard')
-        # use regex to match possible urls from clipboard history
-        URL="$( dmenu-helper run_menu " 輸 Select URL: " "$( clipdel ".*" | xargs -0 | grep -Eo "(((http|magnet|https|ftp|gopher)|mailto):(//|\?)?[^ <>\"\t]*|(www|ftp)[0-9]?\\.[-a-z0-9.]+)[^ .,;\\n\r<\">\\):]?[^, <>\"\]*[^ .,;\\n\r<\">\\):]" )")"
-        ;;
-    ' Search for a video')
-        # get a video link from from youtube from search term
-        SEARCH_QUERY="$( dmenu-helper run_menu "  Enter search term: " "" )"
-        [ "$SEARCH_QUERY" == "" ] && exit 0
-        ID_ARR=()
-        TITLE_ARR=()
-        while IFS=$'\n' read -r VID_TITLE; do
-            IFS=$'\n' read -r VID_ID
-            ID_ARR+=( "$VID_ID" )
-            TITLE_ARR+=( "$VID_TITLE" )
-        done <<< "$( youtube-dl --default-search ytsearch$SEARCH_RESULT_NUM "$SEARCH_QUERY" --get-id --get-title 2>/dev/null )"
-        if [ "${ID_ARR[0]}" == "" ]; then
-            notify-send "Failed to get search results for:" "$SEARCH_QUERY" -i "$ICON"
-            exit 1
-        fi
-        SEL_TITLE="$( dmenu-helper run_menu "  Search results: " "$( for IDX in "${!TITLE_ARR[@]}"; do echo "$(( $IDX + 1 )):${TITLE_ARR[$IDX]}"; done )" )"
-        [ "$SEL_TITLE" == "" ] && exit 0
-        URL="https://www.youtube.com/watch?v=${ID_ARR[$(( $( echo "$SEL_TITLE" | cut -f 1 -d : ) - 1 ))]}"
-        ;;
-esac
+# only use dmenu to search for video / grep from clipboard if there's no argument provided to the script
+if [ -z "$1" ]; then
+    MAIN_ACTION="$( dmenu-helper run_menu " 輸 " " Use link from clipboard\n Search for a video" )"
+    [ "$MAIN_ACTION" == "" ] && exit 0
+
+    URL=""
+    case "$MAIN_ACTION" in
+        ' Use link from clipboard')
+            # use regex to match possible urls from clipboard history
+            URL="$( dmenu-helper run_menu " 輸 Select URL: " "$( clipdel ".*" | xargs -0 | grep -Eo "$URL_REGEX" )" )"
+            ;;
+        ' Search for a video')
+            # get a video link from from youtube from search term
+            SEARCH_QUERY="$( dmenu-helper run_menu "  Enter search term: " "" )"
+            [ "$SEARCH_QUERY" == "" ] && exit 0
+            ID_ARR=()
+            TITLE_ARR=()
+            while IFS=$'\n' read -r VID_TITLE; do
+                IFS=$'\n' read -r VID_ID
+                ID_ARR+=( "$VID_ID" )
+                TITLE_ARR+=( "$VID_TITLE" )
+            done <<< "$( youtube-dl --default-search ytsearch$SEARCH_RESULT_NUM "$SEARCH_QUERY" --get-id --get-title 2>/dev/null )"
+            if [ "${ID_ARR[0]}" == "" ]; then
+                notify-send "Failed to get search results for:" "$SEARCH_QUERY" -i "$ICON"
+                exit 1
+            fi
+            SEL_TITLE="$( dmenu-helper run_menu "  Search results: " "$( for IDX in "${!TITLE_ARR[@]}"; do echo "$(( $IDX + 1 )):${TITLE_ARR[$IDX]}"; done )" )"
+            [ "$SEL_TITLE" == "" ] && exit 0
+            URL="https://www.youtube.com/watch?v=${ID_ARR[$(( $( echo "$SEL_TITLE" | cut -f 1 -d : ) - 1 ))]}"
+            ;;
+    esac
+else
+    # else just filter out the url from the argument
+    URL="$( echo "$1" | grep -Eo "$URL_REGEX" )"
+fi
 
 [ "$URL" == "" ] && exit 0
 

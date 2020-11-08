@@ -11,7 +11,6 @@ These are the things that are planned to be worked on or in progress right now:
  * Integrate any of the following terminal multiplexers - tmux/screen/byobu
  * Move `~/.icons` and `~/.themes` to `~/.local/share`
  * Integrate MPRIS2 support
- * Replace `kunst-mod.sh`
  * Create bootstrapping scripts for tools like neovim and zsh
  * Add logiops config for MX Master 3
  * Add castero config

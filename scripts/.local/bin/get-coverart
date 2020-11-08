@@ -1,0 +1,288 @@
+#!/usr/bin/env python
+
+"""
+This is a python script that manages coverart for display with the mopidy
+music server.
+Supported backends include:
+    Spotify, SoundCloud, YouTube, Stream and Local.
+Supported methods of obtaining album art include:
+    Spotify, MusicBrainz and embed art.
+    (SoundCloud extension does not have a get_images implementation)
+This script caches all images to $XDG_CACHE_HOME/cover_art directory to reduce
+network/filesystem usage.
+The final output of this script is a path - the path to cached image.
+This can be used with scripts like ncmpcpp-ueberzug or specific conky scripts
+to show cover art for the current track.
+It can also be used in a standalone fashion, to cache cover art preemptively.
+"""
+
+import argparse
+import base64
+import configparser
+import json
+import os
+import shutil
+import sys
+import uuid
+from pathlib import Path
+from mopidy import config as config_lib
+from mopidy import ext
+from mopidy_spotify.backend import SpotifyBackend
+from mopidy_local import actor, translator
+import requests
+import mutagen
+
+
+def get_mopidy_config():
+    """Returns the path to the mopidy configuration file."""
+    xdg_chp = os.environ.get('XDG_CONFIG_HOME')
+    if xdg_chp is None:
+        xdg_chp = "~/.config"
+    return xdg_chp + "/mopidy/mopidy.conf"
+
+
+def get_cache_dir():
+    """Returns the path to the cache directory."""
+    cdir_parent = os.environ.get("XDG_CACHE_HOME")
+    if cdir_parent is None:
+        cdir_parent = "~/.cache"
+    return cdir_parent + "/cover_art"
+
+
+def get_cache_name(uri):
+    """Accepts the URI of a track and generates a unique name which is used as
+    the filename for the cover art in the cache."""
+    uuid_str = str(uuid.uuid5(uuid.NAMESPACE_DNS, uri))
+    return base64.encodebytes(uuid.UUID(uuid_str).bytes).decode("ascii").rstrip('=\n').replace('/', '_')
+
+
+def get_cover_spotify(track_uri, dest_path):
+    """Grabs the cover from Spotify using the get_images() function provided
+    by the mopidy-spotify backend."""
+    # get extensions
+    extensions_data = ext.load_extensions()
+    # load config
+    config, _ = config_lib.load(
+        [get_mopidy_config()],
+        [d.config_schema for d in extensions_data],
+        [d.config_defaults for d in extensions_data],
+        [])
+    # init backend
+    backend = SpotifyBackend(config, None)
+    backend.on_start()
+    # get the cover art url
+    img_url = backend.library.get_images([track_uri])[track_uri][0].uri
+    img_resp = requests.get(img_url, stream=True)
+    if img_resp.status_code == 200:
+        with open(dest_path, 'wb') as img_file:
+            for chunk in img_resp:
+                img_file.write(chunk)
+        # deinit and return success
+        backend.on_stop()
+        return True
+    # deinit and return failure
+    backend.on_stop()
+    return False
+
+
+def query_mb(name, artist, album, idtype):
+    """Queries the MusicBrainz server for Release/Release Group MBID."""
+    # declare api root url and user-agent first
+    mb_api_rooturl = "https://musicbrainz.org/ws/2"
+    useragent = "get-coverart/alpha-1 ( github.com/nocturnalbeast/dotfiles )"
+    # build the request
+    params = {
+        "fmt": "json",
+        "query": "artist={} AND release={} AND releasegroup={}".format(artist, name, album),
+        "limit": "1"
+    }
+    headers = {"user-agent": useragent}
+    query_resp = requests.get(mb_api_rooturl + "/" + idtype,
+                              headers=headers, params=params)
+    # if the request suceeded
+    if query_resp.status_code == 200:
+        # then extract the release MBID from the response
+        resp_json = json.loads(
+            query_resp.content.decode('utf8').replace("'", '"'))
+        if resp_json['count'] != 0:
+            return resp_json[idtype + 's'][0]['id']
+    return None
+
+
+def query_caa(mbid, idtype):
+    """Queries the Cover Art Archive for an image using a MBID."""
+    # build the request and send it
+    ca_api_rooturl = "https://coverartarchive.org"
+    headers = {"accept": "application/json"}
+    query_resp = requests.get(ca_api_rooturl + "/" + idtype + "/" + mbid,
+                              headers=headers)
+    # if the request suceeded
+    if query_resp.status_code == 200:
+        # then extract the cover art URL from the response
+        resp_json = json.loads(
+            query_resp.content.decode('utf8').replace("'", '"'))
+        return resp_json['images'][0]['image']
+    return None
+
+
+def get_cover_online(uri, name, artist, album, dest_path):
+    """Grabs the cover art from MusicBrainz and CoverArtArchive."""
+    # init vars first
+    rl_mbid, rg_mbid, img_url = None, None, None
+    # check if the track is a local file
+    if uri.split(":", 1)[0] == "local":
+        # we're doing this so that we can get the MBIDs for release and
+        # releasegroup; this saves us from having to query the MusicBrainz
+        # server for the release IDs first
+        # sooo, get the MBIDs
+        extensions_data = ext.load_extensions()
+        config, _ = config_lib.load(
+            [get_mopidy_config()],
+            [d.config_schema for d in extensions_data],
+            [d.config_defaults for d in extensions_data],
+            [])
+        track_tags = mutagen.File(translator.local_uri_to_path(
+            uri, config['local']['media_dir']))
+        try:
+            rl_mbid = track_tags['musicbrainz_releasetrackid'][0]
+        except KeyError:
+            pass
+        try:
+            rg_mbid = track_tags['musicbrainz_releasegroupid'][0]
+        except KeyError:
+            pass
+    # get release and release group MBIDs via MusicBrainz API queries if we
+    # haven't got it already
+    if rl_mbid is None:
+        rl_mbid = query_mb(name, artist, album, 'release')
+    if rg_mbid is None:
+        rg_mbid = query_mb(name, artist, album, 'release-group')
+    # make sure we do have a result from the query before continuing
+    if rl_mbid is not None:
+        # query Cover Art Archive for the art using release MBID
+        img_url = query_caa(rl_mbid, 'release')
+    if img_url is None and rg_mbid is not None:
+        # query Cover Art Archive for the art using release MBID
+        img_url = query_caa(rg_mbid, 'release-group')
+    # if we fail on both attempts, stop
+    if img_url is None:
+        return False
+    # else continue
+    img_resp = requests.get(img_url, stream=True)
+    if img_resp.status_code == 200:
+        with open(dest_path, 'wb') as img_file:
+            for chunk in img_resp:
+                img_file.write(chunk)
+        return True
+    return False
+
+
+def get_cover_embed(track_uri, dest_path):
+    """Grabs the cover from local file using the get_images() function provided
+    by the mopidy-local backend."""
+    # get extensions
+    extensions_data = ext.load_extensions()
+    # load config
+    config, _ = config_lib.load(
+        [get_mopidy_config()],
+        [d.config_schema for d in extensions_data],
+        [d.config_defaults for d in extensions_data],
+        [])
+    # init stuff
+    backend = actor.LocalBackend(config, None)
+    # get the cover art location
+    img_url = backend.library.get_images([track_uri])[track_uri][0].uri
+    img_url = config['core']['data_dir'] + "/local/images/" + img_url.split("/", 2)[2]
+    if os.path.exists(img_url):
+        shutil.copyfile(img_url, dest_path)
+        return True
+    return False
+
+
+def get_cover(uri, name, artist, album, dest_path):
+    """The main function for the cover art fetching logic, which dispatches
+    data to respective functions based on the first element of the URI."""
+    # init status as failed by default
+    status = False
+    # get stream protocols first
+    cf_parser = configparser.ConfigParser()
+    cf_parser.read(get_mopidy_config())
+    stream_protocols = cf_parser['stream']['protocols'].strip().split("\n")
+    # get the first element from the uri split by : which will check for most
+    # stuff other than local files
+    uri_head = uri.split(":")[0]
+    if uri_head == "spotify":
+        print("INFO: Spotify URI found.", file=sys.stderr)
+        status = get_cover_spotify(uri, dest_path)
+    elif uri_head in stream_protocols:
+        print("INFO: Stream URI found.", file=sys.stderr)
+        status = get_cover_online(uri, name, artist, album, dest_path)
+    elif uri_head == "yt":
+        print("INFO: Youtube URI found.", file=sys.stderr)
+        status = get_cover_online(uri, name, artist, album, dest_path)
+    elif uri_head == "sc":
+        print("INFO: SoundCloud URI found.", file=sys.stderr)
+        status = get_cover_online(uri, name, artist, album, dest_path)
+    elif uri_head == "local":
+        print("INFO: File URI found.", file=sys.stderr)
+        status = get_cover_embed(uri, dest_path)
+        if not status:
+            # get it online if that doesn't work
+            print("INFO: No embed art found, searching online.", file=sys.stderr)
+            status = get_cover_online(uri, name, artist, album, dest_path)
+    return status
+
+
+def main():
+    """Main method."""
+    # define a parser to get the input from command line
+    parser = argparse.ArgumentParser(
+        description='A python script to grab cover art for the mopidy server.',
+        add_help=False)
+    exec_args = parser.add_argument_group("Default arguments")
+    other_args = parser.add_argument_group("Other arguments")
+    exec_args.add_argument(
+        "-u", "--uri", action="store", type=str, metavar="TRACK_URI",
+        help="URI of the track to get cover art for.")
+    exec_args.add_argument(
+        "-n", "--name", action="store", type=str, metavar="TRACK_NAME",
+        help="Name of the track to get cover art for.")
+    exec_args.add_argument(
+        "-a", "--artist", action="store", type=str, metavar="TRACK_ARTIST",
+        help="Artist of the track to get cover art for.")
+    exec_args.add_argument(
+        "-g", "--album", action="store", type=str, metavar="TRACK_ALBUM",
+        help="Album of the track to get cover art for.")
+    other_args.add_argument(
+        "-h", "--help", action="help",
+        help="Show this cruft.")
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+    args = parser.parse_args()
+
+    # get the cache dir now
+    cache_dir = get_cache_dir()
+    # create the cache directory if it doesn't exist
+    if not os.path.exists(cache_dir):
+        Path(cache_dir).mkdir(parents=True, exist_ok=True)
+
+    # only proceed if we have all the fields
+    if args.uri and args.name and args.artist and args.album:
+        # get the unique filename pointing to the cover art
+        cache_name = get_cache_name(args.uri)
+        cache_path = cache_dir + "/" + cache_name + ".jpg"
+        # next check if there is an image with the same filename
+        if not os.path.exists(cache_path):
+            print("INFO: No cached file found.", file=sys.stderr)
+            # then get the cover using get_cover function
+            if get_cover(args.uri, args.name, args.artist, args.album, cache_path):
+                print(cache_path)
+        else:
+            print(cache_path)
+    else:
+        sys.exit("ERROR: One or more fields not specified. Run {} --help to get details on each field.".format(__file__))
+
+
+if __name__ == "__main__":
+    main()

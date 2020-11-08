@@ -101,16 +101,23 @@ case "$ACTION" in
         FLTR_TYPE=$( dmenu-helper run_menu "  Filter type:" "$FLTR_OPTS" )
         [[ -z "$FLTR_TYPE" ]] && exit
         QUERY=$( dmenu-helper run_menu "  Query [$FLTR_TYPE]:" "" )
-
         FLTR_LIST=$( mpc search "$FLTR_TYPE" "$QUERY" )
 
         COUNT=0
         SELECTION="a"
         while [[ -n "$SELECTION" ]]; do
             SELECTION=$( dmenu-helper run_menu "  Results [$COUNT]:" "$FLTR_LIST" )
-            echo " $SELECTION"
             if [[ -n "$SELECTION" ]]; then
-                mpc -q add "$SELECTION"
+                if [[ $COUNT -eq 0 ]]; then
+                    CURR_LENGTH=$( mpc playlist | wc -l )
+                    mpc -q add "$SELECTION"
+                    PLAY_NOW=$( dmenu-helper run_menu "  Start playing now?" "yes\nno" )
+                    if [[ "$PLAY_NOW" == "yes" ]]; then
+                        mpc play $(( CURR_LENGTH + 1 ))
+                    fi
+                else
+                    mpc -q add "$SELECTION"
+                fi
                 ((COUNT++))
             fi
         done
@@ -178,7 +185,10 @@ case "$ACTION" in
         ;;
     ' Lyrics')
         SONG=$( mpc current )
-        LYRICS_FILE="$HOME/.lyrics/$SONG.txt"
+        LYRICS_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/lyrics/$SONG.txt"
+        if [[ ! -d "$( basename "$LYRICS_FILE" )" ]]; then
+            mkdir -p "$( basename "$LYRICS_FILE" )"
+        fi
 
         if [[ ! -f "$LYRICS_FILE" ]]; then
             HOW=$( dmenu-helper run_menu "  Create lyrics? " "auto\nmanual" )

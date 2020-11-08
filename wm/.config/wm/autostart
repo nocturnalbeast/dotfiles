@@ -25,7 +25,5 @@ light-locker &
 polybar-start &
 # launch unclutter to hide cursor when inactive
 unclutter &
-# launch kunst to grab album art on play and notify on song change
-kunst-mod --notify &
 # set numlock key to off
 numlockx off &
