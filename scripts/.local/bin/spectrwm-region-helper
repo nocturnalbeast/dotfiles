@@ -10,11 +10,14 @@ declare -a REGION_LINES
 # then get the resolution lines into another array
 mapfile -t RESOLUTIONS < <( xdpyinfo | awk '/dimensions/{print $2}' )
 
+# try to keep spacing intact, so we need to extract it
+IFS=$':' read -r SPR1 SPR2 SPR3 < <( sed -n "s/^\([ ]*\)region\([ ]*\)=\([ ]*\)screen\[[0-9]*\]:.*$/\1:\2:\3/p" "$SPECTRWM_CONFIG_PATH" | head -1 )
+
 # check if disable_padding option is set, in which case we don't need to reserve space for polybar
 if [ "$1" == "disable_padding" ]; then
     IDX_D=1
     for RESOLUTION in "${RESOLUTIONS[@]}"; do
-        REGION_LINES+=("region = screen[$((IDX_D++))]:${RESOLUTION}+0+0")
+        REGION_LINES+=("${SPR1}region${SPR2}=${SPR3}screen[$((IDX_D++))]:${RESOLUTION}+0+0")
     done
 else
     # get the height reserved for the polybar instance
@@ -25,7 +28,7 @@ else
         RES_WIDTH="$( echo "${RESOLUTIONS[$IDX]}" | cut -f 1 -d 'x' )"
         ALLOWED_HEIGHT="$(( $RES_HEIGHT - $BAR_HEIGHT ))"
         SCREEN_IDX="$(( $IDX + 1 ))"
-        REGION_LINES+=("region = screen[${SCREEN_IDX}]:${RES_WIDTH}x${ALLOWED_HEIGHT}+0+${BAR_HEIGHT}")
+        REGION_LINES+=("${SPR1}region${SPR2}=${SPR3}screen[${SCREEN_IDX}]:${RES_WIDTH}x${ALLOWED_HEIGHT}+0+${BAR_HEIGHT}")
     done
 fi
 

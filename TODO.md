@@ -22,3 +22,4 @@ These are the things that are planned to be worked on or in progress right now:
  * Remove independent repos for suckless tools and maintain an all-in-one patch for each tool
  * Delete nomacs config and add in sxiv config instead
  * Revisit window rules for bspwm and spectrwm
+ * Unify storage locations for both lyrics and cover art
