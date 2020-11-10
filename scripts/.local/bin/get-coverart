@@ -43,10 +43,10 @@ def get_mopidy_config():
 
 def get_cache_dir():
     """Returns the path to the cache directory."""
-    cdir_parent = os.environ.get("XDG_CACHE_HOME")
+    cdir_parent = os.environ.get("XDG_DATA_HOME")
     if cdir_parent is None:
-        cdir_parent = "~/.cache"
-    return cdir_parent + "/cover_art"
+        cdir_parent = "~/.local/share"
+    return cdir_parent + "/music_library/cover_art"
 
 
 def get_cache_name(uri):

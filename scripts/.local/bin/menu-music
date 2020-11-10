@@ -18,6 +18,10 @@ COVER="/tmp/mpd_albumart.jpg"
 # editor command
 E_COMMAND="st -e nvim"
 
+# mpd host and port
+MPD_HOST="localhost"
+MPD_PORT="6600"
+
 # get the states from mpc
 STATES=$( mpc --format "" | sed -rn 's/.*repeat: (on|off)[ ]+random: (on|off)[ ]+single: (on|off)[ ]+consume: (on|off).*/\1 \2 \3 \4/p' )
 REPEAT_STATE=$( echo "$STATES" | cut -f 1 -d ' ' )
@@ -97,26 +101,80 @@ case "$ACTION" in
         fi
         ;;
     ' Add songs')
+        # declare filter types available
         FLTR_OPTS="any\nartist\nalbum\ntitle\ntrack\nname\ngenre\ndate\ncomposer\nperformer\ncomment\ndisc\nfilename"
-        FLTR_TYPE=$( dmenu-helper run_menu "  Filter type:" "$FLTR_OPTS" )
-        [[ -z "$FLTR_TYPE" ]] && exit
-        QUERY=$( dmenu-helper run_menu "  Query [$FLTR_TYPE]:" "" )
-        FLTR_LIST=$( mpc search "$FLTR_TYPE" "$QUERY" )
-
+        # prompt to select one
+        FLTR_TYPE="$( dmenu-helper run_menu "  Filter type:" "$FLTR_OPTS" )"
+        # if answer is empty or not in the list, then exit
+        [[ -z "$FLTR_TYPE" ]] || ! echo -e "$FLTR_OPTS" | grep -Fxq "$FLTR_TYPE" && exit
+        # get the query
+        QUERY="$( dmenu-helper run_menu "  Query [$FLTR_TYPE]:" "" )"
+        # run query using mpd interface
+        QUERY_RES="$( echo -e "find $FLTR_TYPE \"$QUERY\"\nclose" | netcat "$MPD_HOST" "$MPD_PORT" )"
+        # don't ask me to explain this
+        FLTR_LIST="$( echo -e "$QUERY_RES" | grep -E "^file: |^Artist: |^Album: |^Title: " | sed 's/^file: \(.*\)$/<<\1>>/g; s/^Artist: \(.*\)/<\1>/g; s/^Album: \(.*\)/<\1>/g; s/^Title: \(.*\)/<\1>/g; /^<Artist:/d; /^<Album:/d' | tr '\n' '\f' | sed 's/\([^>]\)>\f<\([^<]\)/\1|\2/g; s/>>\f<\([^<]\)/|\1/g;' | tr '\f' '\n' | tr -d "<>" )"
+        # declare arrays
+        declare -A RESULTS_ARR
+        # now process them into the above arrays
+        while IFS=$'\n' read -r LINE; do
+            URI="$( echo "$LINE" | cut -f 1 -d "|" )"
+            FIELD_COUNT="$( echo "$LINE" | grep -o '|' | wc -l )"
+            PRESENT_LINE=""
+            case $FIELD_COUNT in
+                "0")
+                    # this means no metadata obtained
+                    PRESENT_LINE="URI: $URI"
+                    ;;
+                "1")
+                    # this means artist
+                    ARTIST="$( echo "$LINE" | cut -f 2- -d "|" )"
+                    PRESENT_LINE="Artist: $ARTIST"
+                    ;;
+                "2")
+                    # this means album
+                    ARTIST="$( echo "$LINE" | cut -f 2 -d "|" )"
+                    ALBUM="$( echo "$LINE" | cut -f 3- -d "|" )"
+                    PRESENT_LINE="Album: $ALBUM by $ARTIST"
+                    ;;
+                "3")
+                    # this means track
+                    ARTIST="$( echo "$LINE" | cut -f 2 -d "|" )"
+                    ALBUM="$( echo "$LINE" | cut -f 3 -d "|" )"
+                    TRACK="$( echo "$LINE" | cut -f 4- -d "|" )"
+                    PRESENT_LINE="Track: $TRACK from $ALBUM by $ARTIST"
+                    ;;
+                *)
+                    PRESENT_LINE="Unknown: $LINE"
+                    ;;
+            esac
+            RESULTS_ARR+=( ["$URI"]="$PRESENT_LINE" )
+        done < <( echo -e "$FLTR_LIST" )
+        # finally prompt the user to selct the song
         COUNT=0
         SELECTION="a"
         while [[ -n "$SELECTION" ]]; do
-            SELECTION=$( dmenu-helper run_menu "  Results [$COUNT]:" "$FLTR_LIST" )
+            SELECTION="$( dmenu-helper custom_menu "-l 5" "  Results [$COUNT]:" "$( printf "%s\n" "${RESULTS_ARR[@]}" )" )"
+            # if selected string is not null; then
             if [[ -n "$SELECTION" ]]; then
+                SELECTION_KEY=""
+                # find the key that is the URI of the track
+                for URIKEY in "${!RESULTS_ARR[@]}"; do
+                    if [[ ${RESULTS_ARR["$URIKEY"]} == "$SELECTION" ]]; then
+                        SELECTION_KEY="$URIKEY"
+                    fi
+                done
+                # remove the selected entry from the list of choices
+                unset RESULTS_ARR[$SELECTION_KEY]
+                # check if the addition is the first one, if yes then prompt to play now or not
                 if [[ $COUNT -eq 0 ]]; then
                     CURR_LENGTH=$( mpc playlist | wc -l )
-                    mpc -q add "$SELECTION"
+                    mpc -q add "$SELECTION_KEY"
                     PLAY_NOW=$( dmenu-helper run_menu "  Start playing now?" "yes\nno" )
                     if [[ "$PLAY_NOW" == "yes" ]]; then
-                        mpc play $(( CURR_LENGTH + 1 ))
+                        mpc -q play $(( CURR_LENGTH + 1 ))
                     fi
                 else
-                    mpc -q add "$SELECTION"
+                    mpc -q add "$SELECTION_KEY"
                 fi
                 ((COUNT++))
             fi
@@ -185,9 +243,9 @@ case "$ACTION" in
         ;;
     ' Lyrics')
         SONG=$( mpc current )
-        LYRICS_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/lyrics/$SONG.txt"
-        if [[ ! -d "$( basename "$LYRICS_FILE" )" ]]; then
-            mkdir -p "$( basename "$LYRICS_FILE" )"
+        LYRICS_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/music_library/lyrics/$SONG.txt"
+        if [[ ! -d "$( dirname "$LYRICS_FILE" )" ]]; then
+            mkdir -p "$( dirname "$LYRICS_FILE" )"
         fi
 
         if [[ ! -f "$LYRICS_FILE" ]]; then
