@@ -1,117 +1,126 @@
-<h2 align="center">
-
-    ██████╗  ██████╗ ████████╗███████╗██╗██╗     ███████╗███████╗
-    ██╔══██╗██╔═══██╗╚══██╔══╝██╔════╝██║██║     ██╔════╝██╔════╝
-    ██║  ██║██║   ██║   ██║   █████╗  ██║██║     █████╗  ███████╗
-    ██║  ██║██║   ██║   ██║   ██╔══╝  ██║██║     ██╔══╝  ╚════██║
-    ██████╔╝╚██████╔╝   ██║   ██║     ██║███████╗███████╗███████║
-    ╚═════╝  ╚═════╝    ╚═╝   ╚═╝     ╚═╝╚══════╝╚══════╝╚══════╝
-
-</h2>
-
-![nocturnalbeast's dotfiles](https://github.com/nocturnalbeast/dotfiles/raw/master/.screenshots/main.png)
+<img align="center" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/logo.png?raw=true" alt="dotfiles-logo">
 
 
 ## Usage
 
 These dotfiles are managed with [GNU stow](https://www.gnu.org/software/stow/), so you'll need it installed.
 
-Clone the repository, and install the configuration files for any program that's included by running
-```
-$ stow <package-name>
-```
-
-To install everything, just run
-```
-$ stow *
-```
+To install these dotfiles, there is an installer script included. Clone the repository, and run the script `install.sh` to install all available packages.
 
 For a quick guide for managing and using dotfiles managed with [GNU stow](https://www.gnu.org/software/stow/), I recommend [alexpearce's guide](https://alexpearce.me/2016/02/managing-dotfiles-with-stow/) on the same.
 
 
-## Details
+## Components
 
-* CLI
-  * [st](https://github.com/nocturnalbeast/st) - My fork of suckless.org's simple terminal emulator.
-  * [zsh](https://sourceforge.net/projects/zsh) - A powerful alternative shell.
-    * [zplugin](https://github.com/zdharma/zplugin) - Fast Z shell plugin manager with advanced reporting, services and more.
-    * [zsh-completions](github.com/zsh-users/zsh-completions) - Additional completion definitions for Z shell.
-    * [fast-syntax-highlighting](https://github.com/zdharma/fast-syntax-highlighting) - Faster syntax highlighting for Z shell.
-    * [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) - FISH-like autosuggestions for Z shell.
-    * [history-search-multi-word](https://github.com/zdharma/history-search-multi-word) - Multi-word, syntax-highlighted history searches for Z shell.
-    * [enhancd](https://github.com/b4b4r07/enhancd) - Better cd command with customizable interactive filter.
-    * [LS_COLORS](https://github.com/trapd00r/LS_COLORS) - A collection of LS_COLORS used to colorize output of ls command.
-    * [exa](https://github.com/ogham/exa) - Replacement for ls written in Rust.
-    * [bat](https://github.com/sharkdp/bat) - A cat clone with syntax highlighting and Git integration.
-    * [warhol](https://github.com/unixorn/warhol.plugin.zsh) - Colorize output of common commands.
-    * [zsh-colored-man-pages](https://github.com/ael-code/zsh-colored-man-pages) - Colorize options and such in man pages.
-    * [zsh-diff-so-fancy](https://github.com/zdharma/zsh-diff-so-fancy) - Supercharged git diff with better highlighting.
-    * [git-now](https://github.com/iwata/git-now) - A temporary commit tool for git.
-    * [git-extras](https://github.com/tj/git-extras) - Adds extra commands to git, including repo summary, repl and more.
-    * [git-cal](https://github.com/k4rthik/git-cal) - Github-like contributions chart in the terminal.
-    * [thefuck](https://github.com/nvbn/thefuck) - Program that corrects previous mistyped command.
-    * [spaceship-prompt](https://github.com/maximbaz/spaceship-prompt) - A prompt for astronauts - asynchronous version. 
-  * [neovim](https://github.com/neovim/neovim) - VIM fork focused on extensibility and usability.
-    * [vim-plug](https://github.com/junegunn/vim-plug) - A minimalist VIM plugin manager.
-    * [vim-sensible](https://github.com/tpope/vim-sensible) - Sensible defaults for VIM.
-    * [ale](https://github.com/dense-analysis/ale) - Asynchronous Linting Engine fo VIM.
-    * [goyo](https://github.com/junegunn/goyo.vim) - Distraction-free writing in VIM.
-    * [limelight](https://github.com/junegunn/limelight.vim) - Selective highlighting in VIM. (used in tandem with goyo)
-    * [lightline](https://github.com/itchyny/lightline.vim) - A light and configurable statusline/tabline plugin for VIM.
-    * [vim-startify](https://github.com/mhinz/vim-startify) - The fancy startscreen for VIM.
-    * [vim-polyglot](https://github.com/sheerun/vim-polyglot) - A solid language pack for VIM.
-    * [nerdcommenter](https://github.com/scrooloose/nerdcommenter) - VIM plugin for intensely orgamsic commenting.
-    * [vim-surround](https://github.com/tpope/vim-surround) - Quoting/parenthesizing made simple.
-    * [challenger-deep-theme](https://github.com/challenger-deep-theme/vim) - Dark colorscheme for VIM.
-    * [vim-devicons](https://github.com/ryanoasis/vim-devicons) - VIM plugin that adds file type glyphs/icons to popular VIM plugins.
-    * [fzf](https://github.com/junegunn/fzf) - Fuzzy finding for VIM.
-    * [vim-gitgutter](https://github.com/airblade/vim-gitgutter) - VIM plugin that shows git diff in the sign column.
-  * [mpd](https://github.com/MusicPlayerDaemon/MPD) - Music Player Daemon - a daemon for playing music of various formats.
-  * [ncmpcpp](https://github.com/arybczak/ncmpcpp) - Featureful ncurses based MPD client inspired by ncmpc.
-  * [mpc](https://github.com/MusicPlayerDaemon/mpc) - Command line client for mpd. (used in custom polybar controls)
-  * [surfraw](https://gitlab.com/surfraw/Surfraw) - Shell Users' Revolutionary Front Rage Against the Web - a command line utility to search from multiple search engines and sources.
-  * [cava](https://github.com/karlstav/cava) - Console-based Audio Visualizer for Alsa. (used only for MPD here)
-  * [neofetch](https://github.com/dylanaraps/neofetch) - A command-line system information tool written in Bash.
+ * Desktop:
+    * [bspwm](https://github.com/baskerville/bspwm): A tiling window manager based on binary space partitioning.
+    * [spectrwm](https://github.com/conformal/spectrwm): A small dynamic tiling window manager for X11.
+    * [sxhkd](https://github.com/baskerville/sxhkd): Simple X hotkey daemon
+    * [polybar](https://github.com/polybar/polybar): A fast and easy-to-use status bar.
+    * [dmenu](https://tools.suckless.org/dmenu): Dynamic menu for X.
+        * [clipmenu](https://github.com/cdown/clipmenu): Clipboard management using dmenu.
+    * [picom](https://github.com/yshui/picom): A lightweight compositor for X11.
+    * [dunst](https://github.com/dunst-project/dunst): Lightweight and customizable notification daemon.
 
-* GUI
-  * [bspwm](https://github.com/baskerville/bspwm) - The binary-space partitioning window manager.
-  * [sxhkd](https://github.com/baskerville/sxhkd) - Simple X hotkey daemon.
-  * [polybar](https://github.com/jaagr/polybar) - A fast and easy-to-use status bar.
-  * [compton](https://github.com/tryone144/compton) - A compositor for X11. (fork with that sexy dual kawase blur mode)
-  * [rofi](https://github.com/davatorium/rofi) - A window switcher, application launcher, and dmenu replacement.
-    * [tnekcir-no-sidebar](https://github.com/ricwtk/rofi-themes) - A modern-looking theme that I've slightly modified for my use.
-    * [libqalculate](https://github.com/Qalculate/libqalculate) - CLI for Qalculate! used in rofi with a helper script.
-    * [greenclip](https://github.com/erebe/greenclip) - Simple clipboard manager to be integrated with rofi. 
-  * [nitrogen](https://github.com/l3ib/nitrogen) - Background browser and setter for X windows.
-  * [thunar](https://git.xfce.org/xfce/thunar/) - Modern, fast and easy-to-use file manager.
-  * [firefox](https://www.mozilla.org/firefox/) - I use [MaterialFox](https://github.com/muckSponge/MaterialFox) with my Firefox installation. There's a script (inside the ```scripts``` directory) that helps to install it.
+ * Applications:
+    * [st](https://st.suckless.org): Simple terminal implementation for X.
+    * [neovim](https://github.com/neovim/neovim): Vim fork focused on extensibility and usability.
+        * [vim-plug](https://github.com/junegunn/vim-plug): Minimalist vim plugin manager.
+    * [mopidy](https://github.com/mopidy/mopidy): Extensible music server written in Python.
+        * [mopidy-mpd](https://github.com/mopidy/mopidy-mpd): Extension for controlling playback from MPD clients.
+        * [mopidy-soundcloud](https://github.com/mopidy/mopidy-soundcloud): Extension for playing music from SoundCloud.
+        * [mopidy-scrobbler](https://github.com/mopidy/mopidy-scrobbler): Extension for scrobbling played tracks to Last.fm.
+        * [mopidy-spotify](https://github.com/mopidy/mopidy-spotify): Extension for playing music from Spotify.
+        * [mopidy-alsamixer](https://github.com/mopidy/mopidy-alsamixer): Extension for ALSA volume control.
+        * [mopidy-local](https://github.com/mopidy/mopidy-local): Extension for playing music from your local music archive.
+        * [mopidy-youtube](https://github.com/natumbri/mopidy-youtube): Extension for playing music from YouTube.
+        * [mopidy-mpris](https://github.com/mopidy/mopidy-mpris): Extension for controlling Mopidy through the MPRIS D-Bus interface.
+    * [ncmpcpp](https://github.com/ncmpcpp/ncmpcpp): Featureful ncurses based MPD client.
+    * [mpc](https://github.com/MusicPlayerDaemon/mpc): Command-line client for MPD.
+    * [qutebrowser](https://github.com/qutebrowser/qutebrowser): A keyboard-driven, vim-like browser based on PyQt5.
+    * [nitrogen](https://github.com/l3ib/nitrogen): Background browser and setter for X windows.
+    * [newsboat](https://github.com/newsboat/newsboat): An RSS/Atom feed reader for text terminals.
+    * [castero](https://github.com/xgi/castero): TUI podcast client for the terminal.
+    * [gotop](https://github.com/xxxserxxx/gotop): A terminal based graphical activity monitor inspired by gtop and vtop.
+    * [cava](https://github.com/karlstav/cava): Console-based Audio Visualizer for Alsa.
+    * [thunar](https://gitlab.xfce.org/xfce/thunar): Modern, fast and easy-to-use file manager for XFCE.
+    * [engrampa](https://github.com/mate-desktop/engrampa): A file archiver for MATE.
+    * [mpv](https://github.com/mpv-player/mpv): A free, open source, and cross-platform media player.
+    * [zathura](https://git.pwmt.org/pwmt/zathura): A highly customizable and functional document viewer.
+    * [sxiv](https://github.com/muennich/sxiv): Simple X Image Viewer.
+    * [maim](https://github.com/naelstrof/maim): Screenshot utility.
 
-* Themes, fonts and other resources
-  * [Pragmata Pro](https://www.fsd.it/shop/fonts/pragmatapro/) - A monospaced font family designed for coding texts by [Fabrizio Schiavi](https://github.com/fabrizioschiavi).
-  * [San Francisco Pro Display](https://github.com/sahibjotsaggu/San-Francisco-Pro-Fonts) - Apple's default system UI font for their platforms.
-  * [nerd-fonts](https://github.com/ryanoasis/nerd-fonts) - A collection of developer targeted fonts, patched with lots of glyphs/icons.
-  * [fontconfig](https://gitlab.freedesktop.org/fontconfig/fontconfig) - Font configuration that dictates hinting and antialiasing options for font rendering.
-  * colorscheme - Based on the visibone color scheme from [here](http://dotshare.it/dots/27/).
-  * [Tela-grey](https://github.com/vinceliuice/Tela-icon-theme) - A modern icon set that fits well with my theme.
-  * [Super Flat Remix](https://github.com/daniruiz/flat-remix-gtk) - A modern dark theme for the GTK applications that I use.
-  * wallpapers - Some monochrome ones that I found from [WallHaven](https://alpha.wallhaven.cc). Links are given below.
-    * [w_one](https://alpha.wallhaven.cc/wallpaper/62856)
-    * [w_two](https://alpha.wallhaven.cc/wallpaper/161144) 
-    * [w_three](https://alpha.wallhaven.cc/wallpaper/314722) 
-    * [w_four](https://alpha.wallhaven.cc/wallpaper/727255) 
-    * [w_five](https://alpha.wallhaven.cc/wallpaper/742779) 
+ * Shell:
+    * [zsh](http://zsh.sourceforge.net): The Z SHell - designed for interactive use and powerful scripting.
+        * [zinit](https://github.com/zdharma/zinit): Ultra-flexible and fast ZSH plugin manager.
+    * [bash](https://git.savannah.gnu.org/cgit/bash.git): The Bourne Again SHell - the GNU standard shell.
+
+ * Shell utilities:
+    * [surfraw](https://gitlab.com/surfraw/Surfraw): Utility to search the web using multiple search engines from the command line.
+    * [ueberzug](https://github.com/seebye/ueberzug): Command line util which allows to draw images on terminals by using child windows.
+    * [vivid](https://github.com/sharkdp/vivid): A generator for LS_COLORS with support for multiple color themes.
+    * [exa](https://github.com/ogham/exa): A modern replacement for ‘ls’.
+    * [bat](https://github.com/sharkdp/bat): A cat(1) clone with wings.
+    * [dtrx](https://github.com/brettcs/dtrx): CLI tool that extracts archives in a number of different formats.
+    * [trash-cli](https://github.com/andreafrancia/trash-cli): Command line interface to the freedesktop.org trashcan.
+    * [ripgrep](https://github.com/BurntSushi/ripgrep): CLI that recursively searches directories for a regex pattern while respecting your gitignore.
+    * [fzf](https://github.com/junegunn/fzf): A command-line fuzzy finder.
+    * [lyricwikia](https://github.com/enricobacis/lyricwikia): Python API to get song lyrics from LyricWikia.
+    * [neofetch](https://github.com/dylanaraps/neofetch): A command-line system information tool written in bash 3.2+.
+    * [bc](http://phodd.net/gnu-bc): A fairly ubiquitous, useful and powerful calculator.
+    * [wmctrl](http://tripie.sweb.cz/utils/wmctrl): Command line tool to interact with an EWMH/NetWM compatible X Window Manager.
+
+ * Appearance-related resources:
+    * Fonts:
+        * [Iosevka](https://github.com/be5invis/Iosevka): Slender typeface for code, from code.
+        * [nerd-fonts](https://github.com/ryanoasis/nerd-fonts): Iconic font aggregator, collection, & patcher.
+    * Themes:
+        * [bnw](https://github.com/nocturnalbeast/dotfiles/tree/master/gtk/.themes/bnw): My personal theme (made with [themix](https://github.com/themix-project)). High contrast, and as dark as possible!
+    * Cursors:
+        * [Bibata](https://github.com/ful1e5/Bibata_Cursor): Material based cursors.
+    * Icons:
+        * [papirus-bnw](https://github.com/nocturnalbeast/dotfiles/tree/master/gtk/.icons/oomox-bnw): A variant of [Papirus](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme) made with [themix](https://github.com/themix-project) to compliment the main theme.
+    * Wallpapers:
+        * All wallpapers are obtained from [wallhaven](https://wallhaven.cc).
+
+
+## Keybinding layout
+
+The rationale behind this scheme is that all WM-related functions are handled by the `Alt/Mod1` modifier, and all functions related to launching programs/menus are handled by the `Super/Mod4` modifier. Other application-specific modifiers are handled by `Ctrl` modifier.
+
+You can use these layout diagrams to familiarize yourself with the key bindings, or you can customize them to fit your liking!
+
+#### SpectrWM keybings
+
+<img align="center" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/key_layouts/images/spectrwm.png?raw=true" alt="spectrwm-layout">
+
+#### BSPWM keybindings
+
+<img align="center" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/key_layouts/images/bspwm.png?raw=true" alt="spectrwm-layout">
+
+#### Keybindings to launch programs (common across all environments)
+
+<img align="center" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/key_layouts/images/launch.png?raw=true" alt="spectrwm-layout">
+
 
 ## Screenshots
-<div align="center">
-  <img src="https://github.com/nocturnalbeast/dotfiles/raw/master/.screenshots/code.png">
-  <br>
-  <img src="https://github.com/nocturnalbeast/dotfiles/raw/master/.screenshots/dolphin.png">
-  <br>
-  <img src="https://github.com/nocturnalbeast/dotfiles/raw/master/.screenshots/settings.png">
-  <br>
-  <img src="https://github.com/nocturnalbeast/dotfiles/raw/master/.screenshots/chrome.png">
-  <br>
-  <img src="https://github.com/nocturnalbeast/dotfiles/raw/master/.screenshots/clean.png">
-  <br>
-  <img src="https://github.com/nocturnalbeast/dotfiles/raw/master/.screenshots/rofi.png">
-</div>
+
+ * Default desktop - clean
+
+   (to be added)
+
+ * Default desktop - floating window with alternate bar
+
+   (to be added)
+
+ * Default desktop - busy
+
+   (to be added)
+
+ * Menu interaction
+
+   (to be added)
+
+ * Sample GTK application (file manager)
+
+   (to be added)
