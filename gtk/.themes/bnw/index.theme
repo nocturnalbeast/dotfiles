@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=X-GNOME-Metatheme
+Name=bnw-dark-compact
+Comment=A Material Design theme
+Encoding=UTF-8
+
+[X-GNOME-Metatheme]
+GtkTheme=bnw-dark-compact
+MetacityTheme=bnw-dark-compact
+IconTheme=Adwaita
+CursorTheme=Adwaita
+CursorSize=24
