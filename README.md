@@ -1,4 +1,6 @@
-<img align="center" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/logo.png?raw=true" alt="dotfiles-logo">
+<p align="center">
+    <img width="600" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/logo.png?raw=true" alt="dotfiles logo">
+</p>
 
 
 ## Usage
