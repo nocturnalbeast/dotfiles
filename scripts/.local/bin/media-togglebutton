@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+echo '契'
+playerctl metadata -f "{{status}}" --follow 2>/dev/null | while read -r EVENT; do
+    [[ "$EVENT" == "Playing" ]] && echo '' || echo '契'
+done

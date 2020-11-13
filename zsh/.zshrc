@@ -35,7 +35,7 @@ autoload -Uz _zinit
 
 ## 2: configure command history
 
-[ -z "$HISTFILE" ] && HISTFILE="$HOME/.cache/shell_history"
+[ -z "$HISTFILE" ] && HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/shell_history"
 HISTORY_IGNORE="(ls|clear|pwd|zsh|exit)"
 HISTSIZE=50000
 SAVEHIST=50000
@@ -44,7 +44,7 @@ SAVEHIST=50000
 ## 3: import environment variables
 
 # all environment variables are configured here, since they are shared across all shells
-source "$HOME/.config/shell/env"
+source "${XDG_CONFIG_HOME:="$HOME/.config"}/shell/env"
 # set zsh-specific variables
 [ ! -z "$PS1" ] && typeset -U PATH path
 export WORDCHARS="*?[]~=&;!#$%^(){}"
@@ -53,7 +53,7 @@ export WORDCHARS="*?[]~=&;!#$%^(){}"
 ## 4: import aliases
 
 # all aliases are configured here, since they are shared across all shells
-source "$HOME/.config/shell/aliases"
+source "${XDG_CONFIG_HOME:="$HOME/.config"}/shell/aliases"
 
 
 ## 5: set shell options
@@ -187,6 +187,9 @@ zstyle ':completion:*:jobs' numbers true
 zstyle ':completion:*:*:-subscript-:*' tag-order indexes parameters
 zstyle ':completion:correct:' prompt 'correct to: %e'
 zstyle ':completion::complete:*' gain-privileges 1
+
+# make chpwd_recent_dirs respect XDG spec
+zstyle ':chpwd:*' recent-dirs-file "${XDG_CACHE_HOME:="$HOME/.cache"}/chpwd-recent-dirs"
 
 # man completion 
 zstyle ':completion:*:manuals' separate-sections true

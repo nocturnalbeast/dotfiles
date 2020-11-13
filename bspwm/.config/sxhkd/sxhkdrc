@@ -179,19 +179,19 @@ XF86AudioMute
 
 # play/pause mpd
 XF86AudioPlay
-    mpc toggle
+    media-control toggle
 
 # stop mpd
 XF86AudioStop
-    mpc stop
+    media-control stop
 
 # skip to the next track in mpd
 XF86AudioNext
-    mpc next
+    media-control next
 
 # go back to the previous track in mpd
 XF86AudioPrev
-    mpc prev
+    media-control prev
 
 # increase brightness of the display
 XF86MonBrightnessUp

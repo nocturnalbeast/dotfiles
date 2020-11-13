@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+
+PRIORITY=( mopidy mpv chromium )
+TRACK_CHG_EXCLUDE=( chromium mpv )
+INSTANCE_PREF_TIME=180
+INSTANCE_CACHE_LOC="${XDG_CACHE_HOME:="$HOME/.cache"}/playerctl-recent"
+
+function usage() {
+    echo "$(basename "$0") : MPRIS-based media control script"
+    echo " Possible operations: "
+    echo "  toggle      : Toggle play/pause on recent/prioritized player."
+    echo "  stop        : Stop currently playing player(s)."
+    echo "  stopall     : Stop all available players."
+    echo "  next        : Switch to the next track in the preferred player."
+    echo "  prev        : Switch to the previous track in the preferred player."
+    echo "  seek [POS]  : Seek to the specified position in the preferred player."
+}
+
+function get_priority() {
+    if [[ $# -eq 0 ]]; then
+        CURRENT_INSTANCES="$( playerctl -l )"
+    else
+        CURRENT_INSTANCES="$1"
+    fi
+    # check all instances of each player by priority and recency
+    [[ "$CURRENT_INSTANCES" == "" ]] && return
+    declare -a ORDERED_INSTANCES
+    for PLAYER in "${PRIORITY[@]}"; do
+        mapfile -t CP_INSTANCES < <( echo -e "$CURRENT_INSTANCES" | grep "$PLAYER" | sort -nr )
+        ORDERED_INSTANCES=(${ORDERED_INSTANCES[@]} ${CP_INSTANCES[@]})
+    done
+    # add other instances that are not specified in the priority list to the prioritized list
+    mapfile -t EXTRA_INSTANCES < <( comm -13 <( echo -e "$CURRENT_INSTANCES" | sort ) <( printf "%s\n" "${ORDERED_INSTANCES[@]}" | sort ) | sort -nr )
+    ORDERED_INSTANCES=(${ORDERED_INSTANCES[@]} ${EXTRA_INSTANCES[@]})
+    # return the list
+    printf "%s\n" "${ORDERED_INSTANCES[@]}"
+}
+
+function is_anyone_playing() {
+    # get all instances which are reporting as playing
+    playerctl -a metadata -f "{{playerInstance}} {{status}}" 2>/dev/null | grep " Playing$" | cut -f 1 -d " "
+}
+
+function try_playing() {
+    mapfile -t P_INST < <( get_priority )
+    for INSTANCE in "${P_INST[@]}"; do
+        playerctl -p "$INSTANCE" play
+        [[ $? -eq 0 ]] && break
+    done
+}
+
+function toggle() {
+    # check if anyone's playing
+    mapfile -t P_INST < <( get_priority "$( is_anyone_playing )" )
+    if [[ "${#P_INST[@]}" -ne 0 ]]; then
+        playerctl -a pause
+        echo "${P_INST[0]} $( date +%s )" > "$INSTANCE_CACHE_LOC"
+    else
+        if [[ "$( playerctl -l | wc -l )" -eq 1 ]]; then
+            playerctl play
+        # make sure to play the one that's been paused recently before trying for the priority based selection
+        elif [[ -f "$INSTANCE_CACHE_LOC" ]]; then
+            INSTANCE="$( cut -f 1 -d " " "$INSTANCE_CACHE_LOC" )"
+            TIME_ELAPSED=$(( $( date +%s ) - $( cut -f 2 -d " " "$INSTANCE_CACHE_LOC" ) ))
+            if [[ "$TIME_ELAPSED" -lt "$INSTANCE_PREF_TIME" ]]; then
+                playerctl -p "$INSTANCE" play
+            else
+                try_playing
+            fi
+            rm -f "$INSTANCE_CACHE_LOC"
+        else
+            try_playing
+        fi
+    fi
+}
+
+function stop_pb() {
+    if [[ "$1" == "all" ]]; then
+        playerctl -a stop
+    else
+        mapfile -t INSTANCES < <( playerctl -l )
+        for INSTANCE in "${INSTANCES[@]}"; do
+            if [[ ! " ${TRACK_CHG_EXCLUDE[@]} " =~ " ${INSTANCE} " ]]; then
+                playerctl -p "${INSTANCE}" stop
+            fi
+        done
+    fi
+}
+
+function chg_track() {
+    # check if anyone's playing
+    mapfile -t P_INST < <( get_priority "$( is_anyone_playing )" )
+    if [[ "${#P_INST[@]}" -eq 1 ]] && [[ ! " ${TRACK_CHG_EXCLUDE[@]} " =~ " ${P_INST[0]} " ]]; then
+        playerctl -p "${INST}" $1
+    else
+        playerctl -p "$( get_priority | head -1 )" $1
+    fi
+}
+
+function seek() {
+    # check if anyone's playing
+    mapfile -t P_INST < <( is_anyone_playing )
+    if [[ "${#P_INST[@]}" -eq 1 ]]; then
+        playerctl -p "${INST}" position $1
+    else
+        playerctl -p "$( get_priority | head -1 )" position $1
+    fi
+}
+
+case $1 in
+    toggle) toggle; exit 0;;
+    stop) stop_pb; exit 0;;
+    stopall) stop_pb "all"; exit 0;;
+    next) chg_track "next"; exit 0;;
+    prev) chg_track "previous"; exit 0;;
+    seek) seek "$2"; exit 0;;
+    *) echo "Unknown operation: $1"; usage; exit 1;;
+esac

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-STATE_FILE="$XDG_CACHE_HOME/bar_state"
+STATE_FILE="${XDG_CACHE_HOME:="$HOME/.cache"}/bar_state"
 
 usage() {
     echo "$(basename "$0") : polybar helper script"

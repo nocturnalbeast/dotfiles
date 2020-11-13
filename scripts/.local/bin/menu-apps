@@ -64,7 +64,7 @@ function launch_application() {
     # launch the app
     gtk-launch "$APP_NAME"
     # create the updated entry and save it to the history file
-    local HCONTENT="$( echo -e "$( grep -vE "^[0-9]{5}\.[0-9]{10} $APP_NAME$" "$HISTORY_LOC" )\n$APP_FREQ.$APP_LSTL $APP_NAME" | sort -nr | uniq | sort -nr )"
+    local HCONTENT="$( echo -e "$( grep -vE "^$SEL_ENT$" "$HISTORY_LOC" )\n$APP_FREQ.$APP_LSTL $APP_NAME" | sort -nr | uniq | sort -nr )"
     echo -e "$HCONTENT" > "$HISTORY_LOC"
 }
 

@@ -101,9 +101,6 @@ browser-command = "qutebrowser &"
 editor-command = "st -t Neovim -e 'zsh -c nvim' &"
 fm-command = "thunar &"
 
-mpd-host = 127.0.0.1
-mpd-port = 6600
-
 temp-therm-zone = 0
 temp-hwmon-path = /sys/devices/platform/coretemp.0/hwmon/hwmon1/temp2_input
 
@@ -122,7 +119,7 @@ network-interface = wlp2s0
 ; look like a single module, module-margin is not used. Rather, individual
 ; separators are specified in between each 'perceived module'.
 ; For the main bar, the wksp-icon, wksp-name and window modules are made to look
-; and function like one single module, which is the case with the set of mpd
+; and function like one single module, which is the case with the set of media
 ; modules as well.
 ; For the monitoring bar, the network module and the cpu module is split over
 ; two constituent modules as well.
@@ -151,7 +148,7 @@ font-1 = ${fonts.glyph-font}
 module-margin = 0
 
 modules-left = barswitch sep wksp-icon cnt-space wksp-name window cnt-space sep
-modules-center = mpd-artist mpd-prev mpd-playpause mpd-next mpd-track
+modules-center = media-artist media-prev media-playpause media-next media-track
 modules-right = sep volume sep datetime
 
 override-redirect = true
@@ -383,92 +380,78 @@ menu-0-3-background = ${active-colors.content-background}
 menu-0-3-foreground = ${active-colors.content-foreground}
 
 
-[module/mpd-prev]
+[module/media-prev]
 type = custom/text
 
 content = 玲
 
-click-left = mpc prev
-scroll-up = mpc seek -5
-scroll-down = mpc seek +5
+click-left = media-control prev
+scroll-up = media-control seek 5-
+scroll-down = media-control seek 5+
 
 content-background = ${active-colors.header-background}
 content-foreground = ${active-colors.header-foreground}
 content-padding = ${margins.header-padding}
 
 
-[module/mpd-next]
+[module/media-next]
 type = custom/text
 
 content = 怜
 
-click-left = mpc next
-scroll-up = mpc seek -5
-scroll-down = mpc seek +5
+click-left = media-control next
+scroll-up = media-control seek 5-
+scroll-down = media-control seek 5+
 
 content-background = ${active-colors.header-background}
 content-foreground = ${active-colors.header-foreground}
 content-padding = ${margins.header-padding}
 
 
-[module/mpd-playpause]
+[module/media-playpause]
 type = custom/script
 
 tail = true
 interval = 1
-exec = mpd-togglebutton
+exec = media-togglebutton
 
-click-left = mpc toggle
-click-right = mpc stop
-scroll-up = mpc seek -5
-scroll-down = mpc seek +5
+click-left = media-control toggle
+click-right = media-control stop
+scroll-up = media-control seek 5-
+scroll-down = media-control seek 5+
 
 format-background = ${active-colors.header-background}
 format-foreground = ${active-colors.header-foreground}
 
 
-[module/mpd-artist]
-type = internal/mpd
+[module/media-artist]
+type = custom/script
 
-host = ${sysvars.mpd-host}
-port = ${sysvars.mpd-port}
+tail = true
+interval = 1
+exec = media-info artist
 
-interval = 2
+label = %output:0:30:...%
 
-format-online = <label-song>
-format-offline = 
+format-background = ${active-colors.content-background}
+format-foreground = ${active-colors.content-foreground}
 
-label-song = %artist%
-
-format-online-background = ${active-colors.content-background}
-format-online-foreground = ${active-colors.content-foreground}
-format-offline-background = ${active-colors.content-background}
-format-offline-foreground = ${active-colors.content-foreground}
-
-format-online-padding = ${margins.content-padding}
-format-offline-padding = ${margins.content-padding}
+format-padding = ${margins.content-padding}
 
 
-[module/mpd-track]
-type = internal/mpd
+[module/media-track]
+type = custom/script
 
-host = ${sysvars.mpd-host}
-port = ${sysvars.mpd-port}
+tail = true
+interval = 1
+exec = media-info title
 
-interval = 2
+label = %output:0:30:...%
 
-format-online = <label-song>
-format-offline = 
+format-background = ${active-colors.content-background}
+format-foreground = ${active-colors.content-foreground}
 
-label-song = %title%
-
-format-online-background = ${active-colors.content-background}
-format-online-foreground = ${active-colors.content-foreground}
-format-offline-background = ${active-colors.content-background}
-format-offline-foreground = ${active-colors.content-foreground}
-
-format-online-padding = ${margins.content-padding}
-format-offline-padding = ${margins.content-padding}
+format-padding = ${margins.content-padding}
 
 
 [module/keyboard]
