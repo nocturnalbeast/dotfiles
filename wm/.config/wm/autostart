@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #          _           _           _
 #  ___ _ _| |_ ___ ___| |_ ___ ___| |_
@@ -8,7 +8,7 @@
 # load colors
 xrdb -load "${XDG_CONFIG_HOME:-$HOME/.config}"/X11/xresources &
 # restore the wallpaper
-nitrogen --restore &
+setbg &
 # launch compositor
 picom --experimental-backends &
 # launch notification daemon

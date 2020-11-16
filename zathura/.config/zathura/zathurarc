@@ -4,7 +4,7 @@
 # |___|__,|_| |_|_|___|_| |__,|
 
 
-set font                        "Iosevka Aile 10"
+set font                        "sans 10"
 
 set default-fg                  "#FFFFFF"
 set default-bg                  "#000000"

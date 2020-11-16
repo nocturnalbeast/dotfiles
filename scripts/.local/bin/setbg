@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+# Source : setbg from https://github.com/LukeSmithxyz/voidrice
+
+BG_LOCATION="${XDG_CONFIG_HOME:=$HOME/.config}/walls/current"
+
+R_PATH="$( readlink -fn "$1" )"
+
+if [ -f "$R_PATH" ]; then
+    ln -sf "$R_PATH" "$BG_LOCATION"
+    notify-send -u low -i "$BG_LOCATION" "Changing wallpaper to:" "$1"
+elif [ -d "$R_PATH" ]; then
+    ln -sf "$( find "$R_PATH" -iregex '.*.\(jpg\|jpeg\|png\|gif\)' -type f | shuf -n 1 )" "$BG_LOCATION"
+    notify-send -u low -i "$BG_LOCATION" "Changing wallpaper at random from:" "$1"
+fi
+
+xwallpaper --zoom "$BG_LOCATION"

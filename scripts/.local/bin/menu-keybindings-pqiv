@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+ICON="$XDG_CONFIG_HOME/dunst/icons/keyboard.svg"
+
+ENTRIES=$( pqiv --show-bindings | sed 's/^\s*//g; s/{/::{/g; s/</\[/g; s/>/\]/g' | column -t -s "::" )
+
+SEL_KEYBIND="$( dmenu-helper custom_menu "-l 5" "   " "$ENTRIES" )"
+[[ "$SEL_KEYBIND" == "" ]] && exit 0
+
+notify-send -t 5000 "Selected keybind:" "$( echo "$SEL_KEYBIND" | sed 's/ }//g; s/\s*{ / :\n/g' )"  -i "$ICON"

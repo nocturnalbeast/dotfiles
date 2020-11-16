@@ -11,11 +11,6 @@ Xft.autohint:    false
 Xft.hintstyle:   hintslight
 Xft.lcdfilter:   lcddefault
 
-! image viewer settings
-Sxiv.font:       sans:size=9:antialias=true:autohint=true
-Sxiv.background: #000000
-Sxiv.foreground: #f0f0f0
-
 ! simple terminal settings
 St.font:         mono:size=11:antialias=true:autohint:true
 St.alpha:        0.85

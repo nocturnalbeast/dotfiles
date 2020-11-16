@@ -17,10 +17,8 @@ while pgrep -u $UID -x polybar >/dev/null 2>&1; do sleep 1; done
 
 # then launch bars
 for M in $( polybar --list-monitors | cut -d: -f1 ); do
-    # get the width of the monitor
-    RES_X="$( xrandr | grep "$( polybar --list-monitors | cut -f 1 -d : )" | grep -Eo '([0-9]+x[0-9]+\+[0-9]+\+[0-9]+)' )"
-    MONITOR=$M BAR_WIDTH=$RES_X polybar $BARONE &
-    MONITOR=$M BAR_WIDTH=$RES_X polybar $BARTWO &
+    MONITOR=$M polybar $BARONE &
+    MONITOR=$M polybar $BARTWO &
 done
 
 # wait till all the bars have launched

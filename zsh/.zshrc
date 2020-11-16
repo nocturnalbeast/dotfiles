@@ -217,6 +217,8 @@ zstyle ':completion:*:*:*make:*:targets' command awk \''/^[a-zA-Z0-9][^\/\t=]+:/
 
 ## 7: define keybindings
 
+bindkey -e
+
 if (( ${+terminfo[smkx]} )) && (( ${+terminfo[rmkx]} )); then
     function zle-line-init() { echoti smkx }
     function zle-line-finish() { echoti rmkx }

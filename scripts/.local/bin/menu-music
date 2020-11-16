@@ -149,10 +149,10 @@ case "$ACTION" in
             esac
             RESULTS_ARR+=( ["$URI"]="$PRESENT_LINE" )
         done < <( echo -e "$FLTR_LIST" )
-        # finally prompt the user to selct the song
+        # finally prompt the user to select the song
         COUNT=0
         SELECTION="a"
-        while [[ -n "$SELECTION" ]]; do
+        while [[ -n "$SELECTION" ]] && [[ "${#RESULTS_ARR[@]}" -gt "$COUNT" ]]; do
             SELECTION="$( dmenu-helper custom_menu "-l 5" "  Results [$COUNT]:" "$( printf "%s\n" "${RESULTS_ARR[@]}" )" )"
             # if selected string is not null; then
             if [[ -n "$SELECTION" ]]; then

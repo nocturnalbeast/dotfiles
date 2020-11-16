@@ -17,6 +17,5 @@ These are the things that are planned to be worked on or in progress right now:
 
  * Write custom qutebrowser config
  * Remove independent repos for suckless tools and maintain an all-in-one patch for each tool
- * Delete nomacs config and add in sxiv config instead
  * Integrate MPRIS2 support
  * Revisit window rules for bspwm and spectrwm

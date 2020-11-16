@@ -4,6 +4,17 @@
 POLYBAR_CONFIG_PATH="$XDG_CONFIG_HOME/polybar/config"
 SPECTRWM_CONFIG_PATH="$XDG_CONFIG_HOME/spectrwm/spectrwm.conf"
 
+# function to handle getting the height of the bar from polybar config file
+# this can also parse percentage values
+function get_bar_height() {
+    SCR_HEIGHT="$( xdpyinfo | awk '/dimensions/{print $2}' | cut -f 2 -d x )"
+    VERT_MARGIN="$( awk -F "=" '/^[ ]*vert-margin/ {print $2}' "$POLYBAR_CONFIG_PATH" | tr -d ' ' )"
+    [[ "${VERT_MARGIN: -1}" == "%" ]] && printf -v VERT_MARGIN %.0f "$( echo "$SCR_HEIGHT*${VERT_MARGIN::-1}/100" | bc )"
+    BAR_HEIGHT="$( awk -F "=" '/^[ ]*bar-height/ {print $2}' "$POLYBAR_CONFIG_PATH" | tr -d ' ' )"
+    [[ "${BAR_HEIGHT: -1}" == "%" ]] && printf -v BAR_HEIGHT %.0f "$( echo "$SCR_HEIGHT*${BAR_HEIGHT::-1}/100" | bc )"
+    echo "$(( $BAR_HEIGHT + 2 * $VERT_MARGIN ))"
+}
+
 # have an array where we'll be putting those lines to insert in the spectrwm config
 declare -a REGION_LINES
 
@@ -21,14 +32,18 @@ if [ "$1" == "disable_padding" ]; then
     done
 else
     # get the height reserved for the polybar instance
-    BAR_HEIGHT=$(( "$( sed -n "s/^[ ]*bar-height[ ]*=[ ]*\([0-9]*\)[ ]*$/\1/p" "$POLYBAR_CONFIG_PATH" )" + "$( sed -n "s/^[ ]*vert-margin[ ]*=[ ]*\([0-9]*\)[ ]*$/\1/p" "$POLYBAR_CONFIG_PATH" )" ))
+    TTL_BARHEIGHT="$( get_bar_height )"
+    # get the padding already defined in spectrwm config file
+    RG_PADDING="$( awk -F "=" '/^[ ]*region_padding/ {print $2}' "$SPECTRWM_CONFIG_PATH" | tr -d ' ' )"
+    # effective height to reserve is bar_height - region_padding
+    EFF_BARHEIGHT="$(( $TTL_BARHEIGHT - $RG_PADDING ))"
     # convert the data above into some entries that we can replace in the spectrwm config file
     for IDX in "${!RESOLUTIONS[@]}"; do
         RES_HEIGHT="$( echo "${RESOLUTIONS[$IDX]}" | cut -f 2 -d 'x' )"
         RES_WIDTH="$( echo "${RESOLUTIONS[$IDX]}" | cut -f 1 -d 'x' )"
-        ALLOWED_HEIGHT="$(( $RES_HEIGHT - $BAR_HEIGHT ))"
+        ALLOWED_HEIGHT="$(( $RES_HEIGHT - $EFF_BARHEIGHT ))"
         SCREEN_IDX="$(( $IDX + 1 ))"
-        REGION_LINES+=("${SPR1}region${SPR2}=${SPR3}screen[${SCREEN_IDX}]:${RES_WIDTH}x${ALLOWED_HEIGHT}+0+${BAR_HEIGHT}")
+        REGION_LINES+=("${SPR1}region${SPR2}=${SPR3}screen[${SCREEN_IDX}]:${RES_WIDTH}x${ALLOWED_HEIGHT}+0+${EFF_BARHEIGHT}")
     done
 fi
 

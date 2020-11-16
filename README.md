@@ -49,7 +49,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [engrampa](https://github.com/mate-desktop/engrampa): A file archiver for MATE.
     * [mpv](https://github.com/mpv-player/mpv): A free, open source, and cross-platform media player.
     * [zathura](https://git.pwmt.org/pwmt/zathura): A highly customizable and functional document viewer.
-    * [sxiv](https://github.com/muennich/sxiv): Simple X Image Viewer.
+    * [pqiv](https://github.com/phillipberndt/pqiv): Powerful image viewer with minimal UI.
     * [maim](https://github.com/naelstrof/maim): Screenshot utility.
 
  * Shell:

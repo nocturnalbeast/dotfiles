@@ -1,0 +1,149 @@
+[options]
+hide-info-box          = 1
+lazy-load              = 1
+set_cursor_visibility  = 0
+sort                   = 1
+window-title           = Image Viewer - $BASEFILENAME
+auto-montage-mode      = 1
+transparent-background = true
+slideshow-interval     = 2
+end-of-files-action    = wrap-no-reshuffle
+
+
+[actions]
+# fit to the window in windowed mode
+toggle_scale_mode(5)
+
+
+[keybindings]
+# montage mode bindings
+@MONTAGE {
+    # move one row at a time using mouse scroll
+    <Mouse-Scroll-1>        { montage_mode_shift_y_rows(1)         }
+    <Mouse-Scroll-2>        { montage_mode_shift_y_rows(-1)        }
+    # move one image at a time using arrow keys / vim movement keys
+    <Up>                    { montage_mode_shift_y(-1)             }
+    <Down>                  { montage_mode_shift_y(1)              }
+    <Left>                  { montage_mode_shift_x(-1)             }
+    <Right>                 { montage_mode_shift_x(1)              }
+    <KP_Up>                 { montage_mode_shift_y(-1)             }
+    <KP_Down>               { montage_mode_shift_y(1)              }
+    <KP_Left>               { montage_mode_shift_x(-1)             }
+    <KP_Right>              { montage_mode_shift_x(1)              }
+    k                       { montage_mode_shift_y(-1)             }
+    j                       { montage_mode_shift_y(1)              }
+    h                       { montage_mode_shift_x(-1)             }
+    l                       { montage_mode_shift_x(1)              }
+    # move a page at a time using pgup/pgdn or u/d keys
+    <Page_Up>               { montage_mode_shift_y_pg(-1)          }
+    <Page_Down>             { montage_mode_shift_y_pg(1)           }
+    <KP_Page_Up>            { montage_mode_shift_y_pg(-1)          }
+    <KP_Next>               { montage_mode_shift_y_pg(1)           }
+    u                       { montage_mode_shift_y_pg(-1)          }
+    d                       { montage_mode_shift_y_pg(1)           }
+    # go back to normal mode with t
+    t                       { montage_mode_return_cancel()         }
+    # go to normal mode but with the selected image showing with enter
+    <Return>                { montage_mode_return_proceed()        }
+    # follow mode with g
+    g                       { montage_mode_follow(asdfghjkl)       }
+}
+
+# go to next/prev image with mouse
+<Mouse-1>               { goto_file_relative(1)                }
+<Mouse-2>               { goto_file_relative(-1)               }
+<Mouse-Scroll-1>        { goto_file_relative(1)                }
+<Mouse-Scroll-2>        { goto_file_relative(-1)               }
+# go to next/prev image with space/backspace or J/K
+<space>                 { goto_file_relative(1)                }
+<BackSpace>             { goto_file_relative(-1)               }
+J                       { goto_file_relative(1)                }
+K                       { goto_file_relative(-1)               }
+# fullscreen with f
+f                       { toggle_fullscreen(0)                 }
+# quit with q
+q                       { quit()                               }
+# enable/disable background pattern with b
+b                       { toggle_background_pattern(0)         }
+# enable/disable slideshow with s
+s                       { toggle_slideshow()                   }
+# enable/disable displaying information with i
+i                       { toggle_info_box()                    }
+# go to the first/last file with home/end or H/L
+<Home>                  { goto_file_byindex(0)                 }
+<End>                   { goto_file_byindex(-1)                }
+<KP_Home>               { goto_file_byindex(0)                 }
+<KP_End>                { goto_file_byindex(-1)                }
+H                       { goto_file_byindex(0)                 }
+L                       { goto_file_byindex(-1)                }
+# flip image with |
+<bar>                   { flip_vertically()                    }
+<Control><bar>          { flip_horizontally()                  }
+# rotate image with r
+R                       { rotate_left()                        }
+r                       { rotate_right()                       }
+# invert/negate image with n
+n                       { toggle_negate_mode(0)                }
+# zoom control
+t                       { toggle_scale_mode(0)                 }
+<equal>                 { reset_scale_level()                  }
+<minus>                 { set_scale_level_relative(0.9)        }
+<KP_Subtract>           { set_scale_level_relative(0.9)        }
+<plus>                  { set_scale_level_relative(1.1)        }
+<KP_Add>                { set_scale_level_relative(1.1)        }
+# toggle shuffle mode with z
+z                       { toggle_shuffle_mode(0)               }
+# animated images control with comma / period / slash
+<slash>                 { animation_continue()                 }
+<comma>                 { animation_set_speed_relative(0.9)    }
+<period>                { animation_set_speed_relative(1.1)    }
+<Control><slash>        { animation_step(1)                    }
+# slideshow control with control + [plus / minus]
+<Control><plus>         { set_slideshow_interval_relative(1)   }
+<Control><minus>        { set_slideshow_interval_relative(-1)  }
+# jump to prior image with p
+p                       { goto_earlier_file()                  }
+# enter montage/thumbnail mode with t
+t                       { montage_mode_enter()                 }
+# go to any file in the selection with G
+G                       { jump_dialog()                        }
+# go forward/backward 5 files at a time with pgup / pgdn
+<Page_Up>               { goto_file_relative(10)               }
+<Page_Down>             { goto_file_relative(-10)              }
+<KP_Page_Up>            { goto_file_relative(10)               }
+<KP_Next>               { goto_file_relative(-10)              }
+# hardlink the current image to ~/.pqiv-select
+<Control>a              { hardlink_current_image()             }
+# image movement with arrow / vim keys
+<Left>                  { shift_x(10)                          }
+<Right>                 { shift_x(-10)                         }
+<KP_Left>               { shift_x(10)                          }
+<KP_Right>              { shift_x(-10)                         }
+h                       { shift_x(10)                          }
+l                       { shift_x(-10)                         }
+<Control><Left>         { shift_x(50)                          }
+<Control><Right>        { shift_x(-50)                         }
+<Control><KP_Left>      { shift_x(50)                          }
+<Control><KP_Right>     { shift_x(-50)                         }
+<Control>h              { shift_x(50)                          }
+<Control>l              { shift_x(-50)                         }
+<Up>                    { shift_y(10)                          }
+<Down>                  { shift_y(-10)                         }
+<KP_Up>                 { shift_y(10)                          }
+<KP_Down>               { shift_y(-10)                         }
+k                       { shift_y(10)                          }
+j                       { shift_y(-10)                         }
+<Control><Up>           { shift_y(50)                          }
+<Control><Down>         { shift_y(-50)                         }
+<Control><KP_Up>        { shift_y(50)                          }
+<Control><KP_Down>      { shift_y(-50)                         }
+<Control>k              { shift_y(50)                          }
+<Control>j              { shift_y(-50)                         }
+# commands
+<Control>b              { command(setbg)                       }
+<Control>r              { command(|convert - -rotate 90 -)     }
+<Control>R              { command(|convert - -rotate +90 -)    }
+<Control>f              { command(|convert - -flip -)          }
+<Control>F              { command(|convert - -flop -)          }
+<Control>n              { command(|convert - -negate -)        }
+<question>              { command(menu-keybindings-pqiv)       }

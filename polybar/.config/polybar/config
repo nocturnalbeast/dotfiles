@@ -73,34 +73,22 @@ inherit = colors-dark
 
 
 [margins]
-bar-width = ${env:BAR_WIDTH}
-bar-height = 24
-
-vert-margin = 6
-horz-margin = 6
+bar-width = 100%
+bar-height = 3.125%
+vert-margin = 0.78125%
+horz-margin = 0.43923%
 
 mod-margin = 1
-
 header-padding = 2
 content-padding = 2
 
 
 [fonts]
-display-font = "Iosevka Aile:style=Medium:pixelsize=11:antialias=true:autohint=true;3"
-glyph-font = "Iosevka Term:pixelsize=18:antialias=true;4"
+display-font = "sans:style=Medium:pixelsize=11:antialias=true:autohint=true;2"
+glyph-font = "monospace:pixelsize=18:antialias=true;4"
 
 
 [sysvars]
-shutdown-command = "shutdown now"
-reboot-command = "shutdown -r now"
-sleep-command = "systemctl suspend"
-logout-command = "bspc quit"
-
-terminal-command = "st -t Terminal &"
-browser-command = "qutebrowser &"
-editor-command = "st -t Neovim -e 'zsh -c nvim' &"
-fm-command = "thunar &"
-
 temp-therm-zone = 0
 temp-hwmon-path = /sys/devices/platform/coretemp.0/hwmon/hwmon1/temp2_input
 
@@ -126,11 +114,9 @@ network-interface = wlp2s0
 ;
 
 
-[bar/mainbar]
+[bar/common]
 monitor = ${env:MONITOR}
 bottom = false
-
-wm-name = polybar-mainbar
 
 height = ${margins.bar-height}
 width = ${margins.bar-width}
@@ -146,44 +132,30 @@ font-0 = ${fonts.display-font}
 font-1 = ${fonts.glyph-font}
 
 module-margin = 0
+
+override-redirect = true
+enable-ipc = true
+wm-restack = ${env:WINDOW_MANAGER}
+
+
+[bar/mainbar]
+inherit = bar/common
+
+wm-name = polybar-mainbar
 
 modules-left = barswitch sep wksp-icon cnt-space wksp-name window cnt-space sep
 modules-center = media-artist media-prev media-playpause media-next media-track
 modules-right = sep volume sep datetime
 
-override-redirect = true
-enable-ipc = true
-wm-restack = ${env:WINDOW_MANAGER}
-
 
 [bar/monbar]
-monitor = ${env:MONITOR}
-bottom = false
+inherit = bar/common
 
 wm-name = polybar-monbar
-
-height = ${margins.bar-height}
-width = ${margins.bar-width}
-border-top-size = ${margins.vert-margin}
-border-bottom-size = ${margins.vert-margin}
-border-left-size = ${margins.horz-margin}
-border-right-size = ${margins.horz-margin}
-
-background = ${active-colors.background}
-foreground = ${active-colors.foreground}
-
-font-0 = ${fonts.display-font}
-font-1 = ${fonts.glyph-font}
-
-module-margin = 0
 
 modules-left = barswitch sep cpu cpucores cnt-space sep mem sep temp sep
 modules-center = backlight sep battery
 modules-right = sep fs-root sep fs-home sep network-speed network-status
-
-override-redirect = true
-enable-ipc = true
-wm-restack = ${env:WINDOW_MANAGER}
 
 
 ;
@@ -201,7 +173,11 @@ type = custom/script
 interval = 86400
 tail = false
 
-exec = for i in `seq $( grep '^mod-margin' "${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/config" | tr -d ' ' | cut -f 2 -d = | grep -E '[0-9]+' )`; do echo -n ' '; done
+exec = echo '                    '
+
+label-minlen = ${margins.mod-margin}
+label-maxlen = ${margins.mod-margin}
+label-ellipsis = false
 
 format-background = ${active-colors.background}
 format-foreground = ${active-colors.foreground}
@@ -213,7 +189,11 @@ type = custom/script
 interval = 86400
 tail = false
 
-exec = for i in `seq $( grep '^header-padding' "${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/config" | tr -d ' ' | cut -f 2 -d = | grep -E '[0-9]+' )`; do echo -n ' '; done
+exec = echo '                    '
+
+label-minlen = ${margins.header-padding}
+label-maxlen = ${margins.header-padding}
+label-ellipsis = false
 
 format-background = ${active-colors.header-background}
 format-foreground = ${active-colors.header-foreground}
@@ -225,7 +205,11 @@ type = custom/script
 interval = 86400
 tail = false
 
-exec = for i in `seq $( grep '^content-padding' "${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/config" | tr -d ' ' | cut -f 2 -d = | grep -E '[0-9]+' )`; do echo -n ' '; done
+exec = echo '                    '
+
+label-minlen = ${margins.content-padding}
+label-maxlen = ${margins.content-padding}
+label-ellipsis = false
 
 format-background = ${active-colors.content-background}
 format-foreground = ${active-colors.content-foreground}
@@ -294,6 +278,7 @@ label-urgent =
 format-background = ${active-colors.content-background}
 format-foreground = ${active-colors.content-foreground}
 
+
 [module/window]
 type = internal/xwindow
 
@@ -302,82 +287,6 @@ label-maxlen = 45
 
 format-background = ${active-colors.content-background}
 format-foreground = ${active-colors.content-foreground}
-
-
-[module/power-menu]
-type = custom/menu
-
-label-close = 
-label-open = ⏻
-
-expand-right = false
-
-menu-0-0 = ⭘
-menu-0-0-exec = ${sysvars.shutdown-command}
-menu-0-1 = ⏼
-menu-0-1-exec = ${sysvars.reboot-command}
-menu-0-2 = ⏾
-menu-0-2-exec = ${sysvars.sleep-command}
-menu-0-3 = 
-menu-0-3-exec = ${sysvars.logout-command}
-
-label-close-padding = ${margins.header-padding}
-label-open-padding = ${margins.header-padding}
-menu-0-0-padding = ${margins.content-padding}
-menu-0-1-padding = ${margins.content-padding}
-menu-0-2-padding = ${margins.content-padding}
-menu-0-3-padding = ${margins.content-padding}
-
-label-close-background = ${active-colors.header-background}
-label-close-foreground = ${active-colors.header-foreground}
-label-open-background = ${active-colors.header-background}
-label-open-foreground = ${active-colors.header-foreground}
-menu-0-0-background = ${active-colors.content-background}
-menu-0-0-foreground = ${active-colors.content-foreground}
-menu-0-1-background = ${active-colors.content-background}
-menu-0-1-foreground = ${active-colors.content-foreground}
-menu-0-2-background = ${active-colors.content-background}
-menu-0-2-foreground = ${active-colors.content-foreground}
-menu-0-3-background = ${active-colors.content-background}
-menu-0-3-foreground = ${active-colors.content-foreground}
-
-
-[module/app-launcher]
-type = custom/menu
-
-label-close = 
-label-open = 
-
-expand-right = true
-
-menu-0-0 = 
-menu-0-0-exec = ${sysvars.terminal-command}
-menu-0-1 = 
-menu-0-1-exec = ${sysvars.browser-command}
-menu-0-2 = 
-menu-0-2-exec = ${sysvars.editor-command}
-menu-0-3 = 
-menu-0-3-exec = ${sysvars.fm-command}
-
-label-close-padding = ${margins.header-padding}
-label-open-padding = ${margins.header-padding}
-menu-0-0-padding = ${margins.content-padding}
-menu-0-1-padding = ${margins.content-padding}
-menu-0-2-padding = ${margins.content-padding}
-menu-0-3-padding = ${margins.content-padding}
-
-label-close-background = ${active-colors.header-background}
-label-close-foreground = ${active-colors.header-foreground}
-label-open-background = ${active-colors.header-background}
-label-open-foreground = ${active-colors.header-foreground}
-menu-0-0-background = ${active-colors.content-background}
-menu-0-0-foreground = ${active-colors.content-foreground}
-menu-0-1-background = ${active-colors.content-background}
-menu-0-1-foreground = ${active-colors.content-foreground}
-menu-0-2-background = ${active-colors.content-background}
-menu-0-2-foreground = ${active-colors.content-foreground}
-menu-0-3-background = ${active-colors.content-background}
-menu-0-3-foreground = ${active-colors.content-foreground}
 
 
 [module/media-prev]
