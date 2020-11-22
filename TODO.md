@@ -16,6 +16,5 @@ These are the things that are planned to be worked on or in progress right now:
 ### In Progress
 
  * Write custom qutebrowser config
- * Remove independent repos for suckless tools and maintain an all-in-one patch for each tool
  * Integrate MPRIS2 support
  * Revisit window rules for bspwm and spectrwm

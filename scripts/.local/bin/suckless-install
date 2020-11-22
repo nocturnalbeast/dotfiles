@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+
+REPO_LINK_PFX="https://git.suckless.org"
+
+usage() {
+    echo "$(basename "$0") : suckless tools install script"
+    echo "  Usage : $(basename "$0") [TOOL_NAME]"
+}
+
+if [ "$#" -ne 1 ]; then
+    usage
+    exit 1
+elif ! ls "${XDG_CONFIG_HOME:-"$HOME/.config"}/suckless/$1/combined_patch.diff" >/dev/null 2>&1; then
+    >&2 echo "The tool does not have a patch available."
+    exit 1
+fi
+
+echo "Combined patch found, proceeding..."
+git clone "$REPO_LINK_PFX/$1" --quiet
+cd "$1"
+patch -i "${XDG_CONFIG_HOME:-"$HOME/.config"}/suckless/$1/combined_patch.diff" --quiet
+sudo make install --quiet
+cd ..
+rm -rf "$1"

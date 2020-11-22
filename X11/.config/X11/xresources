@@ -3,56 +3,75 @@
 ! |_,_|_| |___|___|___|___|_| |___|___|___|
 
 ! font rendering settings
-Xft.dpi:         96
-Xft.antialias:   true
-Xft.hinting:     true
-Xft.rgba:        rgb
-Xft.autohint:    false
-Xft.hintstyle:   hintslight
-Xft.lcdfilter:   lcddefault
+Xft.dpi:               96
+Xft.antialias:         true
+Xft.hinting:           true
+Xft.rgba:              rgb
+Xft.autohint:          false
+Xft.hintstyle:         hintslight
+Xft.lcdfilter:         lcddefault
 
 ! simple terminal settings
-St.font:         mono:size=11:antialias=true:autohint:true
-St.alpha:        0.85
-St.alphaunfocus: 0.85
-St.borderpx:     4
-St.tabspaces:    4
-St.cwscale:      1
-St.chscale:      1
+St.font:               mono:size=11:antialias=true:autohint:true
+St.alpha:              0.85
+St.alphaunfocus:       0.85
+St.borderpx:           4
+St.tabspaces:          4
+St.cwscale:            1
+St.chscale:            1
+
+! dmenu settings
+dmenu.font:            sans:style=Medium:size=11:antialias=true:autohint=true
+dmenu.background:      #525252
+dmenu.foreground:      #000000
+dmenu.selbackground:   #000000
+dmenu.selforeground:   #ffffff
+dmenu.hlbackground:    #525252
+dmenu.hlforeground:    #ff3333
+dmenu.selhlbackground: #000000
+dmenu.selhlforeground: #ff8080
+dmenu.alphabg:         150
+dmenu.alphafg:         255
+dmenu.alphaselbg:      180
+dmenu.alphaselfg:      255
+dmenu.alphahlbg:       150
+dmenu.alphahlfg:       200
+dmenu.alphaselhlbg:    180
+dmenu.alphaselhlfg:    255
 
 ! special
-*.foreground:    #ffffff
-*.background:    #000000
-*.cursorColor:   #ffffff
+*.foreground:          #ffffff
+*.background:          #000000
+*.cursorColor:         #ffffff
 
 ! black
-*.color0:        #333333
-*.color8:        #666666
+*.color0:              #333333
+*.color8:              #666666
 
 ! red
-*.color1:        #ff3333
-*.color9:        #ff8080
+*.color1:              #ff3333
+*.color9:              #ff8080
 
 ! green
-*.color2:        #33ff44
-*.color10:       #80ff8a
+*.color2:              #33ff44
+*.color10:             #80ff8a
 
 ! yellow
-*.color3:        #ddff33
-*.color11:       #eaff80
+*.color3:              #ddff33
+*.color11:             #eaff80
 
 ! blue
-*.color4:        #3333ff
-*.color12:       #8080ff
+*.color4:              #3333ff
+*.color12:             #8080ff
 
 ! magenta
-*.color5:        #9933ff
-*.color13:       #bf80ff
+*.color5:              #9933ff
+*.color13:             #bf80ff
 
 ! cyan
-*.color6:        #33ffff
-*.color14:       #80ffff
+*.color6:              #33ffff
+*.color14:             #80ffff
 
 ! white
-*.color7:        #999999
-*.color15:       #cccccc
+*.color7:              #999999
+*.color15:             #cccccc

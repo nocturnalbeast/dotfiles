@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-ICON="$XDG_CONFIG_HOME/dunst/icons/keyboard.svg"
+ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/keyboard.svg"
 
 ENTRIES=$( pqiv --show-bindings | sed 's/^\s*//g; s/{/::{/g; s/</\[/g; s/>/\]/g' | column -t -s "::" )
 

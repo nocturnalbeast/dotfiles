@@ -8,7 +8,7 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-~/.config/scripts/polybar-helper disable >/dev/null 2>&1
-trap "~/.config/scripts/polybar-helper enable >/dev/null 2>&1" EXIT
+polybar-helper disable >/dev/null 2>&1
+trap "polybar-helper enable >/dev/null 2>&1" EXIT
 
 clipmenu $( dmenu-helper get_options ) -p "   "

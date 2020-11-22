@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-CONFIG_FILE="$XDG_CONFIG_HOME/spectrwm/spectrwm.conf"
-ICON="$XDG_CONFIG_HOME/dunst/icons/keyboard.svg"
+CONFIG_FILE="${XDG_CONFIG_HOME:="$HOME/.config"}/spectrwm/spectrwm.conf"
+ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/keyboard.svg"
 
 BINDINGS="$( sed -n "s/^[ ]*bind\[\(.*\)\][ ]*=[ ]*\(.*\)[ ]*$/\2 -> \1/p" "$CONFIG_FILE" | sed "s/MOD/$( sed -n "s/^[ ]*modkey[ ]*=[ ]*\(.*\)[ ]*$/\1/p" "$CONFIG_FILE" )/g" | sed "s/Mod1/Alt/g" | sed "s/Mod4/Super/g" | tr '[:upper:]' '[:lower:]' | column -t )"
 

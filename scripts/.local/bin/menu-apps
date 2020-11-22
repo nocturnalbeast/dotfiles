@@ -9,11 +9,11 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
 done
 
 # the location of the frecency history file
-HISTORY_LOC="$HOME/.cache/frecency_launcher/history"
+HISTORY_LOC="${XDG_CACHE_HOME:="$HOME/.cache"}/frecency_launcher/history"
 
 # these are the paths that are used to either include in the search or avoid
 # use pipe symbol as the separator for multiple paths
-PATHS_INCLUDE="$HOME/.local/share/applications|/usr/share/applications"
+PATHS_INCLUDE="${XDG_DATA_HOME:="$HOME/.local/share"}/applications|/usr/share/applications"
 PATHS_EXCLUDE="/tmp"
 
 function usage() {

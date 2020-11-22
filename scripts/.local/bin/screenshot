@@ -3,8 +3,8 @@
 SCREENSHOTS_DIR="$XDG_PICTURES_DIR/screenshots"
 [ ! -d "$SCREENSHOTS_DIR" ] && mkdir -p "$SCREENSHOTS_DIR"
 
-MAIM_OPTS="-o -u" 
-SLOP_OPTS="-b 2 -c 0,0,0,0.6 -q"
+MAIM_OPTS="-u" 
+SLOP_OPTS="-b 2 -c 0,0,0,0.9 -q"
 
 IMAGE_PATH="$SCREENSHOTS_DIR/$( date +%Y-%m-%d_%H:%M:%S ).png"
 

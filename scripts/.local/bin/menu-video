@@ -18,7 +18,7 @@ SEARCH_RESULT_NUM="5"
 DEST_DIR="$XDG_VIDEOS_DIR/downloaded"
 
 # notification icon
-ICON="$HOME/.config/dunst/icons/video.svg"
+ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/video.svg"
 
 # url filtering regex
 URL_REGEX="(((http|magnet|https|ftp|gopher)|mailto):(//|\?)?[^ <>\"\t]*|(www|ftp)[0-9]?\\.[-a-z0-9.]+)[^ .,;\\n\r<\">\\):]?[^, <>\"\]*[^ .,;\\n\r<\">\\):]"

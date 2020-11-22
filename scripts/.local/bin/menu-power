@@ -9,7 +9,7 @@ DELAY_MENU="now\n+60\n+45\n+30\n+15\n+10\n+5\n+3\n+2\n+1"
 ACTION=$( dmenu-helper run_menu " 漣  " "$MAIN_MENU" )
 [ -z "$ACTION" ] && exit
 
-ICON="$HOME/.config/dunst/icons/power.svg"
+ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/power.svg"
 
 case "$ACTION" in
     '⏻ Shutdown')
@@ -36,7 +36,7 @@ case "$ACTION" in
         notify-send -u low "Suspending now..." -i "$ICON"
         systemctl suspend
         ;;
-    ' Lock')
+    ' Lock')
         light-locker-command --lock
         ;;
     ' Logout')

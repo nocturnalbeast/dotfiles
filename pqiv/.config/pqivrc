@@ -1,3 +1,10 @@
+#          _     
+#  ___ ___|_|_ _ 
+# | . | . | | | |
+# |  _|_  |_|\_/ 
+# |_|   |_|      
+
+
 [options]
 hide-info-box          = 1
 lazy-load              = 1
@@ -77,8 +84,8 @@ i                       { toggle_info_box()                    }
 H                       { goto_file_byindex(0)                 }
 L                       { goto_file_byindex(-1)                }
 # flip image with |
-<bar>                   { flip_vertically()                    }
-<Control><bar>          { flip_horizontally()                  }
+<backslash>             { flip_vertically()                    }
+<bar>                   { flip_horizontally()                  }
 # rotate image with r
 R                       { rotate_left()                        }
 r                       { rotate_right()                       }
@@ -139,11 +146,15 @@ j                       { shift_y(-10)                         }
 <Control><KP_Down>      { shift_y(-50)                         }
 <Control>k              { shift_y(50)                          }
 <Control>j              { shift_y(-50)                         }
-# commands
+# set as background with control+b
 <Control>b              { command(setbg)                       }
-<Control>r              { command(|convert - -rotate 90 -)     }
-<Control>R              { command(|convert - -rotate +90 -)    }
-<Control>f              { command(|convert - -flip -)          }
-<Control>F              { command(|convert - -flop -)          }
-<Control>n              { command(|convert - -negate -)        }
+# get help with ?
 <question>              { command(menu-keybindings-pqiv)       }
+# commands to run some quick edits
+cb                      { command(echo $1 | xargs -I {} convert -colorspace Gray "{}" "{}") }
+cB                      { command(echo $1 | xargs -I {} convert -blur 0x3 "{}" "{}")        }
+cr                      { command(echo $1 | xargs -I {} convert -rotate 90 "{}" "{}")       }
+cR                      { command(echo $1 | xargs -I {} convert -rotate -90 "{}" "{}")      }
+cf                      { command(echo $1 | xargs -I {} convert -flip "{}" "{}")            }
+cF                      { command(echo $1 | xargs -I {} convert -flop "{}" "{}")            }
+cn                      { command(echo $1 | xargs -I {} convert -negate "{}" "{}")          }

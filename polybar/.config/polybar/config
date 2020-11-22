@@ -76,7 +76,7 @@ inherit = colors-dark
 bar-width = 100%
 bar-height = 3.125%
 vert-margin = 0.78125%
-horz-margin = 0.43923%
+horz-margin = 0.439238653%
 
 mod-margin = 1
 header-padding = 2
