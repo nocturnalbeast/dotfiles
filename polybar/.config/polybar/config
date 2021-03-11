@@ -13,7 +13,7 @@
 
 
 [settings]
-screenchange-reload = true
+screenchange-reload = false
 
 
 ;
@@ -59,9 +59,10 @@ workspace-normal = #AC000000
 ;
 ; active-colors specifies whether to use the dark or the light theme;
 ; margins define the overall margins and padding used in the modules;
-; fonts define the two fonts (regular and glyph) used in all the bars present;
 ; sysvars define the other system-specific variables that are used in the
-; modules - such as network interface.
+; modules - such as network interface and fonts define the size ratio of the
+; display font to the height of the bar, the size ratio of the glyph font
+; height to the display font height and the font specifications themselves.
 ;
 ; For most users, these are the only settings you'll need to modify to adapt
 ; to your setup.
@@ -84,8 +85,11 @@ content-padding = 2
 
 
 [fonts]
-display-font = "sans:style=Medium:pixelsize=11:antialias=true:autohint=true;2"
-glyph-font = "monospace:pixelsize=18:antialias=true;4"
+display-font = "sans:style=Medium:antialias=true:autohint=true"
+glyph-font = "monospace:antialias=true"
+
+font-ratio = 0.4583
+glyph-ratio = 1.6363
 
 
 [sysvars]
@@ -128,8 +132,8 @@ border-right-size = ${margins.horz-margin}
 background = ${active-colors.background}
 foreground = ${active-colors.foreground}
 
-font-0 = ${fonts.display-font}
-font-1 = ${fonts.glyph-font}
+font-0 = ${env:TEXT_FONT}
+font-1 = ${env:GLYPH_FONT}
 
 module-margin = 0
 
@@ -243,16 +247,16 @@ label-empty =
 label-visible = 
 label-urgent = 
 
-icon-0 = "I;"
-icon-1 = "II;"
-icon-2 = "III;"
-icon-3 = "IV;"
-icon-4 = "V;"
-icon-5 = "VI;"
-icon-6 = "VII;"
-icon-7 = "VIII;"
-icon-8 = "IX;龍"
-icon-9 = "X;"
+icon-0 = "main;"
+icon-1 = "inet;"
+icon-2 = "code;"
+icon-3 = "data;"
+icon-4 = "play;"
+icon-5 = "docs;"
+icon-6 = "draw;"
+icon-7 = "txns;"
+icon-8 = "info;龍"
+icon-9 = "misc;"
 
 format-padding = ${margins.header-padding}
 
@@ -662,7 +666,7 @@ fixed-values = true
 format-mounted = <label-mounted>
 format-unmounted = <label-unmounted>
 label-mounted = %percentage_free%% of %total%
-label-unmounted = N/A
+label-unmounted = 
 
 format-mounted-suffix = 
 format-unmounted-suffix = 

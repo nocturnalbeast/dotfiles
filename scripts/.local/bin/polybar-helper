@@ -8,6 +8,7 @@ usage() {
     echo " Possible operations: "
     echo "  init           : Initialize state file (used right after starting polybar)."
     echo "  get_state      : Returns the global state of the bars (are they hidden or not?)"
+    echo "  get_cache_path : Returns the path of the cache file used to track the states of the bar instances."
     echo "  switch         : Switch the active bar."
     echo "  enable         : Show the active bar."
     echo "  disable        : Hide the active bar."
@@ -17,48 +18,142 @@ usage() {
     echo "  pad_toggle     : Toggle top padding reserved by the window manager."
     echo "  toggle_all     : Toggle both padding and bar visibility."
     echo "  get_dimensions : Gets the current dimensions of the bar as specified in the config file."
+    echo "  get_font       : Gets the font strings for the bars based on options defined in the config file."
 }
 
-round() {
-    VAL=$1
-    R_VAL=${VAL/.*}
-    if (( $( echo "$VAL > $R_VAL" | bc -l ) )); then
-        R_VAL="$(( $R_VAL + 1 ))"
-    fi
-    echo "$R_VAL"
+# function to find the ceiling integer of any given float value
+ceil() {
+    echo "$1" | awk 'function ceil(x, y){y=int(x); return(x>y?y+1:y)} {print ceil($0)}'
 }
 
+# function to find the floor integer of any given float value
+floor() {
+    echo "$1" | awk 'function floor(x, y){y=int(x); return(x<y?y-1:y)} {print floor($0)}'
+}
+
+# function to find the dimensions of the bars with respect to the monitor specified
 get_dimensions() {
-    RESOLUTION="$( xdpyinfo | awk '/dimensions/{print $2}' )"
+    # initialize the resolution variable as an empty string
+    RESOLUTION=""
+    # check if any monitor name is provided
+    if [[ "$1" != "" ]]; then
+        # if yes, then use that to fetch the resolution
+        RESOLUTION="$( polybar --list-monitors | grep "^$1: " | cut -f 2 -d " " | cut -f 1 -d "+" )"
+    fi
+    # check if the resolution is empty - which means either the name was not provided or there was an error
+    if [[ "$RESOLUTION" == "" ]]; then
+        # in that case, use the primary monitor as the fallback to fetch the resolution
+        RESOLUTION="$( polybar --list-monitors | grep "(primary)$" | cut -f 2 -d " " | cut -f 1 -d "+" )"
+    fi
+    # separate height and width into different variables
     SCR_HEIGHT="$( echo "$RESOLUTION" | cut -f 2 -d x )"
     SCR_WIDTH="$( echo "$RESOLUTION" | cut -f 1 -d x )"
+    # find the horizontal margin from the config file
     HORZ_MARGIN="$( awk -F "=" '/^[ ]*horz-margin/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
-    [[ "${HORZ_MARGIN: -1}" == "%" ]] && HORZ_MARGIN="$( round "$( echo "$SCR_WIDTH*${HORZ_MARGIN::-1}/100" | bc -l )" )"
+    # if it's a percentage value, use the resolution to calculate the margin
+    if [[ "${HORZ_MARGIN: -1}" == "%" ]]; then
+        HORZ_MARGIN="$( ceil "$( echo "$SCR_WIDTH*${HORZ_MARGIN::-1}/100" | bc -l )" )"
+        # make sure it's even
+        HORZ_MARGIN="$(( $HORZ_MARGIN - ( $HORZ_MARGIN % 2 ) ))"
+    fi
+    # find the vertical margin from the config file
     VERT_MARGIN="$( awk -F "=" '/^[ ]*vert-margin/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
-    [[ "${VERT_MARGIN: -1}" == "%" ]] && VERT_MARGIN="$( round "$( echo "$SCR_HEIGHT*${VERT_MARGIN::-1}/100" | bc -l )" )"
+    # if it's a percentage value, use the resolution to calculate the margin
+    if [[ "${VERT_MARGIN: -1}" == "%" ]]; then
+        VERT_MARGIN="$( ceil "$( echo "$SCR_HEIGHT*${VERT_MARGIN::-1}/100" | bc -l )" )"
+        # make sure it's even
+        VERT_MARGIN="$(( $VERT_MARGIN - ( $VERT_MARGIN % 2 ) ))"
+    fi
+    # find the bar height value from the config file
     BAR_HEIGHT="$( awk -F "=" '/^[ ]*bar-height/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
-    [[ "${BAR_HEIGHT: -1}" == "%" ]] && BAR_HEIGHT="$( round "$( echo "$SCR_HEIGHT*${BAR_HEIGHT::-1}/100" | bc -l )" )"
+    # if it's a percentage value, use the resolution to calculate the bar height
+    if [[ "${BAR_HEIGHT: -1}" == "%" ]]; then
+        BAR_HEIGHT="$( ceil "$( echo "$SCR_HEIGHT*${BAR_HEIGHT::-1}/100" | bc -l )" )"
+    fi
+    # putting it all together
     echo -e "$HORZ_MARGIN\n$VERT_MARGIN\n$BAR_HEIGHT\n$(( $SCR_WIDTH - 2 * $HORZ_MARGIN ))"
 }
 
+# function to get the font strings that are used in the config
+get_font() {
+    # find the height of the bar first
+    BAR_HEIGHT="$( get_dimensions "$1" | sed '3q;d' )"
+    # obtain the font ratio from the config file
+    FONT_RATIO="$( awk -F "=" '/^[ ]*font-ratio/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
+    # now the font height should be the product of the bar_height and font_ratio values
+    TEXT_FONT_SIZE="$( ceil "$( echo "$BAR_HEIGHT*$FONT_RATIO" | bc -l )" )"
+    # obtain the character-to-glyph ratio from the config file
+    GLYPH_RATIO="$( awk -F "=" '/^[ ]*glyph-ratio/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
+    # calculate the glyph font size
+    GLYPH_FONT_SIZE="$( ceil "$( echo "$TEXT_FONT_SIZE*$GLYPH_RATIO" | bc -l )" )"
+    # now we need to calculate the offset for both the fonts
+    TEXT_FONT_OFFSET="$( ceil "$( echo "1/$FONT_RATIO" | bc -l )" )"
+    GLYPH_FONT_OFFSET="$( ceil "$( echo "$TEXT_FONT_OFFSET*$GLYPH_RATIO" | bc -l )" )"
+    if [[ "$(( ($TEXT_FONT_SIZE + $BAR_HEIGHT) % 2 ))" -eq 1 ]]; then
+        TEXT_FONT_OFFSET="$(( $TEXT_FONT_OFFSET - 1 ))"
+        GLYPH_FONT_OFFSET="$(( $GLYPH_FONT_OFFSET - 1 ))"
+    else
+        TEXT_FONT_OFFSET="$(( $TEXT_FONT_OFFSET + 1 ))"
+        GLYPH_FONT_OFFSET="$(( $GLYPH_FONT_OFFSET + 1 ))"
+    fi
+    # now get the font definitions from the config file
+    TEXT_FONT="$( sed -n 's/^[ ]*display-font[ ]*=[ ]*\(.*\)[ ]*$/\1/p' "$CONFIG_FILE" | tr -d '"' )"
+    GLYPH_FONT="$( sed -n 's/^[ ]*glyph-font[ ]*=[ ]*\(.*\)[ ]*$/\1/p' "$CONFIG_FILE" | tr -d '"' )"
+    # putting it all together
+    echo -e "$TEXT_FONT:pixelsize=$TEXT_FONT_SIZE;$TEXT_FONT_OFFSET\n$GLYPH_FONT:pixelsize=$GLYPH_FONT_SIZE;$GLYPH_FONT_OFFSET"
+}
+
+# function to enumerate all the instances of the bars launched
 get_bars() {
+    # declare the arrays that'll be storing the PIDs and the WIDs of each bar
+    declare -A BARS_WIDS
+    declare -A BARS_PIDS
+    # get all available WIDs into an array
     mapfile -t WIDS < <( xdotool search --class "Polybar" )
+    # go through each WID
     for WID in "${WIDS[@]}"; do
+        # get the name of the window
         WNAME="$( xprop WM_NAME -id "$WID" | awk '{gsub(/[","]/,"",$3);print $3}' | sed 's/^polybar-//g' )"
+        # get the PID of the window
         WPID="$( xprop _NET_WM_PID -id "$WID" | awk '{gsub(/[","]/,"",$3);print $3}' )"
-        echo "$WNAME:$WID:$WPID"
+        # if this instance of polybar is not recorded, then record it
+        if [[ ! " ${!BARS_WIDS[@]} " =~ " ${WNAME} " ]]; then
+            BARS_WIDS[$WNAME]="$WID"
+            BARS_PIDS[$WNAME]="$WPID"
+        # else add the IDs of the processes running on the other monitor(s)
+        else
+            BARS_WIDS[$WNAME]="${BARS_WIDS[$WNAME]},$WID"
+            BARS_PIDS[$WNAME]="${BARS_PIDS[$WNAME]},$WPID"
+        fi
+    done
+    # now print it all out
+    for BAR in "${!BARS_WIDS[@]}"; do
+        echo "$BAR:${BARS_WIDS[$BAR]}:${BARS_PIDS[$BAR]}"
     done
 }
 
+# function to initialize states of the bar instances
 init_state() {
+    declare -a ALL_STATES
     [[ ! -f $STATE_FILE ]] && get_bars > "$STATE_FILE"
     while IFS= read -r LINE; do
-        WID="$( echo "$LINE" | cut -f 2 -d : )"
-        WSTATE="$( xwininfo -id "$WID" | tr -d " " | grep "^MapState:" | cut -f 2 -d : )"
-        if [[ "$WSTATE" == "IsViewable" ]]; then
+        mapfile -t WIDS < <( echo "$LINE" | cut -f 2 -d : | tr "," "\n" )
+        VISIBLE_COUNT=0
+        HIDDEN_COUNT=0
+        for WID in ${WIDS[@]}; do
+            WSTATE="$( xwininfo -id "$WID" | tr -d " " | grep "^MapState:" | cut -f 2 -d : )"
+            if [[ "$WSTATE" == "IsViewable" ]]; then
+                VISIBLE_COUNT=$(( VISIBLE_COUNT + 1 ))
+            else
+                HIDDEN_COUNT=$(( HIDDEN_COUNT + 1 ))
+            fi
+        done
+        if [[ "$VISIBLE_COUNT" == "${#WIDS[@]}" ]]; then
             ALL_STATES+=( "$LINE:visible" )
-        else
+        elif [[ "$HIDDEN_COUNT" == "${#WIDS[@]}" ]]; then
             ALL_STATES+=( "$LINE:hidden" )
+        else
+            notify-send -u normal "Polybar: Error in initialization. Check state file or restart polybar using the polybar-start command."
         fi
     done < "$STATE_FILE"
     printf "%s\n" "${ALL_STATES[@]}" > "$STATE_FILE"
@@ -71,7 +166,7 @@ bspwm_get_padding() {
 }
 
 bspwm_enable_padding() {
-    bspc config top_padding "$( grep -Eo "bspc config top_padding\s+[0-9]+" "${XDG_CONFIG_HOME:="$HOME/.config"}/bspwm/bspwmrc" | tr -s ' ' | cut -f 4 -d ' ' )"
+    "${XDG_CONFIG_HOME:-$HOME/.config}/bspwm/set-monitors"
 }
 
 bspwm_disable_padding() {
@@ -110,8 +205,10 @@ switch_bar() {
 
 enable_bars() {
     if [[ "$( get_padding )" != "0" ]]; then
-        PID_ACTIVE="$( grep "visible$" "$STATE_FILE" | cut -f 3 -d : )"
-        polybar-msg -p "$PID_ACTIVE" cmd show >/dev/null 2>&1
+        mapfile -t PIDS_ACTIVE < <( grep "visible$" "$STATE_FILE" | cut -f 3 -d : | tr "," "\n" )
+        for BAR_PID in ${PIDS_ACTIVE[@]}; do
+            polybar-msg -p "$BAR_PID" cmd show >/dev/null 2>&1
+        done
     fi
 }
 
@@ -125,7 +222,31 @@ are_bars_hidden() {
 }
 
 disable_bars() {
-    polybar-msg cmd hide >/dev/null 2>&1
+    if [[ "$1" == "all" ]]; then
+        polybar-msg cmd hide >/dev/null 2>&1
+    else
+        FOCUS_MON="$( display-helper get_focused_display )"
+        mapfile -t PIDS_ACTIVE< <( grep "visible$" "$STATE_FILE" | cut -f 3 -d : | tr "," "\n" )
+        for PID in "${PIDS_ACTIVE[@]}"; do
+            eval $( xdotool getwindowgeometry --shell "$( xdotool search --pid "$PID" )" )
+            # go through each monitor
+            while IFS=$'\n' read -r ENTRY; do
+                # get the name of the monitor
+                MON_NAME="$( echo "$ENTRY" | cut -f 1 -d - )"
+                # get the x and y bounds of the monitor
+                MON_X_START="$( echo "$ENTRY" | cut -f 4 -d - )"
+                MON_Y_START="$( echo "$ENTRY" | cut -f 5 -d - )"
+                MON_X_END="$(( $MON_X_START + $( echo "$ENTRY" | cut -f 2 -d - ) ))"
+                MON_Y_END="$(( $MON_Y_START + $( echo "$ENTRY" | cut -f 3 -d - ) ))"
+                # if the window is in the bounds obtained above
+                if [[ "$X" -ge "$MON_X_START" ]] && [[ "$X" -lt "$MON_X_END" ]] && [[ "$Y" -ge "$MON_Y_START" ]] && [[ "$Y" -lt "$MON_Y_END" ]] && [[ "$MON_NAME" == "$FOCUS_MON" ]]; then
+                    polybar-msg -p "$PID" cmd hide >/dev/null 2>&1
+                    # break the loop
+                    break
+                fi
+            done <<< "$( xrandr --current | sed -n 's/\(.*\) connected.* \([0-9]*\)x\([0-9]*\)+\([0-9]*\)+\([0-9]*\).*/\1-\2-\3-\4-\5/p' )"
+        done
+    fi
 }
 
 toggle_bars() {
@@ -146,17 +267,23 @@ toggle_all() {
     fi
 }
 
+get_cache_path() {
+    echo "$STATE_FILE"
+}
+
 case $1 in
     init) init_state; exit 0;;
     get_state) are_bars_hidden; exit 0;;
+    get_cache_path) get_cache_path; exit 0;;
     switch) switch_bar; exit 0;;
     enable) enable_bars; exit 0;;
-    disable) disable_bars; exit 0;;
+    disable) disable_bars "$2"; exit 0;;
     toggle) toggle_bars; exit 0;;
     pad_enable) enable_padding; exit 0;;
     pad_disable) disable_padding; exit 0;;
     pad_toggle) toggle_padding; exit 0;;
     toggle_all) toggle_all; exit 0;;
-    get_dimensions) get_dimensions; exit 0;;
+    get_dimensions) get_dimensions $2; exit 0;;
+    get_font) get_font $2; exit 0;;
     *) echo "Unknown operation: $1"; usage; exit 1;;
 esac
