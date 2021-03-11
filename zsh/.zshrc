@@ -315,7 +315,7 @@ zinit wait'0' lucid light-mode for \
         @tj/git-extras \
     as'program' pick'bin/git-*' nocompile \
         @unixorn/git-extra-commands \
-    atclone'source $ATCLONE_DIR/gitcal.zsh' atpull'%atclone' make'install' sbin'bin/site_perl/git-cal' \
+    atclone'source $ATCLONE_DIR/gitcal.zsh' atpull'%atclone' make'install' sbin'bin/git-cal' \
         @k4rthik/git-cal \
     sbin'git-open' \
         @paulirish/git-open \
@@ -433,12 +433,14 @@ fi
 #       so if fuzzy search is not important, remove the following section
 
 # fuzzy finder
-zinit wait'0' lucid from'gh-r' sbin'fzf' for \
-    atload'source $ATLOAD_DIR/fzf.zsh' \
-        @junegunn/fzf-bin
+zinit wait'0' lucid from'gh-r' nocompile light-mode for \
+    bpick'fzf-*.tar.gz' sbin'fzf' atload'source $ATLOAD_DIR/fzf.zsh' \
+        @junegunn/fzf
+zinit wait'0' lucid as'completion' light-mode for \
+    mv'completion.zsh -> _fzf' id-as'fzf-completion' \
+        https://github.com/junegunn/fzf/blob/master/shell/completion.zsh
 zinit wait'0' lucid light-mode for \
-        https://github.com/junegunn/fzf/blob/master/shell/completion.zsh \
-    id-as'fzf-tmux' sbin'bin/fzf-tmux' nocompile \
+    sbin'bin/fzf-tmux' nocompile id-as'fzf-tmux' \
         @junegunn/fzf \
     atload'source $ATLOAD_DIR/fzfwidgets.zsh' \
         @ytet5uy4/fzf-widgets \
