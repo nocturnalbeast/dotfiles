@@ -43,7 +43,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [nitrogen](https://github.com/l3ib/nitrogen): Background browser and setter for X windows.
     * [newsboat](https://github.com/newsboat/newsboat): An RSS/Atom feed reader for text terminals.
     * [castero](https://github.com/xgi/castero): TUI podcast client for the terminal.
-    * [gotop](https://github.com/xxxserxxx/gotop): A terminal based graphical activity monitor inspired by gtop and vtop.
+    * [bottom](https://github.com/ClementTsang/bottom): Yet another cross-platform graphical process/system monitor.
     * [cava](https://github.com/karlstav/cava): Console-based Audio Visualizer for Alsa.
     * [thunar](https://gitlab.xfce.org/xfce/thunar): Modern, fast and easy-to-use file manager for XFCE.
     * [engrampa](https://github.com/mate-desktop/engrampa): A file archiver for MATE.

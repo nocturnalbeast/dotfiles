@@ -24,6 +24,7 @@ $golang\
 $helm\
 $java\
 $julia\
+$kotlin\
 $nim\
 $nodejs\
 $ocaml\
@@ -35,6 +36,7 @@ $ruby\
 $rust\
 $swift\
 $terraform\
+$vagrant\
 $zig\
 $nix_shell\
 $conda\
@@ -106,6 +108,7 @@ style = "bold blue"
 format = "[$read_only]($read_only_style)[$path]($style)"
 style = "bold purple"
 read_only = " "
+home_symbol = ""
 truncation_symbol = "/"
 truncate_to_repo = false
 
@@ -223,6 +226,11 @@ symbol = ""
 format = "  [$symbol $version]($style)"
 style = "bold purple"
 
+[kotlin]
+symbol = ""
+format = "  [$symbol $version]($style)"
+style = "bold blue"
+
 [kubernetes]
 symbol = "ﴱ"
 format = "  [$symbol $context \\[$namespace\\]]($style)"
@@ -327,6 +335,12 @@ format = "[$user]($style)@"
 style_root = "bold red"
 style_user = "bold cyan"
 show_always = false
+
+[vagrant]
+symbol = "力"
+format = "  [$symbol$version]($style)"
+style = "bold cyan"
+detect_files = ["Vagrantfile"]
 
 [zig]
 symbol = "⚡"
