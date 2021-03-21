@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+col -bx < "$1" | bat --language man -p

@@ -60,7 +60,8 @@ alias dv="devour"
 # one-character aliases for the most used terminal applications
 alias l="exa --color=auto --icons --group-directories-first"
 alias v="nvim"
-alias s="gotop"
+alias s="btm"
+alias p="btm --basic"
 alias g="git"
 alias c="bat"
 

@@ -156,7 +156,7 @@ super + u
 
 # launch process manager
 super + s
-    st -t "System Monitor" -e gotop
+    st -t "System Monitor" -e btm
 
 # launch feed reader
 super + n

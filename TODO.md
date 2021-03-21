@@ -18,3 +18,4 @@ These are the things that are planned to be worked on or in progress right now:
  * Write custom qutebrowser config
  * Integrate MPRIS2 support
  * Revisit window rules for bspwm and spectrwm
+ * Add zinit-ices in zsh config to add manpages to $ZPFX
