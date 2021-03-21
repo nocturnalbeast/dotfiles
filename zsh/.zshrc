@@ -112,7 +112,7 @@ setopt auto_pushd
 setopt pushd_ignore_dups
 setopt pushd_to_home
 setopt pushd_silent
-setopt pushdminus
+setopt pushd_minus
 
 # other
 setopt hash_cmds
@@ -297,8 +297,7 @@ zinit light-mode for \
         @zinit-zsh/z-a-bin-gem-node
 
 # basic zsh enhancement plugins - must have in any setup
-zinit wait'1' lucid light-mode for \
-    atinit'source $ATINIT_DIR/fsyh.zsh' \
+zinit wait'0' lucid light-mode for \
         @zdharma/fast-syntax-highlighting \
     atinit'source $ATINIT_DIR/autosuggestions.zsh' atload'source $ATLOAD_DIR/autosuggestions.zsh' \
         @zsh-users/zsh-autosuggestions \
@@ -372,19 +371,26 @@ zinit wait'0' lucid light-mode for \
 
 # input sudo in the current command
 zinit wait'0' lucid light-mode for \
+    id-as'sudo' \
         OMZP::sudo
 
 # extract command
 zinit wait'0' lucid light-mode for \
+    id-as'extract' \
         OMZP::extract
 
-# pip completion
+# pip helper
 zinit wait'0' lucid light-mode for \
-    as'completion' pick'_pip' atpull'source $ATPULL_DIR/pip.zsh' \
+    id-as'pip' \
         OMZP::pip
 
-# a ton more completions
+# let the shell set the terminal window name
 zinit wait'0' lucid light-mode for \
+    id-as'term-support' \
+        OMZL::termsupport.zsh
+
+# a ton more completions (don't use wait-ice for this one or else compinit doesn't load these completions)
+zinit lucid light-mode for \
     nocompile nocompletions \
         @MenkeTechnologies/zsh-more-completions
 
@@ -416,7 +422,10 @@ zinit wait'0' lucid as'completion' light-mode for \
     mv'*zsh-completion -> _hub' id-as'hub-completion' \
         https://github.com/github/hub/raw/master/etc/hub.zsh_completion \
     mv'*zsh -> _exa' id-as'exa-completion' \
-        https://github.com/ogham/exa/raw/master/completions/completions.zsh
+        https://github.com/ogham/exa/raw/master/completions/completions.zsh \
+    id-as'pip-completion' \
+        OMZP::pip/_pip
+
 
 # tmux - thank you @yutakatay for this one!
 if ldconfig -p | grep -q 'libevent-' && ldconfig -p | grep -q 'libncurses'; then
@@ -460,6 +469,6 @@ fi
 
 ## 10: post-startup actions
 
-if ! builtin command -v compinit > /dev/null 2>&1; then
-    autoload -Uz compinit && compinit -u -d "$ZINIT[ZCOMPDUMP_PATH]"
-fi
+ZINIT[COMPINIT_OPTS]=-C
+zicompinit
+zicdreplay
