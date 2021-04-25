@@ -213,7 +213,7 @@ enable_bars() {
 }
 
 are_bars_hidden() {
-    STATE="$( for WID in $( xdotool search --class "Polybar" ); do xwininfo -id "0x$( printf "%x" "$WID" )"; done | grep "Map State: " | uniq | wc -l )"
+    STATE="$( xdotool search --class "Polybar" | xargs -n 1 xwininfo -id | grep "Map State:" | sort | uniq | wc -l )"
     if [[ "$STATE" == "2" ]]; then
         echo "no"
     else
