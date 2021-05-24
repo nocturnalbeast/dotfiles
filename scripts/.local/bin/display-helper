@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+usage() {
+    echo "$(basename "$0") : multi-display helper script"
+    echo " Possible operations: "
+    echo "  run_menu               : Runs the menu to add, edit or switch between display layouts."
+    echo "  get_focused_display    : Gets the currently focused display."
+    echo "  get_display_for_window : Gets the display a window is on, given it's window ID."
+}
+
+# helper function to deduce which display focus is currently on
+get_focused_display() {
+    # initialize a variable to store the focused display name in
+    FOCUS_MON=""
+    # first method - workspace-based
+    # try to get the active workspace first and decide which display it's on by using the offset
+    AW_OFFSET="$( wmctrl -d | grep ' \* ' | awk '{print $6}' )"
+    while IFS=$'\n' read -r ENTRY; do
+        MON_NAME="$( echo "$ENTRY" | cut -f 1 -d : )"
+        MON_OFFSET="$( echo "$ENTRY" | cut -f 2 -d : )"
+        if [[ "$AW_OFFSET" == "$MON_OFFSET" ]]; then
+            FOCUS_MON="$MON_NAME"
+            break
+        fi
+    done <<< "$( xrandr --current | sed -n 's/\(.*\) connected.* [0-9]*x[0-9]*+\([0-9]*\)+\([0-9]*\).*/\1:\2,\3/p' )"
+    # second method - window-based/mouse pointer-based
+    # get the position of the focused window and check which display the top-left corner is in - which is decided as the active diplay
+    # use this method only if the previous one fails
+    if [[ "$FOCUS_MON" == "" ]]; then
+        # get the coordinates of the top left corner of the active window
+        source <( xdotool getactivewindow getwindowgeometry --shell 2>/dev/null )
+        # if that doesn't work, then use the current mouse location instead
+        if [[ "$X" == "" ]] || [[ "$Y" == "" ]]; then
+            source <( xdotool getmouselocation --shell 2>/dev/null )
+        fi
+        FOCUSED_WIN_X="$X"
+        FOCUSED_WIN_Y="$Y"
+        # go through each monitor
+        while IFS=$'\n' read -r ENTRY; do
+            # get the name of the monitor
+            MON_NAME="$( echo "$ENTRY" | cut -f 1 -d - )"
+            # get the x and y bounds of the monitor
+            MON_X_START="$( echo "$ENTRY" | cut -f 4 -d - )"
+            MON_Y_START="$( echo "$ENTRY" | cut -f 5 -d - )"
+            MON_X_END="$(( $MON_X_START + $( echo "$ENTRY" | cut -f 2 -d - ) ))"
+            MON_Y_END="$(( $MON_Y_START + $( echo "$ENTRY" | cut -f 3 -d - ) ))"
+            # if the window is in the bounds obtained above
+            if [[ "$FOCUSED_WIN_X" -ge "$MON_X_START" ]] && [[ "$FOCUSED_WIN_X" -lt "$MON_X_END" ]] && [[ "$FOCUSED_WIN_Y" -ge "$MON_Y_START" ]] && [[ "$FOCUSED_WIN_Y" -lt "$MON_Y_END" ]]; then
+                # then this is the focused display
+                FOCUS_MON="$MON_NAME"
+                # break the loop
+                break
+            fi
+        done <<< "$( xrandr --current | sed -n 's/\(.*\) connected.* \([0-9]*\)x\([0-9]*\)+\([0-9]*\)+\([0-9]*\).*/\1-\2-\3-\4-\5/p' )"
+    fi
+    # third method - fallback
+    # if we still can't find the focused display for some reason, then use the primary one as the fallback
+    if [[ "$FOCUS_MON" == "" ]]; then
+        FOCUS_MON="$( xrandr --current | grep "connected primary" | cut -f 1 -d " " )"
+    fi
+    # print it
+    echo "$FOCUS_MON"
+}
+
+get_display_for_window() {
+    FOCUS_MON=""
+    # get window geometry
+    eval $( xwininfo -id "$1" | sed -n -e "s/^ \+Absolute upper-left X: \+\([0-9]\+\).*/X=\1/p" -e "s/^ \+Absolute upper-left Y: \+\([0-9]\+\).*/Y=\1/p" -e "s/^ \+Width: \+\([0-9]\+\).*/W=\1/p" -e "s/^ \+Height: \+\([0-9]\+\).*/H=\1/p" )
+    # go through each monitor
+    while IFS=$'\n' read -r ENTRY; do
+        # get the name of the monitor
+        MON_NAME="$( echo "$ENTRY" | cut -f 1 -d - )"
+        # get the x and y bounds of the monitor
+        MON_X_START="$( echo "$ENTRY" | cut -f 4 -d - )"
+        MON_Y_START="$( echo "$ENTRY" | cut -f 5 -d - )"
+        MON_X_END="$(( $MON_X_START + $( echo "$ENTRY" | cut -f 2 -d - ) ))"
+        MON_Y_END="$(( $MON_Y_START + $( echo "$ENTRY" | cut -f 3 -d - ) ))"
+        # if the window is in the bounds obtained above
+        if [[ "$X" -ge "$MON_X_START" ]] && [[ "$X" -lt "$MON_X_END" ]] && [[ "$Y" -ge "$MON_Y_START" ]] && [[ "$Y" -lt "$MON_Y_END" ]]; then
+            # then this is the focused display
+            FOCUS_MON="$MON_NAME"
+            # break the loop
+            break
+        fi
+    done <<< "$( xrandr --current | sed -n 's/\(.*\) connected.* \([0-9]*\)x\([0-9]*\)+\([0-9]*\)+\([0-9]*\).*/\1-\2-\3-\4-\5/p' )"
+    # give the result
+    echo "$FOCUS_MON"
+}
+
+case $1 in
+    run_menu) menu-displaylayout & exit 0;;
+    get_focused_display) get_focused_display; exit 0;;
+    get_display_for_window) get_display_for_window "$2"; exit 0;;
+    *) echo "Unknown operation: $1"; usage; exit 1;;
+esac
