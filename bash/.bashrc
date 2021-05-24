@@ -10,10 +10,14 @@ HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/shell_history"
 HISTSIZE=50000
 
 # import environment variables
-source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env"
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env" ]; then
+    source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env"
+fi
 
 # import aliases
-source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases"
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases" ]; then
+    source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases"
+fi
 
 #starship_precmd_user_func="set_win_title"
 # prompt theme

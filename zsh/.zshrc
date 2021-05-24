@@ -44,7 +44,9 @@ SAVEHIST=50000
 ## 3: import environment variables
 
 # all environment variables are configured here, since they are shared across all shells
-source "${XDG_CONFIG_HOME:="$HOME/.config"}/shell/env"
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env" ]; then
+    source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env"
+fi
 # set zsh-specific variables
 [ ! -z "$PS1" ] && typeset -U PATH path
 export WORDCHARS="*?[]~=&;!#$%^(){}"
@@ -53,7 +55,9 @@ export WORDCHARS="*?[]~=&;!#$%^(){}"
 ## 4: import aliases
 
 # all aliases are configured here, since they are shared across all shells
-source "${XDG_CONFIG_HOME:="$HOME/.config"}/shell/aliases"
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases" ]; then
+    source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases"
+fi
 
 
 ## 5: set shell options
