@@ -8,19 +8,30 @@ usage() {
     echo "  custom_menu : Runs dmenu with additional options apart from the custom style and prompt message."
 }
 
+# function to generate options to pass to dmenu
 get_options() {
-    mapfile -t DIMENSIONS < <( polybar-helper get_dimensions )
-    echo "-x ${DIMENSIONS[0]} -y ${DIMENSIONS[1]} -lh ${DIMENSIONS[2]} -z ${DIMENSIONS[3]}"
+    # get the focused display name
+    FOCUS_MON="$( display-helper get_focused_display )"
+    # get the dimensions from the polybar helper script so that they remain consistent
+    mapfile -t DIMENSIONS < <( polybar-helper get_dimensions "$FOCUS_MON" )
+    # use the font from polybar to have consistency
+    FONT="$( polybar-helper get_font "$FOCUS_MON" | head -1 | sed 's/pixelsize=/size=/g' | cut -f 1 -d ";" )"
+    # putting it all together
+    echo "-x ${DIMENSIONS[0]} -y ${DIMENSIONS[1]} -lh ${DIMENSIONS[2]} -z ${DIMENSIONS[3]} -fn ${FONT}"
 }
 
+# function to disable bars before running dmenu and enabling them after exit
 polybar_control() {
     polybar-helper disable >/dev/null 2>&1
     trap "polybar-helper enable >/dev/null 2>&1" EXIT
 }
 
+# function to present the menu based on the input
 menu() {
+    # check if there's an argument to the command
     if [ "$3" != "" ]; then
         LINES="$3"
+    # if not, then check if there's anything from stdin
     elif [ -p /dev/stdin ]; then
         LINES="$( cat )"
     fi
