@@ -6,61 +6,23 @@
 # |___|___|  _|_____|_|_|_|
 #         |_|
 
-# launch the autostart script
-"${XDG_CONFIG_HOME:-$HOME/.config}"/wm/autostart &
-# launch simple x hotkey daemon
-sxhkd -c "${XDG_CONFIG_HOME:-$HOME/.config}/sxhkd/sxhkdrc" &
+# first - start the autostart script
+"${XDG_CONFIG_HOME:-$HOME/.config}"/wm/autostart
 
-# default 10-workspace setup
-bspc monitor -d I II III IV V VI VII VIII IX X
+# second - start the simple x hotkey daemon to handle keybindings
+sxhkd -c "${XDG_CONFIG_HOME:-$HOME/.config}/sxhkd/sxhkdrc"
 
-# spacing and borders
-bspc config border_width            2
-bspc config window_gap              6
-bspc config top_padding             30
+# third - use the set-monitors script to setup all available monitors
+"${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-monitors
 
-# behavior settings
-bspc config split_ratio             0.5
-bspc config borderless_monocle      true
-bspc config gapless_monocle         false
-bspc config focus_follows_pointer   false
-bspc config ignore_ewmh_focus       true
-bspc config automatic_scheme        alternate
+# fourth - use the set-colors script to define all colors for windows and borders
+"${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-colors
 
-# color settings
-bspc config focused_border_color    "#1A1A1A"
-bspc config active_border_color     "#1A1A1A"
-bspc config normal_border_color     "#AAAAAA"
-bspc config urgent_border_color     "#CC6666"
-bspc config presel_feedback_color   "#1A1A1A"
+# fifth - use the set-layout script to define auto/manual tiling layouts for each of the workspaces
+"${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-layout
 
-# window-specific settings
+# sixth - use the set-options script to define all other configuration options pertaining to bspwm
+"${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-options
 
-# rules for windows that are supposed to float
-bspc rule -a nitrogen               state=floating center=on
-bspc rule -a pqiv                   state=floating center=on
-bspc rule -a Lxappearance           state=floating center=on
-bspc rule -a "*:floating"           state=floating center=on
-# allow terminals to be launched on any workspace even if the default one for terminals is the first one
-bspc rule -a st                     follow=on
-# prefer monocle (fullscreen) layout for certain workspaces
-bspc desktop II -l monocle
-bspc desktop VII -l monocle
-# application-specific workspace assignments
-bspc rule -a qutebrowser             desktop='^2' follow=on
-bspc rule -a st:Neovim               desktop='^3' follow=on
-bspc rule -a Thunar                  desktop='^4' follow=on
-bspc rule -a Gparted                 desktop='^4' follow=on
-bspc rule -a mpv                     desktop='^5' follow=on
-bspc rule -a libreoffice             desktop='^6' follow=on
-bspc rule -a libreoffice-startcenter desktop='^6' follow=on
-bspc rule -a Zathura                 desktop='^6' follow=on state=tiled
-bspc rule -a Gimp                    desktop='^7' follow=on
-bspc rule -a Gimp-2.8                desktop='^7' follow=on
-bspc rule -a Pinta                   desktop='^7' follow=on
-bspc rule -a Inkscape                desktop='^7' follow=on
-bspc rule -a TelegramDesktop         desktop='^8' follow=on
-bspc rule -a "Syncthing GTK"         desktop='^8' follow=on
-bspc rule -a Transmission-gtk        desktop='^8' follow=on
-bspc rule -a Uget-gtk                desktop='^8' follow=on
-bspc rule -a "System Monitor"        desktop='^9' follow=on
+# seventh - pass the external-rules script as an argument to the bspc executable to activate all specific window rules
+bspc config external_rules_command "${XDG_CONFIG_HOME:-$HOME/.config}/bspwm/external-rules"

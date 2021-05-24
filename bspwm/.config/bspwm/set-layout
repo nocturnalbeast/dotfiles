@@ -1,0 +1,24 @@
+#!/usr/bin/env sh
+
+# this script defines the tiling layout of all the workspaces using bsp-layout
+
+# master/stack layout for the first workspace
+bsp-layout set tall main
+# monocle layout for the second workspace
+bsp-layout set monocle inet
+# default bspwm layout for the third workspace
+bsp-layout set tiled code
+# reverse-wide layout for the fourth workspace
+bsp-layout set rwide data
+# wide layout for the for the fifth workspace
+bsp-layout set wide play
+# master/stack layout for the sixth workspace
+bsp-layout set tall docs
+# master/stack layout for the seventh workspace
+bsp-layout set tall draw
+# grid layout for the eighth workspace
+bsp-layout set grid txns
+# grid layout for the ninth workspace
+bsp-layout set grid info
+# default bspwm layout for the tenth workspace
+bsp-layout set tiled misc

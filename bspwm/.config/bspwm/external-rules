@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# array that stores all window classes that are supposed to be floating windows
+FLOATING_WINDOWS=( pqiv nitrogen Lxappearance )
+
+# array that stores all terminals
+TERMINALS=( st Alacritty XTerm UXTerm URxvt )
+
+# arrays to store applications that are assigned to each workspace
+WKSP_1_WINDOWS=(  )
+WKSP_2_WINDOWS=( qutebrowser Vivaldi-stable )
+WKSP_3_WINDOWS=( Neovim GNvim )
+WKSP_4_WINDOWS=( Thunar Gparted )
+WKSP_5_WINDOWS=( mpv )
+WKSP_6_WINDOWS=( libreoffice libreoffice-startcenter Zathura )
+WKSP_7_WINDOWS=( Gimp Pinta Inkscape )
+WKSP_8_WINDOWS=( TelegramDesktop Uget-gtk )
+WKSP_9_WINDOWS=( SystemMonitor )
+WKSP_10_WINDOWS=(  )
+
+# arrays to store applications that need to be 'followed' i.e. change focus to them as they launch
+FOLLOW_WINDOWS=( st Alacritty XTerm UXTerm URxvt qutebrowser Vivaldi-stable Neovim GNvim Thunar Gparted mpv libreoffice libreoffice-startcenter Zathura Gimp Pinta Inkscape TelegramDesktop Uget-gtk SystemMonitor )
+
+# first, let's change the positional arguments into labels we can understand
+WINDOW_ID="$1"
+WINDOW_CLASS="$2"
+WINDOW_INSTANCE="$3"
+WINDOW_CONSEQ="$4"
+
+# next, keep a string for the rules that will be generated
+RULES=""
+
+# now, get more details about monitors and workspace numbers
+mapfile -t ALL_MONITORS < <( bspc query -M --names )
+FOCUSED_MONITOR="$( bspc query -M -m focused --names )"
+WKSP_COUNT="$( bspc query -D --names | wc -l )"
+WKSP_PER_MONITOR="$(( $WKSP_COUNT / ${#ALL_MONITORS[@]} ))"
+FOCUSED_MONITOR_NUM=""
+for IDX in "${!ALL_MONITORS[@]}"; do
+   if [[ "${ALL_MONITORS[$IDX]}" = "${FOCUSED_MONITOR}" ]]; then
+       FOCUSED_MONITOR_NUM="$IDX"
+   fi
+done
+
+# decide where to put them based on the array that the class name belongs to
+for WKSP_IDX in $( seq 1 $WKSP_PER_MONITOR ); do
+   WKSP="WKSP_${WKSP_IDX}_WINDOWS[@]"
+   if [[ " ${!WKSP} " =~ " ${WINDOW_CLASS} " ]]; then
+      RULES="$RULES desktop=^$(( $FOCUSED_MONITOR_NUM * $WKSP_PER_MONITOR + $WKSP_IDX ))"
+   fi
+done
+
+# if a window class is mentioned in the array that contains windows that should have follow behavior, add that to the rules string
+if [[ " ${FOLLOW_WINDOWS[@]} " =~ " ${WINDOW_CLASS} " ]]; then
+   RULES="$RULES follow=on"
+fi
+
+# if a window class is mentioned in the array that contains windows that should be floating, add that to the rules string
+if [[ " ${FLOATING_WINDOWS[@]} " =~ " ${WINDOW_CLASS} " ]]; then
+   RULES="$RULES state=floating center=on"
+fi
+
+# finally, output the rules that we generated
+echo "$RULES"
