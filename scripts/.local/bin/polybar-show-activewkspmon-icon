@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+usage() {
+	echo "$( basename "$0" ) : polybar module to show active monitor and workspace"
+	echo "Usage: $( basename "$0" ) [MONITOR_BG] [MONITOR_FG] [WORKSPACE_BG] [WORKSPACE_FG]"
+	echo "       $( basename "$0" ) noformat"
+	exit 0
+}
+
+if [[ $# -ne 4 ]] && [[ $# -ne 1 ]]; then
+	usage
+	exit
+fi
+
+NOFORMAT="false"
+if [[ $# -eq 1 ]] && [[ "$1" == "noformat" ]]; then
+	NOFORMAT="true"
+else
+	usage
+	exit
+fi
+
+ICON_0=""
+ICON_1=""
+ICON_2=""
+ICON_3=""
+ICON_4=""
+ICON_5=""
+ICON_6=""
+ICON_7=""
+ICON_8="龍"
+ICON_9=""
+
+ICON_LAPTOP=""
+ICON_EXTERNAL=""
+ICON_OTHER=""
+
+TOTAL_WORKSPACES="$( wmctrl -d | wc -l )"
+mapfile -t MONITORS < <( xrandr --current | grep ' connected ' | cut -d ' ' -f 1 )
+
+if [[ "${#MONITORS[@]}" == "1" ]]; then
+	while IFS=$'\n' read -r CURR_WKSP; do
+		CURR_WKSP="$( echo "$CURR_WKSP" | cut -f 2 -d '=' )"
+		CURR_WORKSPACE_ICON="ICON_$CURR_WKSP"
+		if [[ "$NOFORMAT" == "true" ]]; then
+			echo "${!CURR_WORKSPACE_ICON}"
+		else
+			echo "%{B"$3"}%{F"$4"}${!CURR_WORKSPACE_ICON}%{B- F-}"
+		fi
+	done < <( xprop -root -spy -notype -f _NET_CURRENT_DESKTOP 0c '=$0\n' _NET_CURRENT_DESKTOP )
+else
+	while IFS=$'\n' read -r CURR_WKSP; do
+		CURR_WKSP="$( echo "$CURR_WKSP" | cut -f 2 -d '=' )"
+		CURR_WKSP_MON="${MONITORS["$(( CURR_WKSP / ( TOTAL_WORKSPACES / ${#MONITORS[@]} )))"]}"
+		CURR_WORKSPACE_ICON="ICON_$(( CURR_WKSP % ( TOTAL_WORKSPACES / ${#MONITORS[@]} )))"
+		CURR_WKSP_MON_ICON=""
+		case $CURR_WKSP_MON in
+			*"eDP"*) CURR_WKSP_MON_ICON="$ICON_LAPTOP";;
+			*"HDMI"*) CURR_WKSP_MON_ICON="$ICON_EXTERNAL";;
+			*) CURR_WKSP_MON_ICON="$ICON_OTHER";;
+		esac
+		if [[ "$NOFORMAT" == "true" ]]; then
+			echo "$CURR_WKSP_MON_ICON | ${!CURR_WORKSPACE_ICON}"
+		else
+			echo "%{B"$1"}%{F"$2"} $CURR_WKSP_MON_ICON %{B- F-}%{B"$3"}%{F"$4"} ${!CURR_WORKSPACE_ICON} %{B- F-}"
+		fi
+	done < <( xprop -root -spy -notype -f _NET_CURRENT_DESKTOP 0c '=$0\n' _NET_CURRENT_DESKTOP )
+fi

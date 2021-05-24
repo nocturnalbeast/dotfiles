@@ -19,3 +19,4 @@ These are the things that are planned to be worked on or in progress right now:
  * Integrate MPRIS2 support
  * Revisit window rules for bspwm and spectrwm
  * Add zinit-ices in zsh config to add manpages to $ZPFX
+ * Add scroll action script for monitor/workspace icon module in Polybar
