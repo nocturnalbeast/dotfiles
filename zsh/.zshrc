@@ -432,8 +432,8 @@ zinit wait'0' lucid as'completion' light-mode for \
         https://github.com/dbrgn/tealdeer/blob/master/zsh_tealdeer \
     mv'*zsh-completion -> _hub' id-as'hub-completion' \
         https://github.com/github/hub/raw/master/etc/hub.zsh_completion \
-    mv'*zsh -> _exa' id-as'exa-completion' \
-        https://github.com/ogham/exa/raw/master/completions/completions.zsh \
+    id-as'exa-completion' \
+        https://github.com/ogham/exa/raw/master/completions/zsh/_exa \
     id-as'pip-completion' \
         OMZP::pip/_pip
 
