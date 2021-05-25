@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+
+# This is an example of how to configure the screen layout using the autostart
+# system in here. Run arandr to arrange the displays however you like, then
+# save the file in the layouts directory with a unique name. This will then be
+# shown in the displaylayout menu as an option. Selecting this from the menu
+# will set it as the active display layout. On subsequent system startups, the
+# autostart script will run the selected layout while starting any of the
+# supported window managers.
+
+# This example mentions how to configure two monitors - the primary monitor
+# with a 1366x768 resolution and a secondary monitor with 1920x1080 resolution
+# to the right of the primary monitor.
+
+xrandr --output eDP1 --primary --mode 1366x768 --pos 0x0 --rotate normal --output HDMI1 --mode 1920x1080 --pos 1366x0 --rotate normal --output VIRTUAL1 --off

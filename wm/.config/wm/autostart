@@ -5,6 +5,10 @@
 # | .'| | |  _| . |_ -|  _| .'|  _|  _|
 # |__,|___|_| |___|___|_| |__,|_| |_|
 
+# setup monitors using script if available
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout" ]; then
+    "${XDG_CONFIG_HOME:-$HOME/.config}"/wm/layouts/"$( cat "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout" )" &
+fi
 # load colors
 xrdb -load "${XDG_CONFIG_HOME:-$HOME/.config}"/X11/xresources &
 # restore the wallpaper
