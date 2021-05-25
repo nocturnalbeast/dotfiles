@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 usage() {
-    echo "$(basename "$0") : bspwm window move script"
-    echo " Usage: $(basename "$0") [north/south/east/west]"
+    echo "$(basename "$0") : bspwm workspace focus/window move script"
+    echo " Usage: $(basename "$0") [focus/move] [WORKSPACE]"
     exit 1
 }
 
