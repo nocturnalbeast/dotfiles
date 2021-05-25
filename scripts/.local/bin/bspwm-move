@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# Source : bspwm_smart_move from https://gitlab.com/protesilaos/dotfiles
+
+usage() {
+    echo "$(basename "$0") : bspwm window move script"
+    echo " Usage: $(basename "$0") [north/south/east/west]"
+    exit 1
+}
+
+[ "$#" -eq 1 ] || usage
+
+case "$1" in
+    north|east|south|west) DIR="$1" ;;
+    *) usage ;;
+esac
+
+_query_nodes() {
+    bspc query -N -n "$@"
+}
+
+[ -z "$( _query_nodes focused.floating )" ] || exit 1
+
+RECEPTACLE="$( _query_nodes 'any.leaf.!window' )"
+
+if [ -n "$(_query_nodes "${dir}.!floating")" ]; then
+    bspc node -s "$DIR"
+elif [ -n "$RECEPTACLE" ]; then
+    bspc node focused -n "$RECEPTACLE" --follow
+else
+    bspc node @/ -p "$DIR" -i && bspc node -n "$RECEPTACLE" --follow
+fi

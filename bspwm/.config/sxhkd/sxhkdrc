@@ -7,7 +7,7 @@
 
 # switch to workspace, use shift to send focused window to workspace 
 alt + {_,shift} + {1-9,0}
-    bspc {desktop -f,node -d} '^{1-9,10}'
+    bspwm-changeworkspace {focus,move} {1-9,10}
 
 # cycle between last used windows across workspaces
 alt + {_,shift} + Tab
@@ -19,13 +19,17 @@ alt + {_,shift} + Tab
 alt + {_,shift} + grave
     bspc desktop -f {next,prev}
 
+# move to the prior workspace
+alt + z
+    bspc desktop -f last
+
 # change focus to window in specified direction - if floating move window in given direction
 alt + {Left,Down,Up,Right,h,j,k,l}
     bspwm-focus {west,south,north,east,west,south,north,east}
 
 # switch with window in specified direction
 alt + shift + {Left,Down,Up,Right,h,j,k,l}
-    bspc node -s {west,south,north,east,west,south,north,east}
+    bspwm-move {west,south,north,east,west,south,north,east}
 
 # cycle between all windows in a workspace, use shift to reverse order
 alt + {_,shift} + c
@@ -41,13 +45,17 @@ alt + {_,shift} + q
 
 ### window size and layout manipulation
 
-# change mode of the focused window
-alt + {s,d,f}
-    bspwm-mode {pseudo_tiled,floating,fullscreen}
+# turn current window to be fullscreen or floating (or toggle back)
+alt + {_,shift} + f
+    bspwm-mode {fullscreen,floating}
+
+# pseudo-tile the current window
+alt + s
+    bspwm-mode pseudo_tiled
 
 # cycle through layouts on the active workspace
 alt + m
-    bspc desktop -l next
+    bsp-layout cycle
 
 # focus on / swap with the biggest window in the active workspace
 alt + {_,shift} + b
@@ -58,8 +66,19 @@ alt + {_,shift} + r
     bspc node @/ -R {+,-}90
 
 # resize the active window to the given direction
-super + {Left,Down,Up,Right,h,j,k,l}
+alt + ctrl + {Left,Down,Up,Right,h,j,k,l}
     bspwm-resize {west,south,north,east,west,south,north,east} 20
+
+# increase/decrease the gaps between windows in the current desktop
+alt + comma : {Left,Down,Up,Right,h,j,k,l}
+    bspc config -d focused window_gap "$(( $( bspc config -d focused window_gap ) {-2,-5,+5,+2,-2,-5,+5,+2} ))"
+
+# reset gaps between windows in the current desktop to the one specified in the config
+alt + shift + comma
+    bspc config -d focused window_gap "$( grep "^bspc config window_gap" "$\{XDG_CONFIG_HOME:-"$HOME/.config"\}/bspwm/bspwmrc" | awk '\{print $4\}' )"
+
+
+### bar control
 
 # toggle between bars
 alt + t
@@ -201,6 +220,7 @@ XF86MonBrightnessUp
 XF86MonBrightnessDown
     change-brightness decrease
 
+
 ### keybindings for taking screenshots
 
 # take a screenshot of the current workspace
@@ -215,12 +235,14 @@ alt + Print
 alt + shift + Print
     screenshot select
 
+
 ### notification control
 alt + n
     dunstctl close
 
 alt + shift + n
     dunstctl action
+
 
 ### misc keybindings
 

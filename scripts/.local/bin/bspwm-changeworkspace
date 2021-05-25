@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+usage() {
+    echo "$(basename "$0") : bspwm window move script"
+    echo " Usage: $(basename "$0") [north/south/east/west]"
+    exit 1
+}
+
+main() {
+   # get more details about monitors and workspace numbers
+   mapfile -t ALL_MONITORS < <( bspc query -M --names )
+   FOCUSED_MONITOR="$( bspc query -M -m focused --names )"
+   WKSP_COUNT="$( bspc query -D --names | wc -l )"
+   WKSP_PER_MONITOR="$(( $WKSP_COUNT / ${#ALL_MONITORS[@]} ))"
+   FOCUSED_MONITOR_NUM=""
+   for IDX in "${!ALL_MONITORS[@]}"; do
+      if [[ "${ALL_MONITORS[$IDX]}" = "${FOCUSED_MONITOR}" ]]; then
+          FOCUSED_MONITOR_NUM="$IDX"
+      fi
+   done
+   mapfile -t FOCUSED_MONITOR_WORKSPACES < <( bspc query -D -m focused | xargs -n 1 printf "%d\n" )
+   CURRENT_WORKSPACE="$( bspc query -D -d )"
+   # determine the workspace 
+   DEST_WORKSPACE=""
+   if [[ "$2" == "next" ]]; then
+      if [[ "${FOCUSED_MONITOR_WORKSPACES[-1]}" == "$CURRENT_WORKSPACE" ]]; then
+         DEST_WORKSPACE="${FOCUSED_MONITOR_WORKSPACES[0]}"
+      else
+         DEST_WORKSPACE="0x$( printf "%x\n" "$(( $( printf "%d\n" "$CURRENT_WORKSPACE" ) + 1 ))" )"
+      fi
+   elif [[ "$2" == "prev" ]]; then
+      if [[ "${FOCUSED_MONITOR_WORKSPACES[0]}" == "$CURRENT_WORKSPACE" ]]; then
+         DEST_WORKSPACE="${FOCUSED_MONITOR_WORKSPACES[-1]}"
+      else
+         DEST_WORKSPACE="0x$( printf "%x\n" "$(( $( printf "%d\n" "$CURRENT_WORKSPACE" ) - 1 ))" )"
+      fi
+   else
+      DEST_WORKSPACE="^$(( $FOCUSED_MONITOR_NUM * $WKSP_PER_MONITOR + $2 ))"
+   fi
+   # perform operation based on first argument
+   if [[ "$1" == "focus" ]]; then
+      bspc desktop -f $DEST_WORKSPACE
+   elif [[ "$1" == "move" ]]; then
+      bspc node -d $DEST_WORKSPACE
+   fi
+}
+
+[ "$#" -eq 2 ] || usage
+
+if [[ "$1" == "focus" ]] || [[ "$1" == "move" ]]; then
+   main $@
+else
+   usage
+fi
+
+OPERATION="$1"
+DEST_WORKSPACE="$2"
+
+
