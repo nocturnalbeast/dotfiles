@@ -8,13 +8,12 @@ for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     }
 done
 
-# the location of the frecency history file
-HISTORY_LOC="${XDG_CACHE_HOME:="$HOME/.cache"}/frecency_launcher/history"
+# the location of the frecency history/cache file
+CACHE_PATH="${XDG_CACHE_HOME:="$HOME/.cache"}/menuapps_history"
 
 # these are the paths that are used to either include in the search or avoid
-# use pipe symbol as the separator for multiple paths
-PATHS_INCLUDE="${XDG_DATA_HOME:="$HOME/.local/share"}/applications|/usr/share/applications"
-PATHS_EXCLUDE="/tmp"
+PATHS_INCLUDE=("${XDG_DATA_HOME:="$HOME/.local/share/"}/applications" "/usr/share/applications")
+PATHS_EXCLUDE=("/tmp")
 
 function usage() {
     echo "$(basename "$0") : dmenu frecency launcher script"
@@ -24,53 +23,87 @@ function usage() {
     echo "  launch  : Launch an application."
 }
 
-# one-liner to get all apps in the format we need
+# generate the frecency list
 function get_apps() {
-    find / -iname "*.desktop" 2>>/dev/null | grep -vE "$PATHS_EXCLUDE" | grep -E "$PATHS_INCLUDE" | xargs -n 1 basename | sort | uniq | sort | xargs -n 1 echo "00000.0000000000" | sed 's/\.desktop$//'
+    for PATH_INCLUDE in "${PATHS_INCLUDE[@]}"; do
+        while IFS=$'\n' read -r ENTRY; do
+            declare -A APPS_LIST+="( "$ENTRY" )"
+        done < <( find "$PATH_INCLUDE" -iname "*.desktop" 2>>/dev/null )
+    done
+    for PATH_EXCLUDE in "${PATHS_EXCLUDE[@]}"; do
+        for ENTRY_IDX in "${!APPS_LIST[@]}"; do
+            if [[ ${APPS_LIST[$ENTRY_IDX]} == $PATHS_EXCLUDE* ]]; then
+                unset 'APPS_LIST[ENTRY_IDX]'
+            fi
+        done
+    done
+    printf '%s\n' "${APPS_LIST[@]}" | xargs -n 1 echo "00000.0000000000"
 }
 
-# one-liner to get a listing of all new apps in the format we need
+# one-liner to get a listing of all new apps in the frecency format used
 function get_new_apps() {
-    comm -23 <( get_apps | cut -f 2- -d ' ' | sort | uniq | sort ) <( cut -f 2- -d ' ' "$HISTORY_LOC" | sort | uniq | sort ) | xargs -n 1 echo "00000.0000000000"
+    comm -23 <( get_apps | cut -f -2 -d " " | sort | uniq | sort ) <( cut -f 2- -d " " "$CACHE_PATH" | sort | uniq | sort ) | xargs -n 1 echo "00000.0000000000"
 }
 
-# function to rebuild the history file, disregarding the existing file
-function rebuild_hfile() {
-    rm -rf "$( dirname "$HISTORY_LOC" )"
-    mkdir -p "$( dirname "$HISTORY_LOC" )"
-    get_apps > "$HISTORY_LOC"
+function rebuild_cache() {
+    rm -f "$CACHE_PATH" 2>>/dev/null
+    get_apps > "$CACHE_PATH"
+    notify-send -u low "Cache created at $CACHE_PATH!"
 }
 
-# function to refresh the history file without losing history
-function refresh_hfile() {
-    local REFHIST="$( echo -e "$( get_new_apps )\n$( cat "$HISTORY_LOC" )" | sort -nr )"
-    echo "$REFHIST" > "$HISTORY_LOC"
+function refresh_cache() {
+    local UPDATED_CACHE="$( echo -e "$( get_new_apps )\n$( cat "$CACHE_PATH" )" | sort -nr )"
+    echo "$UPDATED_CACHE" > "$CACHE_PATH"
 }
 
-# function to launch applications
 function launch_application() {
-    # get the selected application via menu prompt
-    local SEL_APP="$( dmenu-helper run_menu "   " "$( cut -f 2- -d ' ' "$HISTORY_LOC" )" )"
-    # if nothing chosen, then exit
-    [[ "$SEL_APP" == "" ]] && exit 0
-    # next, get the entry and its corresponding fields from the history file
-    local SEL_ENT="$( grep -E "^[0-9]{5}\.[0-9]{10} $SEL_APP$" "$HISTORY_LOC" )"
-    local APP_NAME="$( echo "$SEL_ENT" | cut -f 2- -d " " )"
-    local APP_FREQ="$( echo "$SEL_ENT" | cut -f 1 -d "." )"
-    # we discard the earlier timestamp and replace it with this
-    local APP_LSTL="$( date +%s )"
-    # increment the frequency counter for the application selected
-    APP_FREQ="$( printf %05.0f $(( $APP_FREQ + 1 )) )"
-    # launch the app
-    gtk-launch "$APP_NAME"
-    # create the updated entry and save it to the history file
-    local HCONTENT="$( echo -e "$( grep -vE "^$SEL_ENT$" "$HISTORY_LOC" )\n$APP_FREQ.$APP_LSTL $APP_NAME" | sort -nr | uniq | sort -nr )"
-    echo -e "$HCONTENT" > "$HISTORY_LOC"
+    # run some checks before starting
+    if [ ! -f "$CACHE_PATH" ]; then
+        notify-send -u normal "No frecency cache found! Run $( basename "$0" ) rebuild to generate the cache first!"
+        exit 1
+    elif [[ "$( cat "$CACHE_PATH" )" == "" ]]; then
+        notify-send -u normal "Frecency cache is empty! Run $( basename "$0" ) rebuild to generate the cache first!"
+        exit 1
+    fi
+    # declare the stuff needed to continue
+    mapfile -t APP_ENTRIES_LIST < <( cut -f 2- -d " " "$HISTORY_PATH" )
+    local SELECTED_APP
+    # check the input before launching
+    # if we already have an app from the command line and if it's valid - select the entry
+    if [[ " ${APP_ENTRIES_LIST[@]} " =~ " $1 " ]];then
+        SELECTED_APP="$1"
+    # if we don't have such an entry, ask for one using the menu
+    elif [[ "$1" == "" ]]; then
+        SELECTED_APP="$( dmenu-helper run_menu "   " "$( printf "%s\n" "${APP_ENTRIES_LIST[@]}" )" )"
+        # check if the menu input is valid
+        if [[ "$SELECTED_APP" == "" ]]; then
+            notify-send -u normal "Empty input!"
+            exit 2
+        elif [[ " ${APP_ENTRIES_LIST[@]} " =~ " $SELECTED_APP " ]]; then
+            notify-send -u normal "Invalid application specified!"
+            exit 2
+        fi
+    # if the entry is not an empty string and isn't in the list, then notify the error and exit
+    else
+        notify-send -u normal "Invalid application specified!"
+        exit 2
+    fi
+    # get the entry from the cache - which will include the timestamp and number of times launched
+    local SELECTED_APP_ENTRY="$( grep -E "^[0-9]{5}\.[0-9]{10} ${SELECTED_APP}$" "$CACHE_PATH" )"
+    # increment the number of times launched for the application selected
+    local SELECTED_APP_FREQ="$( printf %05.0f $(( ${SELECTED_APP_ENTRY:0:5} + 1 )) )"
+    # discard the earlier timestamp - replacing it with a timestamp reflecting the current time
+    local SELECTED_APP_LAST_LAUNCH="$( date +%s )"
+    # launch the application
+    gtk-launch "$SELECTED_APP"
+    # create the updated entry and update the same in the cache
+    local UPDATED_CACHE_CONTENT="$( echo -e "$( grep -v "^$SELECTED_APP_ENTRY$" "$CACHE_PATH" )\n$SELECTED_APP_FREQ.$SELECTED_APP_LAST_LAUNCH $SELECTED_APP" | sort -nr | uniq | sort -nr )"
+    echo -e "$UPDATED_CACHE_CONTENT" > "$CACHE_PATH"
 }
 
 case $1 in
-    rebuild) rebuild_hfile; exit 0;;
-    refresh) refresh_hfile; exit 0;;
-    launch) launch_application; exit 0;;
-    *) echo "Unknown operation: $1"; usage; exit 1;;
+    rebuild) rebuild_cache;;
+    refresh) refresh_cache;;
+    launch) launch_application "$2";;
+    *) echo "Unknown operation: $1"; usage;;
 esac

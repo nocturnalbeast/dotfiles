@@ -40,7 +40,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [ncmpcpp](https://github.com/ncmpcpp/ncmpcpp): Featureful ncurses based MPD client.
     * [mpc](https://github.com/MusicPlayerDaemon/mpc): Command-line client for MPD.
     * [qutebrowser](https://github.com/qutebrowser/qutebrowser): A keyboard-driven, vim-like browser based on PyQt5.
-    * [nitrogen](https://github.com/l3ib/nitrogen): Background browser and setter for X windows.
+    * [xwallpaper](https://github.com/stoeckmann/xwallpaper): Wallpaper setting utility for X.
     * [newsboat](https://github.com/newsboat/newsboat): An RSS/Atom feed reader for text terminals.
     * [castero](https://github.com/xgi/castero): TUI podcast client for the terminal.
     * [bottom](https://github.com/ClementTsang/bottom): Yet another cross-platform graphical process/system monitor.
@@ -71,8 +71,13 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [neofetch](https://github.com/dylanaraps/neofetch): A command-line system information tool written in bash 3.2+.
     * [bc](http://phodd.net/gnu-bc): A fairly ubiquitous, useful and powerful calculator.
     * [wmctrl](http://tripie.sweb.cz/utils/wmctrl): Command line tool to interact with an EWMH/NetWM compatible X Window Manager.
+    * [xdotool](https://github.com/jordansissel/xdotool): Fake keyboard/mouse input, window management, and more.
+    * [playerctl](https://github.com/altdesktop/playerctl): MPRIS media player command-line controller.
+    * [youtube-dl](https://github.com/ytdl-org/youtube-dl): Command-line program to download videos from YouTube.com and other video sites.
 
  * Appearance-related resources:
+    * Shell prompt:
+        * [Starship](https://github.com/starship/starship): The minimal, blazing-fast, and infinitely customizable prompt for any shell!
     * Fonts:
         * [Iosevka](https://github.com/be5invis/Iosevka): Slender typeface for code, from code.
         * [nerd-fonts](https://github.com/ryanoasis/nerd-fonts): Iconic font aggregator, collection, & patcher.
