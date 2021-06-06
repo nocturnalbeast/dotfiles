@@ -6,6 +6,7 @@ usage() {
     echo "  run_menu               : Runs the menu to add, edit or switch between display layouts."
     echo "  get_focused_display    : Gets the currently focused display."
     echo "  get_display_for_window : Gets the display a window is on, given it's window ID."
+    echo "  are_monitors_mirrored  : Checks if the monitors are in mirrored configuration."
 }
 
 # helper function to deduce which display focus is currently on
@@ -87,9 +88,20 @@ get_display_for_window() {
     echo "$FOCUS_MON"
 }
 
+are_monitors_mirrored() {
+    if [[ "$( xrandr --current --listmonitors | tail -n+2 | wc -l )" != "1" ]]; then
+        if [[ "$( xrandr --current --listmonitors | tail -n+2 | awk '{print $3}' | cut -f 2- -d '+' | sort | uniq | wc -l )" == "1" ]]; then
+            echo "yes"
+        else
+            echo "no"
+        fi
+    fi
+}
+
 case $1 in
     run_menu) menu-displaylayout & exit 0;;
     get_focused_display) get_focused_display; exit 0;;
     get_display_for_window) get_display_for_window "$2"; exit 0;;
+    are_monitors_mirrored) are_monitors_mirrored; exit 0;;
     *) echo "Unknown operation: $1"; usage; exit 1;;
 esac
