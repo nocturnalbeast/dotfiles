@@ -35,7 +35,7 @@ ICON_9=""
 DEFAULT_ICON=""
 
 # override the icons specified here with the workspace icons defined globally IF they exist
-if [[ -f "$l{XDG_CONFIG_HOME:="$HOME/.config"}/wm/workspace_icons" ]]; then
+if [[ -f "${XDG_CONFIG_HOME:="$HOME/.config"}/wm/workspace_icons" ]]; then
 	source "${XDG_CONFIG_HOME:="$HOME/.config"}/wm/workspace_icons"
 fi
 
