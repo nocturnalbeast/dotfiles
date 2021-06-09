@@ -3,7 +3,6 @@
 ! |_,_|_| |___|___|___|___|_| |___|___|___|
 
 ! font rendering settings
-Xft.dpi:               96
 Xft.antialias:         true
 Xft.hinting:           true
 Xft.rgba:              rgb

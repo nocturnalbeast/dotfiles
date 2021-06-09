@@ -9,8 +9,12 @@
 if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout" ]; then
     "${XDG_CONFIG_HOME:-$HOME/.config}"/wm/layouts/"$( cat "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout" )" &
 fi
+# check the DPI of the current monitors and set accordingly using the set-dpi script (if available)
+if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi" ]; then
+    ${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi
+fi
 # load colors
-xrdb -load "${XDG_CONFIG_HOME:-$HOME/.config}"/X11/xresources &
+xrdb -merge "${XDG_CONFIG_HOME:-$HOME/.config}"/X11/xresources &
 # restore the wallpaper
 setbg &
 # launch compositor

@@ -7,7 +7,15 @@ BARTWO="monbar"
 export WINDOW_MANAGER="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
 
 # terminate already running bar instances
-killall -q polybar
+if type killall &> /dev/null; then
+    killall -q polybar
+elif type pkill &> /dev/null; then
+    pkill polybar
+else
+    while IFS=$'\n' read -r BAR_PID; do
+        kill "$BAR_PID"
+    done < <( ps -e -o pid,cmd | tail -n +2 | awk '{print $1":"substr($0, index($0,$2))}' | sed -n '/^[0-9]\+:polybar/p' | cut -f 1 -d : )
+fi
 
 # remove the state file from the previous instances
 rm -f "$( polybar-helper get_cache_path )"
