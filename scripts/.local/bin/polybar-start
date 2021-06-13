@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
-BARONE="mainbar"
-BARTWO="monbar"
+BARS=(mainbar monbar)
 
 # get the name of the window manager
 export WINDOW_MANAGER="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
@@ -26,10 +25,12 @@ while pgrep -u $UID -x polybar >/dev/null 2>&1; do sleep 1; done
 # then launch bars
 for M in $( polybar --list-monitors | cut -d: -f1 ); do
     FONTS="$( polybar-helper get_font "$M" )"
-    TF="$( echo -e "$FONTS" | sed '1q;d' )"
-    GF="$( echo -e "$FONTS" | sed '2q;d' )"
-    MONITOR=$M TEXT_FONT=$TF GLYPH_FONT=$GF polybar $BARONE &
-    MONITOR=$M TEXT_FONT=$TF GLYPH_FONT=$GF polybar $BARTWO &
+    export ICON_SIZE="$( polybar-helper get_iconsize "$M" )"
+    export TEXT_FONT="$( echo -e "$FONTS" | sed '1q;d' )"
+    export GLYPH_FONT="$( echo -e "$FONTS" | sed '2q;d' )"
+    for BAR in "${BARS[@]}"; do
+        MONITOR=$M polybar $BAR &
+    done
 done
 
 # wait till all the bars have launched
@@ -38,10 +39,10 @@ for BPID in $( pidof polybar ); do
 done
 
 # get the process ID of all the instances of the second bar
-mapfile -t BARTWO_PIDS < <( ps ax | grep "polybar $BARTWO" | grep -v grep | awk '{print $1};' )
+mapfile -t HIDEBAR_PIDS < <( pgrep "polybar" --list-full | grep -E "$(IFS="|$IFS"; printf '%s\n' "${BARS[@]:1}"; IFS="${IFS:1}")" | awk '{print $1};' )
 
 # then hide the instances of the second bar, showing only ones of the first bar
-for BAR_PID in ${BARTWO_PIDS[@]}; do
+for BAR_PID in "${HIDEBAR_PIDS[@]}"; do
     polybar-msg -p "$BAR_PID" cmd hide >/dev/null 2>&1
 done
 

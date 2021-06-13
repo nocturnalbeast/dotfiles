@@ -31,6 +31,8 @@ foreground = #181818
 
 header-background = #B7000000
 header-foreground = #E9FFFFFF
+mid-background = #A0000000
+mid-foreground = #E9FFFFFF
 content-background = #66000000
 content-foreground = #E0FFFFFF
 
@@ -46,6 +48,8 @@ foreground = #FAFAFA
 
 header-background = #D0FFFFFF
 header-foreground = #DD000000
+mid-background = #B0FFFFFF
+mid-foreground = #DD000000
 content-background = #88FFFFFF
 content-foreground = #CC000000
 
@@ -149,7 +153,16 @@ wm-name = polybar-mainbar
 
 modules-left = barswitch sep mon-wksp-icon cnt-space wksp-name window cnt-space sep
 modules-center = media-artist media-prev media-playpause media-next media-track
-modules-right = sep volume sep datetime
+modules-right = sep volume sep datetime sep
+
+tray-position = right
+tray-detached = false
+tray-maxsize = ${env:ICON_SIZE}
+tray-padding = 2
+tray-background = ${active-colors.header-background}
+tray-offset-x = 0
+tray-offset-y = 0
+tray-scale = 1.0
 
 
 [bar/monbar]

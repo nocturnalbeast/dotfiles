@@ -19,6 +19,7 @@ usage() {
     echo "  toggle_all     : Toggle both padding and bar visibility."
     echo "  get_dimensions : Gets the current dimensions of the bar as specified in the config file."
     echo "  get_font       : Gets the font strings for the bars based on options defined in the config file."
+    echo "  get_iconsize   : Gets the height for the icons to be present in the tray. This will be the same as the glyph font height."
 }
 
 # function to find the ceiling integer of any given float value
@@ -101,6 +102,18 @@ get_font() {
     GLYPH_FONT="$( sed -n 's/^[ ]*glyph-font[ ]*=[ ]*\(.*\)[ ]*$/\1/p' "$CONFIG_FILE" | tr -d '"' )"
     # putting it all together
     echo -e "$TEXT_FONT:pixelsize=$TEXT_FONT_SIZE;$TEXT_FONT_OFFSET\n$GLYPH_FONT:pixelsize=$GLYPH_FONT_SIZE;$GLYPH_FONT_OFFSET"
+}
+
+# function to get max tray entry icon size using the font ratios defined in the config
+get_iconsize() {
+    # find the height of the bar first
+    BAR_HEIGHT="$( get_dimensions "$1" | sed '3q;d' )"
+    # obtain the font ratio from the config file
+    FONT_RATIO="$( awk -F "=" '/^[ ]*font-ratio/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
+    # obtain the character-to-glyph ratio from the config file
+    GLYPH_RATIO="$( awk -F "=" '/^[ ]*glyph-ratio/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
+    # calculate the size
+    ceil "$( echo "$( ceil "$( echo "$BAR_HEIGHT*$FONT_RATIO" | bc -l )" )*$GLYPH_RATIO" | bc -l )"
 }
 
 # function to enumerate all the instances of the bars launched
@@ -285,5 +298,6 @@ case $1 in
     toggle_all) toggle_all; exit 0;;
     get_dimensions) get_dimensions $2; exit 0;;
     get_font) get_font $2; exit 0;;
+    get_iconsize) get_iconsize $2; exit 0;;
     *) echo "Unknown operation: $1"; usage; exit 1;;
 esac
