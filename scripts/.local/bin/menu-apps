@@ -27,7 +27,8 @@ function usage() {
 function get_apps() {
     for PATH_INCLUDE in "${PATHS_INCLUDE[@]}"; do
         while IFS=$'\n' read -r ENTRY; do
-            declare -A APPS_LIST+="( "$ENTRY" )"
+            ENTRY="${ENTRY##*/}"
+            declare -a APPS_LIST+=( "${ENTRY::-8}" )
         done < <( find "$PATH_INCLUDE" -iname "*.desktop" 2>>/dev/null )
     done
     for PATH_EXCLUDE in "${PATHS_EXCLUDE[@]}"; do
@@ -66,7 +67,7 @@ function launch_application() {
         exit 1
     fi
     # declare the stuff needed to continue
-    mapfile -t APP_ENTRIES_LIST < <( cut -f 2- -d " " "$HISTORY_PATH" )
+    mapfile -t APP_ENTRIES_LIST < <( cut -f 2- -d " " "$CACHE_PATH" )
     local SELECTED_APP
     # check the input before launching
     # if we already have an app from the command line and if it's valid - select the entry
@@ -79,7 +80,7 @@ function launch_application() {
         if [[ "$SELECTED_APP" == "" ]]; then
             notify-send -u normal "Empty input!"
             exit 2
-        elif [[ " ${APP_ENTRIES_LIST[@]} " =~ " $SELECTED_APP " ]]; then
+        elif [[ ! " ${APP_ENTRIES_LIST[@]} " =~ " $SELECTED_APP " ]]; then
             notify-send -u normal "Invalid application specified!"
             exit 2
         fi

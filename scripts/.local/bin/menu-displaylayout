@@ -17,7 +17,7 @@ create_layout() {
                 notify-send -u normal "No layout files found in ~/.screenlayout! Make sure to save to default save location."
                 exit 1
             else
-                SL_NAME="$LAYOUTS_DIR/$( hostname --short )_$( basename "$LFILE" | rev | cut -f 2- -d "." | rev )"
+                SL_NAME="$LAYOUTS_DIR/$( hostname )_$( basename "$LFILE" | rev | cut -f 2- -d "." | rev )"
                 mv "$HOME/.screenlayout/$LFILE" "$SL_NAME"
                 rmdir "$HOME/.screenlayout" 2>/dev/null
             fi
@@ -25,7 +25,7 @@ create_layout() {
         ' Command-line')
             LNAME="$( dmenu-helper run_menu "  Name the new layout: " "" )"
             [[ "$LNAME" == "" ]] && exit 0
-            SL_NAME="$LAYOUTS_DIR/$( hostname --short )_$LNAME"
+            SL_NAME="$LAYOUTS_DIR/$( hostname )_$LNAME"
             $TERMINAL -c "$EDITOR $SL_NAME"
             ;;
     esac
@@ -43,20 +43,20 @@ select_layout() {
     if [[ "$1" != "" ]]; then
         LSELECTED="$1"
     else
-        LSELECTED="$( dmenu-helper run_menu "  Select a layout to switch to: " "$( find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$( hostname --short )_" | cut -f 2- -d "_" )" )"
+        LSELECTED="$( dmenu-helper run_menu "  Select a layout to switch to: " "$( find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$( hostname )_" | cut -f 2- -d "_" )" )"
     fi
     [[ "$LSELECTED" == "" ]] && exit 0
-    LSELECTED_FULL="$LAYOUTS_DIR/$( hostname --short )_$LSELECTED"
-    echo "$( hostname --short )_$LSELECTED" > "$CURRENT_LAYOUT"
+    LSELECTED_FULL="$LAYOUTS_DIR/$( hostname )_$LSELECTED"
+    echo "$( hostname )_$LSELECTED" > "$CURRENT_LAYOUT"
     $LSELECTED_FULL
     "${XDG_CONFIG_HOME:="$HOME/.config"}"/wm/post-layoutswitch
     notify-send -u low "Screen layout changed to $LSELECTED_FULL"
 }
 
 edit_layout() {
-    LSELECTED="$( dmenu-helper run_menu "  Select a layout to edit: " "$( find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$( hostname --short )_" | cut -f 2- -d "_" )" )"
+    LSELECTED="$( dmenu-helper run_menu "  Select a layout to edit: " "$( find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$( hostname )_" | cut -f 2- -d "_" )" )"
     [[ "$LSELECTED" == "" ]] && exit 0
-    LSELECTED_FULL="$LAYOUTS_DIR/$( hostname --short )_$LSELECTED"
+    LSELECTED_FULL="$LAYOUTS_DIR/$( hostname )_$LSELECTED"
     EL_ACTION="$( dmenu-helper run_menu "  How do you want to edit the selected layout? " " Graphical\n Command-line" )"
     [[ "$EL_ACTION" == "" ]] && exit 0
     case $EL_ACTION in

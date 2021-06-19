@@ -52,11 +52,25 @@ while IFS=$'\n' read -r MONITOR_ENTRY; do
 	declare -a MONITOR_OFFSETS+=( "${MONITOR_ENTRY##*:}" )
 done < <( xrandr --current --listmonitors | tail -n+2 | sed 's/.*[0-9]*\/[0-9]*x[0-9]*\/[0-9]*+\([0-9]*\)+\([0-9]*\)[ ]\+\(.*\)/\3:\1,\2/g' ) 
 
+# check if all monitors have same number of workspaces
+# this would mean that the multihead setup will most likely contain the same workspace names (and icons) across all monitors
+# so use the same icons across all the workspaces
+USE_SAME_ICONS="false"
+# check if we have any environment variable that asks to disable this behavior
+if [[ "$POLYBAR_DISABLE_SAME_ICONS" != "false" ]]; then
+	if [[ "$( printf "%s\n" "${WKSP_OFFSETS[@]}" | sort | uniq --count | awk '{print $1}' | uniq | wc -l )" == "1" ]]; then
+		USE_SAME_ICONS="true"
+	fi
+fi
+
 # the main loop that tracks the focused desktop/workspace
 while IFS=$'\n' read -r CURR_WKSP; do
 	# get the workspace icon
 	CURR_WKSP="$( echo "$CURR_WKSP" | cut -f 2 -d '=' )"
 	CURR_WKSP_ICON_NAME="ICON_$CURR_WKSP"
+	if [[ "$USE_SAME_ICONS" != "false" ]]; then
+		CURR_WKSP_ICON_NAME="ICON_$(( CURR_WKSP % ( ${#WKSP_OFFSETS[@]} / ${#MONITOR_OFFSETS[@]} ) ))"
+	fi
 	if [[ "${!CURR_WKSP_ICON_NAME:+x}" != "x" ]]; then
 		CURR_WKSP_ICON_NAME="DEFAULT_ICON"
 	fi
@@ -71,7 +85,7 @@ while IFS=$'\n' read -r CURR_WKSP; do
 		# set a fallback for the monitor - assuming we don't detect it
 		CURR_MONITOR="${MONITORS[0]}"
 		for IDX in "${!MONITOR_OFFSETS[@]}"; do
-			if [[ "${MONITOR_OFFSETS[$IDX]}" == "${WORKSPACE_OFFSETS[$CURR_WKSP]}" ]]; then
+			if [[ "${MONITOR_OFFSETS[$IDX]}" == "${WKSP_OFFSETS[$CURR_WKSP]}" ]]; then
 				CURR_MONITOR="${MONITORS[$IDX]}"
 			fi
 		done
