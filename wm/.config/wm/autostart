@@ -13,8 +13,6 @@ fi
 if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi" ]; then
     ${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi
 fi
-# load colors
-xrdb -merge "${XDG_CONFIG_HOME:-$HOME/.config}"/X11/xresources &
 # restore the wallpaper
 setbg &
 # launch compositor

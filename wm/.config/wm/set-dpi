@@ -48,9 +48,7 @@ fi
 } > "${XDG_CONFIG_HOME:-"$HOME/.config"}/xsettingsd/xsettingsd.conf"
 echo "Xft.dpi: $SELECTED_DPI" | xrdb -merge
 # restart xsettingsd
-if type killall &> /dev/null; then
-    killall -q xsettingsd
-elif type pkill &> /dev/null; then
+if type pkill &> /dev/null; then
     pkill xsettingsd
 else
     while IFS=$'\n' read -r BAR_PID; do

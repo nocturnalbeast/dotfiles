@@ -12,8 +12,7 @@ function send_notification {
     else
         ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/brightness_high.svg"
     fi
-    BAR=$(seq -s "🮂" 0 $(( BRIGHTNESS / 5 )) | sed 's/[0-9]//g')
-    dunstify -i "$ICON" -u low -r 5555 "" "<span size='x-large'>$BAR</span>"
+    dunstify -h int:value:$BRIGHTNESS -i "$ICON" -u low -r 5555 "Brightness [$BRIGHTNESS%]:" 
 }
 
 xbacklight -${1:0:3} 5

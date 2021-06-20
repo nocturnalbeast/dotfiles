@@ -47,8 +47,8 @@ get_dimensions() {
         RESOLUTION="$( polybar --list-monitors | grep "(primary)$" | cut -f 2 -d " " | cut -f 1 -d "+" )"
     fi
     # separate height and width into different variables
-    SCR_HEIGHT="$( echo "$RESOLUTION" | cut -f 2 -d x )"
-    SCR_WIDTH="$( echo "$RESOLUTION" | cut -f 1 -d x )"
+    SCR_HEIGHT="${RESOLUTION#*x}"
+    SCR_WIDTH="${RESOLUTION%x*}"
     # find the horizontal margin from the config file
     HORZ_MARGIN="$( awk -F "=" '/^[ ]*horz-margin/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
     # if it's a percentage value, use the resolution to calculate the margin
@@ -126,9 +126,14 @@ get_bars() {
     # go through each WID
     for WID in "${WIDS[@]}"; do
         # get the name of the window
-        WNAME="$( xprop WM_NAME -id "$WID" | awk '{gsub(/[","]/,"",$3);print $3}' | sed 's/^polybar-//g' )"
+        WNAME="$( xprop -id "$WID" -notype -f WM_NAME 8s '=$0\n' WM_NAME | cut -f 2 -d = )"
+        WNAME="${WNAME:1:-1}"
+        # we need to skip the tray window if that's enabled
+        if [[ "$WNAME" == "Polybar tray window" ]]; then
+            continue
+        fi
         # get the PID of the window
-        WPID="$( xprop _NET_WM_PID -id "$WID" | awk '{gsub(/[","]/,"",$3);print $3}' )"
+        WPID="$( xprop -id "$WID" -notype -f _NET_WM_PID 0c '=$0\n' _NET_WM_PID | cut -f 2 -d = )"
         # if this instance of polybar is not recorded, then record it
         if [[ ! " ${!BARS_WIDS[@]} " =~ " ${WNAME} " ]]; then
             BARS_WIDS[$WNAME]="$WID"
@@ -226,7 +231,7 @@ enable_bars() {
 }
 
 are_bars_hidden() {
-    STATE="$( xdotool search --class "Polybar" | xargs -n 1 xwininfo -id | grep "Map State:" | sort | uniq | wc -l )"
+    STATE="$( comm -13 <( xdotool search --name  'Polybar tray window'  | sort ) <( xdotool search --class 'Polybar'  | sort ) | xargs -n 1 xwininfo -id | grep "Map State:" | sort | uniq | wc -l )"
     if [[ "$STATE" == "2" ]]; then
         echo "no"
     else

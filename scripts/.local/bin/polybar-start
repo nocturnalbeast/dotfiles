@@ -6,9 +6,7 @@ BARS=(mainbar monbar)
 export WINDOW_MANAGER="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
 
 # terminate already running bar instances
-if type killall &> /dev/null; then
-    killall -q polybar
-elif type pkill &> /dev/null; then
+if type pkill &> /dev/null; then
     pkill polybar
 else
     while IFS=$'\n' read -r BAR_PID; do

@@ -7,75 +7,90 @@
 
 [global]
 # geometry and appearance
-monitor                 = 0
-title                   = Dunst
-class                   = Dunst
-geometry                = "300x10-6-6"
-indicate_hidden         = yes
-shrink                  = no
-transparency            = 50
-notification_height     = 0
-separator_height        = 4
-padding                 = 8
-horizontal_padding      = 8
-frame_width             = 2
-frame_color             = "#AAAAAA"
-corner_radius           = 0
-separator_color         = auto
-idle_threshold          = 120
+monitor                  = 0
+title                    = Dunst
+class                    = Dunst
+geometry                 = "300x10-6-6"
+indicate_hidden          = yes
+shrink                   = no
+transparency             = 40
+notification_height      = 0
+separator_height         = 4
+padding                  = 8
+text_icon_padding        = 0
+horizontal_padding       = 8
+frame_width              = 0
+frame_color              = "#FFFFFF"
+corner_radius            = 0
+separator_color          = auto
+idle_threshold           = 120
+progress_bar             = true
+progress_bar_height      = 10
+progress_bar_frame_width = 1
+progress_bar_min_width   = 150
+progress_bar_max_width   = 300
 
 # text formatting
-font                    = sans 11
-line_height             = 1.2
-markup                  = full
-format                  = "<b>%s</b>\n%b"
-alignment               = left
-show_age_threshold      = 60
-word_wrap               = yes
-ellipsize               = middle
-ignore_newline          = no
-stack_duplicates        = true
-hide_duplicate_count    = false
-show_indicators         = yes
-icon_position           = left
-max_icon_size           = 32
+font                     = sans 11
+line_height              = 1.2
+markup                   = full
+format                   = "<b>%s</b>\n%b"
+alignment                = left
+show_age_threshold       = 60
+word_wrap                = yes
+ellipsize                = middle
+ignore_newline           = no
+stack_duplicates         = true
+hide_duplicate_count     = false
+show_indicators          = yes
+icon_position            = left
+min_icon_size            = 0
+max_icon_size            = 32
+vertical_alignment       = center
 
 # behavior
-follow                  = keyboard
-sort                    = yes
-sticky_history          = yes
-history_length          = 20
-browser                 = /usr/bin/qutebrowser
-always_run_script       = true
-startup_notification    = false
-verbosity               = mesg
-force_xinerama          = false
-mouse_left_click        = close_current
-mouse_middle_click      = do_action
-mouse_right_click       = close_all
+follow                   = keyboard
+sort                     = yes
+sticky_history           = yes
+history_length           = 20
+browser                  = /usr/bin/qutebrowser
+dmenu                    = /usr/bin/dmenu -p "   "
+always_run_script        = true
+startup_notification     = false
+verbosity                = mesg
+mouse_left_click         = close_current
+mouse_middle_click       = do_action
+mouse_right_click        = close_all
+ignore_dbusclose         = false
+
+# compatibility
+force_xinerama           = false
+force_xwayland           = false
 
 
 [experimental]
-per_monitor_dpi         = false
+per_monitor_dpi          = true
 
 
 [urgency_low]
-background              = "#000000"
-foreground              = "#BFBFBF"
-timeout                 = 2
-icon                    = ~/.config/dunst/icons/info.svg
+background               = "#EAEAEA"
+foreground               = "#333333"
+highlight                = "#333333"
+timeout                  = 2
+icon                     = ~/.config/dunst/icons/info.svg
 
 
 [urgency_normal]
-background              = "#000000"
-foreground              = "#FFFFFF"
-timeout                 = 5
-icon                    = ~/.config/dunst/icons/warning.svg
+background               = "#FFFFFF"
+foreground               = "#000000"
+highlight                = "#000000"
+timeout                  = 5
+icon                     = ~/.config/dunst/icons/warning.svg
 
 
 [urgency_critical]
-background              = "#D23D3D"
-foreground              = "#FFFFFF"
-frame_color             = "#E84F4F"
-timeout                 = 0
-icon                    = ~/.config/dunst/icons/error.svg
+background               = "#D23D3D"
+foreground               = "#FFFFFF"
+highlight                = "#FFFFFF"
+timeout                  = 0
+icon                     = ~/.config/dunst/icons/error.svg

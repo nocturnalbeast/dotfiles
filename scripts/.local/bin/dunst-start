@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 
-# terminate notify-osd instances
-killall -q notify-osd
-
-# wait until the process has been shut down
-while pgrep -u $UID -x notify-osd >/dev/null; do sleep 1; done
+# terminate existing notification daemons
+DAEMONS=(notify-osd dunst)
+for DAEMON in "${DAEMONS[@]}"; do
+    if type pkill &> /dev/null; then
+        pkill "$DAEMON"
+    else
+        while IFS=$'\n' read -r DAEMON_PID; do
+            kill "$DAEMON_PID"
+        done < <( ps -e -o pid,cmd | tail -n +2 | awk '{print $1":"substr($0, index($0,$2))}' | sed -n '/^[0-9]\+:'$DAEMON'/p' | cut -f 1 -d : )
+    fi
+    # wait till they've been shut down
+    while pgrep -u $UID -x $DAEMON >/dev/null; do sleep 1; done
+done
 
 # then launch dunst
 dunst &
