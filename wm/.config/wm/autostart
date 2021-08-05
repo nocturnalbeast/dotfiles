@@ -33,3 +33,11 @@ polybar-start &
 unclutter &
 # set numlock key to off
 numlockx off &
+# run nm-applet if that's present
+if command -v nm-applet &>/dev/null; then
+    nm-applet &
+fi
+# run bleuman-applet if that's present
+if command -v blueman-applet &>/dev/null; then
+    blueman-applet &
+fi

@@ -7,7 +7,7 @@
 
 # switch to workspace, use shift to send focused window to workspace 
 alt + {_,shift} + {1-9,0}
-    bspwm-changeworkspace {focus,move} {1-9,10}
+    bspwm-workspace {focus,move} {1-9,10}
 
 # cycle between last used windows across workspaces
 alt + {_,shift} + Tab

@@ -48,3 +48,9 @@ alias ytdp="youtube-dl --format bestaudio+bestvideo --yes-playlist"
 
 # move wget-hsts file to XDG_CACHE_HOME
 alias wget="wget --hsts-file=\"$XDG_CACHE_HOME/wget-hsts\""
+
+# too lazy to type python, so type py instead
+alias py="python"
+
+# windows command prompt has corrupted me
+alias cls="clear"

@@ -5,12 +5,12 @@ DIRECTION=$1
 
 if bspc query -T -n | grep -q '"state":"floating"'; then
     case "$DIRECTION" in
-        west) FLAG="-x -";;
-        east) FLAG="-x +";;
-        north) FLAG="-y -";;
-        south) FLAG="-y +";;
+        west) COORD="-$SIZE 0";;
+        east) COORD="$SIZE 0";;
+        north) COORD="0 -$SIZE";;
+        south) COORD="0 $SIZE";;
     esac
-    xdo move ${FLAG}${SIZE}
+    bspc node focused -v $COORD
 else
     bspc node -f $1
 fi

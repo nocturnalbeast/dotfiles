@@ -52,8 +52,3 @@ if [[ "$1" == "focus" ]] || [[ "$1" == "move" ]]; then
 else
    usage
 fi
-
-OPERATION="$1"
-DEST_WORKSPACE="$2"
-
-

@@ -23,7 +23,7 @@ _query_nodes() {
 
 RECEPTACLE="$( _query_nodes 'any.leaf.!window' )"
 
-if [ -n "$(_query_nodes "${dir}.!floating")" ]; then
+if [ -n "$(_query_nodes "${DIR}.!floating")" ]; then
     bspc node -s "$DIR"
 elif [ -n "$RECEPTACLE" ]; then
     bspc node focused -n "$RECEPTACLE" --follow

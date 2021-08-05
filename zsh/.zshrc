@@ -341,7 +341,9 @@ zinit wait'0' lucid light-mode for \
     id-as'zsh-bd' \
         @Tarrasch/zsh-bd \
     atinit'source $ATINIT_DIR/marks.zsh' id-as'zshmarks' \
-        @jocelynmallon/zshmarks
+        @jocelynmallon/zshmarks \
+    id-as'up' \
+        @peterhurford/up.zsh
 
 # colorize command output 
 zinit wait'0' lucid light-mode for \
@@ -424,7 +426,9 @@ zinit wait'0' lucid from'gh-r' nocompile light-mode for \
     bpick'navi-*' sbin'navi' id-as'navi' \
         @denisidoro/navi \
     pick'tldr-*' mv'tldr-* -> tldr' sbin'tldr' id-as'tealdeer' \
-        @dbrgn/tealdeer
+        @dbrgn/tealdeer \
+    bpick'mmv_*' mv'mmv_*/mmv -> mmv' sbin'mmv' id-as'mmv' \
+        @itchyny/mmv
 
 # completions for some of the above programs
 zinit wait'0' lucid as'completion' light-mode for \
@@ -462,7 +466,7 @@ zinit wait'0' lucid light-mode for \
     sbin'bin/fzf-tmux' nocompile id-as'fzf-tmux' \
         @junegunn/fzf \
     atload'source $ATLOAD_DIR/fzfwidgets.zsh' id-as'fzf-widgets' \
-        @ytet5uy4/fzf-widgets \
+        @crater2150-zsh/fzf-widgets \
     atinit'source $ATINIT_DIR/fz.zsh' id-as'fz' \
         @changyuheng/fz \
     atload'source $ATLOAD_DIR/fzftab.zsh' id-as'fzf-tab' \
