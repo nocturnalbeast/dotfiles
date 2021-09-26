@@ -92,7 +92,7 @@ function launch_application() {
     # get the entry from the cache - which will include the timestamp and number of times launched
     local SELECTED_APP_ENTRY="$( grep -E "^[0-9]{5}\.[0-9]{10} ${SELECTED_APP}$" "$CACHE_PATH" )"
     # increment the number of times launched for the application selected
-    local SELECTED_APP_FREQ="$( printf %05.0f $(( ${SELECTED_APP_ENTRY:0:5} + 1 )) )"
+    local SELECTED_APP_FREQ="$( printf %05.0f $(( 10#${SELECTED_APP_ENTRY:0:5} + 1 )) )"
     # discard the earlier timestamp - replacing it with a timestamp reflecting the current time
     local SELECTED_APP_LAST_LAUNCH="$( date +%s )"
     # launch the application

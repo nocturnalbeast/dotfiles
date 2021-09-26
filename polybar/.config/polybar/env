@@ -1,0 +1,16 @@
+# for dynamic wm-restack option
+WINDOW_MANAGER="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
+
+# for temperature module
+TEMP_HWMON_PATH="/sys/devices/platform/coretemp.0/hwmon/hwmon7/temp1_input"
+TEMP_THERMAL_ZONE=9
+
+# for battery module
+BATT_BATTERY="BAT0"
+BATT_ADAPTER="AC"
+
+# for brightness module
+BRIG_CARD="intel_backlight"
+
+# for network module
+NTWK_INTERFACE="wlo1"

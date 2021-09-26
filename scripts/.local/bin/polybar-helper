@@ -50,70 +50,71 @@ get_dimensions() {
     SCR_HEIGHT="${RESOLUTION#*x}"
     SCR_WIDTH="${RESOLUTION%x*}"
     # find the horizontal margin from the config file
-    HORZ_MARGIN="$( awk -F "=" '/^[ ]*horz-margin/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
+    HORZ_MARGIN="$( read-ini -f "$CONFIG_FILE" -k "horz-margin" )"
     # if it's a percentage value, use the resolution to calculate the margin
     if [[ "${HORZ_MARGIN: -1}" == "%" ]]; then
         HORZ_MARGIN="$( ceil "$( echo "$SCR_WIDTH*${HORZ_MARGIN::-1}/100" | bc -l )" )"
         # make sure it's even
-        HORZ_MARGIN="$(( $HORZ_MARGIN - ( $HORZ_MARGIN % 2 ) ))"
+        HORZ_MARGIN="$(( HORZ_MARGIN - ( HORZ_MARGIN % 2 ) ))"
     fi
     # find the vertical margin from the config file
-    VERT_MARGIN="$( awk -F "=" '/^[ ]*vert-margin/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
+    VERT_MARGIN="$( read-ini -f "$CONFIG_FILE" -k "vert-margin" )"
     # if it's a percentage value, use the resolution to calculate the margin
     if [[ "${VERT_MARGIN: -1}" == "%" ]]; then
         VERT_MARGIN="$( ceil "$( echo "$SCR_HEIGHT*${VERT_MARGIN::-1}/100" | bc -l )" )"
         # make sure it's even
-        VERT_MARGIN="$(( $VERT_MARGIN - ( $VERT_MARGIN % 2 ) ))"
+        VERT_MARGIN="$(( VERT_MARGIN - ( VERT_MARGIN % 2 ) ))"
     fi
     # find the bar height value from the config file
-    BAR_HEIGHT="$( awk -F "=" '/^[ ]*bar-height/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
+    BAR_HEIGHT="$( read-ini -f "$CONFIG_FILE" -k "bar-height" )"
     # if it's a percentage value, use the resolution to calculate the bar height
     if [[ "${BAR_HEIGHT: -1}" == "%" ]]; then
         BAR_HEIGHT="$( ceil "$( echo "$SCR_HEIGHT*${BAR_HEIGHT::-1}/100" | bc -l )" )"
     fi
     # putting it all together
-    echo -e "$HORZ_MARGIN\n$VERT_MARGIN\n$BAR_HEIGHT\n$(( $SCR_WIDTH - 2 * $HORZ_MARGIN ))"
+    echo -e "$HORZ_MARGIN\n$VERT_MARGIN\n$BAR_HEIGHT\n$(( SCR_WIDTH - 2 * HORZ_MARGIN ))"
 }
 
 # function to get the font strings that are used in the config
 get_font() {
     # find the height of the bar first
     BAR_HEIGHT="$( get_dimensions "$1" | sed '3q;d' )"
-    # obtain the font ratio from the config file
-    FONT_RATIO="$( awk -F "=" '/^[ ]*font-ratio/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
-    # now the font height should be the product of the bar_height and font_ratio values
-    TEXT_FONT_SIZE="$( ceil "$( echo "$BAR_HEIGHT*$FONT_RATIO" | bc -l )" )"
-    # obtain the character-to-glyph ratio from the config file
-    GLYPH_RATIO="$( awk -F "=" '/^[ ]*glyph-ratio/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
-    # calculate the glyph font size
-    GLYPH_FONT_SIZE="$( ceil "$( echo "$TEXT_FONT_SIZE*$GLYPH_RATIO" | bc -l )" )"
-    # now we need to calculate the offset for both the fonts
-    TEXT_FONT_OFFSET="$( ceil "$( echo "1/$FONT_RATIO" | bc -l )" )"
-    GLYPH_FONT_OFFSET="$( ceil "$( echo "$TEXT_FONT_OFFSET*$GLYPH_RATIO" | bc -l )" )"
-    if [[ "$(( ($TEXT_FONT_SIZE + $BAR_HEIGHT) % 2 ))" -eq 1 ]]; then
-        TEXT_FONT_OFFSET="$(( $TEXT_FONT_OFFSET - 1 ))"
-        GLYPH_FONT_OFFSET="$(( $GLYPH_FONT_OFFSET - 1 ))"
-    else
-        TEXT_FONT_OFFSET="$(( $TEXT_FONT_OFFSET + 1 ))"
-        GLYPH_FONT_OFFSET="$(( $GLYPH_FONT_OFFSET + 1 ))"
+    # obtain the text font height from the config file
+    TEXT_FONT_SIZE="$( read-ini -f "$CONFIG_FILE" -k "text-font-height" )"
+    # if it's a percentage value, we define the percentage as the percentage of
+    # the effective bar height, so calculate accordingly
+    if [[ "${TEXT_FONT_SIZE: -1}" == "%" ]]; then
+        TEXT_FONT_SIZE="$( ceil "$( echo "$BAR_HEIGHT*${TEXT_FONT_SIZE::-1}/100" | bc -l )" )"
     fi
+    # obtain the icon font height from the config file
+    ICON_FONT_SIZE="$( read-ini -f "$CONFIG_FILE" -k "icon-font-height" )"
+    # if it's a percentage value, we define the percentage as the percentage of
+    # the effective bar height, so calculate accordingly
+    if [[ "${ICON_FONT_SIZE: -1}" == "%" ]]; then
+        ICON_FONT_SIZE="$( ceil "$( echo "$BAR_HEIGHT*${ICON_FONT_SIZE::-1}/100" | bc -l )" )"
+    fi
+    # now we need to calculate the offset for both the fonts
+    TEXT_FONT_OFFSET="$(( ( ( BAR_HEIGHT - TEXT_FONT_SIZE ) * TEXT_FONT_SIZE / ( BAR_HEIGHT * 2 ) ) + ( ( TEXT_FONT_SIZE > ( BAR_HEIGHT / 2 ) ) * ( ( 10 * TEXT_FONT_SIZE - 5 * BAR_HEIGHT ) / TEXT_FONT_SIZE ) ) ))"
+    ICON_FONT_OFFSET="$(( ( ( BAR_HEIGHT - ICON_FONT_SIZE ) * ICON_FONT_SIZE / ( BAR_HEIGHT * 2 ) ) + ( ( ICON_FONT_SIZE > ( BAR_HEIGHT / 2 ) ) * ( ( 10 * ICON_FONT_SIZE - 5 * BAR_HEIGHT ) / ICON_FONT_SIZE ) ) ))"
     # now get the font definitions from the config file
-    TEXT_FONT="$( sed -n 's/^[ ]*display-font[ ]*=[ ]*\(.*\)[ ]*$/\1/p' "$CONFIG_FILE" | tr -d '"' )"
-    GLYPH_FONT="$( sed -n 's/^[ ]*glyph-font[ ]*=[ ]*\(.*\)[ ]*$/\1/p' "$CONFIG_FILE" | tr -d '"' )"
+    TEXT_FONT="$( read-ini -f "$CONFIG_FILE" -k "text-font" )"
+    ICON_FONT="$( read-ini -f "$CONFIG_FILE" -k "icon-font" )"
     # putting it all together
-    echo -e "$TEXT_FONT:pixelsize=$TEXT_FONT_SIZE;$TEXT_FONT_OFFSET\n$GLYPH_FONT:pixelsize=$GLYPH_FONT_SIZE;$GLYPH_FONT_OFFSET"
+    echo -e "$TEXT_FONT:pixelsize=$TEXT_FONT_SIZE;$TEXT_FONT_OFFSET\n$ICON_FONT:pixelsize=$ICON_FONT_SIZE;$ICON_FONT_OFFSET"
 }
 
 # function to get max tray entry icon size using the font ratios defined in the config
 get_iconsize() {
     # find the height of the bar first
     BAR_HEIGHT="$( get_dimensions "$1" | sed '3q;d' )"
-    # obtain the font ratio from the config file
-    FONT_RATIO="$( awk -F "=" '/^[ ]*font-ratio/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
-    # obtain the character-to-glyph ratio from the config file
-    GLYPH_RATIO="$( awk -F "=" '/^[ ]*glyph-ratio/ {print $2}' "$CONFIG_FILE" | tr -d ' ' )"
-    # calculate the size
-    ceil "$( echo "$( ceil "$( echo "$BAR_HEIGHT*$FONT_RATIO" | bc -l )" )*$GLYPH_RATIO" | bc -l )"
+    # obtain the icon font height from the config file
+    ICON_FONT_SIZE="$( read-ini -f "$CONFIG_FILE" -k "icon-font-height" )"
+    # if it's a percentage value, we define the percentage as the percentage of
+    # the effective bar height, so calculate accordingly
+    if [[ "${ICON_FONT_SIZE: -1}" == "%" ]]; then
+        ICON_FONT_SIZE="$( ceil "$( echo "$BAR_HEIGHT*${ICON_FONT_SIZE::-1}/100" | bc -l )" )"
+    fi
+    echo "$ICON_FONT_SIZE"
 }
 
 # function to enumerate all the instances of the bars launched
@@ -254,8 +255,8 @@ disable_bars() {
                 # get the x and y bounds of the monitor
                 MON_X_START="$( echo "$ENTRY" | cut -f 4 -d - )"
                 MON_Y_START="$( echo "$ENTRY" | cut -f 5 -d - )"
-                MON_X_END="$(( $MON_X_START + $( echo "$ENTRY" | cut -f 2 -d - ) ))"
-                MON_Y_END="$(( $MON_Y_START + $( echo "$ENTRY" | cut -f 3 -d - ) ))"
+                MON_X_END="$(( MON_X_START + $( echo "$ENTRY" | cut -f 2 -d - ) ))"
+                MON_Y_END="$(( MON_Y_START + $( echo "$ENTRY" | cut -f 3 -d - ) ))"
                 # if the window is in the bounds obtained above
                 if [[ "$X" -ge "$MON_X_START" ]] && [[ "$X" -lt "$MON_X_END" ]] && [[ "$Y" -ge "$MON_Y_START" ]] && [[ "$Y" -lt "$MON_Y_END" ]] && [[ "$MON_NAME" == "$FOCUS_MON" ]]; then
                     polybar-msg -p "$PID" cmd hide >/dev/null 2>&1
@@ -302,7 +303,7 @@ case $1 in
     pad_toggle) toggle_padding; exit 0;;
     toggle_all) toggle_all; exit 0;;
     get_dimensions) get_dimensions $2; exit 0;;
-    get_font) get_font $2; exit 0;;
-    get_iconsize) get_iconsize $2; exit 0;;
+    get_font) get_font "$2"; exit 0;;
+    get_iconsize) get_iconsize "$2"; exit 0;;
     *) echo "Unknown operation: $1"; usage; exit 1;;
 esac

@@ -1,0 +1,36 @@
+#!/usr/bin/env sh
+
+# Open any file
+# Input(s):
+#   Environment variables:
+#     NO_COLOR: If set, disables color output in logs.
+#   Command-line arguments:
+#     FILENAME/URL
+# Output(s):
+#   Opens the file using the application provided by mimeinfo.list or mimeo's association list
+# Requirement(s):
+#   mimeo / xdg-open
+
+usage() {
+    cat << EOF
+Usage: $( basename "$0" ) FILENAME/URL
+
+Open any file.
+
+Required options:
+  FILENAME/URL  Path to local file/URL of web resource
+EOF
+}
+
+error() {
+    printf "[$( date +'%Y-%m-%dT%H:%M:%S%z' )] [$( basename "$0" )] ERROR: $*\n" >&2
+}
+
+if command -v mimeo >/dev/null 2>&1; then
+    $( mimeo -c $@ )
+elif command -v xdg-open >/dev/null 2>&1; then
+    xdg-open $@
+else
+    error "No file handlers present!"
+    exit 1
+fi

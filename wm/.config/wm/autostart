@@ -24,7 +24,11 @@ mopidy &
 # launch clipboard manager
 clipmenud &
 # launch screen autolocker
-light-locker &
+if command -v xsecurelock xss-lock xset &>/dev/null; then
+    xset s 300 5 && xss-lock -n /usr/libexec/xsecurelock/dimmer -l -- xsecurelock &
+elif command -v light-locker &>/dev/null; then
+    light-locker &
+fi
 # launch polkit agent for user authentication
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 # launch system bars

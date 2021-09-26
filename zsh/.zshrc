@@ -397,8 +397,8 @@ zinit wait'0' lucid light-mode for \
 
 # let the shell set the terminal window name
 zinit wait'0' lucid light-mode for \
-    id-as'term-support' \
-        OMZL::termsupport.zsh
+    atload'source $ATLOAD_DIR/tabtitle.zsh' id-as'tab-title' \
+        @trystan2k/zsh-tab-title
 
 # a ton more completions (don't use wait-ice for this one or else compinit doesn't load these completions)
 zinit lucid light-mode for \

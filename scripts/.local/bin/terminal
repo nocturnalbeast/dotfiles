@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+
+TERMINAL_LIST="x-terminal-emulator mate-terminal gnome-terminal terminator xfce4-terminal urxvt rxvt termit Eterm aterm uxterm xterm roxterm termite lxterminal terminology st qterminal lilyterm tilix terminix konsole kitty guake tilda alacritty hyper"
+
+if [ -n "$TERMINAL" ]; then
+    echo "Launching terminal: $TERMINAL"
+    $TERMINAL &
+elif [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
+    SHELL_PPID="$( ps -p "$PPID" -o ppid= | tr -d " " )"
+    SHELL_PPNAME="$( ps -p "$SHELL_PPID" -o comm= )"
+    if echo "$TERMINAL_LIST" | grep -q "$SHELL_PPNAME" 2>/dev/null; then
+        echo "Launching terminal: $SHELL_PPNAME"
+        $SHELL_PPNAME &
+    fi
+else
+    for TERMINAL_ENTRY in $TERMINAL_LIST; do
+        if command -v "$TERMINAL_ENTRY" > /dev/null 2>&1; then
+            echo "Launching terminal: $TERMINAL_ENTRY"
+            $TERMINAL_ENTRY &
+            break
+        fi
+    done
+fi
