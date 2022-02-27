@@ -15,7 +15,7 @@ fi
 if ! test -d "$ZINIT_HOME"; then
     mkdir -p "$ZINIT_HOME"
     chmod g-rwX "$ZINIT_HOME"
-    git clone --depth 10 https://github.com/zdharma/zinit.git ${ZINIT_HOME}/bin
+    git clone --depth 10 https://github.com/zdharma-continuum/zinit.git ${ZINIT_HOME}/bin
 fi
 
 typeset -gAH ZINIT
@@ -41,23 +41,16 @@ HISTSIZE=50000
 SAVEHIST=50000
 
 
-## 3: import environment variables
+## 3: import generic environment variables and aliases
 
-# all environment variables are configured here, since they are shared across all shells
-if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env" ]; then
-    source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env"
-fi
-# set zsh-specific variables
+# just source .profile, it will source required environment variables and aliases
+source "$HOME/.profile"
+
+
+## 4: set zsh-specific environment variables and aliases
+
 [ ! -z "$PS1" ] && typeset -U PATH path
 export WORDCHARS="*?[]~=&;!#$%^(){}"
-
-
-## 4: import aliases
-
-# all aliases are configured here, since they are shared across all shells
-if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases" ]; then
-    source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases"
-fi
 
 
 ## 5: set shell options
@@ -67,7 +60,6 @@ setopt auto_cd
 
 # better command history
 setopt append_history
-setopt inc_append_history
 setopt share_history
 setopt hist_ignore_all_dups
 setopt hist_ignore_dups
@@ -297,13 +289,13 @@ ATLOAD_DIR="$HOOKSCRIPT_DIR/scripts_atload"
 
 # zinit annexes
 zinit light-mode for \
-        @zinit-zsh/z-a-readurl \
-        @zinit-zsh/z-a-bin-gem-node
+        @zdharma-continuum/zinit-annex-readurl \
+        @zdharma-continuum/zinit-annex-bin-gem-node
 
 # basic zsh enhancement plugins - must have in any setup
 zinit wait'0' lucid light-mode for \
     id-as'fast-syntax-highlighting' \
-        @zdharma/fast-syntax-highlighting \
+        @zdharma-continuum/fast-syntax-highlighting \
     atinit'source $ATINIT_DIR/autosuggestions.zsh' atload'source $ATLOAD_DIR/autosuggestions.zsh' id-as'zsh-autosuggestions' \
         @zsh-users/zsh-autosuggestions \
     blockf atpull'source $ATPULL_DIR/completions.zsh' id-as'zsh-completions' \
@@ -347,7 +339,7 @@ zinit wait'0' lucid light-mode for \
 
 # colorize command output 
 zinit wait'0' lucid light-mode for \
-    as'program' atclone'$ATCLONE_DIR/grc.zsh' atpull'%atclone' compile'grc.zsh' src'grc.zsh' pick'$ZPFX/bin/grc*' id-as'grc' \
+    atclone'source $ATCLONE_DIR/grc.zsh' atpull'%atclone' compile'grc.zsh' src'grc.zsh' sbin'(grc|grcat)' id-as'grc' \
         @garabik/grc
 
 # correct commands
@@ -411,7 +403,7 @@ zinit wait'0' lucid from'gh-r' nocompile light-mode for \
         @cli/cli \
     bpick'hub-*' mv'hub-*/bin/hub -> hub' sbin'hub' id-as'gh-hub' \
         @github/hub \
-    bpick'exa-*' mv'exa-* -> exa' sbin'exa' id-as'exa' \
+    bpick'exa-*' mv'bin/exa -> exa' sbin'exa' atclone'source $ATCLONE_DIR/exa.zsh' id-as'exa' \
         @ogham/exa \
     blockf nocompletions bpick'ripgrep-*' mv'ripgrep-*/rg -> rg' sbin'rg' atclone'source $ATCLONE_DIR/ripgrep.zsh' atpull'%atclone' id-as'ripgrep' \
         @BurntSushi/ripgrep \
@@ -425,15 +417,33 @@ zinit wait'0' lucid from'gh-r' nocompile light-mode for \
         @dandavison/delta \
     bpick'navi-*' sbin'navi' id-as'navi' \
         @denisidoro/navi \
-    pick'tldr-*' mv'tldr-* -> tldr' sbin'tldr' id-as'tealdeer' \
+    pick'tealdeer-*' mv'tealdeer-* -> tldr' sbin'tldr' id-as'tealdeer' \
         @dbrgn/tealdeer \
     bpick'mmv_*' mv'mmv_*/mmv -> mmv' sbin'mmv' id-as'mmv' \
-        @itchyny/mmv
+        @itchyny/mmv \
+    bpick'hexyl-*' mv'hexyl-*/hexyl -> hexyl' sbin'hexyl' id-as'hexyl' \
+        @sharkdp/hexyl \
+    bpick'tokei-*' sbin'tokei' id-as'tokei' \
+        @XAMPPRocky/tokei \
+    bpick'*.tar.gz' sbin'glow' id-as'glow' \
+        @charmbracelet/glow \
+    bpick'hyperfine-*' mv'hyperfine-*/hyperfine -> hyperfine' sbin'hyperfine' id-as'hyperfine' \
+        @sharkdp/hyperfine \
+    pick'jq-*' mv'jq-* -> jq' sbin'jq' id-as'jq' \
+        @stedolan/jq \
+    bpick'*.tar.gz' mv'xh-*/xh -> xh' sbin'xh' id-as'xh' \
+        @ducaale/xh \
+    pick'yq_*' mv'yq_* -> yq' sbin'yq' id-as'yq' \
+        @mikefarah/yq \
+    bpick'bandwhich*' sbin'bandwhich' id-as'bandwhich' \
+        @imsnif/bandwhich \
+    bpick'duf_*.tar.gz' sbin'duf' id-as'duf' \
+        @muesli/duf
 
 # completions for some of the above programs
 zinit wait'0' lucid as'completion' light-mode for \
     mv'zsh_tealdeer -> _tldr' id-as'tealdeer-completion' \
-        https://github.com/dbrgn/tealdeer/blob/master/zsh_tealdeer \
+        https://github.com/dbrgn/tealdeer/raw/main/completion/zsh_tealdeer \
     mv'*zsh-completion -> _hub' id-as'hub-completion' \
         https://github.com/github/hub/raw/master/etc/hub.zsh_completion \
     id-as'exa-completion' \
@@ -461,8 +471,8 @@ zinit wait'0' lucid from'gh-r' nocompile light-mode for \
         @junegunn/fzf
 zinit wait'0' lucid as'completion' light-mode for \
     mv'completion.zsh -> _fzf' id-as'fzf-completion' \
-        https://github.com/junegunn/fzf/blob/master/shell/completion.zsh
-zinit wait'0' lucid light-mode for \
+        https://github.com/junegunn/fzf/raw/master/shell/completion.zsh
+zinit wait'1' lucid light-mode for \
     sbin'bin/fzf-tmux' nocompile id-as'fzf-tmux' \
         @junegunn/fzf \
     atload'source $ATLOAD_DIR/fzfwidgets.zsh' id-as'fzf-widgets' \
@@ -496,7 +506,11 @@ fi
 # add plugin-related manpages into the MANPATH
 export MANPATH=":$ZPFX/share/man"
 
-# use zinit's compinit functions instead of zsh's compinit - makes things easier
-ZINIT[COMPINIT_OPTS]=-C
-zicompinit
-zicdreplay
+# compinit + cdreplay
+autoload -Uz compinit
+COMPINIT_INTERVAL=3600
+if [ $( date +'%s' ) -gt $(( $( stat -c '%Y' $ZINIT[ZCOMPDUMP_PATH] ) + $COMPINIT_INTERVAL )) ]; then
+    ZINIT[COMPINIT_OPTS]=-C
+fi
+compinit -d ${ZINIT[ZCOMPDUMP_PATH]:-${ZDOTDIR:-$HOME}/.zcompdump} "${(Q@)${(z@)ZINIT[COMPINIT_OPTS]}}"
+zinit cdreplay

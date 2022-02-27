@@ -5,20 +5,17 @@
 # | . | .'|_ -|   |
 # |___|__,|___|_|_|
 
-# setting up history file
+# just source .profile, it will source required environment variables and aliases
+source "$HOME/.profile"
+
+# make sure this is an interactive shell before setting up interactive shell preferences
+[[ $- != *i* ]] && return
+
+# shell-specific settings
+shopt -s autocd
+HISTCONTROL=ignoreboth
 HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/shell_history"
 HISTSIZE=50000
 
-# import environment variables
-if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env" ]; then
-    source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/env"
-fi
-
-# import aliases
-if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases" ]; then
-    source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/aliases"
-fi
-
-#starship_precmd_user_func="set_win_title"
 # prompt theme
 eval "$(starship init bash)"

@@ -13,6 +13,10 @@ fi
 if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi" ]; then
     ${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi
 fi
+# start audio
+if command -v pipewire &>/dev/null; then
+    pipewire &
+fi
 # restore the wallpaper
 setbg &
 # launch compositor
@@ -20,7 +24,11 @@ picom --experimental-backends &
 # launch notification daemon
 dunst-start &
 # launch music player server
-mopidy &
+if command -v mopidy &>/dev/null; then
+    mopidy &
+elif command -v mpd &>/dev/null; then
+    mpd &
+fi
 # launch clipboard manager
 clipmenud &
 # launch screen autolocker
@@ -31,17 +39,17 @@ elif command -v light-locker &>/dev/null; then
 fi
 # launch polkit agent for user authentication
 /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
-# launch system bars
-polybar-start &
-# launch unclutter to hide cursor when inactive
+# hide cursor when inactive
 unclutter &
 # set numlock key to off
 numlockx off &
-# run nm-applet if that's present
+# launch system bars
+polybar-start &
+# networkmanager tray applet
 if command -v nm-applet &>/dev/null; then
     nm-applet &
 fi
-# run bleuman-applet if that's present
+# bluetooth tray applet
 if command -v blueman-applet &>/dev/null; then
     blueman-applet &
 fi

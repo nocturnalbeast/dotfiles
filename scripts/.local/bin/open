@@ -27,9 +27,9 @@ error() {
 }
 
 if command -v mimeo >/dev/null 2>&1; then
-    $( mimeo -c $@ )
+    $( mimeo -c "$@" )
 elif command -v xdg-open >/dev/null 2>&1; then
-    xdg-open $@
+    xdg-open "$@"
 else
     error "No file handlers present!"
     exit 1

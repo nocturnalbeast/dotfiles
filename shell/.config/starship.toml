@@ -13,9 +13,12 @@ $kubernetes\
 $docker_context\
 $singularity\
 $aws\
+$azure\
 $gcloud\
 $openstack\
+$pulumi\
 $cmake\
+$cobol\
 $dart\
 $deno\
 $dotnet\
@@ -36,6 +39,7 @@ $php\
 $purescript\
 $python\
 $red\
+$rlang\
 $ruby\
 $rust\
 $scala\
@@ -48,20 +52,28 @@ $zig\
 $nix_shell\
 $conda\
 $crystal\
-$env_var\
 $package\
 $cmd_duration\
 $line_break\
 $jobs\
 $battery\
 $memory_usage\
+$container\
+$sudo\
 $shell\
 $character"""
+
+continuation_prompt = "[](bold yellow) "
 
 [aws]
 symbol = ""
 format = "  [$symbol $profile($region)]($style)"
 style = "bold yellow"
+
+[azure]
+symbol = "ﴃ"
+format = "  [$symbol $subscription]($style)"
+style = "bold blue"
 
 [battery]
 full_symbol = ""
@@ -96,6 +108,11 @@ style = "bold yellow"
 min_time = 2_000
 show_milliseconds = false
 
+[cobol]
+symbol = ""
+format = "  [$symbol $version]($style)"
+style = "bold blue"
+
 [conda]
 symbol = ""
 format = "  [$symbol $environment]($style)"
@@ -125,6 +142,7 @@ read_only = " "
 home_symbol = ""
 truncation_symbol = "/"
 truncate_to_repo = false
+repo_root_style = "bold green"
 
 [docker_context]
 symbol = ""
@@ -290,7 +308,7 @@ style = "bold yellow"
 [openstack]
 symbol = ""
 format = "  [$symbol $cloud/$project]($style)"
-style = "bold orange"
+style = "bold red"
 
 [package]
 symbol = ""
@@ -305,6 +323,11 @@ style = "bold blue"
 [php]
 symbol = ""
 format = "  [$symbol $version]($style)"
+style = "bold purple"
+
+[pulumi]
+symbol = ""
+format = "  [$symbol $username@$stack $version]($style)"
 style = "bold purple"
 
 [purescript]
@@ -338,7 +361,7 @@ style = "bold red"
 [rust]
 symbol = ""
 format = "  [$symbol $version]($style)"
-style = "bold orange"
+style = "bold red"
 
 [scala]
 symbol = ""
@@ -354,7 +377,8 @@ ion_indicator = "ﱦ "
 elvish_indicator = "ﬦ "
 tcsh_indicator = " "
 unknown_indicator = " "
-format = "[$indicator](bold cyan)"
+format = "[$indicator]($style)"
+style = "bold cyan"
 disabled = false
 
 [shlvl]
@@ -365,6 +389,13 @@ disabled = false
 symbol = ""
 format = "  [$symbol $env]($style)"
 style = "bold blue"
+
+[sudo]
+format = "[$symbol]($style) "
+style = "bold white"
+symbol = "ﮊ"
+allow_windows = false
+disabled = false
 
 [swift]
 symbol = ""
