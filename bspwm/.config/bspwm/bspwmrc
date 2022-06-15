@@ -6,23 +6,25 @@
 # |___|___|  _|_____|_|_|_|
 #         |_|
 
-# first - start the autostart script
-"${XDG_CONFIG_HOME:-$HOME/.config}"/wm/autostart
-
-# second - start the simple x hotkey daemon to handle keybindings
+# start the simple x hotkey daemon to handle keybindings
 sxhkd -c "${XDG_CONFIG_HOME:-$HOME/.config}/sxhkd/sxhkdrc"
 
-# third - use the set-monitors script to setup all available monitors
+# use the set-monitors script to setup all available monitors
 "${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-monitors
 
-# fourth - use the set-colors script to define all colors for windows and borders
+# use the set-colors script to define all colors for windows and borders
 "${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-colors
 
-# fifth - use the set-layout script to define auto/manual tiling layouts for each of the workspaces
+# use the set-layout script to define auto/manual tiling layouts for each of the workspaces
 "${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-layout
 
-# sixth - use the set-options script to define all other configuration options pertaining to bspwm
+# use the set-options script to define all other configuration options pertaining to bspwm
 "${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-options
 
-# seventh - pass the external-rules script as an argument to the bspc executable to activate all specific window rules
+# pass the external-rules script as an argument to the bspc executable to activate all specific window rules
 bspc config external_rules_command "${XDG_CONFIG_HOME:-$HOME/.config}/bspwm/external-rules"
+
+# lastly, call the autostart script and start other bspwm-related stuff separately
+"${XDG_CONFIG_HOME:-$HOME/.config}"/wm/autostart
+bspwm-pow-af &
+bspwm-noactiveborders &

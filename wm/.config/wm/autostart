@@ -37,8 +37,6 @@ if command -v xsecurelock xss-lock xset &>/dev/null; then
 elif command -v light-locker &>/dev/null; then
     light-locker &
 fi
-# launch polkit agent for user authentication
-/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
 # hide cursor when inactive
 unclutter &
 # set numlock key to off
@@ -52,4 +50,8 @@ fi
 # bluetooth tray applet
 if command -v blueman-applet &>/dev/null; then
     blueman-applet &
+fi
+# disk mounting tray applet
+if command -v udiskie &>/dev/null; then
+    udiskie -Avnt &
 fi

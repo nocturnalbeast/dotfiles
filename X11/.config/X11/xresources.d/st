@@ -1,0 +1,8 @@
+! simple terminal settings
+St.font:         mono:size=11:antialias=true:autohint:true
+St.alpha:        0.85
+St.alphaunfocus: 0.85
+St.borderpx:     4
+St.tabspaces:    4
+St.cwscale:      1
+St.chscale:      1

@@ -442,12 +442,10 @@ zinit wait'0' lucid from'gh-r' nocompile light-mode for \
 
 # completions for some of the above programs
 zinit wait'0' lucid as'completion' light-mode for \
-    mv'zsh_tealdeer -> _tldr' id-as'tealdeer-completion' \
+    mv'tealdeer-completion -> _tldr' id-as'tealdeer-completion' \
         https://github.com/dbrgn/tealdeer/raw/main/completion/zsh_tealdeer \
-    mv'*zsh-completion -> _hub' id-as'hub-completion' \
+    mv'hub-completion -> _hub' id-as'hub-completion' \
         https://github.com/github/hub/raw/master/etc/hub.zsh_completion \
-    id-as'exa-completion' \
-        https://github.com/ogham/exa/raw/master/completions/zsh/_exa \
     id-as'pip-completion' \
         OMZP::pip/_pip
 
@@ -470,7 +468,7 @@ zinit wait'0' lucid from'gh-r' nocompile light-mode for \
     bpick'fzf-*.tar.gz' sbin'fzf' atload'source $ATLOAD_DIR/fzf.zsh' id-as'fzf' \
         @junegunn/fzf
 zinit wait'0' lucid as'completion' light-mode for \
-    mv'completion.zsh -> _fzf' id-as'fzf-completion' \
+    mv'fzf-completion -> _fzf' id-as'fzf-completion' \
         https://github.com/junegunn/fzf/raw/master/shell/completion.zsh
 zinit wait'1' lucid light-mode for \
     sbin'bin/fzf-tmux' nocompile id-as'fzf-tmux' \

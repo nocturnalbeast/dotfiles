@@ -27,11 +27,13 @@ import uuid
 from pathlib import Path
 from mopidy import config as config_lib
 from mopidy import ext
-from mopidy_spotify.backend import SpotifyBackend
 from mopidy_local import actor, translator
 import requests
 import mutagen
-
+try:
+    from mopidy_spotify.backend import SpotifyBackend
+except ModuleNotFoundError:
+    pass
 
 def get_mopidy_config():
     """Returns the path to the mopidy configuration file."""

@@ -51,22 +51,29 @@ else
     alias m="ncmpcpp"
 fi
 
-# youtube-dl aliases
-# use yt-dlp instead of youtube-dl if that exists
-if command -v yt-dlp &>/dev/null; then
-    alias ytdv="yt-dlp --format bestvideo+bestaudio --no-playlist"
-    alias ytda="yt-dlp --format bestaudio --extract-audio --no-playlist"
-    alias ytdvp="yt-dlp --format bestvideo+bestaudio --yes-playlist"
-    alias ytdap="yt-dlp --format bestaudio --yes-playlist"
-else
-    alias ytdv="youtube-dl --format bestvideo+bestaudio --no-playlist"
-    alias ytda="youtube-dl --format bestaudio --extract-audio --no-playlist"
-    alias ytdvp="youtube-dl --format bestvideo+bestaudio --yes-playlist"
-    alias ytdap="youtube-dl --format bestaudio --yes-playlist"
-fi
-
 # move wget-hsts file to XDG_CACHE_HOME
 alias wget="wget --hsts-file=\"$XDG_CACHE_HOME/wget-hsts\""
+
+# youtube-dl aliases
+if command -v yt-dlp &>/dev/null; then
+    # use yt-dlp instead of youtube-dl if that exists
+    alias dlv="yt-dlp --format bestvideo+bestaudio --no-playlist"
+    alias dla="yt-dlp --format bestaudio --extract-audio --no-playlist"
+    alias dlvp="yt-dlp --format bestvideo+bestaudio --yes-playlist"
+    alias dlap="yt-dlp --format bestaudio --yes-playlist"
+else
+    alias dlv="youtube-dl --format bestvideo+bestaudio --no-playlist"
+    alias dla="youtube-dl --format bestaudio --extract-audio --no-playlist"
+    alias dlvp="youtube-dl --format bestvideo+bestaudio --yes-playlist"
+    alias dlap="youtube-dl --format bestaudio --yes-playlist"
+fi
+
+# download scriptlet for regular links
+if command -v curl &>/dev/null; then
+    alias dl="curl -m 10 -L --progress-bar -q -O"
+elif command -v wget &>/dev/null; then
+    alias dl="wget --timeout 10 --progress=bar --show-progress -q"
+fi
 
 # too lazy to type python, so type py instead
 alias py="python"
@@ -75,11 +82,13 @@ alias py="python"
 alias cls="clear"
 
 # easy chmod
-alias 000="chmod 000"
-alias 640="chmod 640"
-alias 644="chmod 644"
-alias 755="chmod 755"
-alias 775="chmod 775"
+for UNUM in $( seq 0 7 ); do
+    for GNUM in $( seq 0 7 ); do
+        for ONUM in $( seq 0 7 ); do
+            alias "$UNUM$GNUM$ONUM"="chmod $UNUM$GNUM$ONUM"
+        done
+    done
+done
 
 # date aliases
 alias pdate="date '+%a, %b %d %Y %T %Z'"

@@ -21,6 +21,11 @@ These are the things that are planned to be worked on or in progress right now:
 
 ### In Progress
 
+ * Work on switching from dmenu to rofi
+ * Work on switching from st to kitty
+ * Push the changes from this clone
+ * Remove suckless configs from repo once done
+ * Rename dmenu-helper into menu-helper
  * Rework neovim config
  * Write custom qutebrowser config
  * Integrate MPRIS2 support

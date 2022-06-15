@@ -55,12 +55,12 @@ $crystal\
 $package\
 $cmd_duration\
 $line_break\
+$shell\
 $jobs\
 $battery\
 $memory_usage\
 $container\
 $sudo\
-$shell\
 $character"""
 
 continuation_prompt = "[](bold yellow) "
@@ -372,7 +372,7 @@ style = "bold red"
 bash_indicator = " "
 fish_indicator = " "
 zsh_indicator = ""
-powershell_indicator = "ﲵ "
+powershell_indicator = ""
 ion_indicator = "ﱦ "
 elvish_indicator = "ﬦ "
 tcsh_indicator = " "

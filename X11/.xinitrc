@@ -8,16 +8,13 @@ for FILE in "/etc/profile" "$HOME/.profile" "/etc/xprofile" "$HOME/.xprofile"; d
 done
 
 # load resource files
-if [ -d /etc/X11/Xresources ]; then
-    for FILE in /etc/X11/Xresources/*; do
-        [ -f $FILE ] && xrdb -merge $FILE
-    done
-elif [ -f /etc/X11/Xresources ]; then
-    xrdb -merge /etc/X11/Xresources
-fi
-for FILE in "${XDG_CONFIG_HOME:-"$HOME/.config"}/X11/xresources" "$HOME/.Xresources"; do
+for FILE in "/etc/X11/Xresources" "${XDG_CONFIG_HOME:-"$HOME/.config"}/X11/xresources.d" "${XDG_CONFIG_HOME:-"$HOME/.config"}/X11/xresources" "$HOME/.Xresources"; do
     if [ -f "$FILE" ]; then
         xrdb -merge $FILE
+    elif [ -d "$FILE" ]; then
+        for SUB_FILE in "$FILE"/*; do
+            [ -f "$SUB_FILE" ] && xrdb -merge "$SUB_FILE"
+        done
     fi
 done
 
