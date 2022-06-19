@@ -1,5 +1,8 @@
-thunar/.config/Thunar/accels.scm
 gtk/.config/gtk-2.0/gtkfilechooser.ini
-nvim/.config/nvim/.netrwhist
 gtk/.config/gtk-3.0/bookmarks
+mopidy/.config/mopidy/podcast
+neovim/.config/nvim/lua/packer_compiled.lua
+neovim/.config/nvim/.netrwhist
 themix/.config/oomox/*.json
+thunar/.config/Thunar/accels.scm
+thunar/.config/Thunar/renamerrc

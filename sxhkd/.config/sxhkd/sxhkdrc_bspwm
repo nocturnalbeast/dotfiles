@@ -1,0 +1,97 @@
+#          _   _     _
+#  ___ _ _| |_| |_ _| |
+# |_ -|_'_|   | '_| . |
+# |___|_,_|_|_|_,_|___|
+
+
+## window / workspace focus & swap
+
+# focus a numbered workspace / send the focused window on the current workspace to the selected workspace
+super + {_,shift} + {1-9,0}
+    bspwm-workspace {focus,move} {1-9,10}
+
+# switch focus between the last focused window(s) [either forward / backward]
+super + {_,shift} + Tab
+    bspwm-history-focus window {older,newer}
+
+# switch focus between the last focused workspace(s) [either forward / backward]
+super + {_,shift} + grave
+    bspwm-history-focus workspace {older,newer}
+
+# focus window in the specified direction
+super + {Left,Down,Up,Right,h,j,k,l}
+    bspwm-focus {west,south,north,east,west,south,north,east}
+
+# swap with window in the specified direction [if floating move the window in the given direction]
+super + shift + {Left,Down,Up,Right,h,j,k,l}
+    bspwm-move {west,south,north,east,west,south,north,east}
+
+# switch focus between all the windows in the currently focused workspace [either forward / backward]
+super + {_,shift} + c
+    bspc node -f {next,prev}.local
+
+# focus on / swap with the biggest window in the currently focused workspace 
+super + {_,shift} + b
+    bspc node -{f,s} biggest.local
+
+
+## window mode manipulation
+
+# make the focused window fullscreen / floating
+super + {_,shift} + f
+    bspwm-mode {fullscreen,floating}
+
+# make the focused window tiled / pseudo-tiled
+super + {_,shift} + t
+    bspwm-mode {tiled,pseudo_tiled}
+
+
+## window size manipulation
+
+# resize the focused window in the given direction
+super + ctrl + {Left,Down,Up,Right,h,j,k,l}
+    bspwm-resize {west,south,north,east,west,south,north,east} 20
+
+# decrease / increase the gaps between windows
+super + {comma,period}
+    bspwm-gaps {decrease,increase} 2
+
+# reset gaps between windows to the default value defined in the configuration
+super + shift + comma
+    bspwm-gaps reset
+
+
+### window layout manipulation
+
+# switch between available layouts on the focused workspace
+super + m
+    bsp-layout cycle
+
+# rotate the layout of the windows in the focused workspace clockwise / counterclockwise
+super + {_,shift} + r
+    bspc node @/ -R {+,-}90
+
+
+## window close
+
+# close / kill the focused window
+super + {_,shift} + q
+    bspc node -{c,k}
+
+
+## reload
+
+# reload hotkey daemon
+super + Escape
+    pkill -USR1 -x sxhkd
+
+# reload window manager
+super + shift + Escape
+    bspc wm --restart
+
+
+## other
+
+# show help menu for keybindings defined by the hotkey daemon
+super + slash
+    menu-keybindings-bspwm

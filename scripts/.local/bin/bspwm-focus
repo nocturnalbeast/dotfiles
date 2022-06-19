@@ -1,16 +1,9 @@
 #!/usr/bin/env bash
 
-SIZE=${2:-'20'}
 DIRECTION=$1
 
-if bspc query -T -n | grep -q '"state":"floating"'; then
-    case "$DIRECTION" in
-        west) COORD="-$SIZE 0";;
-        east) COORD="$SIZE 0";;
-        north) COORD="0 -$SIZE";;
-        south) COORD="0 $SIZE";;
-    esac
-    bspc node focused -v $COORD
-else
-    bspc node -f $1
+if ! bspc query -T -n | grep -q '"state":"floating"'; then
+    if ! bspc node -f $1; then
+        bspc monitor -f $1;
+    fi
 fi

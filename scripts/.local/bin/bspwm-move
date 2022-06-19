@@ -19,14 +19,28 @@ _query_nodes() {
     bspc query -N -n "$@"
 }
 
-[ -z "$( _query_nodes focused.floating )" ] || exit 1
-
 RECEPTACLE="$( _query_nodes 'any.leaf.!window' )"
+SIZE=20
 
-if [ -n "$(_query_nodes "${DIR}.!floating")" ]; then
-    bspc node -s "$DIR"
-elif [ -n "$RECEPTACLE" ]; then
-    bspc node focused -n "$RECEPTACLE" --follow
+if [ -n "$( _query_nodes focused.floating )" ]; then
+    case "$DIR" in
+        west) COORD="-$SIZE 0";;
+        east) COORD="$SIZE 0";;
+        north) COORD="0 -$SIZE";;
+        south) COORD="0 $SIZE";;
+    esac
+    bspc node focused -v $COORD
 else
-    bspc node @/ -p "$DIR" -i && bspc node -n "$RECEPTACLE" --follow
+    if [ -n "$( _query_nodes "${DIR}.!floating" )" ]; then
+        if [ -z "$( _query_nodes "focused#${DIR}.local" )" ]; then
+            bspc node -m "$DIR" --follow
+        else
+            bspc node -s "$DIR"
+        fi
+    elif [ -n "$RECEPTACLE" ]; then
+        bspc node focused -n "$RECEPTACLE" --follow
+    else
+        bspc node @/ -p "$DIR" -i && bspc node -n "$RECEPTACLE" --follow
+    fi
 fi
+

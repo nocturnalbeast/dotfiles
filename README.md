@@ -1,7 +1,9 @@
-<p align="center">
-    <img width="600" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/logo.png?raw=true" alt="dotfiles logo">
-</p>
-
+<div align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/logo-dark.png?raw=true">
+      <img alt="logo" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/logo-light.png?raw=true">
+    </picture>
+</div>
 
 ## Usage
 
@@ -25,7 +27,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [dunst](https://github.com/dunst-project/dunst): Lightweight and customizable notification daemon.
 
  * Applications:
-    * [st](https://st.suckless.org): Simple terminal implementation for X.
+    * [kitty](https://github.com/kovidgoyal/kitty):  Cross-platform, fast, feature-rich, GPU based terminal.
     * [neovim](https://github.com/neovim/neovim): Vim fork focused on extensibility and usability.
         * [vim-plug](https://github.com/junegunn/vim-plug): Minimalist vim plugin manager.
     * [mopidy](https://github.com/mopidy/mopidy): Extensible music server written in Python.
@@ -39,7 +41,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
         * [mopidy-mpris](https://github.com/mopidy/mopidy-mpris): Extension for controlling Mopidy through the MPRIS D-Bus interface.
     * [ncmpcpp](https://github.com/ncmpcpp/ncmpcpp): Featureful ncurses based MPD client.
     * [mpc](https://github.com/MusicPlayerDaemon/mpc): Command-line client for MPD.
-    * [qutebrowser](https://github.com/qutebrowser/qutebrowser): A keyboard-driven, vim-like browser based on PyQt5.
+    * [firefox](https://www.mozilla.org/firefox): A free and open-source web browser developed by the Mozilla Foundation.
     * [xwallpaper](https://github.com/stoeckmann/xwallpaper): Wallpaper setting utility for X.
     * [newsboat](https://github.com/newsboat/newsboat): An RSS/Atom feed reader for text terminals.
     * [castero](https://github.com/xgi/castero): TUI podcast client for the terminal.
@@ -93,22 +95,12 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
 
 ## Keybinding layout
 
-The rationale behind this scheme is that all WM-related functions are handled by the `Alt/Mod1` modifier, and all functions related to launching programs/menus are handled by the `Super/Mod4` modifier. Other application-specific modifiers are handled by `Ctrl` modifier.
-
+All the global keybindings use the `Super/Win` key as the main modifier.
 You can use these layout diagrams to familiarize yourself with the key bindings, or you can customize them to fit your liking!
 
-#### SpectrWM keybings
+#### Tiling WM keybindings
 
-<img align="center" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/key_layouts/images/spectrwm.png?raw=true" alt="spectrwm-layout">
-
-#### BSPWM keybindings
-
-<img align="center" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/key_layouts/images/bspwm.png?raw=true" alt="spectrwm-layout">
-
-#### Keybindings to launch programs (common across all environments)
-
-<img align="center" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/key_layouts/images/launch.png?raw=true" alt="spectrwm-layout">
-
+<img align="center" src="https://github.com/nocturnalbeast/dotfiles/blob/master/repo_resources/key_layouts/images/tiling.png?raw=true" alt="tiling-layout">
 
 ## Screenshots
 

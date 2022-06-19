@@ -2,22 +2,43 @@
 
 TERMINAL_LIST="x-terminal-emulator mate-terminal gnome-terminal terminator xfce4-terminal urxvt rxvt termit Eterm aterm uxterm xterm roxterm termite lxterminal terminology st qterminal lilyterm tilix terminix konsole kitty guake tilda alacritty hyper"
 
-if [ -n "$TERMINAL" ]; then
-    echo "Launching terminal: $TERMINAL"
-    $TERMINAL &
-elif [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
-    SHELL_PPID="$( ps -p "$PPID" -o ppid= | tr -d " " )"
-    SHELL_PPNAME="$( ps -p "$SHELL_PPID" -o comm= )"
-    if echo "$TERMINAL_LIST" | grep -q "$SHELL_PPNAME" 2>/dev/null; then
-        echo "Launching terminal: $SHELL_PPNAME"
-        $SHELL_PPNAME &
-    fi
-else
-    for TERMINAL_ENTRY in $TERMINAL_LIST; do
-        if command -v "$TERMINAL_ENTRY" > /dev/null 2>&1; then
-            echo "Launching terminal: $TERMINAL_ENTRY"
-            $TERMINAL_ENTRY &
-            break
+get_a_terminal() {
+    A_TERMINAL=""
+    # if the TERMINAL environment variable is set and it is a valid executable, then select it
+    if [ -n "$TERMINAL" ]; then
+        if command -v "$TERMINAL" > /dev/null 2>&1; then
+            >&2 echo "TERMINAL environment variable found!"
+            A_TERMINAL="$TERMINAL"
         fi
-    done
+    fi
+    # if this script is being executed in a terminal, get the process name and use it to select
+    if [ "$A_TERMINAL" = "" ]; then
+        if [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
+            SHELL_PPID="$( ps -p "$PPID" -o ppid= | tr -d " " )"
+            SHELL_PPNAME="$( ps -p "$SHELL_PPID" -o comm= )"
+            if echo "$TERMINAL_LIST" | grep -q "$SHELL_PPNAME" 2>/dev/null; then
+                >&2 echo "Parent terminal found!"
+                A_TERMINAL="$SHELL_PPNAME"
+            fi
+        fi
+    fi
+    # if we still don't have a terminal name by now, get the first terminal that's present from the terminal list and select it
+    if [ "$A_TERMINAL" = "" ]; then
+        for TERMINAL_ENTRY in $TERMINAL_LIST; do
+            if command -v "$TERMINAL_ENTRY" > /dev/null 2>&1; then
+                A_TERMINAL="$TERMINAL_ENTRY"
+                break
+            fi
+        done
+    fi
+    # return the selected terminal
+    echo "$A_TERMINAL"
+}
+
+SELECTED_TERMINAL=$( get_a_terminal )
+if [ "$SELECTED_TERMINAL" = "" ]; then
+    >&2 echo "No known terminal!"
+else
+    echo "Launching terminal: $SELECTED_TERMINAL"
+    "$SELECTED_TERMINAL" $@
 fi

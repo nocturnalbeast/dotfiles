@@ -4,7 +4,7 @@
 # reworked some stuff, added dependency checking script and some styling
 
 # lyrics from python-lyricwikia package
-DEPENDENCIES=(mpd mpc lyrics)
+DEPENDENCIES=(mpc clyrics)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     type -p "$DEPENDENCY" &>/dev/null || {
         echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
@@ -251,7 +251,7 @@ case "$ACTION" in
         if [[ ! -f "$LYRICS_FILE" ]]; then
             HOW=$( dmenu-helper run_menu "  Create lyrics? " "auto\nmanual" )
             if [[ "$HOW" == "auto" ]]; then
-                lyrics "$( mpc current --format "[%artist%]" )" "$( mpc current --format "[%title%]" )" >> "$LYRICS_FILE"
+                clyrics "$( mpc current --format "[%artist%]" )" "$( mpc current --format "[%title%]" )" >> "$LYRICS_FILE"
                 if [[ $? -ne 0 ]]; then
                     notify-send "Lyrics not found for the song:" "$SONG"
                 else

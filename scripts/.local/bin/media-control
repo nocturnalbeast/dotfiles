@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-PRIORITY=( mopidy mpv chromium )
-TRACK_CHG_EXCLUDE=( chromium mpv )
+PRIORITY=( mopidy mpv )
+TRACK_CHG_EXCLUDE=( mpv )
 INSTANCE_PREF_TIME=180
 INSTANCE_CACHE_LOC="${XDG_CACHE_HOME:="$HOME/.cache"}/playerctl-recent"
 
@@ -14,6 +14,7 @@ function usage() {
     echo "  next        : Switch to the next track in the preferred player."
     echo "  prev        : Switch to the previous track in the preferred player."
     echo "  seek [POS]  : Seek to the specified position in the preferred player."
+    echo "  get_state   : Get current state of preferred player."
 }
 
 function get_priority() {
@@ -107,6 +108,12 @@ function seek() {
     fi
 }
 
+function get_state() {
+    PRIO_PLAYER="$( get_priority "$( is_anyone_playing )" | head -1 )"
+    echo "$PRIO_PLAYER"
+    playerctl -p "$PRIO_PLAYER" metadata -f "{{status}}|{{title}}|{{artist}}|{{album}}" | tr '|' '\n'
+}
+
 case $1 in
     toggle) toggle; exit 0;;
     stop) stop_pb; exit 0;;
@@ -114,5 +121,6 @@ case $1 in
     next) chg_track "next"; exit 0;;
     prev) chg_track "previous"; exit 0;;
     seek) seek "$2"; exit 0;;
+    get_state) get_state; exit 0;;
     *) echo "Unknown operation: $1"; usage; exit 1;;
 esac

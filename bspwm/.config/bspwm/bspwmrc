@@ -7,7 +7,7 @@
 #         |_|
 
 # start the simple x hotkey daemon to handle keybindings
-sxhkd -c "${XDG_CONFIG_HOME:-$HOME/.config}/sxhkd/sxhkdrc"
+sxhkd -c "${XDG_CONFIG_HOME:-$HOME/.config}/sxhkd/sxhkdrc_bspwm" "${XDG_CONFIG_HOME:-$HOME/.config}/sxhkd/sxhkdrc_common" &
 
 # use the set-monitors script to setup all available monitors
 "${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-monitors

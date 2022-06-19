@@ -8,7 +8,7 @@ TERMINALS=( x-terminal-emulator mate-terminal gnome-terminal terminator xfce4-te
 
 # arrays to store applications that are assigned to each workspace
 WKSP_1_WINDOWS=(  )
-WKSP_2_WINDOWS=( qutebrowser Vivaldi-stable )
+WKSP_2_WINDOWS=( qutebrowser Firefox )
 WKSP_3_WINDOWS=( Neovim GNvim )
 WKSP_4_WINDOWS=( Thunar Gparted )
 WKSP_5_WINDOWS=( mpv )
@@ -16,10 +16,10 @@ WKSP_6_WINDOWS=( libreoffice libreoffice-startcenter Zathura )
 WKSP_7_WINDOWS=( Gimp Pinta Inkscape )
 WKSP_8_WINDOWS=( TelegramDesktop Uget-gtk )
 WKSP_9_WINDOWS=( SystemMonitor )
-WKSP_10_WINDOWS=(  )
+WKSP_10_WINDOWS=( Meld )
 
 # arrays to store applications that need to be 'followed' i.e. change focus to them as they launch
-FOLLOW_WINDOWS=( st Alacritty XTerm UXTerm URxvt qutebrowser Vivaldi-stable Neovim GNvim Thunar Gparted mpv libreoffice libreoffice-startcenter Zathura Gimp Pinta Inkscape TelegramDesktop Uget-gtk SystemMonitor )
+FOLLOW_WINDOWS=( st Alacritty XTerm UXTerm URxvt qutebrowser Firefox Neovim GNvim Thunar Gparted mpv libreoffice libreoffice-startcenter Zathura Gimp Pinta Inkscape TelegramDesktop Uget-gtk SystemMonitor )
 
 # first, let's change the positional arguments into labels we can understand
 WINDOW_ID="$1"

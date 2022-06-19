@@ -1,0 +1,146 @@
+colors:
+    bg: '000000'
+    fg: 'ffffff'
+    
+
+    black: '333333'
+    red: 'ff3333'
+    green: '33ff44'
+    yellow: 'ddff33'
+    blue: '3333ff'
+    magenta: '9933ff'
+    cyan: '33ffff'
+    white: '999999'
+
+    brightblack: '666666'
+    brightred: 'ff8080'
+    brightgreen: '80ff8a'
+    brightyellow: 'eaff80'
+    brightblue: '8080ff'
+    brightmagenta: 'bf80ff'
+    brightcyan: '80ffff'
+    brightwhite: 'cccccc'
+
+core:
+  normal_text: {}
+
+  regular_file: {}
+
+  reset_to_normal: {}
+
+  directory:
+    foreground: magenta 
+
+  symlink:
+    foreground: blue
+
+  multi_hard_link:
+    foreground: brightred
+
+  fifo:
+    foreground: bg
+    background: blue
+
+  socket:
+    foreground: bg
+    background: magenta
+
+  door:
+    foreground: brightgreen
+    background: black
+
+  block_device:
+    foreground: yellow
+    background: black
+
+  character_device:
+    foreground: magenta
+    background: black
+
+  broken_symlink:
+    foreground: bg
+    background: red
+
+  missing_symlink_target:
+    foreground: bg
+    background: red
+
+  setuid:
+    foreground: white
+    background: red
+    font-style: bold
+
+  setgid:
+    foreground: white
+    background: red
+
+  file_with_capability:
+    foreground: white
+    background: magenta
+
+  sticky_other_writable: {}
+
+  other_writable: {}
+
+  sticky: {}
+
+  executable_file:
+    foreground: red
+    font-style: bold
+
+text:
+  special:
+    foreground: brightblack
+    background: yellow
+
+  todo:
+    font-style: bold
+
+  licenses:
+    foreground: white
+
+  configuration:
+    foreground: yellow
+
+  other:
+    foreground: yellow
+
+markup:
+  foreground: yellow
+
+programming:
+  source:
+    foreground: green
+
+  tooling:
+    foreground: brightgreen
+
+    continuous-integration:
+      foreground: green
+
+media:
+  image:
+    foreground: brightyellow
+
+  audio:
+    foreground: brightgreen
+
+  video:
+    foreground: brightmagenta
+
+  fonts:
+    foreground: brightwhite
+
+office:
+  foreground: brightred
+
+archives:
+  foreground: cyan
+  font-style: underline
+
+executable:
+  foreground: red
+  font-style: bold
+
+unimportant:
+  foreground: brightblack

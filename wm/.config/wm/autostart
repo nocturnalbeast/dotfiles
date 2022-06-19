@@ -22,7 +22,9 @@ setbg &
 # launch compositor
 picom --experimental-backends &
 # launch notification daemon
-dunst-start &
+if command -v dunst dunst-start &>/dev/null; then
+    dunst-start
+fi
 # launch music player server
 if command -v mopidy &>/dev/null; then
     mopidy &
@@ -30,10 +32,12 @@ elif command -v mpd &>/dev/null; then
     mpd &
 fi
 # launch clipboard manager
-clipmenud &
+if command -v clipmenud &>/dev/null; then
+    clipmenud &
+fi
 # launch screen autolocker
 if command -v xsecurelock xss-lock xset &>/dev/null; then
-    xset s 300 5 && xss-lock -n /usr/libexec/xsecurelock/dimmer -l -- xsecurelock &
+    xsecurelock-helper start &
 elif command -v light-locker &>/dev/null; then
     light-locker &
 fi
@@ -42,7 +46,9 @@ unclutter &
 # set numlock key to off
 numlockx off &
 # launch system bars
-polybar-start &
+if command -v polybar polybar-start &>/dev/null; then
+    polybar-start
+fi
 # networkmanager tray applet
 if command -v nm-applet &>/dev/null; then
     nm-applet &

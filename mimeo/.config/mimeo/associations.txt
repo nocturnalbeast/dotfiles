@@ -131,7 +131,7 @@
   \.torrent$
 
 # html files and web links
-/usr/bin/qutebrowser %U
+/usr/bin/firefox %U
   ^https?://
   ^ftp://
   ^www\.

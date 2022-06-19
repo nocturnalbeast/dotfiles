@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DEPENDENCIES=(youtube-dl clipmenu mpc)
+DEPENDENCIES=(yt-dlp clipmenu mpc)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     type -p "$DEPENDENCY" &>/dev/null || {
         echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
@@ -44,7 +44,7 @@ if [ -z "$1" ]; then
                 IFS=$'\n' read -r VID_ID
                 ID_ARR+=( "$VID_ID" )
                 TITLE_ARR+=( "$VID_TITLE" )
-            done <<< "$( youtube-dl --default-search ytsearch$SEARCH_RESULT_NUM "$SEARCH_QUERY" --get-id --get-title 2>/dev/null )"
+            done <<< "$( yt-dlp --default-search ytsearch$SEARCH_RESULT_NUM "$SEARCH_QUERY" --get-id --get-title 2>/dev/null )"
             if [ "${ID_ARR[0]}" == "" ]; then
                 notify-send "Failed to get search results for:" "$SEARCH_QUERY" -i "$ICON"
                 exit 1
@@ -62,7 +62,7 @@ fi
 [ "$URL" == "" ] && exit 0
 
 # get the name of the video
-VNAME="$( youtube-dl -e "$URL" )"
+VNAME="$( yt-dlp -e "$URL" )"
 
 # display options; whether to stream in mpv or in browser or to download
 LINK_ACTION="$( dmenu-helper run_menu " 輸 What to do with this URL? " "契 Stream\n Open in browser\n Download\n Queue audio in player" )"
@@ -85,7 +85,7 @@ case "$LINK_ACTION" in
         # if downloading the video, send a notification
         notify-send "Fetching available formats..." -i "$ICON"
         # get the available formats
-        AVAIL_FMTS="$( youtube-dl -F "$URL" | tail -n +4 | sed 's/audio only/audio/g; s/ \+/,/g' | tr -s ',' ':' )"
+        AVAIL_FMTS="$( yt-dlp -F "$URL" | tail -n +4 | sed 's/audio only/audio/g; s/ \+/,/g' | tr -s ',' ':' )"
         # clean up the format a bit and then show all of them for selection
         QUALITY="$( dmenu-helper run_menu " 輸 Select quality: " "$AVAIL_FMTS" | cut -f 1 -d : )"
         # if nothing is selected, exit
@@ -94,9 +94,9 @@ case "$LINK_ACTION" in
         [ ! -d "$DEST_DIR" ] && mkdir -p "$DEST_DIR"
         # then download in the preferred quality
         if [ "$ED_ARGS" == "" ]; then
-            youtube-dl -f "$QUALITY" -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c "$URL" &
+            yt-dlp -f "$QUALITY" -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c "$URL" &
         else
-            youtube-dl -f "$QUALITY" -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c --external-downloader-args "$ED_ARGS" "$URL" &
+            yt-dlp -f "$QUALITY" -o "$DEST_DIR/%(title)s.%(ext)s" --external-downloader aria2c --external-downloader-args "$ED_ARGS" "$URL" &
         fi
         # and show a notification once done
         notify-send "Download completed:" "$VNAME" -i "$ICON"

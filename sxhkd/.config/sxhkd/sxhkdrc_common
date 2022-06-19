@@ -1,0 +1,146 @@
+#          _   _     _
+#  ___ _ _| |_| |_ _| |
+# |_ -|_'_|   | '_| . |
+# |___|_,_|_|_|_,_|___|
+
+
+## commonly used applications
+
+# terminal
+super + Return 
+    terminal
+
+# browser
+super + w
+    $BROWSER
+
+# private browser
+super + shift + w
+    $BROWSER_PRIVATE
+
+# file manager
+super + e
+    $FILES
+
+
+## menus
+
+# super menu
+super + s
+    menu-allmenus
+
+# launch an app / refresh app list
+super + {_,shift} + space
+    menu-apps {launch,refresh}
+
+# terminal app menu
+super + shift + Return
+    menu-terminalapps
+
+# power menu
+super + p
+    menu-power
+
+# copy clipboard entry / delete clipboard entry
+super + {_,shift} + x
+    menu-clip{board,delete}
+
+# web video download / stream menu
+super + v
+    menu-video
+
+# web search menu
+super + o
+    menu-surfraw
+
+# window select menu
+super + bracketleft
+    menu-window
+
+# window hide menu
+super + shift + bracketleft
+    menu-window-hide
+
+# workspace select menu
+super + bracketright
+    menu-workspace
+
+# calculator menu
+super + equal
+    menu-calc
+
+
+## notifications
+
+# close / take action on notification
+super + {_,shift} + n
+    dunstctl {close,action}
+
+
+## screenshots
+
+# take a screenshot
+Print
+    screenshot full
+
+# take a screenshot of the focused window
+super + Print
+    screenshot window
+
+# take a screenshot of any selected window or region
+super + shift + Print
+    screenshot select
+
+
+## media control
+
+# decrease volume
+XF86AudioLowerVolume
+    change-volume down
+
+# increase volume
+XF86AudioRaiseVolume
+    change-volume up
+
+# toggle mute
+XF86AudioMute
+    change-volume mute
+
+# play/pause
+XF86AudioPlay
+    media-control toggle
+
+# stop
+XF86AudioStop
+    media-control stop
+
+# skip to the next track
+XF86AudioNext
+    media-control next
+
+# go back to the previous track
+XF86AudioPrev
+    media-control prev
+
+
+## display brightness control
+
+# increase brightness of the display
+XF86MonBrightnessUp
+    change-brightness increase
+
+# decrease brightness of the display
+XF86MonBrightnessDown
+    change-brightness decrease
+
+
+## bar control
+
+super + {_,shift} + backslash
+    polybar-helper {switch,toggle_all}
+
+
+## screenlock
+
+super + minus
+    xsecurelock-helper lock

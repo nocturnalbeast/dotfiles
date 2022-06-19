@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-DEPENDENCIES=(wmctrl)
+DEPENDENCIES=(wmctrl xprop xrandr)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do
     type -p "$DEPENDENCY" &>/dev/null || {
         echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2

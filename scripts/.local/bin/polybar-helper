@@ -272,7 +272,7 @@ toggle_bars() {
     if [[ "$( are_bars_hidden )" == "yes" ]]; then
         enable_bars
     else
-        disable_bars
+        disable_bars all
     fi
 }
 
@@ -281,7 +281,7 @@ toggle_all() {
         enable_padding
         enable_bars
     else
-        disable_bars
+        disable_bars all
         disable_padding
     fi
 }

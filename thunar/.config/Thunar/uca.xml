@@ -14,7 +14,7 @@
     <icon>gvim</icon>
     <name>Open with VIM</name>
     <unique-id>1554524954640265-2</unique-id>
-    <command>st -e nvim %f</command>
+    <command>terminal nvim %f</command>
     <description>Opens the file in VIM</description>
     <patterns>*</patterns>
     <other-files/>
