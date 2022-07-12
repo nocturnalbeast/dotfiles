@@ -10,6 +10,10 @@ bspc subscribe node_remove | while read -r _; do
         for win in $( bspc query -N -n .leaf.local.!window ); do
             bspc node $win -k
         done
-    bspc desktop -f last.occupied
+        if [ $( bspc query -N -n .window | wc -l ) -eq 0 ]; then
+            bspc desktop -f 'primary:^1'
+        else
+            bspc desktop -f last.occupied
+        fi
     fi
 done

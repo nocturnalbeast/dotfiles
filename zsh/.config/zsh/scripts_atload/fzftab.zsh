@@ -30,6 +30,7 @@ zstyle ':fzf-tab:complete:bat:*' fzf-preview $PREVIEW_SNIPPET
 zstyle ':fzf-tab:complete:rm:*' fzf-preview $PREVIEW_SNIPPET
 zstyle ':fzf-tab:complete:cp:*' fzf-preview $PREVIEW_SNIPPET
 zstyle ':fzf-tab:complete:mv:*' fzf-preview $PREVIEW_SNIPPET
+zstyle ':fzf-tab:complete:less:*' fzf-preview $PREVIEW_SNIPPET
 
 # enable fzf completion
 enable-fzf-tab

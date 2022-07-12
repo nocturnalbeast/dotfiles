@@ -27,7 +27,6 @@ These are the things that are planned to be worked on or in progress right now:
  * kitty: update config specifically for kittens
  * scripts: provide option to set the window title in terminal that was launched
  * scripts: provide missing scripts referenced by sxhkd mappings
- * sxhkd/docs: update keymap diagrams
  * spectrwm: remove deprecated spectrwm config
  * neovim: rewrite config in lua
  * neovim: rename top-level folder from `nvim` to `neovim`

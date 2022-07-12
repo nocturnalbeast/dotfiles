@@ -2,9 +2,14 @@
 # | -_|   | | |
 # |___|_|_|\_/
 
-# import user scripts
+# append user scripts folder to $PATH
 if [ -d "$HOME/.local/bin" ]; then
     export PATH=$HOME/.local/bin:$PATH
+fi
+
+# append 3rd-party scripts/binaries folder to $PATH
+if [ -d "$HOME/bin" ]; then
+    export PATH=$HOME/bin:$PATH
 fi
 
 # set fallback language
@@ -55,7 +60,7 @@ export ANDROID_HOME="$XDG_DATA_HOME/android"
 export EDITOR="nvim"
 export VISUAL="nvim"
 export BROWSER="firefox"
-export BROWSER_PRIVATE="firefox --private-window"
+export BROWSER_PRIVATE_OPT="--private-window"
 export READER="zathura"
 export TERMINAL="kitty"
 export VIDEO="mpv"

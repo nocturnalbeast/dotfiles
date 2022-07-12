@@ -16,7 +16,7 @@ super + w
 
 # private browser
 super + shift + w
-    $BROWSER_PRIVATE
+    $BROWSER $BROWSER_PRIVATE_OPT
 
 # file manager
 super + e
