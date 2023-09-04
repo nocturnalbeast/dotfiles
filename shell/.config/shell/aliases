@@ -28,14 +28,20 @@ alias vim="nvim"
 alias vi="nvim"
 
 # don't use rm, use freedesktop.org spec trash folders instead
-alias trp="trash-put"
-alias trl="trash-list"
-alias tre="trash-empty"
-alias trr="trash-restore"
-alias trd="trash-rm"
+alias trp="trash"
+alias trl="trash list"
+alias tre="trash empty"
+alias treall="trash empty --all"
+alias trr="trash restore"
+alias trrall="trash restore --all"
 
 # devour script to launch gui applications
 alias dv="devour"
+
+# shim for arch command if it's not there
+if command -v arch &>/dev/null; then
+    alias arch="uname -m"
+fi
 
 # one-character aliases for the most used terminal applications
 alias l="exa --color=auto --icons --group-directories-first"

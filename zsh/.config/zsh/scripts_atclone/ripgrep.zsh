@@ -1,1 +1,1 @@
-zinit creinstall -q BurntSushi/ripgrep
+zinit creinstall -q ripgrep

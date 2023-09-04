@@ -1,9 +1,5 @@
-autoload -Uz chpwd_recent_dirs cdr add-zsh-hook
-add-zsh-hook chpwd chpwd_recent_dirs
-
-bindkey '^A' fzf-select-widget
-bindkey '^R' fzf-insert-history
-bindkey '^F' fzf-insert-files
-bindkey '^D' fzf-insert-directory
-bindkey '^E' fzf-edit-files
-bindkey '^K' fzf-kill-processes
+bindkey '^D' fzf-cd
+bindkey '^R' fzf-history
+bindkey '^K' fzf-kill-proc-by-list
+bindkey '^P' fzf-kill-proc-by-port
+bindkey '^E' fzf-gitmoji

@@ -1,1 +1,1 @@
-alias bdgr="cd-gitroot"
+alias cdgr="cd-gitroot"

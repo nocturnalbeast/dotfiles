@@ -1,1 +1,1 @@
-zinit creinstall -q sharkdp/fd
+zinit creinstall -q fd

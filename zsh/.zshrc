@@ -41,19 +41,13 @@ HISTSIZE=50000
 SAVEHIST=50000
 
 
-## 3: import generic environment variables and aliases
-
-# just source .profile, it will source required environment variables and aliases
-source "$HOME/.profile"
-
-
-## 4: set zsh-specific environment variables and aliases
+## 3: set zsh-specific environment variables and aliases
 
 [ ! -z "$PS1" ] && typeset -U PATH path
 export WORDCHARS="*?[]~=&;!#$%^(){}"
 
 
-## 5: set shell options
+## 4: set shell options
 
 # go into directories without requiring explicit cd command
 setopt auto_cd
@@ -120,7 +114,7 @@ setopt notify
 setopt interactive_comments
 
 
-## 6: define completion behavior
+## 5: define completion behavior
 
 # enable caching
 zstyle ':completion:*' accept-exact '*(N)'
@@ -211,7 +205,7 @@ zstyle ':completion:*:make::' tag-order targets:
 zstyle ':completion:*:*:*make:*:targets' command awk \''/^[a-zA-Z0-9][^\/\t=]+:/ {print $1}'\' \$file
 
 
-## 7: define keybindings
+## 6: define keybindings
 
 bindkey -e
 
@@ -278,7 +272,7 @@ bindkey "^H" backward-kill-word
 bindkey "\e[3;5~" kill-word
 
 
-## 8: plugins
+## 7: plugins
 
 # define hook script directories
 HOOKSCRIPT_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
@@ -294,7 +288,7 @@ zinit light-mode for \
 
 # basic zsh enhancement plugins - must have in any setup
 zinit wait'0' lucid light-mode for \
-    id-as'fast-syntax-highlighting' \
+    atload'source $ATLOAD_DIR/fastsyntaxhighlighting.zsh' id-as'fast-syntax-highlighting' \
         @zdharma-continuum/fast-syntax-highlighting \
     atinit'source $ATINIT_DIR/autosuggestions.zsh' atload'source $ATLOAD_DIR/autosuggestions.zsh' id-as'zsh-autosuggestions' \
         @zsh-users/zsh-autosuggestions \
@@ -303,39 +297,57 @@ zinit wait'0' lucid light-mode for \
     atload'source $ATLOAD_DIR/hss.zsh' id-as'zsh-history-substring-search' \
         @zsh-users/zsh-history-substring-search
 
+# NOTE: the following may override some completion styles we've defined earlier
+#       so if fuzzy search is not important, remove the following section
+
+# fuzzy finder and integrations
+zinit wait'0' lucid from'gh-r' nocompile light-mode for \
+    bpick'fzf-*.tar.gz' sbin'fzf' atload'source $ATLOAD_DIR/fzf.zsh' id-as'fzf' \
+        @junegunn/fzf
+zinit wait'0' lucid as'completion' light-mode for \
+    mv'fzf-completion -> _fzf' id-as'fzf-completion' \
+        https://github.com/junegunn/fzf/raw/master/shell/completion.zsh
+zinit wait'0a' lucid light-mode for \
+    sbin'bin/fzf-tmux' nocompile id-as'fzf-tmux' \
+        @junegunn/fzf \
+    atinit'source $ATINIT_DIR/fz.zsh' id-as'fz' \
+        @changyuheng/fz \
+    atload'source $ATLOAD_DIR/fzftab.zsh' id-as'fzf-tab' \
+        @Aloxaf/fzf-tab \
+    atload'source $ATLOAD_DIR/fzfwidgets.zsh' id-as'fzf-widgets' \
+        @amaya382/zsh-fzf-widgets
+
 # enhance git
-zinit wait'0' lucid light-mode for \
-    atinit'source $ATINIT_DIR/forgit.zsh' id-as'forgit' \
+zinit wait'0a' lucid light-mode for \
+    atload'source $ATLOAD_DIR/forgit.zsh' id-as'forgit' \
         @wfxr/forgit \
     as'program' pick'$ZPFX/bin/git-*' make'PREFIX=$ZPFX' nocompile id-as'git-extras' \
         @tj/git-extras \
     as'program' pick'bin/git-*' nocompile id-as'git-extra-commands' \
         @unixorn/git-extra-commands \
-    atclone'source $ATCLONE_DIR/gitcal.zsh' atpull'%atclone' make'install' sbin'bin/git-cal' id-as'git-cal' \
+    nocompile atclone'source $ATCLONE_DIR/gitcal.zsh' atpull'%atclone' make'install' sbin'bin/site_perl/git-cal' id-as'git-cal' \
         @k4rthik/git-cal \
     sbin'git-open' id-as'git-open' \
         @paulirish/git-open \
-    sbin'git-recent' id-as'git-recent' \
+    nocompile sbin'git-recent' id-as'git-recent' \
         @paulirish/git-recent \
-    sbin'git-my' id-as'git-my' \
+    nocompile sbin'git-my' id-as'git-my' \
         @davidosomething/git-my \
     atload'source $ATLOAD_DIR/gitcd.zsh' id-as'gitcd' \
         @viko16/gitcd.plugin.zsh
 
 # enhance cd
 zinit wait'0' lucid light-mode for \
-    id-as'zsh-autoenv' \
+    id-as'autoenv' \
         @Tarrasch/zsh-autoenv \
     atinit'source $ATINIT_DIR/z.zsh' id-as'zsh-z' \
         @agkozak/zsh-z \
     atinit'source $ATINIT_DIR/cdgitroot.zsh' id-as'cd-gitroot' \
         @mollifier/cd-gitroot \
-    id-as'zsh-bd' \
+    id-as'bd' \
         @Tarrasch/zsh-bd \
-    atinit'source $ATINIT_DIR/marks.zsh' id-as'zshmarks' \
-        @jocelynmallon/zshmarks \
-    id-as'up' \
-        @peterhurford/up.zsh
+    atinit'source $ATINIT_DIR/marks.zsh' id-as'marks' \
+        @jocelynmallon/zshmarks
 
 # colorize command output 
 zinit wait'0' lucid light-mode for \
@@ -392,8 +404,13 @@ zinit wait'0' lucid light-mode for \
     atload'source $ATLOAD_DIR/tabtitle.zsh' id-as'tab-title' \
         @trystan2k/zsh-tab-title
 
+# have notifications for long-running commands
+zinit wait'0' lucid light-mode for \
+    atload'source $ATLOAD_DIR/autonotify.zsh' id-as'auto-notify' \
+        @MichaelAquilina/zsh-auto-notify
+
 # a ton more completions (don't use wait-ice for this one or else compinit doesn't load these completions)
-zinit lucid light-mode for \
+zinit wait'0' lucid light-mode for \
     nocompile nocompletions id-as'zsh-more-completions' \
         @MenkeTechnologies/zsh-more-completions
 
@@ -401,8 +418,8 @@ zinit lucid light-mode for \
 zinit wait'0' lucid from'gh-r' nocompile light-mode for \
     bpick'gh_*.tar.gz' mv'gh*/bin/gh -> gh' sbin'gh' atload'source $ATLOAD_DIR/gh.zsh' id-as'gh-cli' \
         @cli/cli \
-    bpick'hub-*' mv'hub-*/bin/hub -> hub' sbin'hub' id-as'gh-hub' \
-        @github/hub \
+    cp'hub-*/etc/hub.zsh_completion -> _hub' pick'hub-*' mv'hub-*/bin/hub -> hub' sbin'hub' id-as'gh-hub' \
+        @mislav/hub \
     bpick'exa-*' mv'bin/exa -> exa' sbin'exa' atclone'source $ATCLONE_DIR/exa.zsh' id-as'exa' \
         @ogham/exa \
     blockf nocompletions bpick'ripgrep-*' mv'ripgrep-*/rg -> rg' sbin'rg' atclone'source $ATCLONE_DIR/ripgrep.zsh' atpull'%atclone' id-as'ripgrep' \
@@ -430,7 +447,7 @@ zinit wait'0' lucid from'gh-r' nocompile light-mode for \
     bpick'hyperfine-*' mv'hyperfine-*/hyperfine -> hyperfine' sbin'hyperfine' id-as'hyperfine' \
         @sharkdp/hyperfine \
     pick'jq-*' mv'jq-* -> jq' sbin'jq' id-as'jq' \
-        @stedolan/jq \
+        @jqlang/jq \
     bpick'*.tar.gz' mv'xh-*/xh -> xh' sbin'xh' id-as'xh' \
         @ducaale/xh \
     pick'yq_*' mv'yq_* -> yq' sbin'yq' id-as'yq' \
@@ -438,18 +455,25 @@ zinit wait'0' lucid from'gh-r' nocompile light-mode for \
     bpick'bandwhich*' sbin'bandwhich' id-as'bandwhich' \
         @imsnif/bandwhich \
     bpick'duf_*.tar.gz' sbin'duf' id-as'duf' \
-        @muesli/duf
+        @muesli/duf \
+    bpick'trash-*.tar.gz' nocompile nocompletions sbin'trash' id-as'trashy' \
+        @oberblastmeister/trashy \
+    bpick'rtx-*.tar.gz' atclone'source $ATCLONE_DIR/rtx.zsh' atpull'%atclone' nocompile nocompletions mv'rtx/bin/rtx -> rtx' sbin'rtx' id-as'rtx' \
+        @jdx/rtx
+
+# other programs from github - load / source using zinit
+zinit wait'0' lucid light-mode for \
+    ver"stable" pullopts"--rebase" id-as'translate-shell' \
+        @soimort/translate-shell
 
 # completions for some of the above programs
 zinit wait'0' lucid as'completion' light-mode for \
     mv'tealdeer-completion -> _tldr' id-as'tealdeer-completion' \
         https://github.com/dbrgn/tealdeer/raw/main/completion/zsh_tealdeer \
-    mv'hub-completion -> _hub' id-as'hub-completion' \
-        https://github.com/github/hub/raw/master/etc/hub.zsh_completion \
     id-as'pip-completion' \
         OMZP::pip/_pip
 
-# tmux - thank you @yutakatay for this one!
+# tmux - thank you @yutkat for this one!
 if ldconfig -p | grep -q 'libevent-' && ldconfig -p | grep -q 'libncurses'; then
     zinit wait'0' lucid from'gh-r' light-mode for \
         bpick'tmux-*.tar.gz' sbin'tmux' atclone'source $ATCLONE_DIR/tmux.zsh' atpull'%atclone' id-as'tmux' \
@@ -460,28 +484,8 @@ elif builtin command -v tmux > /dev/null 2>&1 && test $(echo "$(tmux -V | cut -d
             @tmux/tmux
 fi
 
-# NOTE: the following may override some completion styles we've defined earlier
-#       so if fuzzy search is not important, remove the following section
 
-# fuzzy finder
-zinit wait'0' lucid from'gh-r' nocompile light-mode for \
-    bpick'fzf-*.tar.gz' sbin'fzf' atload'source $ATLOAD_DIR/fzf.zsh' id-as'fzf' \
-        @junegunn/fzf
-zinit wait'0' lucid as'completion' light-mode for \
-    mv'fzf-completion -> _fzf' id-as'fzf-completion' \
-        https://github.com/junegunn/fzf/raw/master/shell/completion.zsh
-zinit wait'1' lucid light-mode for \
-    sbin'bin/fzf-tmux' nocompile id-as'fzf-tmux' \
-        @junegunn/fzf \
-    atload'source $ATLOAD_DIR/fzfwidgets.zsh' id-as'fzf-widgets' \
-        @crater2150-zsh/fzf-widgets \
-    atinit'source $ATINIT_DIR/fz.zsh' id-as'fz' \
-        @changyuheng/fz \
-    atload'source $ATLOAD_DIR/fzftab.zsh' id-as'fzf-tab' \
-        @Aloxaf/fzf-tab
-
-
-## 9: prompt theme
+## 8: prompt theme
 
 # using starship for the consistent prompt across shells
 eval "$(starship init zsh)"
@@ -490,7 +494,7 @@ if [ ! -f "$ZINIT[COMPLETIONS_DIR]/_starship" ]; then
 fi
 
 
-## 10: post-startup actions
+## 9: post-startup actions
 
 # source all system-provided completions
 if [[ -d "/usr/share/zsh/site-functions" ]]; then
@@ -506,9 +510,11 @@ export MANPATH=":$ZPFX/share/man"
 
 # compinit + cdreplay
 autoload -Uz compinit
-COMPINIT_INTERVAL=3600
-if [ $( date +'%s' ) -gt $(( $( stat -c '%Y' $ZINIT[ZCOMPDUMP_PATH] ) + $COMPINIT_INTERVAL )) ]; then
-    ZINIT[COMPINIT_OPTS]=-C
+if [[ $ZINIT[ZCOMPDUMP_PATH](#qNmh-20) ]]; then
+    compinit -C -d ${ZINIT[ZCOMPDUMP_PATH]:-${ZDOTDIR:-$HOME}/.zcompdump} "${(Q@)${(z@)ZINIT[COMPINIT_OPTS]}}"
+else
+    mkdir -p "$ZINIT[ZCOMPDUMP_PATH]:h"
+    compinit -i -d ${ZINIT[ZCOMPDUMP_PATH]:-${ZDOTDIR:-$HOME}/.zcompdump} "${(Q@)${(z@)ZINIT[COMPINIT_OPTS]}}"
+    touch "$ZINIT[ZCOMPDUMP_PATH]"
 fi
-compinit -d ${ZINIT[ZCOMPDUMP_PATH]:-${ZDOTDIR:-$HOME}/.zcompdump} "${(Q@)${(z@)ZINIT[COMPINIT_OPTS]}}"
 zinit cdreplay

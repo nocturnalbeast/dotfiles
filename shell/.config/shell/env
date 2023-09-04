@@ -66,6 +66,7 @@ export TERMINAL="kitty"
 export VIDEO="mpv"
 export IMAGE="pqiv"
 export FILES="thunar"
+export SYSTEMD_EDITOR="$EDITOR"
 
 # some pager options
 export PAGER="less -RF --mouse"
