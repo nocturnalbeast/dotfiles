@@ -72,11 +72,12 @@ export SYSTEMD_EDITOR="$EDITOR"
 
 # some pager options
 export PAGER="less -RF --mouse"
-if [ -f "$XDG_CONFIG_HOME/bat/man-wrapper" ]; then
-    export MANPAGER="$XDG_CONFIG_HOME/bat/man-wrapper"
-fi
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export BAT_PAGER="$PAGER"
 export DELTA_PAGER="$PAGER"
+
+# fix formatting with bat while using as man pager
+export MANROFFOPT="-c"
 
 # LS_COLORS using vivid
 if type "vivid" > /dev/null; then
