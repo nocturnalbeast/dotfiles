@@ -43,6 +43,13 @@ if command -v arch &>/dev/null; then
     alias arch="uname -m"
 fi
 
+# default fetch
+if command -v fastfetch &>/dev/null; then
+    alias fetch="fastfetch"
+elif command -v neofetch &>/dev/null; then
+    alias fetch="neofetch"
+fi
+
 # one-character aliases for the most used terminal applications
 alias l="exa --color=auto --icons --group-directories-first"
 alias v="nvim"

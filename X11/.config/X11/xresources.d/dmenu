@@ -7,7 +7,7 @@ dmenu.selforeground:   #ffffff
 dmenu.hlbackground:    #525252
 dmenu.hlforeground:    #ff3333
 dmenu.selhlbackground: #000000
-dmenu.selhlforeground: #ff8080
+dmenu.selhlforeground: #ff9999
 dmenu.alphabg:         150
 dmenu.alphafg:         255
 dmenu.alphaselbg:      180

@@ -3,38 +3,38 @@
 ! |_,_|_| |___|___|___|___|_| |___|___|___|
 
 ! special
-*.foreground:  #ffffff
-*.background:  #000000
-*.cursorColor: #ffffff
+*.foreground:   #ffffff
+*.background:   #000000
+*.cursorColor:  #ffffff
 
 ! black
-*.color0:      #333333
-*.color8:      #666666
+*.color0:       #4d4d4d
+*.color8:       #1a1a1a
 
 ! red
-*.color1:      #ff3333
-*.color9:      #ff8080
+*.color1:       #ff9999
+*.color9:       #ff3333
 
 ! green
-*.color2:      #33ff44
-*.color10:     #80ff8a
+*.color2:       #99ff99
+*.color10:      #33ff33
 
 ! yellow
-*.color3:      #ddff33
-*.color11:     #eaff80
+*.color3:       #ffff99
+*.color11:      #ffff33
 
 ! blue
-*.color4:      #3333ff
-*.color12:     #8080ff
+*.color4:       #99ccff
+*.color12:      #3399ff
 
 ! magenta
-*.color5:      #9933ff
-*.color13:     #bf80ff
+*.color5:       #ff99ff
+*.color13:      #ff33ff
 
 ! cyan
-*.color6:      #33ffff
-*.color14:     #80ffff
+*.color6:       #99ffff
+*.color14:      #33ffff
 
 ! white
-*.color7:      #999999
-*.color15:     #cccccc
+*.color7:       #b3b3b3
+*.color15:      #e6e6e6

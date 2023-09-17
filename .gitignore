@@ -6,3 +6,5 @@ neovim/.config/nvim/.netrwhist
 themix/.config/oomox/*.json
 thunar/.config/Thunar/accels.scm
 thunar/.config/Thunar/renamerrc
+oomox/.config/oomox/recent_palette.json
+oomox/.config/oomox/ui_config.json

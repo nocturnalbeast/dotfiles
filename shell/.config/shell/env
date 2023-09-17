@@ -55,6 +55,8 @@ export GTK2_RC_FILES="$XDG_CONFIG_HOME/gtk-2.0/gtkrc"
 export CARGO_HOME="$XDG_DATA_HOME/cargo"
 export PYTHONSTARTUP="$XDG_CONFIG_HOME/python/startup.py"
 export ANDROID_HOME="$XDG_DATA_HOME/android"
+export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
+export CARGO_HOME="$XDG_DATA_HOME/cargo"
 
 # defining applications
 export EDITOR="nvim"
@@ -82,6 +84,9 @@ if type "vivid" > /dev/null; then
         export LS_COLORS="$( vivid generate "$XDG_CONFIG_HOME/vivid/theme.yml" )"
     fi
 fi
+
+# proper spacing between icons and filenames
+export EXA_ICON_SPACING=2
 
 # clipmenu options
 export CM_DIR="$XDG_RUNTIME_DIR"
