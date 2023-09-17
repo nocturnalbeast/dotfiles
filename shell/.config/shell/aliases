@@ -4,16 +4,16 @@
 # |__,|_|_|__,|___|___|___|
 
 # ls aliases
-alias ls="exa --color=auto --icons --group-directories-first"
-alias ll="exa -bhl --color=auto --icons --group-directories-first --git"
-alias la="exa -a --color=auto --icons --group-directories-first "
-alias lt="exa -bh --tree --color=auto --icons --group-directories-first"
-alias l.="exa -d .* --color=auto --icons --group-directories-first"
-alias lal="exa -bhal --color=auto --icons --group-directories-first --git"
-alias lsd="exa -hFx --color=auto --icons"
-alias lr="exa -R --color=auto --icons --group-directories-first"
-alias lra="exa -aR --color=auto --icons --group-directories-first"
-alias lrl="exa -alR --color=auto --icons --group-directories-first"
+alias ls="eza --color=auto --icons --group-directories-first"
+alias ll="eza -bhl --color=auto --icons --group-directories-first --git"
+alias la="eza -a --color=auto --icons --group-directories-first "
+alias lt="eza -bh --tree --color=auto --icons --group-directories-first"
+alias l.="eza -d .* --color=auto --icons --group-directories-first"
+alias lal="eza -bhal --color=auto --icons --group-directories-first --git"
+alias lsd="eza -hFx --color=auto --icons"
+alias lr="eza -R --color=auto --icons --group-directories-first"
+alias lra="eza -aR --color=auto --icons --group-directories-first"
+alias lrl="eza -alR --color=auto --icons --group-directories-first"
 
 # make grep highlight matches
 alias grep="grep --color=auto"
@@ -51,7 +51,7 @@ elif command -v neofetch &>/dev/null; then
 fi
 
 # one-character aliases for the most used terminal applications
-alias l="exa --color=auto --icons --group-directories-first"
+alias l="eza --color=auto --icons --group-directories-first"
 alias v="nvim"
 alias s="btm"
 alias p="btm --basic"

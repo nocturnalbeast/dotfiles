@@ -420,8 +420,8 @@ zinit wait'0' lucid from'gh-r' nocompile light-mode for \
         @cli/cli \
     cp'hub-*/etc/hub.zsh_completion -> _hub' pick'hub-*' mv'hub-*/bin/hub -> hub' sbin'hub' id-as'gh-hub' \
         @mislav/hub \
-    bpick'exa-*' mv'bin/exa -> exa' sbin'exa' atclone'source $ATCLONE_DIR/exa.zsh' id-as'exa' \
-        @ogham/exa \
+    bpick'eza-*' sbin'eza' id-as'eza' \
+        @eza-community/eza \
     blockf nocompletions bpick'ripgrep-*' mv'ripgrep-*/rg -> rg' sbin'rg' atclone'source $ATCLONE_DIR/ripgrep.zsh' atpull'%atclone' id-as'ripgrep' \
         @BurntSushi/ripgrep \
     blockf nocompletions bpick'fd-*' mv'fd-*/fd -> fd' sbin'fd' atclone'source $ATCLONE_DIR/fd.zsh' atpull'%atclone' id-as'fd' \
@@ -471,7 +471,9 @@ zinit wait'0' lucid as'completion' light-mode for \
     mv'tealdeer-completion -> _tldr' id-as'tealdeer-completion' \
         https://github.com/dbrgn/tealdeer/raw/main/completion/zsh_tealdeer \
     id-as'pip-completion' \
-        OMZP::pip/_pip
+        OMZP::pip/_pip \
+    id-as'eza-completion' \
+        https://github.com/eza-community/eza/raw/main/completions/zsh/_eza
 
 # tmux - thank you @yutkat for this one!
 if ldconfig -p | grep -q 'libevent-' && ldconfig -p | grep -q 'libncurses'; then
