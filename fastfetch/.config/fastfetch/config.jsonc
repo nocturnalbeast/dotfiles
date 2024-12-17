@@ -7,69 +7,68 @@
 {
     "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
     "logo": {
-        "type": "none"
+        "type": "none",
     },
     "display": {
-        "binaryPrefix": "si",
-        "separator": "  ┃ "
+        "size": { "binaryPrefix": "si" },
+        "separator": "  ┃ ",
     },
 
     "modules": [
-
         {
             "type": "title",
             "format": "{1}@{2}",
             "key": " ",
-            "keyColor": "white"
+            "keyColor": "white",
         },
         "break",
 
         {
             "type": "host",
             "key": " 󰒋",
-            "keyColor": "red"
+            "keyColor": "red",
         },
         {
             "type": "board",
             "key": " 󰘚",
-            "keyColor": "red"
+            "keyColor": "red",
         },
         {
             "type": "cpu",
             "key": " ",
-            "keyColor": "red"
+            "keyColor": "red",
         },
         {
             "type": "gpu",
             "key": " 󰈈",
-            "keyColor": "red"
+            "keyColor": "red",
         },
         {
             "type": "disk",
             "format": "{10} - {2} [{9}]",
             "showExternal": false,
             "key": " ",
-            "keyColor": "red"
+            "keyColor": "red",
         },
         {
             "type": "display",
             "key": " 󰍹",
-            "keyColor": "red"
+            "keyColor": "red",
         },
         {
             "type": "sound",
             "key": " 󰋋",
-            "keyColor": "red"
+            "keyColor": "red",
         },
         {
             "type": "bluetooth",
             "key": " 󰂯",
-            "keyColor": "red"
+            "keyColor": "red",
         },
         {
             "type": "gamepad",
             "key": " 󰊗",
-            "keyColor": "red"
+            "keyColor": "red",
         },
         "break",
 
@@ -77,70 +76,70 @@
             "type": "os",
             "format": "{2} [{4}/{5} - {12}]",
             "key": " 󰌽",
-            "keyColor": "green"
+            "keyColor": "green",
         },
         {
             "type": "kernel",
             "key": " ",
             "format": "{2} [{1}]",
-            "keyColor": "green"
+            "keyColor": "green",
         },
         {
             "type": "packages",
             "key": " 󰏖",
-            "keyColor": "green"
+            "keyColor": "green",
         },
         {
             "type": "uptime",
             "key": " 󰥔",
-            "keyColor": "green"
+            "keyColor": "green",
         },
         "break",
 
         {
             "type": "cpuusage",
             "key": " ",
-            "keyColor": "yellow"
+            "keyColor": "yellow",
         },
         {
             "type": "processes",
             "key": " 󰜎",
-            "keyColor": "yellow"
+            "keyColor": "yellow",
         },
         {
             "type": "disk",
             "format": "{10} - {1} / {2} [{3}%]",
             "key": " ",
-            "keyColor": "yellow"
+            "keyColor": "yellow",
         },
         {
             "type": "memory",
             "format": "{1} / {2} [{3}%]",
             "key": " 󰘚",
-            "keyColor": "yellow"
+            "keyColor": "yellow",
         },
         {
             "type": "swap",
             "format": "{1} / {2} [{3}%]",
             "key": " 󰓡",
-            "keyColor": "yellow"
+            "keyColor": "yellow",
         },
         "break",
 
         {
             "type": "brightness",
             "key": " 󰳲",
-            "keyColor": "blue"
+            "keyColor": "blue",
         },
         {
             "type": "battery",
             "key": " 󰁹",
-            "keyColor": "blue"
+            "keyColor": "blue",
         },
         {
             "type": "poweradapter",
             "key": " 󰚥",
-            "keyColor": "blue"
+            "keyColor": "blue",
         },
         "break",
 
@@ -148,75 +147,75 @@
             "type": "lm",
             "format": "{1} [{2}]",
             "key": " 󱥠",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "de",
             "format": "{1} [{2}]",
             "key": " 󰧨",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "wm",
             "format": "{1} [{3}]",
             "key": " ",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "theme",
             "key": " 󰉼",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "icons",
             "key": " 󰀻",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "cursor",
             "format": "{1} [{2}px]",
             "key": " 󰇀",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "font",
             "key": " ",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "shell",
             "format": "{1} {4}",
             "key": " 󰞷",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "terminal",
             "key": " ",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "terminalsize",
             "format": "{2}x{1} [{3}x{4}px]",
             "key": " ",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         {
             "type": "terminalfont",
             "format": "{2} [{3}pt]",
             "key": " ",
-            "keyColor": "magenta"
+            "keyColor": "magenta",
         },
         "break",
 
         {
             "type": "player",
             "key": " 󰴙",
-            "keyColor": "cyan"
+            "keyColor": "cyan",
         },
         {
             "type": "media",
             "key": " 󰎈",
-            "keyColor": "cyan"
+            "keyColor": "cyan",
         },
         "break",
 
@@ -224,18 +223,18 @@
             "type": "wifi",
             "format": "{4} [{10}] [{1}]",
             "key": " 󰖩",
-            "keyColor": "black"
+            "keyColor": "black",
         },
         {
             "type": "localip",
             "key": " 󰍒",
             "compact": true,
-            "keyColor": "black"
+            "keyColor": "black",
         },
         {
             "type": "publicip",
             "key": " 󰍎",
-            "keyColor": "black"
+            "keyColor": "black",
         },
         "break",
 
@@ -243,8 +242,7 @@
             "type": "custom",
             "format": "\u001b[31m███\u001b[32m███\u001b[33m███\u001b[34m███\u001b[35m███\u001b[36m███",
             "key": " ",
-            "keyColor": "white"
+            "keyColor": "white",
         },
-
-    ]
+    ],
 }

@@ -43,6 +43,7 @@ $elixir\
 $elm\
 $erlang\
 $fennel\
+$gleam\
 $golang\
 $gradle\
 $haskell\
@@ -53,15 +54,19 @@ $julia\
 $kotlin\
 $lua\
 $meson\
+$mojo\
+$nats\
 $nim\
 $nodejs\
 $ocaml\
+$odin\
 $opa\
 $perl\
 $php\
 $pulumi\
 $purescript\
 $python\
+$quarto\
 $raku\
 $red\
 $rlang\
@@ -72,6 +77,7 @@ $solidity\
 $spack\
 $swift\
 $terraform\
+$typst\
 $vagrant\
 $vlang\
 $zig\
@@ -372,6 +378,13 @@ format = '( [\[$all_status$ahead_behind\]]($style))'
 style = "bold yellow"
 ignore_submodules = false
 
+[gleam]
+disabled = false
+symbol = " "
+format = " 󰧞 [$symbol $version]($style)"
+version_format = "v${raw}"
+style = "bold red"
+
 [golang]
 disabled = false
 symbol = " "
@@ -488,6 +501,18 @@ format = " 󰧞 [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
+[mojo]
+disabled = false
+format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰈸 "
+style = "bold red"
+
+[nats]
+disabled = false
+format = " 󰧞 [$symbol $version]($style)"
+symbol = "󱅲 "
+style = "bold purple"
+
 [nim]
 disabled = false
 symbol = " "
@@ -521,6 +546,13 @@ version_format = "v${raw}"
 style = "bold yellow"
 global_switch_indicator = ""
 local_switch_indicator = "*"
+
+[odin]
+disabled = false
+symbol = " "
+format = " 󰧞 [$symbol $version]($style)"
+style = "bold cyan"
+show_commit = false
 
 [opa]
 disabled = false
@@ -635,6 +667,13 @@ format = ' 󰧞 [$symbol ($pyenv_prefix)$version( \($virtualenv\))]($style)'
 version_format = "v${raw}"
 style = "bold cyan"
 pyenv_version_name = false
+
+[quarto]
+disabled = false
+symbol = " "
+format = " 󰧞 [$symbol $version]($style)"
+version_format = "v${raw}"
+style = "bold blue"
 
 [raku]
 disabled = false
@@ -771,14 +810,11 @@ use_12hr = true
 utc_time_offset = "local"
 
 [typst]
-format = "via [$symbol($version )]($style)"
-version_format = "v${raw}"
-symbol = "t "
-style = "bold #0093A7"
 disabled = false
-detect_extensions = ["typ"]
-detect_files = ["template.typ"]
-detect_folders = []
+symbol = "󰰥 "
+format = " 󰧞 [$symbol $version]($style)"
+version_format = "v${raw}"
+style = "bold cyan"
 
 [username]
 disabled = false
