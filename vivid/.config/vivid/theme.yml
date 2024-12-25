@@ -128,6 +128,9 @@ media:
   video:
     foreground: brightmagenta
 
+  3d:
+    foreground: brightred
+
   fonts:
     foreground: brightwhite
 
