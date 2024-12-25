@@ -1,129 +1,212 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
-# pm - acronym for package manager.
-# use this script to run common package management operations, regardless of
-# the base distribution.
+# A distribution-agnostic wrapper for common package management operations.
 
 usage() {
-    echo "$(basename "$0") : distro-agnostic package management helper script"
-    echo " Possible operations: "
-    echo "  install/i      : Install a package/number of packages."
-    echo "  update/u       : Update all installed packages."
-    echo "  search/s       : Search if a package is available on the remote repositories."
-    echo "  remove/r       : Remove an installed package."
-    echo "  clean/c        : Clean cache/remnants/orphaned packages etc."
-    echo "  desc/d         : Get more information about a package."
+    cat << EOF
+Usage: $(basename "$0") OPERATION [PACKAGE...]
+
+A distro-agnostic package management helper script.
+
+Operations:
+  install, i    Install specified package(s).
+  update,  u    Update all installed packages.
+  search,  s    Search for a package in remote repositories.
+  remove,  r    Remove specified package(s).
+  clean,   c    Clean package cache and remove orphaned packages.
+  desc,    d    Show detailed information about specified package(s).
+EOF
 }
 
-get_commands() {
-    if [[ -f "/etc/os-release" ]]; then
-        source /etc/os-release
-    elif [[ -f "/usr/lib/os-release" ]]; then
-        source /usr/lib/os-release
-    fi
-
-    if [[ "$ID" == "" ]] && [[ "$ID_LIKE" == "" ]]; then
-        >&2 echo "Can't detect any operating system ID. Exiting now."
-        exit
-    elif [[ "$ID" == "" ]]; then
-        ID="$ID_LIKE"
-    fi
-
-    SU_REQUIRED="true"
-    case $ID in
-        "ubuntu"|"debian"|"raspbian"|"linuxmint")
-            INSTALL_CMD="apt-get install"
-            UPDATE_CMD="apt-get update; apt-get upgrade"
-            SEARCH_CMD="apt-cache search"
-            REMOVE_CMD="apt-get --purge remove"
-            CLEAN_CMD="apt-get autoremove; apt-get autoclean"
-            DESC_CMD="apt-cache show"
-            ;;
-         "arch"|"archlinux"|"artix"|"artixlinux")
-            AUR_WRAPPER="none"
-            if type paru &> /dev/null; then
-                AUR_WRAPPER="paru"
-            elif type yay &> /dev/null; then
-                AUR_WRAPPER="yay"
-            elif type pacaur &> /dev/null; then
-                AUR_WRAPPER="pacaur"
-            fi
-            if [[ "$AUR_WRAPPER" != "none" ]]; then
-                INSTALL_CMD="$AUR_WRAPPER --color auto -S"
-                UPDATE_CMD="$AUR_WRAPPER --color auto -Syu"
-                SEARCH_CMD="$AUR_WRAPPER --color auto -Ss"
-                REMOVE_CMD="$AUR_WRAPPER --color auto -Rsn"
-                CLEAN_CMD="$AUR_WRAPPER --color auto -Sc"
-                DESC_CMD="$AUR_WRAPPER --color auto -Q --info"
-                SU_REQUIRED="false"
-            else
-                INSTALL_CMD="pacman --color auto -S"
-                UPDATE_CMD="pacman --color auto -Syu"
-                SEARCH_CMD="pacman --color auto -Ss"
-                REMOVE_CMD="pacman --color auto -Rsn"
-                CLEAN_CMD="pacman --color auto -Sc"
-                DESC_CMD="pacman --color auto -Q --info"
-            fi
-            ;;
-        "void")
-            INSTALL_CMD="xbps-install -S"
-            UPDATE_CMD="xbps-install -Su"
-            SEARCH_CMD="xbps-query -Rs"
-            REMOVE_CMD="xbps-remove -R"
-            CLEAN_CMD="xbps-remove -Oo"
-            DESC_CMD="xbps-query -S"
-            ;;
-        *)
-            >&2 echo "Unsupported OS. Exiting now."
-            ;;
-    esac
-}
-
-get_su_command() {
-    SU_CMD=""
-    if [[ "$( id -u )" != "0" ]] && [[ "$SU_REQUIRED" == "true" ]]; then
-        if type doas &> /dev/null; then
-            SU_CMD="doas"
-        elif type sudo &> /dev/null; then
-            SU_CMD="sudo"
+# Returns the appropriate privilege escalation command (sudo/doas) if needed.
+#
+# Arguments:
+#   $1 - Boolean indicating if privilege escalation is needed
+#
+# Outputs:
+#   Writes the privilege escalation command to stdout if needed.
+detect_sudo_binary() {
+    if [ "$(id -u)" != "0" ] && [ "$1" = "true" ]; then
+        if type doas > /dev/null 2>&1; then
+            echo "doas"
+        elif type sudo > /dev/null 2>&1; then
+            echo "sudo"
         fi
     fi
 }
 
-OPERATION="$1"
-shift
+# Returns the package manager command for the current operation and distribution.
+#
+# Arguments:
+#   $1 - Operation to perform (install/update/search/remove/clean/desc)
+#
+# Outputs:
+#   Writes the complete package manager command to stdout.
+#   Writes error message to stderr on unsupported distribution.
+get_package_manager_command() {
+    OPERATION="$1"
 
-case $OPERATION in
-    "install"|"i")
-        get_commands
-        get_su_command
-        $SU_CMD $INSTALL_CMD $@
-        ;;
-    "update"|"u")
-        get_commands
-        get_su_command
-        $SU_CMD $UPDATE_CMD
-        ;;
-    "search"|"s")
-        get_commands
-        $SEARCH_CMD $@
-        ;;
-    "remove"|"r")
-        get_commands
-        get_su_command
-        $SU_CMD $REMOVE_CMD $@
-        ;;
-    "clean"|"c")
-        get_commands
-        get_su_command
-        $SU_CMD $CLEAN_CMD
-        ;;
-    "desc"|"d")
-        get_commands
-        $DESC_CMD $@
-        ;;
-    *)
-        usage
-        exit
-        ;;
-esac
+    if [ -f "/etc/os-release" ]; then
+        . /etc/os-release
+    elif [ -f "/usr/lib/os-release" ]; then
+        . /usr/lib/os-release
+    fi
+
+    if [ "$ID" = "" ] && [ "$ID_LIKE" = "" ]; then
+        echo "Can't detect any operating system ID. Exiting now." >&2
+        exit 1
+    elif [ "$ID" = "" ]; then
+        ID="$ID_LIKE"
+    fi
+
+    # Debian-based distro commands
+    DEBIAN_INSTALL_CMD="apt-get install"
+    DEBIAN_UPDATE_CMD="apt-get update; apt-get upgrade"
+    DEBIAN_SEARCH_CMD="apt-cache search"
+    DEBIAN_REMOVE_CMD="apt-get --purge remove"
+    DEBIAN_CLEAN_CMD="apt-get autoremove; apt-get autoclean"
+    DEBIAN_DESC_CMD="apt-cache show"
+
+    # Red Hat-based distro commands (DNF)
+    REDHAT_INSTALL_CMD="dnf install"
+    REDHAT_UPDATE_CMD="dnf update"
+    REDHAT_SEARCH_CMD="dnf search"
+    REDHAT_REMOVE_CMD="dnf remove"
+    REDHAT_CLEAN_CMD="dnf clean all; dnf autoremove"
+    REDHAT_DESC_CMD="dnf info"
+
+    # SUSE-based distro commands
+    SUSE_INSTALL_CMD="zypper install"
+    SUSE_UPDATE_CMD="zypper update"
+    SUSE_SEARCH_CMD="zypper search"
+    SUSE_REMOVE_CMD="zypper remove"
+    SUSE_CLEAN_CMD="zypper clean"
+    SUSE_DESC_CMD="zypper info"
+
+    # Arch-based distro commands
+    ARCH_CMD="pacman"
+    NEEDS_SU="true"
+    if type paru > /dev/null 2>&1; then
+        ARCH_CMD="paru"
+        NEEDS_SU="false"
+    elif type yay > /dev/null 2>&1; then
+        ARCH_CMD="yay"
+        NEEDS_SU="false"
+    elif type pacaur > /dev/null 2>&1; then
+        ARCH_CMD="pacaur"
+        NEEDS_SU="false"
+    fi
+    ARCH_INSTALL_CMD="$ARCH_CMD -S --color auto"
+    ARCH_UPDATE_CMD="$ARCH_CMD -Syu --color auto"
+    ARCH_SEARCH_CMD="$ARCH_CMD -Ss --color auto"
+    ARCH_REMOVE_CMD="$ARCH_CMD -Rsn --color auto"
+    ARCH_CLEAN_CMD="$ARCH_CMD -Sc --color auto"
+    ARCH_DESC_CMD="$ARCH_CMD -Q --info --color auto"
+
+    # Void Linux commands
+    VOID_INSTALL_CMD="xbps-install -S"
+    VOID_UPDATE_CMD="xbps-install -Su"
+    VOID_SEARCH_CMD="xbps-query -Rs"
+    VOID_REMOVE_CMD="xbps-remove -R"
+    VOID_CLEAN_CMD="xbps-remove -Oo"
+    VOID_DESC_CMD="xbps-query -S"
+
+    case $ID in
+        "ubuntu" | "debian" | "raspbian" | "linuxmint")
+            PKG_TYPE="DEBIAN"
+            NEEDS_SU="true"
+            ;;
+        "fedora" | "rhel" | "centos" | "rocky" | "almalinux" | "nobara")
+            PKG_TYPE="REDHAT"
+            NEEDS_SU="true"
+            ;;
+        "opensuse-tumbleweed" | "opensuse-leap" | "opensuse" | "suse")
+            PKG_TYPE="SUSE"
+            NEEDS_SU="true"
+            ;;
+        "arch" | "archlinux" | "artix" | "artixlinux" | "endeavouros" | "cachyos" | "garuda" | "manjaro")
+            PKG_TYPE="ARCH"
+            ;;
+        "void")
+            PKG_TYPE="VOID"
+            NEEDS_SU="true"
+            ;;
+        *)
+            echo "Unsupported OS. Exiting now." >&2
+            exit 1
+            ;;
+    esac
+
+    if [ "$PKG_TYPE" != "" ]; then
+        case $OPERATION in
+            "install")
+                CMD_VAR="${PKG_TYPE}_INSTALL_CMD"
+                ;;
+            "update")
+                CMD_VAR="${PKG_TYPE}_UPDATE_CMD"
+                ;;
+            "search")
+                CMD_VAR="${PKG_TYPE}_SEARCH_CMD"
+                ;;
+            "remove")
+                CMD_VAR="${PKG_TYPE}_REMOVE_CMD"
+                ;;
+            "clean")
+                CMD_VAR="${PKG_TYPE}_CLEAN_CMD"
+                ;;
+            "desc")
+                CMD_VAR="${PKG_TYPE}_DESC_CMD"
+                ;;
+        esac
+        eval "CMD=\$$CMD_VAR"
+        SU_CMD=$(detect_sudo_binary "$NEEDS_SU")
+        if [ -n "$SU_CMD" ]; then
+            echo "$SU_CMD $CMD"
+        else
+            echo "$CMD"
+        fi
+    fi
+}
+
+# Main entry point that processes the command-line arguments.
+#
+# Arguments:
+#   $1 - Operation to perform
+#   $@ - Additional arguments for the operation
+main() {
+    OPERATION="$1"
+    shift
+
+    case $OPERATION in
+        "install" | "i")
+            CMD=$(get_package_manager_command "install")
+            $CMD $@
+            ;;
+        "update" | "u")
+            CMD=$(get_package_manager_command "update")
+            $CMD
+            ;;
+        "search" | "s")
+            CMD=$(get_package_manager_command "search")
+            $CMD $@
+            ;;
+        "remove" | "r")
+            CMD=$(get_package_manager_command "remove")
+            $CMD $@
+            ;;
+        "clean" | "c")
+            CMD=$(get_package_manager_command "clean")
+            $CMD
+            ;;
+        "desc" | "d")
+            CMD=$(get_package_manager_command "desc")
+            $CMD $@
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
