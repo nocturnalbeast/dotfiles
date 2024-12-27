@@ -1,126 +1,328 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
-PRIORITY=( mopidy mpv )
-TRACK_CHG_EXCLUDE=( mpv )
-INSTANCE_PREF_TIME=180
-INSTANCE_CACHE_LOC="${XDG_CACHE_HOME:="$HOME/.cache"}/playerctl-recent"
+# A MPRIS-based media playback contoller script with player prioritization.
 
-function usage() {
-    echo "$(basename "$0") : MPRIS-based media control script"
-    echo " Possible operations: "
-    echo "  toggle      : Toggle play/pause on recent/prioritized player."
-    echo "  stop        : Stop currently playing player(s)."
-    echo "  stopall     : Stop all available players."
-    echo "  next        : Switch to the next track in the preferred player."
-    echo "  prev        : Switch to the previous track in the preferred player."
-    echo "  seek [POS]  : Seek to the specified position in the preferred player."
-    echo "  get_state   : Get current state of preferred player."
+# Global configuration
+PRIORITY="mopidy DeaDBeeF mpv"
+TRACK_CHG_EXCLUDE="mpv"
+VOL_CHG_EXCLUDE=""
+POS_CHG_EXCLUDE=""
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") OPERATION [ARGUMENT]
+
+A MPRIS-based media playback script.
+
+Operations:
+    list            List available players ordered by priority
+    play            Play media on the highest priority available player
+    stop            Stop currently playing player(s)
+    stopall         Stop all available players
+    pause           Pause currently playing player(s)
+    pauseall        Pause all available players
+    toggle          Toggle play/pause on prioritized player
+    next            Skip to next track on playing player(s)
+    prev            Skip to previous track on playing player(s)
+    info            Show current playback information
+                    If ARGUMENT is provided, use it for metadata formatting
+    continuousinfo  Follow playback information with live updates
+                    If ARGUMENT is provided, use it for metadata formatting
+    volume          Change volume by ARGUMENT (e.g. +5, -10, 70)
+    seek            Seek by ARGUMENT (e.g. +10, -30)
+                    Format: [+-]TIME where TIME is in seconds
+EOF
 }
 
-function get_priority() {
-    if [[ $# -eq 0 ]]; then
-        CURRENT_INSTANCES="$( playerctl -l )"
-    else
-        CURRENT_INSTANCES="$1"
+# Returns list of currently playing instances.
+#
+# Outputs:
+#   Writes list of playing instances to stdout.
+get_playing_instances() {
+    playerctl -a metadata -f "{{playerInstance}} {{status}}" 2> /dev/null |
+        grep " Playing$" |
+        cut -f1 -d " "
+}
+
+# Returns a list of player instances ordered by priority.
+#
+# Arguments:
+#   $1 - Filter type: "all" for all instances, "playing" for only playing instances
+#
+# Outputs:
+#   Writes ordered list of player instances to stdout.
+get_priority() {
+    FILTER_TYPE="${1:-all}"
+    CURRENT_INSTANCES=$(playerctl -l 2> /dev/null)
+    [ -z "$CURRENT_INSTANCES" ] && return 1
+
+    # If only playing instances needed, return them ordered by priority
+    if [ "$FILTER_TYPE" = "playing" ]; then
+        RESULT=""
+        PLAYING_INSTANCES=$(get_playing_instances)
+        # First add playing instances that are in priority list
+        for player in $PRIORITY; do
+            for instance in $PLAYING_INSTANCES; do
+                [ "$player" = "$instance" ] && RESULT="$RESULT|$instance"
+            done
+        done
+        # Then add any playing instances not in priority list
+        for instance in $PLAYING_INSTANCES; do
+            case " $PRIORITY " in
+                *" $instance "*) continue ;;
+            esac
+            RESULT="$RESULT|$instance"
+        done
+        printf "%s\n" "$RESULT" | tr -s '|' '\n' | sed '/^$/d'
+        return
     fi
-    # check all instances of each player by priority and recency
-    [[ "$CURRENT_INSTANCES" == "" ]] && return
-    declare -a ORDERED_INSTANCES
-    for PLAYER in "${PRIORITY[@]}"; do
-        mapfile -t CP_INSTANCES < <( echo -e "$CURRENT_INSTANCES" | grep "$PLAYER" | sort -nr )
-        ORDERED_INSTANCES=(${ORDERED_INSTANCES[@]} ${CP_INSTANCES[@]})
+
+    # Start with prioritized instances
+    RESULT=""
+    for player in $PRIORITY; do
+        for instance in $CURRENT_INSTANCES; do
+            [ "$player" = "$instance" ] && RESULT="$RESULT|$instance"
+        done
     done
-    # add other instances that are not specified in the priority list to the prioritized list
-    mapfile -t EXTRA_INSTANCES < <( comm -13 <( echo -e "$CURRENT_INSTANCES" | sort ) <( printf "%s\n" "${ORDERED_INSTANCES[@]}" | sort ) | sort -nr )
-    ORDERED_INSTANCES=(${ORDERED_INSTANCES[@]} ${EXTRA_INSTANCES[@]})
-    # return the list
-    printf "%s\n" "${ORDERED_INSTANCES[@]}"
-}
 
-function is_anyone_playing() {
-    # get all instances which are reporting as playing
-    playerctl -a metadata -f "{{playerInstance}} {{status}}" 2>/dev/null | grep " Playing$" | cut -f 1 -d " "
-}
-
-function try_playing() {
-    mapfile -t P_INST < <( get_priority )
-    for INSTANCE in "${P_INST[@]}"; do
-        playerctl -p "$INSTANCE" play
-        [[ $? -eq 0 ]] && break
+    # Add remaining instances that are not in priority list
+    for instance in $CURRENT_INSTANCES; do
+        case " $PRIORITY " in
+            *" $instance "*) continue ;;
+        esac
+        RESULT="$RESULT|$instance"
     done
+
+    # Move playing instances to the front, maintaining their priority order
+    PLAYING_RESULT=""
+    PLAYING_INSTANCES=$(get_playing_instances)
+    # First add playing instances that are in priority list
+    for player in $PRIORITY; do
+        for instance in $PLAYING_INSTANCES; do
+            [ "$player" = "$instance" ] && PLAYING_RESULT="$PLAYING_RESULT|$instance"
+        done
+    done
+    # Then add any playing instances not in priority list
+    for instance in $PLAYING_INSTANCES; do
+        case " $PRIORITY " in
+            *" $instance "*) continue ;;
+        esac
+        PLAYING_RESULT="$PLAYING_RESULT|$instance"
+    done
+
+    # Remove playing instances from main result and combine
+    for instance in $PLAYING_INSTANCES; do
+        RESULT=$(printf "%s\n" "$RESULT" | tr -s '|' '\n' | grep -v "^${instance}$" | tr '\n' '|')
+    done
+    RESULT="$PLAYING_RESULT|$RESULT"
+
+    # Output the final list
+    printf "%s\n" "$RESULT" | tr -s '|' '\n' | sed '/^$/d'
 }
 
-function toggle() {
-    # check if anyone's playing
-    mapfile -t P_INST < <( get_priority "$( is_anyone_playing )" )
-    if [[ "${#P_INST[@]}" -ne 0 ]]; then
-        playerctl -a pause
-        echo "${P_INST[0]} $( date +%s )" > "$INSTANCE_CACHE_LOC"
-    else
-        if [[ "$( playerctl -l | wc -l )" -eq 1 ]]; then
-            playerctl play
-        # make sure to play the one that's been paused recently before trying for the priority based selection
-        elif [[ -f "$INSTANCE_CACHE_LOC" ]]; then
-            INSTANCE="$( cut -f 1 -d " " "$INSTANCE_CACHE_LOC" )"
-            TIME_ELAPSED=$(( $( date +%s ) - $( cut -f 2 -d " " "$INSTANCE_CACHE_LOC" ) ))
-            if [[ "$TIME_ELAPSED" -lt "$INSTANCE_PREF_TIME" ]]; then
-                playerctl -p "$INSTANCE" play
-            else
-                try_playing
+# Controls playback state on specified players.
+#
+# Arguments:
+#   $1 - Operation to perform (play, stop, pause)
+#   $2 - "all" to affect all players, otherwise affects specific players based on operation
+control_playback() {
+    OPERATION="$1"
+    ALL_FLAG="$2"
+
+    # For play operation, try each player in priority order
+    if [ "$OPERATION" = "play" ]; then
+        get_priority | while read -r instance; do
+            if playerctl -p "$instance" play 2> /dev/null; then
+                return 0
             fi
-            rm -f "$INSTANCE_CACHE_LOC"
-        else
-            try_playing
-        fi
+        done
+        return 1
     fi
-}
 
-function stop_pb() {
-    if [[ "$1" == "all" ]]; then
-        playerctl -a stop
+    # For stop/pause operations
+    if [ "$ALL_FLAG" = "all" ]; then
+        if playerctl -a "$OPERATION" 2> /dev/null; then
+            return 0
+        fi
     else
-        mapfile -t INSTANCES < <( playerctl -l )
-        for INSTANCE in "${INSTANCES[@]}"; do
-            if [[ ! " ${TRACK_CHG_EXCLUDE[@]} " =~ " ${INSTANCE} " ]]; then
-                playerctl -p "${INSTANCE}" stop
+        get_priority "playing" | while read -r instance; do
+            if playerctl -p "$instance" "$OPERATION" 2> /dev/null; then
+                return 0
             fi
         done
     fi
+    return 1
 }
 
-function chg_track() {
-    # check if anyone's playing
-    mapfile -t P_INST < <( get_priority "$( is_anyone_playing )" )
-    if [[ "${#P_INST[@]}" -eq 1 ]] && [[ ! " ${TRACK_CHG_EXCLUDE[@]} " =~ " ${P_INST[0]} " ]]; then
-        playerctl -p "${INST}" $1
+# Changes track on specified players.
+#
+# Arguments:
+#   $1 - Direction to change track ("next" or "previous")
+change_track() {
+    get_priority "playing" | while read -r instance; do
+        case " $TRACK_CHG_EXCLUDE " in
+            *" $instance "*) continue ;;
+        esac
+        if playerctl -p "$instance" "$1" 2> /dev/null; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Changes volume on players by priority.
+#
+# Arguments:
+#   $1 - Volume change (e.g. +5, -10, 70)
+change_volume() {
+    # Get numeric value and convert to decimal
+    case "$1" in
+        +*) NUM="${1#+}"; SUFFIX="+";;
+        -*) NUM="${1#-}"; SUFFIX="-";;
+        *) NUM="$1"; SUFFIX="";;
+    esac
+    ARG="$(printf "%.2f" "$(echo "scale=2; $NUM/100" | bc)")$SUFFIX"
+
+    get_priority | while read -r instance; do
+        case " $VOL_CHG_EXCLUDE " in
+            *" $instance "*) continue ;;
+        esac
+        if playerctl -p "$instance" volume "$ARG" 2> /dev/null; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Seeks in media by priority.
+#
+# Arguments:
+#   $1 - Position change in seconds (e.g. +10, -30)
+seek_position() {
+    # Convert +N to N+ and -N to N- for playerctl
+    case "$1" in
+        +*) ARG="${1#+}+" ;;
+        -*) ARG="${1#-}-" ;;
+        *) ARG="$1" ;;
+    esac
+
+    get_priority | while read -r instance; do
+        case " $POS_CHG_EXCLUDE " in
+            *" $instance "*) continue ;;
+        esac
+        if playerctl -p "$instance" position "$ARG" 2> /dev/null; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Gets current playback information from preferred player.
+#
+# Arguments:
+#   $1 - Optional format string for metadata
+#   $2 - Optional "follow" flag for continuous updates
+#
+# Outputs:
+#   Writes playback information to stdout.
+get_info() {
+    FORMAT_STRING="$1"
+    FOLLOW_MODE="$2"
+
+    PREFERRED_PLAYER=$(get_priority | head -n1)
+    [ -z "$PREFERRED_PLAYER" ] && {
+        printf "No players available\n"
+        return 1
+    }
+
+    if [ -z "$FORMAT_STRING" ]; then
+        FORMAT_STRING='Player: {{playerInstance}}
+Status: {{status}}
+Title: {{title}}
+Artist: {{artist}}
+Album: {{album}}'
+    fi
+
+    if [ "$FOLLOW_MODE" = "follow" ]; then
+        playerctl -p "$PREFERRED_PLAYER" -F metadata -f "$FORMAT_STRING" 2> /dev/null
     else
-        playerctl -p "$( get_priority | head -1 )" $1
+        playerctl -p "$PREFERRED_PLAYER" metadata -f "$FORMAT_STRING" 2> /dev/null
     fi
 }
 
-function seek() {
-    # check if anyone's playing
-    mapfile -t P_INST < <( is_anyone_playing )
-    if [[ "${#P_INST[@]}" -eq 1 ]]; then
-        playerctl -p "${INST}" position $1
-    else
-        playerctl -p "$( get_priority | head -1 )" position $1
+# Toggles playback state on prioritized player.
+#
+# Outputs:
+#   Returns 0 on success, 1 on failure.
+toggle_playback() {
+    PREFERRED_PLAYER=$(get_priority | head -n1)
+    [ -z "$PREFERRED_PLAYER" ] && return 1
+
+    if playerctl -p "$PREFERRED_PLAYER" play-pause 2> /dev/null; then
+        return 0
     fi
+    return 1
 }
 
-function get_state() {
-    PRIO_PLAYER="$( get_priority "$( is_anyone_playing )" | head -1 )"
-    echo "$PRIO_PLAYER"
-    playerctl -p "$PRIO_PLAYER" metadata -f "{{status}}|{{title}}|{{artist}}|{{album}}" | tr '|' '\n'
+# Main entry point that processes command-line arguments.
+#
+# Arguments:
+#   $1 - Operation to perform
+#   $2 - Optional argument for operations that need it
+main() {
+    case $1 in
+        list)
+            get_priority
+            ;;
+        play)
+            control_playback "play"
+            ;;
+        stop)
+            control_playback "stop"
+            ;;
+        stopall)
+            control_playback "stop" "all"
+            ;;
+        pause)
+            control_playback "pause"
+            ;;
+        pauseall)
+            control_playback "pause" "all"
+            ;;
+        toggle)
+            toggle_playback
+            ;;
+        next)
+            change_track "next"
+            ;;
+        prev)
+            change_track "previous"
+            ;;
+        info)
+            get_info "$2"
+            ;;
+        continuousinfo)
+            get_info "$2" "follow"
+            ;;
+        volume)
+            [ -z "$2" ] && {
+                printf "Error: Volume change required\n" >&2
+                exit 1
+            }
+            change_volume "$2"
+            ;;
+        seek)
+            [ -z "$2" ] && {
+                printf "Error: Seek position required\n" >&2
+                exit 1
+            }
+            seek_position "$2"
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
 }
 
-case $1 in
-    toggle) toggle; exit 0;;
-    stop) stop_pb; exit 0;;
-    stopall) stop_pb "all"; exit 0;;
-    next) chg_track "next"; exit 0;;
-    prev) chg_track "previous"; exit 0;;
-    seek) seek "$2"; exit 0;;
-    get_state) get_state; exit 0;;
-    *) echo "Unknown operation: $1"; usage; exit 1;;
-esac
+main "$@"

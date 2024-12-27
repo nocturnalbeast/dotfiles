@@ -23,7 +23,7 @@ case "$1" in
         # reconfigure, assuming settings were modified outside of this script
         configure
         # pause music player and notifications
-        CURRENT_PLAYER_STATE="$( media-control get_state | sed '2q;d' )"
+        CURRENT_PLAYER_STATE="$(media-control info '{{status}}')"
         if [ "$CURRENT_PLAYER_STATE" = "Playing" ]; then
             media-control toggle
         fi

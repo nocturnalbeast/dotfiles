@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-playerctl metadata -f "{{status}} {{$1}}" --follow 2>/dev/null | while IFS= read -r EVENT; do
-    echo -e "$EVENT" | cut -f 2- -d " "
-done
