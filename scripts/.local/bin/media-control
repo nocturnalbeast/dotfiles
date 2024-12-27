@@ -7,6 +7,13 @@ PRIORITY="mopidy DeaDBeeF mpv"
 TRACK_CHG_EXCLUDE="mpv"
 VOL_CHG_EXCLUDE=""
 POS_CHG_EXCLUDE=""
+CACHE_TIMEOUT=180
+if [ -n "$XDG_RUNTIME_DIR" ]; then
+    CACHE_DIR="$XDG_RUNTIME_DIR"
+else
+    CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}"
+fi
+CACHE_FILE="$CACHE_DIR/media-control-recent"
 
 usage() {
     cat << EOF
@@ -16,21 +23,21 @@ A MPRIS-based media playback script.
 
 Operations:
     list            List available players ordered by priority
+    toggle          Toggle play/pause on prioritized player
     play            Play media on the highest priority available player
-    stop            Stop currently playing player(s)
-    stopall         Stop all available players
     pause           Pause currently playing player(s)
     pauseall        Pause all available players
-    toggle          Toggle play/pause on prioritized player
+    stop            Stop currently playing player(s)
+    stopall         Stop all available players
     next            Skip to next track on playing player(s)
     prev            Skip to previous track on playing player(s)
+    volume          Change volume by ARGUMENT (e.g. +5, -10, 70)
+    seek            Seek by ARGUMENT (e.g. +10, -30)
+                    Format: [+-]TIME where TIME is in seconds
     info            Show current playback information
                     If ARGUMENT is provided, use it for metadata formatting
     continuousinfo  Follow playback information with live updates
                     If ARGUMENT is provided, use it for metadata formatting
-    volume          Change volume by ARGUMENT (e.g. +5, -10, 70)
-    seek            Seek by ARGUMENT (e.g. +10, -30)
-                    Format: [+-]TIME where TIME is in seconds
 EOF
 }
 
@@ -120,6 +127,48 @@ get_priority() {
     printf "%s\n" "$RESULT" | tr -s '|' '\n' | sed '/^$/d'
 }
 
+# Saves player name to cache file.
+#
+# Arguments:
+#   $1 - Player name to save
+#
+# Outputs:
+#   Returns 0 on success, 1 on failure.
+set_recency_cache() {
+    playerctl -l 2> /dev/null | grep -q "^$1$" || {
+        printf "Error: Player '%s' not found\n" "$1" >&2
+        return 1
+    }
+    mkdir -p "$(dirname "$CACHE_FILE")" || {
+        printf "Error: Could not create cache directory\n" >&2
+        return 1
+    }
+    printf "%s %s" "$1" "$(date +%s)" > "$CACHE_FILE" || {
+        printf "Error: Could not write to cache file\n" >&2
+        return 1
+    }
+    return 0
+}
+
+# Gets player name from cache file if within timeout.
+#
+# Outputs:
+#   Writes player name to stdout if cache is valid.
+get_recency_cache() {
+    if [ -f "$CACHE_FILE" ]; then
+        CURRENT_TIME=$(date +%s)
+        CACHED_TIME=$(cut -f2 -d " " "$CACHE_FILE")
+        TIME_DIFF=$(expr "$CURRENT_TIME" - "$CACHED_TIME")
+        if [ "$TIME_DIFF" -lt "$CACHE_TIMEOUT" ]; then
+            playerctl -l 2> /dev/null | grep -q "^$(cut -f1 -d " " "$CACHE_FILE")$" || {
+                rm -f "$CACHE_FILE"
+                return
+            }
+            cut -f1 -d " " "$CACHE_FILE"
+        fi
+    fi
+}
+
 # Controls playback state on specified players.
 #
 # Arguments:
@@ -129,10 +178,20 @@ control_playback() {
     OPERATION="$1"
     ALL_FLAG="$2"
 
+    # Try to get player from cache
+    PREFERRED_PLAYER=$(get_recency_cache)
+    [ -n "$PREFERRED_PLAYER" ] && {
+        if playerctl -p "$PREFERRED_PLAYER" "$OPERATION" 2> /dev/null; then
+            set_recency_cache "$PREFERRED_PLAYER"
+            return 0
+        fi
+    }
+
     # For play operation, try each player in priority order
     if [ "$OPERATION" = "play" ]; then
         get_priority | while read -r instance; do
             if playerctl -p "$instance" play 2> /dev/null; then
+                set_recency_cache "$instance"
                 return 0
             fi
         done
@@ -147,9 +206,26 @@ control_playback() {
     else
         get_priority "playing" | while read -r instance; do
             if playerctl -p "$instance" "$OPERATION" 2> /dev/null; then
+                set_recency_cache "$instance"
                 return 0
             fi
         done
+    fi
+    return 1
+}
+
+# Toggles playback state on prioritized player.
+#
+# Outputs:
+#   Returns 0 on success, 1 on failure.
+toggle_playback() {
+    PREFERRED_PLAYER=$(get_recency_cache)
+    [ -z "$PREFERRED_PLAYER" ] && PREFERRED_PLAYER=$(get_priority | head -n1)
+    [ -z "$PREFERRED_PLAYER" ] && return 1
+
+    if playerctl -p "$PREFERRED_PLAYER" play-pause 2> /dev/null; then
+        set_recency_cache "$PREFERRED_PLAYER"
+        return 0
     fi
     return 1
 }
@@ -159,11 +235,20 @@ control_playback() {
 # Arguments:
 #   $1 - Direction to change track ("next" or "previous")
 change_track() {
+    PREFERRED_PLAYER=$(get_recency_cache)
+    [ -n "$PREFERRED_PLAYER" ] && {
+        if playerctl -p "$PREFERRED_PLAYER" "$1" 2> /dev/null; then
+            set_recency_cache "$PREFERRED_PLAYER"
+            return 0
+        fi
+    }
+
     get_priority "playing" | while read -r instance; do
         case " $TRACK_CHG_EXCLUDE " in
             *" $instance "*) continue ;;
         esac
         if playerctl -p "$instance" "$1" 2> /dev/null; then
+            set_recency_cache "$instance"
             return 0
         fi
     done
@@ -177,17 +262,35 @@ change_track() {
 change_volume() {
     # Get numeric value and convert to decimal
     case "$1" in
-        +*) NUM="${1#+}"; SUFFIX="+";;
-        -*) NUM="${1#-}"; SUFFIX="-";;
-        *) NUM="$1"; SUFFIX="";;
+        +*)
+            NUM="${1#+}"
+            SUFFIX="+"
+            ;;
+        -*)
+            NUM="${1#-}"
+            SUFFIX="-"
+            ;;
+        *)
+            NUM="$1"
+            SUFFIX=""
+            ;;
     esac
     ARG="$(printf "%.2f" "$(echo "scale=2; $NUM/100" | bc)")$SUFFIX"
+
+    PREFERRED_PLAYER=$(get_recency_cache)
+    [ -n "$PREFERRED_PLAYER" ] && {
+        if playerctl -p "$PREFERRED_PLAYER" volume "$ARG" 2> /dev/null; then
+            set_recency_cache "$PREFERRED_PLAYER"
+            return 0
+        fi
+    }
 
     get_priority | while read -r instance; do
         case " $VOL_CHG_EXCLUDE " in
             *" $instance "*) continue ;;
         esac
         if playerctl -p "$instance" volume "$ARG" 2> /dev/null; then
+            set_recency_cache "$instance"
             return 0
         fi
     done
@@ -206,11 +309,20 @@ seek_position() {
         *) ARG="$1" ;;
     esac
 
+    PREFERRED_PLAYER=$(get_recency_cache)
+    [ -n "$PREFERRED_PLAYER" ] && {
+        if playerctl -p "$PREFERRED_PLAYER" position "$ARG" 2> /dev/null; then
+            set_recency_cache "$PREFERRED_PLAYER"
+            return 0
+        fi
+    }
+
     get_priority | while read -r instance; do
         case " $POS_CHG_EXCLUDE " in
             *" $instance "*) continue ;;
         esac
         if playerctl -p "$instance" position "$ARG" 2> /dev/null; then
+            set_recency_cache "$instance"
             return 0
         fi
     done
@@ -229,7 +341,8 @@ get_info() {
     FORMAT_STRING="$1"
     FOLLOW_MODE="$2"
 
-    PREFERRED_PLAYER=$(get_priority | head -n1)
+    PREFERRED_PLAYER=$(get_recency_cache)
+    [ -z "$PREFERRED_PLAYER" ] && PREFERRED_PLAYER=$(get_priority | head -n1)
     [ -z "$PREFERRED_PLAYER" ] && {
         printf "No players available\n"
         return 1
@@ -250,20 +363,6 @@ Album: {{album}}'
     fi
 }
 
-# Toggles playback state on prioritized player.
-#
-# Outputs:
-#   Returns 0 on success, 1 on failure.
-toggle_playback() {
-    PREFERRED_PLAYER=$(get_priority | head -n1)
-    [ -z "$PREFERRED_PLAYER" ] && return 1
-
-    if playerctl -p "$PREFERRED_PLAYER" play-pause 2> /dev/null; then
-        return 0
-    fi
-    return 1
-}
-
 # Main entry point that processes command-line arguments.
 #
 # Arguments:
@@ -274,14 +373,11 @@ main() {
         list)
             get_priority
             ;;
+        toggle)
+            toggle_playback
+            ;;
         play)
             control_playback "play"
-            ;;
-        stop)
-            control_playback "stop"
-            ;;
-        stopall)
-            control_playback "stop" "all"
             ;;
         pause)
             control_playback "pause"
@@ -289,20 +385,17 @@ main() {
         pauseall)
             control_playback "pause" "all"
             ;;
-        toggle)
-            toggle_playback
+        stop)
+            control_playback "stop"
+            ;;
+        stopall)
+            control_playback "stop" "all"
             ;;
         next)
             change_track "next"
             ;;
         prev)
             change_track "previous"
-            ;;
-        info)
-            get_info "$2"
-            ;;
-        continuousinfo)
-            get_info "$2" "follow"
             ;;
         volume)
             [ -z "$2" ] && {
@@ -317,6 +410,12 @@ main() {
                 exit 1
             }
             seek_position "$2"
+            ;;
+        info)
+            get_info "$2"
+            ;;
+        continuousinfo)
+            get_info "$2" "follow"
             ;;
         *)
             usage
