@@ -1,44 +1,183 @@
 #!/usr/bin/env sh
 
-TERMINAL_LIST="x-terminal-emulator mate-terminal gnome-terminal terminator xfce4-terminal urxvt rxvt termit Eterm aterm uxterm xterm roxterm termite lxterminal terminology st qterminal lilyterm tilix terminix konsole kitty guake tilda alacritty hyper"
+# A script to launch a terminal emulator with automatic detection and prioritization.
 
-get_a_terminal() {
-    A_TERMINAL=""
-    # if the TERMINAL environment variable is set and it is a valid executable, then select it
-    if [ -n "$TERMINAL" ]; then
-        if command -v "$TERMINAL" > /dev/null 2>&1; then
-            >&2 echo "TERMINAL environment variable found!"
-            A_TERMINAL="$TERMINAL"
-        fi
-    fi
-    # if this script is being executed in a terminal, get the process name and use it to select
-    if [ "$A_TERMINAL" = "" ]; then
-        if [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
-            SHELL_PPID="$( ps -p "$PPID" -o ppid= | tr -d " " )"
-            SHELL_PPNAME="$( ps -p "$SHELL_PPID" -o comm= )"
-            if echo "$TERMINAL_LIST" | grep -q "$SHELL_PPNAME" 2>/dev/null; then
-                >&2 echo "Parent terminal found!"
-                A_TERMINAL="$SHELL_PPNAME"
-            fi
-        fi
-    fi
-    # if we still don't have a terminal name by now, get the first terminal that's present from the terminal list and select it
-    if [ "$A_TERMINAL" = "" ]; then
-        for TERMINAL_ENTRY in $TERMINAL_LIST; do
-            if command -v "$TERMINAL_ENTRY" > /dev/null 2>&1; then
-                A_TERMINAL="$TERMINAL_ENTRY"
-                break
-            fi
-        done
-    fi
-    # return the selected terminal
-    echo "$A_TERMINAL"
+# Global configuration
+# Terminals are listed in order of preference for each display server
+WAYLAND_TERMINALS="\
+foot \
+kitty \
+alacritty \
+wezterm \
+termite"
+
+X11_TERMINALS="\
+x-terminal-emulator \
+mate-terminal \
+gnome-terminal \
+terminator \
+xfce4-terminal \
+urxvt \
+rxvt \
+xterm \
+uxterm \
+aterm \
+Eterm \
+roxterm \
+lxterminal \
+terminology \
+st \
+qterminal \
+lilyterm \
+tilix \
+terminix \
+konsole \
+guake \
+tilda \
+hyper"
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [ARGUMENTS]
+
+A script to launch a terminal emulator with automatic detection.
+Any provided arguments will be passed to the terminal command.
+
+Detection order:
+    1. \$TERMINAL environment variable if set and valid
+    2. Parent terminal if script is run from a terminal
+    3. First available terminal from display server specific list
+       (Falls back to X11 terminals under Wayland if needed)
+EOF
 }
 
-SELECTED_TERMINAL=$( get_a_terminal )
-if [ "$SELECTED_TERMINAL" = "" ]; then
-    >&2 echo "No known terminal!"
-else
-    echo "Launching terminal: $SELECTED_TERMINAL"
-    "$SELECTED_TERMINAL" $@
-fi
+# Detects if running under Wayland.
+#
+# Returns:
+#   0 if running under Wayland, 1 otherwise
+is_wayland() {
+    [ -n "$WAYLAND_DISPLAY" ]
+}
+
+# Gets the appropriate terminal list based on display server.
+#
+# Outputs:
+#   Writes space-separated list of terminals to stdout.
+get_terminal_list() {
+    if is_wayland; then
+        echo "$WAYLAND_TERMINALS"
+    else
+        echo "$X11_TERMINALS"
+    fi
+}
+
+# Detects if a command exists and is executable.
+#
+# Arguments:
+#   $1 - Command to check
+#
+# Returns:
+#   0 if command exists and is executable, 1 otherwise
+command_exists() {
+    command -v "$1" > /dev/null 2>&1
+}
+
+# Gets the parent terminal if script is run from a terminal.
+#
+# Outputs:
+#   Writes parent terminal name to stdout if found, empty string otherwise.
+get_parent_terminal() {
+    if [ -n "$TERM" ] && [ "$TERM" != "dumb" ]; then
+        SHELL_PPID="$(ps -p "$PPID" -o ppid= | tr -d " ")"
+        SHELL_PPNAME="$(ps -p "$SHELL_PPID" -o comm=)"
+        # Check against all possible terminals
+        if echo "$WAYLAND_TERMINALS $X11_TERMINALS" | grep -q "$SHELL_PPNAME" 2> /dev/null; then
+            echo "$SHELL_PPNAME"
+        fi
+    fi
+}
+
+# Gets the first available terminal from a list.
+#
+# Arguments:
+#   $1 - Space-separated list of terminals to check
+#
+# Outputs:
+#   Writes first available terminal name to stdout if found, empty string otherwise.
+get_first_available() {
+    for terminal in $1; do
+        if command_exists "$terminal"; then
+            echo "$terminal"
+            return 0
+        fi
+    done
+    echo ""
+}
+
+# Detects which terminal to use based on priority.
+#
+# Outputs:
+#   Writes selected terminal name to stdout.
+#   Returns 0 if a terminal is found, 1 otherwise.
+detect_terminal() {
+    # Check $TERMINAL environment variable
+    if [ -n "$TERMINAL" ] && command_exists "$TERMINAL"; then
+        echo "Using \$TERMINAL: $TERMINAL" >&2
+        echo "$TERMINAL"
+        return 0
+    fi
+
+    # Check parent terminal
+    PARENT_TERMINAL=$(get_parent_terminal)
+    if [ -n "$PARENT_TERMINAL" ]; then
+        echo "Using parent terminal: $PARENT_TERMINAL" >&2
+        echo "$PARENT_TERMINAL"
+        return 0
+    fi
+
+    # Get display server specific terminal list
+    TERMINAL_LIST=$(get_terminal_list)
+
+    # Check terminal list
+    FOUND_TERMINAL=$(get_first_available "$TERMINAL_LIST")
+    if [ -n "$FOUND_TERMINAL" ]; then
+        if is_wayland; then
+            echo "Using Wayland terminal: $FOUND_TERMINAL" >&2
+        else
+            echo "Using X11 terminal: $FOUND_TERMINAL" >&2
+        fi
+        echo "$FOUND_TERMINAL"
+        return 0
+    fi
+
+    # If no Wayland terminal found under Wayland, try X11 terminals as fallback
+    if is_wayland && [ -z "$FOUND_TERMINAL" ]; then
+        FOUND_TERMINAL=$(get_first_available "$X11_TERMINALS")
+        if [ -n "$FOUND_TERMINAL" ]; then
+            echo "Using X11 terminal under Wayland: $FOUND_TERMINAL" >&2
+            echo "$FOUND_TERMINAL"
+            return 0
+        fi
+    fi
+
+    echo "No terminal emulator found!" >&2
+    return 1
+}
+
+# Main entry point that processes command-line arguments.
+#
+# Arguments:
+#   $@ - Arguments to pass to the terminal command
+main() {
+    case "$1" in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+    esac
+
+    SELECTED_TERMINAL=$(detect_terminal) || exit 1
+    exec "$SELECTED_TERMINAL" "$@"
+}
+
+main "$@"
