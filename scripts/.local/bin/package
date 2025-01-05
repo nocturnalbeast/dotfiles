@@ -15,6 +15,7 @@ Operations:
   remove,  r    Remove specified package(s).
   clean,   c    Clean package cache and remove orphaned packages.
   desc,    d    Show detailed information about specified package(s).
+  list,    l    List installed packages.
 EOF
 }
 
@@ -66,6 +67,7 @@ get_package_manager_command() {
     DEBIAN_REMOVE_CMD="apt-get --purge remove"
     DEBIAN_CLEAN_CMD="apt-get autoremove; apt-get autoclean"
     DEBIAN_DESC_CMD="apt-cache show"
+    DEBIAN_LIST_CMD="dpkg -l"
 
     # Red Hat-based distro commands (DNF)
     REDHAT_INSTALL_CMD="dnf install"
@@ -74,6 +76,7 @@ get_package_manager_command() {
     REDHAT_REMOVE_CMD="dnf remove"
     REDHAT_CLEAN_CMD="dnf clean all; dnf autoremove"
     REDHAT_DESC_CMD="dnf info"
+    REDHAT_LIST_CMD="dnf list installed"
 
     # SUSE-based distro commands
     SUSE_INSTALL_CMD="zypper install"
@@ -82,6 +85,7 @@ get_package_manager_command() {
     SUSE_REMOVE_CMD="zypper remove"
     SUSE_CLEAN_CMD="zypper clean"
     SUSE_DESC_CMD="zypper info"
+    SUSE_LIST_CMD="zypper packages --installed-only"
 
     # Arch-based distro commands
     ARCH_CMD="pacman"
@@ -102,6 +106,7 @@ get_package_manager_command() {
     ARCH_REMOVE_CMD="$ARCH_CMD -Rsn --color auto"
     ARCH_CLEAN_CMD="$ARCH_CMD -Sc --color auto"
     ARCH_DESC_CMD="$ARCH_CMD -Q --info --color auto"
+    ARCH_LIST_CMD="$ARCH_CMD -Q --color auto"
 
     # Void Linux commands
     VOID_INSTALL_CMD="xbps-install -S"
@@ -110,6 +115,7 @@ get_package_manager_command() {
     VOID_REMOVE_CMD="xbps-remove -R"
     VOID_CLEAN_CMD="xbps-remove -Oo"
     VOID_DESC_CMD="xbps-query -S"
+    VOID_LIST_CMD="xbps-query -l"
 
     case $ID in
         "ubuntu" | "debian" | "raspbian" | "linuxmint")
@@ -157,6 +163,9 @@ get_package_manager_command() {
             "desc")
                 CMD_VAR="${PKG_TYPE}_DESC_CMD"
                 ;;
+            "list")
+                CMD_VAR="${PKG_TYPE}_LIST_CMD"
+                ;;
         esac
         eval "CMD=\$$CMD_VAR"
         SU_CMD=$(detect_sudo_binary "$NEEDS_SU")
@@ -201,6 +210,10 @@ main() {
         "desc" | "d")
             CMD=$(get_package_manager_command "desc")
             $CMD $@
+            ;;
+        "list" | "l")
+            CMD=$(get_package_manager_command "list")
+            $CMD
             ;;
         *)
             usage
