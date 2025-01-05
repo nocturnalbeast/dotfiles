@@ -22,8 +22,8 @@ setbg &
 # launch compositor
 picom --experimental-backends &
 # launch notification daemon
-if command -v dunst dunst-start &>/dev/null; then
-    dunst-start
+if command -v notification &>/dev/null; then
+    notification start
 fi
 # launch music player server
 if command -v mopidy &>/dev/null; then

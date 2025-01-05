@@ -1,0 +1,160 @@
+#!/usr/bin/env sh
+
+# A script to manage notification daemons with automatic detection.
+
+# Global configuration
+WAYLAND_DAEMONS="mako"
+X11_DAEMONS="dunst notify-osd"
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") OPERATION [ARGUMENTS]
+
+A script to manage notification daemons with automatic detection.
+Any additional arguments will be passed to the daemon on start.
+
+Operations:
+    start   Start the notification daemon
+    stop    Stop all notification daemons
+    -h      Show this help message
+
+Detection order:
+    1. Under Wayland: mako
+    2. Under X11: dunst, notify-osd
+EOF
+}
+
+# Detects if running under Wayland.
+#
+# Returns:
+#   0 if running under Wayland, 1 otherwise
+is_wayland() {
+    [ -n "$WAYLAND_DISPLAY" ]
+}
+
+# Gets the appropriate daemon list based on display server.
+#
+# Outputs:
+#   Writes space-separated list of daemons to stdout.
+get_daemon_list() {
+    if is_wayland; then
+        echo "$WAYLAND_DAEMONS"
+    else
+        echo "$X11_DAEMONS"
+    fi
+}
+
+# Detects if a command exists and is executable.
+#
+# Arguments:
+#   $1 - Command to check
+#
+# Returns:
+#   0 if command exists and is executable, 1 otherwise
+command_exists() {
+    command -v "$1" > /dev/null 2>&1
+}
+
+# Gets the first available daemon from a list.
+#
+# Arguments:
+#   $1 - Space-separated list of daemons to check
+#
+# Outputs:
+#   Writes first available daemon name to stdout if found, empty string otherwise.
+get_first_available() {
+    for daemon in $1; do
+        if command_exists "$daemon"; then
+            echo "$daemon"
+        fi
+    done
+    echo ""
+}
+
+# Terminates existing notification daemons.
+#
+# Arguments:
+#   $1 - Space-separated list of daemons to terminate
+terminate_daemons() {
+    USER_ID=$(id -u)
+    for daemon in $1; do
+        if command_exists pkill; then
+            if pkill "$daemon" 2> /dev/null; then
+                echo "Stopped $daemon" >&2
+            fi
+        else
+            FOUND_DAEMON=0
+            ps -e -o pid,cmd | sed 1d | {
+                while read -r pid cmd; do
+                    case "$cmd" in
+                        *"$daemon"*)
+                            if kill "$pid" 2> /dev/null; then
+                                FOUND_DAEMON=1
+                            fi
+                            ;;
+                    esac
+                done
+                [ "$FOUND_DAEMON" = 1 ] && echo "Stopped $daemon" >&2
+            }
+        fi
+        while pgrep -u "$USER_ID" -x "$daemon" > /dev/null; do sleep 1; done
+    done
+}
+
+# Starts the notification daemon.
+#
+# Arguments:
+#   $@ - Arguments to pass to the daemon
+start_daemon() {
+    DAEMON_LIST=$(get_daemon_list)
+
+    SELECTED_DAEMON=$(get_first_available "$DAEMON_LIST")
+    if [ -z "$SELECTED_DAEMON" ]; then
+        echo "No notification daemon found!" >&2
+        return 1
+    fi
+
+    terminate_daemons "$WAYLAND_DAEMONS $X11_DAEMONS"
+
+    if is_wayland; then
+        echo "Starting Wayland notification daemon: $SELECTED_DAEMON" >&2
+    else
+        echo "Starting X11 notification daemon: $SELECTED_DAEMON" >&2
+    fi
+    "$SELECTED_DAEMON" "$@" &
+}
+
+# Stops all notification daemons.
+stop_daemons() {
+    echo "Stopping all notification daemons..." >&2
+    terminate_daemons "$WAYLAND_DAEMONS $X11_DAEMONS"
+    echo "All notification daemons stopped." >&2
+}
+
+# Main entry point that processes command-line arguments.
+#
+# Arguments:
+#   $1 - Operation to perform (start/stop)
+#   $@ - Additional arguments for start operation
+main() {
+    case "$1" in
+        start)
+            shift
+            start_daemon "$@"
+            ;;
+        stop)
+            stop_daemons
+            ;;
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Error: Invalid operation '$1'" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
