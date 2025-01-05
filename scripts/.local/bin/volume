@@ -1,0 +1,249 @@
+#!/usr/bin/env sh
+
+# A script to control audio volume using various backends with notifications.
+
+# Global configuration
+NOTIFICATION_ID=4444
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+ICON_MUTED="$CONFIG_DIR/dunst/icons/volume_muted.svg"
+ICON_LOW="$CONFIG_DIR/dunst/icons/volume_low.svg"
+ICON_MEDIUM="$CONFIG_DIR/dunst/icons/volume_medium.svg"
+ICON_HIGH="$CONFIG_DIR/dunst/icons/volume_high.svg"
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") OPERATION [VALUE]
+
+A script to control audio volume with notifications.
+
+Operations:
+    increase [step]  Increase volume by step% (default: 5%)
+    decrease [step]  Decrease volume by step% (default: 5%)
+    set <value>     Set volume to value% (0-100)
+    mute            Toggle mute
+    get             Get current volume level
+
+Arguments:
+    step            Step size percentage (1-100, default: 5)
+    value           Volume percentage (0-100)
+EOF
+}
+
+# Detects which volume control command to use.
+#
+# Outputs:
+#   Writes the detected command name to stdout.
+#   Returns 0 if a command is found, 1 if no command is found.
+detect_volume_command() {
+    if command -v wpctl > /dev/null 2>&1; then
+        echo "wpctl"
+        return 0
+    elif command -v pw-volume > /dev/null 2>&1; then
+        echo "pw-volume"
+        return 0
+    elif command -v pactl > /dev/null 2>&1; then
+        echo "pactl"
+        return 0
+    else
+        echo "Error: No supported volume control command found" >&2
+        echo "Please install one of: wpctl, pw-volume, pactl" >&2
+        return 1
+    fi
+}
+
+# Gets the current volume level and mute state.
+#
+# Arguments:
+#   $1 - The volume command to use
+#
+# Outputs:
+#   Writes "volume muted" if muted, or just "volume" if not
+get_volume() {
+    case "$1" in
+        wpctl)
+            VOLUME=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print int($2 * 100)}')
+            [ "$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -c MUTED)" -eq 1 ] && echo "$VOLUME muted" || echo "$VOLUME"
+            ;;
+        pw-volume)
+            VOLUME=$(pw-volume status | awk -F'[][]' '/front-left:/ {print int($2)}')
+            [ "$(pw-volume status | grep -c MUTED)" -eq 1 ] && echo "$VOLUME muted" || echo "$VOLUME"
+            ;;
+        pactl)
+            SINK=$(pactl get-default-sink)
+            VOLUME=$(pactl get-sink-volume "$SINK" | awk '{print $5}' | tr -d '%')
+            [ "$(pactl get-sink-mute "$SINK" | grep -c yes)" -eq 1 ] && echo "$VOLUME muted" || echo "$VOLUME"
+            ;;
+    esac
+}
+
+# Gets the appropriate icon based on volume level and mute state.
+#
+# Arguments:
+#   $1 - Current volume level
+#   $2 - Mute state ("muted" or empty)
+#
+# Outputs:
+#   Writes path to appropriate icon to stdout.
+get_icon() {
+    VOLUME="$1"
+    [ -n "$2" ] && {
+        echo "$ICON_MUTED"
+        return
+    }
+    if [ "$VOLUME" -lt 30 ]; then
+        echo "$ICON_LOW"
+    elif [ "$VOLUME" -lt 70 ]; then
+        echo "$ICON_MEDIUM"
+    else
+        echo "$ICON_HIGH"
+    fi
+}
+
+# Sends a notification with the current volume level.
+#
+# Arguments:
+#   $1 - Current volume info (volume and mute state)
+send_notification() {
+    VOLUME_INFO="$1"
+    VOLUME="${VOLUME_INFO%% *}"
+    MUTED="${VOLUME_INFO#* }"
+    [ "$MUTED" = "$VOLUME" ] && MUTED=""
+
+    case "$VOLUME_INFO" in
+        *muted*)
+            notify-send -i "$(get_icon "$VOLUME" "$MUTED")" -u low "Volume [Muted]" -h int:value:"$VOLUME" -r "$NOTIFICATION_ID"
+            ;;
+        *)
+            notify-send -i "$(get_icon "$VOLUME" "$MUTED")" -u low "Volume [$VOLUME%]" -h int:value:"$VOLUME" -r "$NOTIFICATION_ID"
+            ;;
+    esac
+}
+
+# Changes volume level.
+#
+# Arguments:
+#   $1 - The volume command to use
+#   $2 - Operation to perform ("increase", "decrease", "set", or "mute")
+#   $3 - Value percentage (1-100) for increase/decrease/set operations
+change_volume() {
+    VOLUME_CMD="$1"
+    OPERATION="$2"
+    VALUE="$3"
+
+    case "$VOLUME_CMD" in
+        wpctl)
+            case "$OPERATION" in
+                increase)
+                    wpctl set-volume @DEFAULT_AUDIO_SINK@ "$VALUE"%+
+                    ;;
+                decrease)
+                    wpctl set-volume @DEFAULT_AUDIO_SINK@ "$VALUE"%-
+                    ;;
+                set)
+                    wpctl set-volume @DEFAULT_AUDIO_SINK@ "$(echo "scale=2; $VALUE/100" | bc)"
+                    ;;
+                mute)
+                    wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+                    ;;
+            esac
+            ;;
+        pw-volume)
+            case "$OPERATION" in
+                increase)
+                    pw-volume change +"$VALUE"%
+                    ;;
+                decrease)
+                    pw-volume change -"$VALUE"%
+                    ;;
+                set)
+                    pw-volume set "$VALUE"%
+                    ;;
+                mute)
+                    pw-volume mute toggle
+                    ;;
+            esac
+            ;;
+        pactl)
+            SINK=$(pactl get-default-sink)
+            case "$OPERATION" in
+                increase)
+                    pactl set-sink-volume "$SINK" +"$VALUE"%
+                    ;;
+                decrease)
+                    pactl set-sink-volume "$SINK" -"$VALUE"%
+                    ;;
+                set)
+                    pactl set-sink-volume "$SINK" "$VALUE"%
+                    ;;
+                mute)
+                    pactl set-sink-mute "$SINK" toggle
+                    ;;
+            esac
+            ;;
+    esac
+
+    CURRENT_VOLUME=$(get_volume "$VOLUME_CMD")
+    send_notification "$CURRENT_VOLUME"
+}
+
+# Main entry point that processes command-line arguments.
+#
+# Arguments:
+#   $1 - Operation to perform
+#   $2 - Optional value (1-100)
+main() {
+    case "$1" in
+        increase | decrease | mute | get | set)
+            # Verify that we have a supported volume command
+            VOLUME_CMD=$(detect_volume_command)
+            if [ -z "$VOLUME_CMD" ]; then
+                exit 1
+            fi
+            ;;
+    esac
+
+    # Set default step size if not provided for increase/decrease
+    if [ "$1" = "increase" ] || [ "$1" = "decrease" ]; then
+        VALUE=${2:-5}
+    else
+        VALUE="$2"
+    fi
+
+    # Validate value for volume changes
+    if [ "$1" = "increase" ] || [ "$1" = "decrease" ] || [ "$1" = "set" ]; then
+        if ! [ "$VALUE" -eq "$VALUE" ] 2>/dev/null || [ "$VALUE" -lt 0 ] || [ "$VALUE" -gt 100 ]; then
+            echo "Error: Volume value must be a number between 0 and 100" >&2
+            usage >&2
+            exit 1
+        fi
+    fi
+
+    # Require value for set operation
+    if [ "$1" = "set" ] && [ -z "$VALUE" ]; then
+        echo "Error: Volume value is required for set operation" >&2
+        usage >&2
+        exit 1
+    fi
+
+    case "$1" in
+        increase | decrease | set)
+            change_volume "$VOLUME_CMD" "$1" "$VALUE"
+            ;;
+        mute)
+            change_volume "$VOLUME_CMD" mute
+            ;;
+        get)
+            get_volume "$VOLUME_CMD"
+            ;;
+        -h | --help)
+            usage
+            ;;
+        *)
+            echo "Error: Invalid operation '$1'" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

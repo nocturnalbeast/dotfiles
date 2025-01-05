@@ -96,15 +96,15 @@ super + shift + Print
 
 # decrease volume
 XF86AudioLowerVolume
-    change-volume down
+    volume down 10
 
 # increase volume
 XF86AudioRaiseVolume
-    change-volume up
+    volume up 10
 
 # toggle mute
 XF86AudioMute
-    change-volume mute
+    volume mute
 
 # play/pause
 XF86AudioPlay
