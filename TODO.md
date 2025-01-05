@@ -9,7 +9,6 @@ These are the things that are planned to be worked on or in progress right now:
  * tmux: add configuration as a fallback to kitty's multiplexing capabilities
  * castero: add configuration
  * scripts: implement scratchpad script
- * install: implement package installation scripts for distros in use
  * gtk: remove all theme files and replace them with oomox/themix config files and have the install/bootstrap script generate them on the fly
  * scripts: set unified metadata header for all scripts
  * scripts: unify code style for all scripts
@@ -31,7 +30,6 @@ These are the things that are planned to be worked on or in progress right now:
  * neovim: rewrite config in lua
  * neovim: rename top-level folder from `nvim` to `neovim`
  * zsh: add zinit-ices in `.zshrc` to add manpages to `$ZPFX`
- * dmenu: fix dmenu unified patch for use with latest release
  * gtk: add GTK4 configuration
  * scripts: add autoscaling/rendering script for wallpapers picked for xsecurelock
  * scripts: fix bspwm-move not moving focused window to empty monitor
