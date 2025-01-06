@@ -147,7 +147,7 @@ j                       { shift_y(-10)                         }
 <Control>k              { shift_y(50)                          }
 <Control>j              { shift_y(-50)                         }
 # set as background with control+b
-<Control>b              { command(setbg)                       }
+<Control>b              { command(background set)              }
 # get help with ?
 <question>              { command(menu-keybindings-pqiv)       }
 # commands to run some quick edits

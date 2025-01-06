@@ -1,0 +1,195 @@
+#!/usr/bin/env sh
+
+# A display server agnostic script to set and manage wallpapers.
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") OPERATION [OPTIONS]
+
+A display server agnostic script to set and manage wallpapers.
+
+Operations:
+    set   [PATH] [MODE]    Set wallpaper from PATH with optional MODE
+    random [DIR] [MODE]    Set random wallpaper from DIR with optional MODE
+    restore                Restore current wallpaper
+    -h, --help            Show this help message
+
+Modes:
+    fill        (default) Fill the screen, cropping if needed
+    center      Center the image
+    tile        Tile the image
+    stretch     Stretch to fit screen
+    maxaspect   Scale to fit screen maintaining aspect ratio
+EOF
+}
+
+# Detect if running under Wayland
+#
+# Returns:
+#   0 if running under Wayland, 1 otherwise
+is_wayland() {
+    [ -n "$WAYLAND_DISPLAY" ]
+}
+
+# Get the appropriate wallpaper setter command based on display server
+#
+# Arguments:
+#   $1 - Mode to set the wallpaper (fill/center/tile/stretch/maxaspect)
+#   $2 - Path to wallpaper image
+#
+# Outputs:
+#   Writes the wallpaper setter command to stdout
+get_wallpaper_setter() {
+    MODE="$1"
+    IMAGE="$2"
+
+    if is_wayland; then
+        if command -v swww > /dev/null 2>&1; then
+            # Start swww-daemon if not running
+            if ! pgrep -x swww-daemon > /dev/null; then
+                swww-daemon &
+                sleep 0.1  # Give daemon a moment to start
+            fi
+            SWWW_MODE="$(printf '%s' "$MODE" | sed 's/center/no/;s/fill/crop/;s/maxaspect/fit/;')"
+            echo "swww img $IMAGE --resize $SWWW_MODE --transition-duration 0.5"
+        elif command -v swaybg > /dev/null 2>&1; then
+            SWAY_MODE="$(printf '%s' "$MODE" | sed 's/maxaspect/fit/;')"
+            echo "swaybg -m $SWAY_MODE -i $IMAGE"
+        else
+            echo "No supported Wayland wallpaper setter found" >&2
+            return 1
+        fi
+    else
+        if command -v xwallpaper > /dev/null 2>&1; then
+            XWALL_MODE="$(printf '%s' "$MODE" | sed 's/fill/zoom/;s/maxaspect/maximize/')"
+            echo "xwallpaper --$XWALL_MODE $IMAGE"
+        elif command -v feh > /dev/null 2>&1; then
+            FEH_MODE="bg-$(printf '%s' "$MODE" | sed 's/maxaspect/max/;s/stretch/scale/')"
+            echo "feh --no-fehbg --$FEH_MODE $IMAGE"
+        elif command -v hsetroot > /dev/null 2>&1; then
+            HSET_MODE="$(printf '%s' "$MODE" | sed 's/fill/cover/;s/stretch/fill/;s/maxaspect/full/')"
+            echo "hsetroot -$HSET_MODE $IMAGE"
+        else
+            echo "No supported X11 wallpaper setter found" >&2
+            return 1
+        fi
+    fi
+}
+
+# Validate if the given mode is supported
+#
+# Arguments:
+#   $1 - Mode to validate
+#
+# Returns:
+#   0 if mode is valid, 1 otherwise
+is_valid_mode() {
+    case "$1" in
+        fill|center|tile|stretch|maxaspect) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Set wallpaper using the appropriate setter
+#
+# Arguments:
+#   $1 - Path to wallpaper image
+#   $2 - Mode to set the wallpaper (optional, defaults to fill)
+set_wallpaper() {
+    IMAGE="$1"
+    MODE="${2:-fill}"
+
+    if ! is_valid_mode "$MODE"; then
+        echo "Invalid mode: $MODE" >&2
+        echo "Supported modes: fill, center, tile, stretch, maxaspect" >&2
+        return 1
+    fi
+
+    if [ ! -r "$IMAGE" ]; then
+        echo "Image not found or not readable: $IMAGE" >&2
+        return 1
+    fi
+
+    if [ -h "$IMAGE" ]; then
+        IMAGE="$(readlink -f "$IMAGE")"
+    fi
+
+    mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/wm"
+    ln -sf "$IMAGE" "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_wallpaper"
+
+    CMD=$(get_wallpaper_setter "$MODE" "$IMAGE")
+    if [ $? -eq 0 ]; then
+        $CMD
+        notify-send -u low -i "$IMAGE" "Wallpaper changed" "$(basename "$IMAGE")"
+    fi
+}
+
+# Set random wallpaper from directory
+#
+# Arguments:
+#   $1 - Directory containing wallpapers
+#   $2 - Mode to set the wallpaper (optional, defaults to fill)
+set_random_wallpaper() {
+    DIR="$1"
+    MODE="${2:-fill}"
+
+    if [ ! -d "$DIR" ]; then
+        echo "Directory not found: $DIR" >&2
+        return 1
+    fi
+
+    IMAGE=$(find "$DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) | shuf -n 1)
+    if [ -z "$IMAGE" ]; then
+        echo "No images found in directory: $DIR" >&2
+        return 1
+    fi
+
+    set_wallpaper "$IMAGE" "$MODE"
+}
+
+# Restore current wallpaper
+restore_wallpaper() {
+    CURRENT="${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_wallpaper"
+    if [ -r "$CURRENT" ]; then
+        set_wallpaper "$CURRENT" "fill"
+    else
+        echo "No current wallpaper found at: $CURRENT" >&2
+        return 1
+    fi
+}
+
+# Main entry point
+main() {
+    case "$1" in
+        set)
+            shift
+            if [ $# -eq 0 ]; then
+                echo "Error: No image path provided" >&2
+                usage
+                exit 1
+            fi
+            set_wallpaper "$1" "$2"
+            ;;
+        random)
+            shift
+            if [ $# -eq 0 ]; then
+                echo "Error: No directory path provided" >&2
+                usage
+                exit 1
+            fi
+            set_random_wallpaper "$1" "$2"
+            ;;
+        restore)
+            restore_wallpaper
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
