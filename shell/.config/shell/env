@@ -22,7 +22,9 @@ export XDG_STATE_HOME=${XDG_STATE_HOME:="$HOME/.local/state"}
 export XDG_CACHE_HOME=${XDG_CACHE_HOME:="$HOME/.cache"}
 export XDG_CONFIG_HOME=${XDG_CONFIG_HOME:="$HOME/.config"}
 if [ -f "$XDG_CONFIG_HOME/user-dirs.dirs" ]; then
-    set -a; . "$XDG_CONFIG_HOME/user-dirs.dirs"; set +a
+    set -a
+    . "$XDG_CONFIG_HOME/user-dirs.dirs"
+    set +a
 fi
 
 # disable history for less command
@@ -56,7 +58,13 @@ export CARGO_HOME="$XDG_DATA_HOME/cargo"
 export PYTHONSTARTUP="$XDG_CONFIG_HOME/python/startup.py"
 export ANDROID_HOME="$XDG_DATA_HOME/android"
 export RUSTUP_HOME="$XDG_DATA_HOME/rustup"
-export CARGO_HOME="$XDG_DATA_HOME/cargo"
+export CUDA_CACHE_PATH="$XDG_CACHE_HOME/nv"
+export WINEPREFIX="$XDG_CONFIG_HOME/wine"
+
+# append rust binaries folder to $PATH
+if [ -d "$CARGO_HOME/bin" ]; then
+    export PATH=$CARGO_HOME/bin:$PATH
+fi
 
 # defining applications
 export EDITOR="nvim"
@@ -80,9 +88,9 @@ export DELTA_PAGER="$PAGER"
 export MANROFFOPT="-c"
 
 # LS_COLORS using vivid
-if type "vivid" > /dev/null; then
+if command -v vivid > /dev/null 2>&1; then
     if [ -f "$XDG_CONFIG_HOME/vivid/theme.yml" ]; then
-        export LS_COLORS="$( vivid generate "$XDG_CONFIG_HOME/vivid/theme.yml" )"
+        export LS_COLORS="$(vivid generate "$XDG_CONFIG_HOME/vivid/theme.yml")"
     fi
 fi
 
@@ -94,7 +102,7 @@ export CM_DIR="$XDG_RUNTIME_DIR"
 export CM_HISTLENGTH=5
 
 # if xsecurelock exists, define it's settings
-if type "xsecurelock" > /dev/null; then
+if command -v xsecurelock > /dev/null 2>&1; then
     export XSECURELOCK_AUTH="auth_x11"
     export XSECURELOCK_AUTH_BACKGROUND_COLOR="rgb:0d/0d/0d"
     export XSECURELOCK_AUTHPROTO="authproto_pam"
@@ -111,7 +119,7 @@ if type "xsecurelock" > /dev/null; then
     export XSECURELOCK_DISCARD_FIRST_KEYPRESS=1
     export XSECURELOCK_FONT="monospace:style=Bold:antialias=true"
     export XSECURELOCK_PASSWORD_PROMPT="cursor"
-    export XSECURELOCK_SAVER="$(which xsecurelock-screensaver)" 
+    export XSECURELOCK_SAVER="$(which xsecurelock-screensaver)"
     export XSECURELOCK_SHOW_DATETIME=0
     export XSECURELOCK_SHOW_USERNAME=0
     export XSECURELOCK_SHOW_HOSTNAME=0
