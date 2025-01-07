@@ -141,29 +141,23 @@ change_brightness() {
 #   $1 - Operation to perform
 #   $2 - Optional value (step size or target percentage)
 main() {
-    [ $# -eq 0 ] && {
-        usage
-        exit 1
-    }
-
-    OPERATION="$1"
-    BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
-
-    case "$OPERATION" in
+    case "$1" in
         increase|decrease)
+            BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
             VALUE="${2:-5}"
             if [ "$VALUE" -gt 0 ] && [ "$VALUE" -le 100 ]; then
-                change_brightness "$BRIGHTNESS_CMD" "$OPERATION" "$VALUE"
+                change_brightness "$BRIGHTNESS_CMD" "$1" "$VALUE"
             else
                 echo "Error: Step size must be between 1 and 100" >&2
                 exit 1
             fi
             ;;
         set)
+            BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
             if [ $# -eq 2 ]; then
                 VALUE="$2"
                 if [ "$VALUE" -ge 0 ] && [ "$VALUE" -le 100 ]; then
-                    change_brightness "$BRIGHTNESS_CMD" "$OPERATION" "$VALUE"
+                    change_brightness "$BRIGHTNESS_CMD" "$1" "$VALUE"
                 else
                     echo "Error: Percentage must be between 0 and 100" >&2
                     exit 1
@@ -174,13 +168,13 @@ main() {
             fi
             ;;
         get)
+            BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
             get_brightness "$BRIGHTNESS_CMD"
             ;;
         -h|--help)
             usage
             ;;
         *)
-            echo "Error: Unknown operation '$OPERATION'" >&2
             usage
             exit 1
             ;;
