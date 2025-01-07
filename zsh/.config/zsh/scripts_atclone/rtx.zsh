@@ -1,1 +1,1 @@
-./rtx/rtx completion zsh > $ZINIT[COMPLETIONS_DIR]/_rtx
+./mise/mise completion zsh > $ZINIT[COMPLETIONS_DIR]/_mise

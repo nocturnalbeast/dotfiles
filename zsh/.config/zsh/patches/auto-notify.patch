@@ -1,0 +1,14 @@
+diff --git a/auto-notify.plugin.zsh b/auto-notify.plugin.zsh
+index 591a47e..f6d56eb 100644
+--- a/auto-notify.plugin.zsh
++++ b/auto-notify.plugin.zsh
+@@ -181,8 +181,7 @@ _auto_notify_reset_tracking
+ 
+ platform="$(uname)"
+ if [[ "$platform" == "Linux" ]] && ! type notify-send > /dev/null; then
+-    printf "'notify-send' must be installed for zsh-auto-notify to work\n"
+-    printf "Please install it with your relevant package manager\n"
++    disable_auto_notify
+ else
+     enable_auto_notify
+ fi
