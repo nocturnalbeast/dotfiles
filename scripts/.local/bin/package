@@ -183,6 +183,11 @@ get_package_manager_command() {
 #   $1 - Operation to perform
 #   $@ - Additional arguments for the operation
 main() {
+    if [ $# -eq 0 ]; then
+        usage
+        exit 1
+    fi
+
     OPERATION="$1"
     shift
 
