@@ -1,0 +1,190 @@
+#!/usr/bin/env sh
+
+# A script to control screen brightness using various backends with notifications.
+
+# Global configuration
+NOTIFICATION_ID=5555
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
+ICON_LOW="$CONFIG_DIR/dunst/icons/brightness_low.svg"
+ICON_MEDIUM="$CONFIG_DIR/dunst/icons/brightness_medium.svg"
+ICON_HIGH="$CONFIG_DIR/dunst/icons/brightness_high.svg"
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") OPERATION [VALUE]
+
+A script to control screen brightness with notifications.
+
+Operations:
+    increase [step]  Increase brightness by step% (default: 5%)
+    decrease [step]  Decrease brightness by step% (default: 5%)
+    set <percent>    Set brightness to specific percentage (0-100)
+    get              Get current brightness level
+
+Arguments:
+    step             Step size percentage (1-100, default: 5)
+    percent          Brightness percentage (0-100)
+EOF
+}
+
+# Detects which brightness control command to use.
+#
+# Outputs:
+#   Writes the detected command name to stdout.
+#   Returns 0 if a command is found, 1 if no command is found.
+detect_brightness_command() {
+    if command -v brightnessctl > /dev/null 2>&1; then
+        echo "brightnessctl"
+        return 0
+    elif command -v xbacklight > /dev/null 2>&1; then
+        echo "xbacklight"
+        return 0
+    else
+        echo "Error: No supported brightness control command found" >&2
+        echo "Please install one of: brightnessctl, xbacklight" >&2
+        return 1
+    fi
+}
+
+# Gets the current brightness level.
+#
+# Arguments:
+#   $1 - The brightness command to use
+#
+# Outputs:
+#   Writes current brightness level (0-100) to stdout.
+get_brightness() {
+    case "$1" in
+        brightnessctl)
+            brightnessctl -P get
+            ;;
+        xbacklight)
+            xbacklight -get | cut -d '.' -f 1
+            ;;
+    esac
+}
+
+# Gets the appropriate icon based on brightness level.
+#
+# Arguments:
+#   $1 - Current brightness level (0-100)
+#
+# Outputs:
+#   Writes path to appropriate icon to stdout.
+get_icon() {
+    BRIGHTNESS="$1"
+    if [ "$BRIGHTNESS" -lt 40 ]; then
+        echo "$ICON_LOW"
+    elif [ "$BRIGHTNESS" -lt 70 ]; then
+        echo "$ICON_MEDIUM"
+    else
+        echo "$ICON_HIGH"
+    fi
+}
+
+# Sends a notification with the current brightness level.
+#
+# Arguments:
+#   $1 - Current brightness level (0-100)
+send_notification() {
+    BRIGHTNESS="$1"
+    ICON=$(get_icon "$BRIGHTNESS")
+    notify-send -i "$ICON" -h int:value:"$BRIGHTNESS" -u low -r "$NOTIFICATION_ID" "Brightness [$BRIGHTNESS%]"
+}
+
+# Changes brightness level.
+#
+# Arguments:
+#   $1 - The brightness command to use
+#   $2 - Operation to perform ("increase", "decrease", or "set")
+#   $3 - Value (step size for increase/decrease, target percentage for set)
+change_brightness() {
+    BRIGHTNESS_CMD="$1"
+    OPERATION="$2"
+    VALUE="$3"
+
+    case "$BRIGHTNESS_CMD" in
+        brightnessctl)
+            case "$OPERATION" in
+                increase)
+                    brightnessctl set "+${VALUE}%"
+                    ;;
+                decrease)
+                    brightnessctl set "${VALUE}%-"
+                    ;;
+                set)
+                    brightnessctl set "${VALUE}%"
+                    ;;
+            esac
+            ;;
+        xbacklight)
+            case "$OPERATION" in
+                increase)
+                    xbacklight -inc "$VALUE"
+                    ;;
+                decrease)
+                    xbacklight -dec "$VALUE"
+                    ;;
+                set)
+                    xbacklight -set "$VALUE"
+                    ;;
+            esac
+            ;;
+    esac
+
+    send_notification "$(get_brightness "$BRIGHTNESS_CMD")"
+}
+
+# Main entry point that processes command-line arguments.
+#
+# Arguments:
+#   $1 - Operation to perform
+#   $2 - Optional value (step size or target percentage)
+main() {
+    [ $# -eq 0 ] && {
+        usage
+        exit 1
+    }
+
+    OPERATION="$1"
+    BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
+
+    case "$OPERATION" in
+        increase|decrease)
+            VALUE="${2:-5}"
+            if [ "$VALUE" -gt 0 ] && [ "$VALUE" -le 100 ]; then
+                change_brightness "$BRIGHTNESS_CMD" "$OPERATION" "$VALUE"
+            else
+                echo "Error: Step size must be between 1 and 100" >&2
+                exit 1
+            fi
+            ;;
+        set)
+            if [ $# -eq 2 ]; then
+                VALUE="$2"
+                if [ "$VALUE" -ge 0 ] && [ "$VALUE" -le 100 ]; then
+                    change_brightness "$BRIGHTNESS_CMD" "$OPERATION" "$VALUE"
+                else
+                    echo "Error: Percentage must be between 0 and 100" >&2
+                    exit 1
+                fi
+            else
+                echo "Error: Percentage required for set operation" >&2
+                exit 1
+            fi
+            ;;
+        get)
+            get_brightness "$BRIGHTNESS_CMD"
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo "Error: Unknown operation '$OPERATION'" >&2
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
