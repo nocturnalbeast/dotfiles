@@ -4,16 +4,21 @@
 # |__,|_|_|__,|___|___|___|
 
 # ls aliases
-alias ls="eza --color=auto --icons --group-directories-first"
-alias ll="eza -bhl --color=auto --icons --group-directories-first --git"
-alias la="eza -a --color=auto --icons --group-directories-first "
-alias lt="eza -bh --tree --color=auto --icons --group-directories-first"
-alias l.="eza -d .* --color=auto --icons --group-directories-first"
-alias lal="eza -bhal --color=auto --icons --group-directories-first --git"
-alias lsd="eza -hFx --color=auto --icons"
-alias lr="eza -R --color=auto --icons --group-directories-first"
-alias lra="eza -aR --color=auto --icons --group-directories-first"
-alias lrl="eza -alR --color=auto --icons --group-directories-first"
+if command -v eza > /dev/null 2>&1; then
+    LS_PREFIX="eza --icons --git --color=auto --group-directories-first"
+else
+    LS_PREFIX="ls --color=auto --group-directories-first"
+fi
+alias ls="$LS_PREFIX"
+alias ll="$LS_PREFIX -bhl"
+alias la="$LS_PREFIX -a"
+alias lt="$LS_PREFIX -bh --tree"
+alias l.="$LS_PREFIX -d .*"
+alias lal="$LS_PREFIX -bhal"
+alias lsd="$LS_PREFIX -hFx"
+alias lr="$LS_PREFIX -R"
+alias lra="$LS_PREFIX -aR"
+alias lrl="$LS_PREFIX -alR"
 
 # make grep highlight matches
 alias grep="grep --color=auto"
@@ -21,11 +26,15 @@ alias egrep="egrep --color=auto"
 alias fgrep="fgrep --color=auto"
 
 # use bat instead of regular cat
-alias cat="bat"
+if command -v bat > /dev/null 2>&1; then
+    alias cat="bat"
+fi
 
 # launch neovim when accidentally trying to vim or vi
-alias vim="nvim"
-alias vi="nvim"
+if command -v nvim > /dev/null 2>&1; then
+    alias vim="nvim"
+    alias vi="nvim"
+fi
 
 # don't use rm, use freedesktop.org spec trash folders instead
 alias trp="trash"
@@ -39,14 +48,14 @@ alias trrall="trash restore --all"
 alias dv="devour"
 
 # shim for arch command if it's not there
-if command -v arch &>/dev/null; then
+if command -v arch > /dev/null 2>&1; then
     alias arch="uname -m"
 fi
 
 # default fetch
-if command -v fastfetch &>/dev/null; then
+if command -v fastfetch > /dev/null 2>&1; then
     alias fetch="fastfetch"
-elif command -v neofetch &>/dev/null; then
+elif command -v neofetch > /dev/null 2>&1; then
     alias fetch="neofetch"
 fi
 
@@ -58,7 +67,7 @@ alias p="btm --basic"
 alias g="git"
 alias c="bat"
 alias j="jobs"
-if command -v ncmpcpp-ueberzug &>/dev/null; then
+if command -v ncmpcpp-ueberzug > /dev/null 2>&1; then
     alias m="ncmpcpp-ueberzug"
 else
     alias m="ncmpcpp"
@@ -68,7 +77,7 @@ fi
 alias wget="wget --hsts-file=\"$XDG_CACHE_HOME/wget-hsts\""
 
 # youtube-dl aliases
-if command -v yt-dlp &>/dev/null; then
+if command -v yt-dlp > /dev/null 2>&1; then
     # use yt-dlp instead of youtube-dl if that exists
     alias dlv="yt-dlp --format bestvideo+bestaudio --no-playlist"
     alias dla="yt-dlp --format bestaudio --extract-audio --no-playlist"
@@ -82,9 +91,9 @@ else
 fi
 
 # download scriptlet for regular links
-if command -v curl &>/dev/null; then
+if command -v curl > /dev/null 2>&1; then
     alias dl="curl -m 10 -L --progress-bar -q -O"
-elif command -v wget &>/dev/null; then
+elif command -v wget > /dev/null 2>&1; then
     alias dl="wget --timeout 10 --progress=bar --show-progress -q"
 fi
 
@@ -95,9 +104,9 @@ alias py="python"
 alias cls="clear"
 
 # easy chmod
-for UNUM in $( seq 0 7 ); do
-    for GNUM in $( seq 0 7 ); do
-        for ONUM in $( seq 0 7 ); do
+for UNUM in $(seq 0 7); do
+    for GNUM in $(seq 0 7); do
+        for ONUM in $(seq 0 7); do
             alias "$UNUM$GNUM$ONUM"="chmod $UNUM$GNUM$ONUM"
         done
     done
