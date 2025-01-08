@@ -17,10 +17,6 @@ Operations:
     start   Start the notification daemon
     stop    Stop all notification daemons
     -h      Show this help message
-
-Detection order:
-    1. Under Wayland: mako
-    2. Under X11: dunst, notify-osd
 EOF
 }
 
