@@ -9,17 +9,19 @@
 format = """
 $username\
 $hostname\
-$shlvl\
+$localip\
 $directory\
 $vcsh\
 $git_branch\
 $fossil_branch\
+$fossil_metrics\
 $hg_branch\
 $git_commit\
 $git_state\
 $git_metrics\
 $git_status\
 $pijul_channel\
+$direnv\
 $kubernetes\
 $docker_context\
 $singularity\
@@ -88,6 +90,7 @@ $fill\
 ($cmd_duration 󰧞 )\
 ($jobs 󰧞 )\
 ($sudo 󰧞 )\
+($shlvl 󰧞 )\
 ($battery 󰧞 )\
 ($memory_usage 󰧞 )\
 ($time 󰧞 )\
@@ -438,7 +441,7 @@ style = "bold green"
 [hostname]
 disabled = false
 ssh_symbol = " "
-format = "[$hostname]($style) "
+format = "[$hostname]($style) 󰇙 "
 style = "bold green"
 ssh_only = true
 trim_at = "."
@@ -478,6 +481,12 @@ disabled = false
 symbol = "󱃾 "
 format = ' 󰧞 [$symbol $context \[$namespace\]]($style)'
 style = "bold cyan"
+
+[localip]
+ssh_only = true
+format = "[$localipv4]($style) 󰅂 "
+style = "bold green"
+disabled = false 
 
 [lua]
 disabled = false
@@ -573,7 +582,9 @@ format = "[$symbol]($style)"
 style = "bold"
 
 [os.symbols]
+AIX = "[󰾡](white)"
 Alpaquita = "[](white)"
+AlmaLinux = "[ ](green)"
 Alpine = "[ ](blue)"
 Amazon = "[ ](yellow)"
 Android = "[ ](green)"
@@ -586,10 +597,11 @@ Emscripten = "[](white)"
 EndeavourOS = "[ ](purple)"
 Fedora = "[ ](blue)"
 FreeBSD = "[ ](red)"
-Garuda = "[](red)"
+Garuda = "[ ](red)"
 Gentoo = "[ ](purple)"
 HardenedBSD = "[](blue)"
 Illumos = "[ ](white)"
+Kali = "[ ](red)"
 Linux = "[󰌽 ](yellow)"
 Mabox = "[](white)"
 Macos = "[ ](white)"
@@ -597,22 +609,25 @@ Manjaro = "[ ](green)"
 Mariner = "[](blue)"
 MidnightBSD = "[](white)"
 Mint = "[󰣭 ](green)"
-NetBSD = "[](yellow)"
+NetBSD = "[󰈿](yellow)"
 NixOS = "[ ](blue)"
 OpenBSD = "[ ](yellow)"
 OpenCloudOS = "[](white)"
 openEuler = "[](white)"
 openSUSE = "[ ](green)"
-OracleLinux = "[](red)"
+OracleLinux = "[󰎡 ](red)"
 Pop = "[ ](white)"
 Raspbian = "[ ](red)"
 Redhat = "[ ](red)"
 RedHatEnterprise = "[ ](red)"
+RockyLinux = "[ ](green)"
 Redox = "[](red)"
 Solus = "[ ](blue)"
 SUSE = "[ ](green)"
 Ubuntu = "[ ](red)"
+Ultramarine = "[](blue)"
 Unknown = "[ ](red)"
+Void = "[ ](green)"
 Windows = "[󰖳 ](blue)"
 
 [package]
@@ -736,7 +751,7 @@ style = "bold"
 [shlvl]
 disabled = false
 symbol = "󱞩 "
-format = "[$symbol$shlvl]($style) "
+format = "[$symbol$shlvl]($style)"
 style = "bold yellow"
 threshold = 2
 repeat = false
@@ -768,7 +783,7 @@ disabled = false
 format = "[$symbol( $status)( | $common_meaning)( | $signal_name)]($style)"
 map_symbol = true
 not_executable_symbol = "[ ](yellow)"
-not_found_symbol = "[🔍](yellow)"
+not_found_symbol = "[󰍊 ](yellow)"
 pipestatus = true
 pipestatus_format = "[$pipestatus 󰄾 $symbol( $status)( | $common_meaning)( | $signal_name)]($style)"
 pipestatus_segment_format = "[$status( | $common_meaning)( | $signal_name)]($style)"
@@ -818,7 +833,7 @@ style = "bold cyan"
 
 [username]
 disabled = false
-format = "[$user]($style)@"
+format = "[$user]($style) 󰁥  "
 style_root = "bold red"
 style_user = "bold cyan"
 show_always = false
