@@ -1,0 +1,67 @@
+#            _
+#  _____ ___| |_ ___
+# |     | .'| '_| . |
+# |_|_|_|__,|_,_|___|
+# 
+
+
+# behavior
+history=1
+max-history=20
+sort=-time
+markup=1
+actions=1
+max-visible=5
+
+# mouse bindings
+on-button-left=dismiss
+on-button-middle=invoke-default-action
+on-button-right=dismiss-all
+
+# appearance
+font=sans 11
+width=300
+height=100
+outer-margin=6
+margin=6
+padding=8
+border-size=2
+border-radius=0
+default-timeout=5000
+layer=top
+border-color=#999999
+background-color=#EAEAEA
+text-color=#333333
+progress-color=over #777777
+icons=1
+max-icon-size=32
+icon-location=left
+format=<b>%s</b>\n%b
+text-alignment=left
+
+[urgency=low]
+font=sans 11
+background-color=#333333
+text-color=#EAEAEA
+progress-color=over #777777
+default-timeout=2000
+icon-path=~/.local/share/notification_icons/info.svg
+
+[urgency=normal]
+font=sans 11
+background-color=#EAEAEA
+text-color=#333333
+progress-color=over #777777
+default-timeout=5000
+icon-path=~/.local/share/notification_icons/warning.svg
+
+[urgency=high]
+font=sans 13
+background-color=#D23D3D
+text-color=#000000
+progress-color=over #FF9999
+default-timeout=0
+icon-path=~/.local/share/notification_icons/error.svg
+
+[mode=do-not-disturb]
+invisible=1
