@@ -2,6 +2,9 @@
 
 # A display server agnostic script to set and manage wallpapers.
 
+# Global configuration
+WALLPAPER_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers"
+
 usage() {
     cat << EOF
 Usage: $(basename "$0") OPERATION [OPTIONS]
@@ -9,8 +12,8 @@ Usage: $(basename "$0") OPERATION [OPTIONS]
 A display server agnostic script to set and manage wallpapers.
 
 Operations:
-    set   [PATH] [MODE]    Set wallpaper from PATH with optional MODE
-    random [DIR] [MODE]    Set random wallpaper from DIR with optional MODE
+    set [PATH] [MODE]      Set wallpaper from PATH with optional MODE
+    random [DIR] [MODE]    Set random wallpaper from optional DIR with optional MODE
     restore                Restore current wallpaper
     -h, --help            Show this help message
 
@@ -117,7 +120,7 @@ set_wallpaper() {
     fi
 
     mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/wm"
-    ln -sf "$IMAGE" "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_wallpaper"
+    ln -sfr "$IMAGE" "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_wallpaper"
 
     SETTER_CMD=$(get_wallpaper_setter "$MODE" "$IMAGE")
     if [ $? -eq 0 ]; then
@@ -129,10 +132,10 @@ set_wallpaper() {
 # Set random wallpaper from directory
 #
 # Arguments:
-#   $1 - Directory containing wallpapers
+#   $1 - Directory containing wallpapers (optional, defaults to WALLPAPER_DIR)
 #   $2 - Mode to set the wallpaper (optional, defaults to fill)
 set_random_wallpaper() {
-    DIR="$1"
+    DIR="${1:-$WALLPAPER_DIR}"
     MODE="${2:-fill}"
 
     if [ ! -d "$DIR" ]; then
@@ -140,7 +143,7 @@ set_random_wallpaper() {
         return 1
     fi
 
-    IMAGE=$(find "$DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) | shuf -n 1)
+    IMAGE=$(find "$DIR/" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) | shuf -n 1)
     if [ -z "$IMAGE" ]; then
         echo "No images found in directory: $DIR" >&2
         return 1
@@ -174,11 +177,6 @@ main() {
             ;;
         random)
             shift
-            if [ $# -eq 0 ]; then
-                echo "Error: No directory path provided" >&2
-                usage
-                exit 1
-            fi
             set_random_wallpaper "$1" "$2"
             ;;
         restore)
