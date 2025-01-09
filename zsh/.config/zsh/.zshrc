@@ -520,14 +520,18 @@ zinit wait'1' lucid from'gh-r' nocompile light-mode for \
     id-as'shellcheck' bpick'shellcheck-*' mv'shellcheck-*/shellcheck -> shellcheck' sbin'shellcheck' \
         @koalaman/shellcheck \
     id-as'cocogitto' bpick'cocogitto-*' mv'*/cog -> cog' sbin'cog' atload'$ATLOAD_DIR/cocogitto.zsh' \
-        @cocogitto/cocogitto
+        @cocogitto/cocogitto \
+    id-as'gron' bpick'gron*' sbin'gron' \
+        @tomnomnom/gron
 
 # programs from github (without releases/binaries) - load / source using zinit
 zinit wait'1' lucid light-mode for \
     id-as'translate-shell' ver"stable" pullopts"--rebase" \
         @soimort/translate-shell \
     id-as'zsh-sweep' sbin'bin/zsweep' \
-        @psprint/zsh-sweep
+        @psprint/zsh-sweep \
+    id-as'pathpicker' sbin'fpp' atclone'$ATCLONE_DIR/pathpicker.zsh' \
+        @facebook/PathPicker
 
 # completions for some of the above programs
 zinit wait'1' lucid as'completion' light-mode for \
