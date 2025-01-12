@@ -19,13 +19,13 @@ A script to control audio volume with notifications.
 Operations:
     increase [step]  Increase volume by step% (default: 5%)
     decrease [step]  Decrease volume by step% (default: 5%)
-    set <value>     Set volume to value% (0-100)
-    mute            Toggle mute
-    get             Get current volume level
+    set <value>      Set volume to value% (0-100)
+    mute             Toggle mute
+    get              Get current volume level
 
 Arguments:
-    step            Step size percentage (1-100, default: 5)
-    value           Volume percentage (0-100)
+    step             Step size percentage (1-100, default: 5)
+    value            Volume percentage (0-100)
 EOF
 }
 
@@ -211,7 +211,7 @@ main() {
 
     # Validate value for volume changes
     if [ "$1" = "increase" ] || [ "$1" = "decrease" ] || [ "$1" = "set" ]; then
-        if ! [ "$VALUE" -eq "$VALUE" ] 2>/dev/null || [ "$VALUE" -lt 0 ] || [ "$VALUE" -gt 100 ]; then
+        if ! expr "X$VALUE" : "X-\{0,1\}[0-9][0-9]*$" > /dev/null || [ "$VALUE" -lt 0 ] || [ "$VALUE" -gt 100 ]; then
             echo "Error: Volume value must be a number between 0 and 100" >&2
             usage >&2
             exit 1

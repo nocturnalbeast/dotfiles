@@ -15,7 +15,7 @@ Operations:
     set [PATH] [MODE]      Set wallpaper from PATH with optional MODE
     random [DIR] [MODE]    Set random wallpaper from optional DIR with optional MODE
     restore                Restore current wallpaper
-    -h, --help            Show this help message
+    -h, --help             Show this help message
 
 Modes:
     fill        (default) Fill the screen, cropping if needed
@@ -90,7 +90,7 @@ get_wallpaper_setter() {
 #   0 if mode is valid, 1 otherwise
 is_valid_mode() {
     case "$1" in
-        fill|center|tile|stretch|maxaspect) return 0 ;;
+        fill | center | tile | stretch | maxaspect) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -182,7 +182,7 @@ main() {
         restore)
             restore_wallpaper
             ;;
-        -h|--help)
+        -h | --help)
             usage
             ;;
         *)

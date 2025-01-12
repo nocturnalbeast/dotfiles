@@ -142,7 +142,7 @@ change_brightness() {
 #   $2 - Optional value (step size or target percentage)
 main() {
     case "$1" in
-        increase|decrease)
+        increase | decrease)
             BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
             VALUE="${2:-5}"
             if [ "$VALUE" -gt 0 ] && [ "$VALUE" -le 100 ]; then
@@ -171,7 +171,7 @@ main() {
             BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
             get_brightness "$BRIGHTNESS_CMD"
             ;;
-        -h|--help)
+        -h | --help)
             usage
             ;;
         *)

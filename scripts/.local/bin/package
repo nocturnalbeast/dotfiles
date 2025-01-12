@@ -22,12 +22,23 @@ EOF
 # Returns the appropriate privilege escalation command (sudo/doas) if needed.
 #
 # Arguments:
-#   $1 - Boolean indicating if privilege escalation is needed
+#   $1 - Operation being performed
+#   $2 - Boolean indicating if privilege escalation is needed
 #
 # Outputs:
 #   Writes the privilege escalation command to stdout if needed.
 detect_sudo_binary() {
-    if [ "$(id -u)" != "0" ] && [ "$1" = "true" ]; then
+    OPERATION="$1"
+    NEEDS_SU="$2"
+
+    # These operations never need privilege escalation
+    case $OPERATION in
+        "search" | "list" | "desc")
+            return
+            ;;
+    esac
+
+    if [ "$(id -u)" != "0" ] && [ "$NEEDS_SU" = "true" ]; then
         if type doas > /dev/null 2>&1; then
             echo "doas"
         elif type sudo > /dev/null 2>&1; then
@@ -168,7 +179,7 @@ get_package_manager_command() {
                 ;;
         esac
         eval "CMD=\$$CMD_VAR"
-        SU_CMD=$(detect_sudo_binary "$NEEDS_SU")
+        SU_CMD=$(detect_sudo_binary "$OPERATION" "$NEEDS_SU")
         if [ -n "$SU_CMD" ]; then
             echo "$SU_CMD $CMD"
         else
@@ -219,6 +230,9 @@ main() {
         "list" | "l")
             CMD=$(get_package_manager_command "list")
             $CMD
+            ;;
+        "-h" | "--help")
+            usage
             ;;
         *)
             usage
