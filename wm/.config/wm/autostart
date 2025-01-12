@@ -5,59 +5,86 @@
 # | .'| | |  _| . |_ -|  _| .'|  _|  _|
 # |__,|___|_| |___|___|_| |__,|_| |_|
 
-# setup monitors using script if available
-if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout" ]; then
-    "${XDG_CONFIG_HOME:-$HOME/.config}"/wm/layouts/"$( cat "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout" )" &
+is_wayland() {
+    [ -n "$WAYLAND_DISPLAY" ]
+}
+
+# configure monitor layout and set dpi (for X11)
+if ! is_wayland; then
+    layout_file="${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout"
+    if [ -f "$layout_file" ]; then
+        "${XDG_CONFIG_HOME:-$HOME/.config}"/wm/layouts/"$(cat "$layout_file")" &
+    fi
+    dpi_script="${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi"
+    if [ -f "$dpi_script" ]; then
+        "$dpi_script"
+    fi
 fi
-# check the DPI of the current monitors and set accordingly using the set-dpi script (if available)
-if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi" ]; then
-    ${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi
-fi
-# start audio
-if command -v pipewire &>/dev/null; then
-    pipewire &
-fi
+
 # restore the wallpaper
 background restore
-# launch compositor
-picom --experimental-backends &
-# launch notification daemon
-if command -v notification &>/dev/null; then
-    notification start
+
+# start audio
+if ! pgrep -x "pipewire" >/dev/null && command -v pipewire >/dev/null 2>&1; then
+    pipewire &
 fi
+
 # launch music player server
-if command -v mopidy &>/dev/null; then
+if command -v mopidy >/dev/null 2>&1; then
     mopidy &
-elif command -v mpd &>/dev/null; then
+elif command -v mpd >/dev/null 2>&1; then
     mpd &
 fi
+
+# launch notification daemon
+if command -v notificationd >/dev/null 2>&1; then
+    notificationd start
+fi
+
+# launch compositor
+if ! is_wayland; then
+    picom --experimental-backends &
+fi
+
+# TODO: rework clipboard manager for Wayland
 # launch clipboard manager
-if command -v clipmenud &>/dev/null; then
-    clipmenud &
-fi
+#if command -v clipmenud >/dev/null 2>&1; then
+#    clipmenud &
+#fi
+
+# TODO: rework screen locker for Wayland
 # launch screen autolocker
-if command -v xsecurelock xss-lock xset &>/dev/null; then
-    xsecurelock-helper start &
-elif command -v light-locker &>/dev/null; then
-    light-locker &
-fi
+#if command -v xsecurelock xss-lock xset >/dev/null 2>&1; then
+#    xsecurelock-helper start &
+#elif command -v light-locker >/dev/null 2>&1; then
+#    light-locker &
+#fi
+
+# TODO: make this conditional / use a script instead
 # hide cursor when inactive
-unclutter &
+#unclutter &
+
+# TODO: make this conditional / use a script instead
 # set numlock key to off
-numlockx off &
+#numlockx off &
+
+# TODO: test with waybar
 # launch system bars
-if command -v polybar polybar-start &>/dev/null; then
-    polybar-start
-fi
+#if command -v polybar polybar-start >/dev/null 2>&1; then
+#    polybar-start
+#fi
+
 # networkmanager tray applet
-if command -v nm-applet &>/dev/null; then
+if command -v nm-applet >/dev/null 2>&1; then
     nm-applet &
 fi
+
 # bluetooth tray applet
-if command -v blueman-applet &>/dev/null; then
+if command -v blueman-applet >/dev/null 2>&1; then
     blueman-applet &
 fi
+
 # disk mounting tray applet
-if command -v udiskie &>/dev/null; then
+if command -v udiskie >/dev/null 2>&1; then
     udiskie -Avnt &
 fi
