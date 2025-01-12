@@ -529,9 +529,7 @@ zinit wait'1' lucid light-mode for \
     id-as'translate-shell' ver"stable" pullopts"--rebase" \
         @soimort/translate-shell \
     id-as'zsh-sweep' sbin'bin/zsweep' \
-        @psprint/zsh-sweep \
-    id-as'pathpicker' sbin'fpp' atclone'$ATCLONE_DIR/pathpicker.zsh' \
-        @facebook/PathPicker
+        @psprint/zsh-sweep
 
 # completions for some of the above programs
 zinit wait'1' lucid as'completion' light-mode for \
