@@ -1,36 +1,81 @@
 #!/usr/bin/env sh
 
-# Open any file
-# Input(s):
-#   Environment variables:
-#     NO_COLOR: If set, disables color output in logs.
-#   Command-line arguments:
-#     FILENAME/URL
-# Output(s):
-#   Opens the file using the application provided by mimeinfo.list or mimeo's association list
-# Requirement(s):
-#   mimeo / xdg-open
+# A script to open files and URLs using various handlers.
 
 usage() {
     cat << EOF
-Usage: $( basename "$0" ) FILENAME/URL
+Usage: $(basename "$0") FILE/URL
 
-Open any file.
+A script to open files and URLs with appropriate handlers.
 
-Required options:
-  FILENAME/URL  Path to local file/URL of web resource
+Arguments:
+    FILE/URL        Path to local file or URL to open
 EOF
 }
 
-error() {
-    printf "[$( date +'%Y-%m-%dT%H:%M:%S%z' )] [$( basename "$0" )] ERROR: $*\n" >&2
+# Detects which file opener command to use.
+#
+# Outputs:
+#   Writes the detected command name to stdout.
+detect_opener_command() {
+    if command -v handlr > /dev/null 2>&1; then
+        echo "handlr"
+    elif command -v mimeo > /dev/null 2>&1; then
+        echo "mimeo"
+    elif command -v xdg-open > /dev/null 2>&1; then
+        echo "xdg-open"
+    else
+        echo "Error: No supported file opener command found" >&2
+        echo "Please install one of: handlr, mimeo, xdg-open" >&2
+    fi
 }
 
-if command -v mimeo >/dev/null 2>&1; then
-    $( mimeo -c "$@" )
-elif command -v xdg-open >/dev/null 2>&1; then
-    xdg-open "$@"
-else
-    error "No file handlers present!"
-    exit 1
-fi
+# Opens a file or URL with the appropriate handler.
+#
+# Arguments:
+#   $1 - The opener command to use
+#   $2 - The file/URL to open
+open_file() {
+    OPENER="$1"
+    shift
+    TARGET="$1"
+
+    case $OPENER in
+        "handlr")
+            handlr open "$TARGET"
+            ;;
+        "mimeo")
+            mimeo -c "$TARGET"
+            ;;
+        "xdg-open")
+            xdg-open "$TARGET"
+            ;;
+    esac
+}
+
+# Main entry point that processes command-line arguments.
+#
+# Arguments:
+#   $@ - File/URL to open
+main() {
+    if [ $# -eq 0 ]; then
+        usage
+        exit 1
+    fi
+
+    case $1 in
+        "-h" | "--help")
+            usage
+            ;;
+        *)
+            OPENER_CMD=$(detect_opener_command)
+            if [ -n "$OPENER_CMD" ]; then
+                open_file "$OPENER_CMD" "$@"
+            else
+                exit 1
+            fi
+            ;;
+    esac
+}
+
+main "$@"
