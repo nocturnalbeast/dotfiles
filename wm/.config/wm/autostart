@@ -25,8 +25,12 @@ fi
 background restore
 
 # start audio
-if ! pgrep -x "pipewire" >/dev/null && command -v pipewire >/dev/null 2>&1; then
-    pipewire &
+if command -v pipewire >/dev/null 2>&1; then
+    if systemctl --user is-active --quiet pipewire.service; then
+        systemctl --user restart pipewire.service
+    elif ! pgrep -x "pipewire" >/dev/null; then
+        pipewire &
+    fi
 fi
 
 # launch music player server
