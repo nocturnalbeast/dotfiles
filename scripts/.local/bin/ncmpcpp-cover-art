@@ -22,16 +22,16 @@ read -r -d '' music_note << EOF
 EOF
 
 # Only set this if the geometries are wrong or ncmpcpp shouts at you to do it.
-# Visually select/highlight a character on your terminal, zoom in an image 
+# Visually select/highlight a character on your terminal, zoom in an image
 # editor and count how many pixels a character's width and height are.
 font_height=
 font_width=
 
 main() {
-    kill_previous_instances >/dev/null 2>&1
-    get_cover_image         >/dev/null
-    display_cover_image     2>/dev/null
-    detect_window_resizes   >/dev/null 2>&1
+    kill_previous_instances > /dev/null 2>&1
+    get_cover_image > /dev/null
+    display_cover_image 2> /dev/null
+    detect_window_resizes > /dev/null 2>&1
 }
 
 # ==== Main functions =========================================================
@@ -41,23 +41,23 @@ kill_previous_instances() {
     for pid in $(pidof -x "$script_name"); do
         if [ "$pid" != $$ ]; then
             kill -15 "$pid"
-        fi 
+        fi
     done
 }
 
 get_cover_image() {
-    trackuri="$( mpc --format "%file%" current )"
-    trackname="$( mpc --format "%title%" current )"
-    trackartist="$( mpc --format "%artist%" current )"
-    trackalbum="$( mpc --format "%album%" current )"
-    cached_image_path="$( get-coverart -u "$trackuri" -n "$trackname" -a "$trackartist" -g "$trackalbum" 2>/dev/null )"
+    trackuri="$(mpc --format "%file%" current)"
+    trackname="$(mpc --format "%title%" current)"
+    trackartist="$(mpc --format "%artist%" current)"
+    trackalbum="$(mpc --format "%album%" current)"
+    cached_image_path="$(get-coverart -u "$trackuri" -n "$trackname" -a "$trackartist" -g "$trackalbum" 2> /dev/null)"
     if [ "$cached_image_path" != "" ]; then
         cp "$cached_image_path" "$image_path"
     else
         echo "$music_note" | base64 --decode > "$image_path"
     fi
     # show notification here too
-    if [ "$( polybar-helper get_state )" == "yes" ]; then
+    if [ "$(polybar-helper get_state)" == "yes" ]; then
         if [ "$trackname" != "" ]; then
             if [ "$trackalbum" = "$trackname" ]; then
                 notify-send -u low "Playing $trackname" "by <b>$trackartist</b>" -i "$image_path"
@@ -93,7 +93,6 @@ detect_window_resizes() {
     } &
 }
 
-
 # ==== Helper functions =========================================================
 
 compute_geometry() {
@@ -104,12 +103,12 @@ compute_geometry() {
         guess_font_size
     fi
 
-    ueber_height=$(( term_lines - padding_top - padding_bottom ))
+    ueber_height=$((term_lines - padding_top - padding_bottom))
     # Because Ueberzug uses characters as a unit we must multiply
     # the line count (height) by the font size ratio in order to
     # obtain an equivalent width in column count
-    ueber_width=$(( ueber_height * font_height / font_width ))
-    ueber_left=$(( term_cols - ueber_width - padding_right ))
+    ueber_width=$((ueber_height * font_height / font_width))
+    ueber_left=$((term_cols - ueber_width - padding_right))
 
     if [ "$left_aligned" = "true" ]; then
         compute_geometry_left_aligned
@@ -122,10 +121,10 @@ compute_geometry() {
 
 compute_geometry_left_aligned() {
     ueber_left=$padding_left
-    max_width_chars=$(( term_cols * max_width / 100 ))
+    max_width_chars=$((term_cols * max_width / 100))
     if [ "$max_width" != 0 ] &&
-        [ $(( ueber_width + padding_right + padding_left )) -gt "$max_width_chars" ]; then
-        ueber_width=$(( max_width_chars - padding_left - padding_right ))
+        [ $((ueber_width + padding_right + padding_left)) -gt "$max_width_chars" ]; then
+        ueber_width=$((max_width_chars - padding_left - padding_right))
     fi
 }
 
@@ -133,33 +132,33 @@ compute_geometry_right_aligned() {
     if [ "$reserved_cols_in_percent" = "true" ]; then
         ueber_left_percent=$(printf "%.0f\n" $(calc "$ueber_left" / "$term_cols" '*' 100))
         if [ "$ueber_left_percent" -lt "$reserved_playlist_cols" ]; then
-            ueber_left=$(( term_cols * reserved_playlist_cols / 100  ))
-            ueber_width=$(( term_cols - ueber_left - padding_right ))
+            ueber_left=$((term_cols * reserved_playlist_cols / 100))
+            ueber_width=$((term_cols - ueber_left - padding_right))
         fi
     else
         if [ "$ueber_left" -lt "$reserved_playlist_cols" ]; then
             ueber_left=$reserved_playlist_cols
-            ueber_width=$(( term_cols - ueber_left - padding_right ))
+            ueber_width=$((term_cols - ueber_left - padding_right))
         fi
 
     fi
 
     if [ "$max_width" != 0 ] && [ "$ueber_width" -gt "$max_width" ]; then
         ueber_width=$max_width
-        ueber_left=$(( term_cols - ueber_width - padding_right ))
+        ueber_left=$((term_cols - ueber_width - padding_right))
     fi
 }
 
 apply_force_square_setting() {
     if [ $force_square = "true" ]; then
-        ueber_height=$(( ueber_width * font_width / font_height ))
+        ueber_height=$((ueber_width * font_width / font_height))
         case "$square_alignment" in
             center)
-                area=$(( term_lines - padding_top - padding_bottom ))
-                padding_top=$(( padding_top + area / 2 - ueber_height / 2  ))
+                area=$((term_lines - padding_top - padding_bottom))
+                padding_top=$((padding_top + area / 2 - ueber_height / 2))
                 ;;
             bottom)
-                padding_top=$(( term_lines - padding_bottom - ueber_height ))
+                padding_top=$((term_lines - padding_bottom - ueber_height))
                 ;;
             *) ;;
         esac
@@ -175,14 +174,14 @@ guess_font_size() {
 
     guess_terminal_pixelsize
 
-    approx_font_width=$(( term_width / term_cols ))
-    approx_font_height=$(( term_height / term_lines ))
+    approx_font_width=$((term_width / term_cols))
+    approx_font_height=$((term_height / term_lines))
 
-    term_xpadding=$(( ( - approx_font_width * term_cols + term_width ) / 2 ))
-    term_ypadding=$(( ( - approx_font_height * term_lines + term_height ) / 2 ))
+    term_xpadding=$(((-approx_font_width * term_cols + term_width) / 2))
+    term_ypadding=$(((-approx_font_height * term_lines + term_height) / 2))
 
-    font_width=$(( (term_width - 2 * term_xpadding) / term_cols ))
-    font_height=$(( (term_height - 2 * term_ypadding) / term_lines ))
+    font_width=$(((term_width - 2 * term_xpadding) / term_cols))
+    font_height=$(((term_height - 2 * term_ypadding) / term_lines))
 }
 
 guess_terminal_pixelsize() {
@@ -190,7 +189,7 @@ guess_terminal_pixelsize() {
     # Ueberzug utilizes to retrieve terminal window size.
     # https://github.com/seebye/ueberzug/blob/master/ueberzug/terminal.py#L10
 
-    python <<END
+    python << END
 import sys, struct, fcntl, termios
 
 def get_geometry():
@@ -222,7 +221,6 @@ is_font_size_successfully_computed() {
         [ "$term_height" != "0" ] && [ "$term_width" != "0" ]
 }
 
-
 calc() {
     awk "BEGIN{print $*}"
 }
@@ -238,6 +236,5 @@ send_to_ueberzug() {
 
     IFS=${old_IFS}
 }
-
 
 main

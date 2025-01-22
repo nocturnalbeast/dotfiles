@@ -5,16 +5,16 @@
 export FIFO_UEBERZUG="/tmp/mpd-ueberzug-${PPID}"
 
 cleanup() {
-    rm "$FIFO_UEBERZUG" 2>/dev/null
-    pkill -P $$ 2>/dev/null
-    pkill -f "$( which ncmpcpp-cover-art )"
+    rm "$FIFO_UEBERZUG" 2> /dev/null
+    pkill -P $$ 2> /dev/null
+    pkill -f "$(which ncmpcpp-cover-art)"
 }
 
-pkill -P $$ 2>/dev/null
-rm "$FIFO_UEBERZUG" 2>/dev/null
-mkfifo "$FIFO_UEBERZUG" >/dev/null
-trap cleanup EXIT 2>/dev/null
-tail --follow "$FIFO_UEBERZUG" | ueberzug layer --silent --parser simple >/dev/null 2>&1 &
+pkill -P $$ 2> /dev/null
+rm "$FIFO_UEBERZUG" 2> /dev/null
+mkfifo "$FIFO_UEBERZUG" > /dev/null
+trap cleanup EXIT 2> /dev/null
+tail --follow "$FIFO_UEBERZUG" | ueberzug layer --silent --parser simple > /dev/null 2>&1 &
 
 ncmpcpp
 cleanup

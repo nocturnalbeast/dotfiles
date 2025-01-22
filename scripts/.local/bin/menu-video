@@ -2,13 +2,13 @@
 
 DEPENDENCIES=(yt-dlp clipmenu mpc)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-    type -p "$DEPENDENCY" &>/dev/null || {
+    type -p "$DEPENDENCY" &> /dev/null || {
         echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
         exit 1
     }
 done
 
-# external downloader args 
+# external downloader args
 ED_ARGS="-c -j 3 -x 3 -s 3 -k 1M"
 
 # number of results to show
@@ -25,47 +25,47 @@ URL_REGEX="(((http|magnet|https|ftp|gopher)|mailto):(//|\?)?[^ <>\"\t]*|(www|ftp
 
 # only use dmenu to search for video / grep from clipboard if there's no argument provided to the script
 if [ -z "$1" ]; then
-    MAIN_ACTION="$( dmenu-helper run_menu " 輸 " " Use link from clipboard\n Search for a video" )"
+    MAIN_ACTION="$(dmenu-helper run_menu " 輸 " " Use link from clipboard\n Search for a video")"
     [ "$MAIN_ACTION" == "" ] && exit 0
 
     URL=""
     case "$MAIN_ACTION" in
         ' Use link from clipboard')
             # use regex to match possible urls from clipboard history
-            URL="$( dmenu-helper run_menu " 輸 Select URL: " "$( clipdel ".*" | xargs -0 | grep -Eo "$URL_REGEX" )" )"
+            URL="$(dmenu-helper run_menu " 輸 Select URL: " "$(clipdel ".*" | xargs -0 | grep -Eo "$URL_REGEX")")"
             ;;
         ' Search for a video')
             # get a video link from from youtube from search term
-            SEARCH_QUERY="$( dmenu-helper run_menu "  Enter search term: " "" )"
+            SEARCH_QUERY="$(dmenu-helper run_menu "  Enter search term: " "")"
             [ "$SEARCH_QUERY" == "" ] && exit 0
             ID_ARR=()
             TITLE_ARR=()
             while IFS=$'\n' read -r VID_TITLE; do
                 IFS=$'\n' read -r VID_ID
-                ID_ARR+=( "$VID_ID" )
-                TITLE_ARR+=( "$VID_TITLE" )
-            done <<< "$( yt-dlp --default-search ytsearch$SEARCH_RESULT_NUM "$SEARCH_QUERY" --get-id --get-title 2>/dev/null )"
+                ID_ARR+=("$VID_ID")
+                TITLE_ARR+=("$VID_TITLE")
+            done <<< "$(yt-dlp --default-search ytsearch$SEARCH_RESULT_NUM "$SEARCH_QUERY" --get-id --get-title 2> /dev/null)"
             if [ "${ID_ARR[0]}" == "" ]; then
                 notify-send "Failed to get search results for:" "$SEARCH_QUERY" -i "$ICON"
                 exit 1
             fi
-            SEL_TITLE="$( dmenu-helper run_menu "  Search results: " "$( for IDX in "${!TITLE_ARR[@]}"; do echo "$(( $IDX + 1 )):${TITLE_ARR[$IDX]}"; done )" )"
+            SEL_TITLE="$(dmenu-helper run_menu "  Search results: " "$(for IDX in "${!TITLE_ARR[@]}"; do echo "$((IDX + 1)):${TITLE_ARR[$IDX]}"; done)")"
             [ "$SEL_TITLE" == "" ] && exit 0
-            URL="https://www.youtube.com/watch?v=${ID_ARR[$(( $( echo "$SEL_TITLE" | cut -f 1 -d : ) - 1 ))]}"
+            URL="https://www.youtube.com/watch?v=${ID_ARR[$(($(echo "$SEL_TITLE" | cut -f 1 -d :) - 1))]}"
             ;;
     esac
 else
     # else just filter out the url from the argument
-    URL="$( echo "$1" | grep -Eo "$URL_REGEX" )"
+    URL="$(echo "$1" | grep -Eo "$URL_REGEX")"
 fi
 
 [ "$URL" == "" ] && exit 0
 
 # get the name of the video
-VNAME="$( yt-dlp -e "$URL" )"
+VNAME="$(yt-dlp -e "$URL")"
 
 # display options; whether to stream in mpv or in browser or to download
-LINK_ACTION="$( dmenu-helper run_menu " 輸 What to do with this URL? " "契 Stream\n Open in browser\n Download\n Queue audio in player" )"
+LINK_ACTION="$(dmenu-helper run_menu " 輸 What to do with this URL? " "契 Stream\n Open in browser\n Download\n Queue audio in player")"
 [ "$LINK_ACTION" == "" ] && exit 0
 
 case "$LINK_ACTION" in
@@ -85,9 +85,9 @@ case "$LINK_ACTION" in
         # if downloading the video, send a notification
         notify-send "Fetching available formats..." -i "$ICON"
         # get the available formats
-        AVAIL_FMTS="$( yt-dlp -F "$URL" | tail -n +4 | sed 's/audio only/audio/g; s/ \+/,/g' | tr -s ',' ':' )"
+        AVAIL_FMTS="$(yt-dlp -F "$URL" | tail -n +4 | sed 's/audio only/audio/g; s/ \+/,/g' | tr -s ',' ':')"
         # clean up the format a bit and then show all of them for selection
-        QUALITY="$( dmenu-helper run_menu " 輸 Select quality: " "$AVAIL_FMTS" | cut -f 1 -d : )"
+        QUALITY="$(dmenu-helper run_menu " 輸 Select quality: " "$AVAIL_FMTS" | cut -f 1 -d :)"
         # if nothing is selected, exit
         [ "$QUALITY" == "" ] && exit 0
         # if destination folder does not exist, create one
@@ -105,7 +105,7 @@ case "$LINK_ACTION" in
         # now that we have mopidy we can do this
         mpc add "yt:$URL"
         notify-send "Added audio to queue." -i "$ICON"
-        PN_CHOICE="$( dmenu-helper run_menu "  Play added song now? " "yes\nno" )"
-        [ "$PN_CHOICE" == "yes" ] && mpc play $( mpc playlist | wc -l )
+        PN_CHOICE="$(dmenu-helper run_menu "  Play added song now? " "yes\nno")"
+        [ "$PN_CHOICE" == "yes" ] && mpc play $(mpc playlist | wc -l)
         ;;
 esac

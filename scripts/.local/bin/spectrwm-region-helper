@@ -7,10 +7,10 @@ SPECTRWM_CONFIG_PATH="${XDG_CONFIG_HOME:="$HOME/.config"}/spectrwm/spectrwm.conf
 declare -a REGION_LINES
 
 # then get the resolution lines into another array
-mapfile -t RESOLUTIONS < <( xdpyinfo | awk '/dimensions/{print $2}' )
+mapfile -t RESOLUTIONS < <(xdpyinfo | awk '/dimensions/{print $2}')
 
 # try to keep spacing intact, so we need to extract it
-IFS=$':' read -r SPR1 SPR2 SPR3 < <( sed -n "s/^\([ ]*\)region\([ ]*\)=\([ ]*\)screen\[[0-9]*\]:.*$/\1:\2:\3/p" "$SPECTRWM_CONFIG_PATH" | head -1 )
+IFS=$':' read -r SPR1 SPR2 SPR3 < <(sed -n "s/^\([ ]*\)region\([ ]*\)=\([ ]*\)screen\[[0-9]*\]:.*$/\1:\2:\3/p" "$SPECTRWM_CONFIG_PATH" | head -1)
 
 # check if disable_padding option is set, in which case we don't need to reserve space for polybar
 if [ "$1" == "disable_padding" ]; then
@@ -20,30 +20,30 @@ if [ "$1" == "disable_padding" ]; then
     done
 else
     # get the height reserved for the polybar instance
-    mapfile -t BAR_DIMENSIONS < <( polybar-helper get_dimensions )
-    TTL_BARHEIGHT="$(( ${BAR_DIMENSIONS[2]} + 2 * ${BAR_DIMENSIONS[1]} ))"
+    mapfile -t BAR_DIMENSIONS < <(polybar-helper get_dimensions)
+    TTL_BARHEIGHT="$((${BAR_DIMENSIONS[2]} + 2 * ${BAR_DIMENSIONS[1]}))"
     # get the padding already defined in spectrwm config file
-    RG_PADDING="$( awk -F "=" '/^[ ]*region_padding/ {print $2}' "$SPECTRWM_CONFIG_PATH" | tr -d ' ' )"
+    RG_PADDING="$(awk -F "=" '/^[ ]*region_padding/ {print $2}' "$SPECTRWM_CONFIG_PATH" | tr -d ' ')"
     # effective height to reserve is bar_height - region_padding
-    EFF_BARHEIGHT="$(( $TTL_BARHEIGHT - $RG_PADDING ))"
+    EFF_BARHEIGHT="$((TTL_BARHEIGHT - RG_PADDING))"
     # convert the data above into some entries that we can replace in the spectrwm config file
     for IDX in "${!RESOLUTIONS[@]}"; do
-        RES_HEIGHT="$( echo "${RESOLUTIONS[$IDX]}" | cut -f 2 -d 'x' )"
-        RES_WIDTH="$( echo "${RESOLUTIONS[$IDX]}" | cut -f 1 -d 'x' )"
-        ALLOWED_HEIGHT="$(( $RES_HEIGHT - $EFF_BARHEIGHT ))"
-        SCREEN_IDX="$(( $IDX + 1 ))"
+        RES_HEIGHT="$(echo "${RESOLUTIONS[$IDX]}" | cut -f 2 -d 'x')"
+        RES_WIDTH="$(echo "${RESOLUTIONS[$IDX]}" | cut -f 1 -d 'x')"
+        ALLOWED_HEIGHT="$((RES_HEIGHT - EFF_BARHEIGHT))"
+        SCREEN_IDX="$((IDX + 1))"
         REGION_LINES+=("${SPR1}region${SPR2}=${SPR3}screen[${SCREEN_IDX}]:${RES_WIDTH}x${ALLOWED_HEIGHT}+0+${EFF_BARHEIGHT}")
     done
 fi
 
 # replace them in the spectrwm config file
-REPLACE_LINENR="$( grep -n "^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:.*$" "$SPECTRWM_CONFIG_PATH" | cut -d : -f 1 | head -1 )"
+REPLACE_LINENR="$(grep -n "^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:.*$" "$SPECTRWM_CONFIG_PATH" | cut -d : -f 1 | head -1)"
 sed -i '/^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:.*$/d' "$SPECTRWM_CONFIG_PATH"
-for (( IDX=${#REGION_LINES[@]}-1 ; IDX>=0 ; IDX-- )) ; do
-    TEMP_FILE="$( mktemp )"
+for ((IDX = ${#REGION_LINES[@]} - 1; IDX >= 0; IDX--)); do
+    TEMP_FILE="$(mktemp)"
     awk -v n="$REPLACE_LINENR" -v s="${REGION_LINES[IDX]}" 'NR == n {print s} {print}' "$SPECTRWM_CONFIG_PATH" > "$TEMP_FILE"
     mv "$TEMP_FILE" "$SPECTRWM_CONFIG_PATH"
 done
 
 # now restart spectrwm so that it reloads the configuration file
-kill -1 "$( pidof spectrwm )"
+kill -1 "$(pidof spectrwm)"

@@ -6,14 +6,14 @@
 MAIN_MENU="⏻ Shutdown\n⏼ Reboot\n⏾ Sleep\n Lock\n Logout\n Clear pending"
 DELAY_MENU="now\n+60\n+45\n+30\n+15\n+10\n+5\n+3\n+2\n+1"
 
-ACTION=$( dmenu-helper run_menu " 漣  " "$MAIN_MENU" )
+ACTION=$(dmenu-helper run_menu " 漣  " "$MAIN_MENU")
 [ -z "$ACTION" ] && exit
 
 ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/power.svg"
 
 case "$ACTION" in
     '⏻ Shutdown')
-        DELAY=$( dmenu-helper run_menu "Delay: " "$DELAY_MENU" )
+        DELAY=$(dmenu-helper run_menu "Delay: " "$DELAY_MENU")
         [ -z "$DELAY" ] && exit
         if [ "$DELAY" == "now" ]; then
             notify-send -u normal "Shutting down now..." -i "$ICON"
@@ -23,7 +23,7 @@ case "$ACTION" in
         shutdown -P "$DELAY"
         ;;
     '⏼ Reboot')
-        DELAY=$( dmenu-helper run_menu "Delay: " "$DELAY_MENU" )
+        DELAY=$(dmenu-helper run_menu "Delay: " "$DELAY_MENU")
         [ -z "$DELAY" ] && exit
         if [ "$DELAY" == "now" ]; then
             notify-send -u normal "Rebooting now..." -i "$ICON"
@@ -40,11 +40,11 @@ case "$ACTION" in
         light-locker-command --lock
         ;;
     ' Logout')
-        WM="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
+        WM="$(wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p")"
         if [ "$WM" == "bspwm" ]; then
             bspc quit
         elif [ "$WM" == "spectrwm" ]; then
-            kill -INT $( pidof spectrwm )
+            kill -INT $(pidof spectrwm)
         else
             notify-send -u normal "Unknown environment, could not log out." -i "$ICON"
         fi
@@ -52,4 +52,5 @@ case "$ACTION" in
     ' Clear pending')
         notify-send -u normal "Cleared pending shutdown" -i "$ICON"
         shutdown -c
+        ;;
 esac

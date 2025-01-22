@@ -15,18 +15,18 @@ get_preferred_menu() {
 # function to generate options to pass to dmenu
 get_options() {
     # get the focused display name
-    FOCUS_MON="$( display-helper get_focused_display )"
+    FOCUS_MON="$(display-helper get_focused_display)"
     # get the dimensions from the polybar helper script so that they remain consistent
-    mapfile -t DIMENSIONS < <( polybar-helper get_dimensions "$FOCUS_MON" )
+    mapfile -t DIMENSIONS < <(polybar-helper get_dimensions "$FOCUS_MON")
     # use the font from polybar to have consistency
-    FONT="$( polybar-helper get_font "$FOCUS_MON" | head -1 | sed 's/pixelsize=/size=/g' | cut -f 1 -d ";" )"
+    FONT="$(polybar-helper get_font "$FOCUS_MON" | head -1 | sed 's/pixelsize=/size=/g' | cut -f 1 -d ";")"
     # putting it all together
     echo "-X ${DIMENSIONS[0]} -Y ${DIMENSIONS[1]} -l ${DIMENSIONS[2]} -W ${DIMENSIONS[3]} -fn ${FONT}"
 }
 
 # function to disable bars before running dmenu and enabling them after exit
 polybar_control() {
-    polybar-helper disable >/dev/null 2>&1
+    polybar-helper disable > /dev/null 2>&1
     trap "polybar-helper enable >/dev/null 2>&1" EXIT
 }
 
@@ -37,14 +37,29 @@ menu() {
         LINES="$3"
     # if not, then check if there's anything from stdin
     elif [ -p /dev/stdin ]; then
-        LINES="$( cat )"
+        LINES="$(cat)"
     fi
     echo -e "$LINES" | dmenu $1 -p "$2" | tail -1
 }
 
 case $1 in
-    run_menu) polybar_control; menu "$( get_options )" "$2" "$3"; exit 0;;
-    get_options) get_options; exit 0;;
-    custom_menu) polybar_control; menu "$( get_options ) $2" "$3" "$4"; exit 0;;
-    *) echo "Unknown operation: $1"; usage; exit 1;;
+    run_menu)
+        polybar_control
+        menu "$(get_options)" "$2" "$3"
+        exit 0
+        ;;
+    get_options)
+        get_options
+        exit 0
+        ;;
+    custom_menu)
+        polybar_control
+        menu "$(get_options) $2" "$3" "$4"
+        exit 0
+        ;;
+    *)
+        echo "Unknown operation: $1"
+        usage
+        exit 1
+        ;;
 esac

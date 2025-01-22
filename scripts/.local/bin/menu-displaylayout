@@ -5,34 +5,34 @@ LAYOUTS_DIR="${XDG_CONFIG_HOME:="$HOME/.config"}/wm/layouts"
 
 create_layout() {
     SL_NAME=""
-    CL_ACTION="$( dmenu-helper run_menu "  How do you want to create the new layout? " " Graphical\n Command-line" )"
-    [[ "$CL_ACTION" == "" ]] && exit 0
+    CL_ACTION="$(dmenu-helper run_menu "  How do you want to create the new layout? " " Graphical\n Command-line")"
+    [[ $CL_ACTION == "" ]] && exit 0
     case $CL_ACTION in
         ' Graphical')
-            MARKER_FILE="$( mktemp )"
+            MARKER_FILE="$(mktemp)"
             arandr
-            LFILE="$( find "$HOME/.screenlayout" -type f -newer "$MARKER_FILE" -printf "%T+ %p %f\n" | sort -r | head -1 | cut -f 3 -d " " )"
+            LFILE="$(find "$HOME/.screenlayout" -type f -newer "$MARKER_FILE" -printf "%T+ %p %f\n" | sort -r | head -1 | cut -f 3 -d " ")"
             rm "$MARKER_FILE"
-            if [[ "$LFILE" == "" ]]; then
+            if [[ $LFILE == "" ]]; then
                 notify-send -u normal "No layout files found in ~/.screenlayout! Make sure to save to default save location."
                 exit 1
             else
-                SL_NAME="$LAYOUTS_DIR/$( hostname )_$( basename "$LFILE" | rev | cut -f 2- -d "." | rev )"
+                SL_NAME="$LAYOUTS_DIR/$(hostname)_$(basename "$LFILE" | rev | cut -f 2- -d "." | rev)"
                 mv "$HOME/.screenlayout/$LFILE" "$SL_NAME"
-                rmdir "$HOME/.screenlayout" 2>/dev/null
+                rmdir "$HOME/.screenlayout" 2> /dev/null
             fi
             ;;
         ' Command-line')
-            LNAME="$( dmenu-helper run_menu "  Name the new layout: " "" )"
-            [[ "$LNAME" == "" ]] && exit 0
-            SL_NAME="$LAYOUTS_DIR/$( hostname )_$LNAME"
+            LNAME="$(dmenu-helper run_menu "  Name the new layout: " "")"
+            [[ $LNAME == "" ]] && exit 0
+            SL_NAME="$LAYOUTS_DIR/$(hostname)_$LNAME"
             $TERMINAL -c "$EDITOR $SL_NAME"
             ;;
     esac
-    if [[ "$SL_NAME" != "" ]]; then
-        SWITCH_ACTION="$( dmenu-helper run_menu "  Do you want to switch to the newly created layout? " "Yes\nNo" )"
-        if [[ "$SWITCH_ACTION" == "Yes" ]]; then
-            select_layout "$( basename "$SL_NAME" | cut -f 2- -d "_" )"
+    if [[ $SL_NAME != "" ]]; then
+        SWITCH_ACTION="$(dmenu-helper run_menu "  Do you want to switch to the newly created layout? " "Yes\nNo")"
+        if [[ $SWITCH_ACTION == "Yes" ]]; then
+            select_layout "$(basename "$SL_NAME" | cut -f 2- -d "_")"
         fi
     else
         notify-send -u normal "Error in creating layout!"
@@ -40,25 +40,25 @@ create_layout() {
 }
 
 select_layout() {
-    if [[ "$1" != "" ]]; then
+    if [[ $1 != "" ]]; then
         LSELECTED="$1"
     else
-        LSELECTED="$( dmenu-helper run_menu "  Select a layout to switch to: " "$( find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$( hostname )_" | cut -f 2- -d "_" )" )"
+        LSELECTED="$(dmenu-helper run_menu "  Select a layout to switch to: " "$(find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$(hostname)_" | cut -f 2- -d "_")")"
     fi
-    [[ "$LSELECTED" == "" ]] && exit 0
-    LSELECTED_FULL="$LAYOUTS_DIR/$( hostname )_$LSELECTED"
-    echo "$( hostname )_$LSELECTED" > "$CURRENT_LAYOUT"
+    [[ $LSELECTED == "" ]] && exit 0
+    LSELECTED_FULL="$LAYOUTS_DIR/$(hostname)_$LSELECTED"
+    echo "$(hostname)_$LSELECTED" > "$CURRENT_LAYOUT"
     $LSELECTED_FULL
     "${XDG_CONFIG_HOME:="$HOME/.config"}"/wm/post-layoutswitch
     notify-send -u low "Screen layout changed to $LSELECTED_FULL"
 }
 
 edit_layout() {
-    LSELECTED="$( dmenu-helper run_menu "  Select a layout to edit: " "$( find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$( hostname )_" | cut -f 2- -d "_" )" )"
-    [[ "$LSELECTED" == "" ]] && exit 0
-    LSELECTED_FULL="$LAYOUTS_DIR/$( hostname )_$LSELECTED"
-    EL_ACTION="$( dmenu-helper run_menu "  How do you want to edit the selected layout? " " Graphical\n Command-line" )"
-    [[ "$EL_ACTION" == "" ]] && exit 0
+    LSELECTED="$(dmenu-helper run_menu "  Select a layout to edit: " "$(find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$(hostname)_" | cut -f 2- -d "_")")"
+    [[ $LSELECTED == "" ]] && exit 0
+    LSELECTED_FULL="$LAYOUTS_DIR/$(hostname)_$LSELECTED"
+    EL_ACTION="$(dmenu-helper run_menu "  How do you want to edit the selected layout? " " Graphical\n Command-line")"
+    [[ $EL_ACTION == "" ]] && exit 0
     case $EL_ACTION in
         ' Graphical')
             cp "$LSELECTED_FULL" /tmp/edit_layout.sh
@@ -69,25 +69,46 @@ edit_layout() {
             $TERMINAL -c "$EDITOR $LSELECTED_FULL"
             ;;
     esac
-    SWITCH_ACTION="$( dmenu-helper run_menu "  Do you want to reload the edited layout? " "Yes\nNo" )"
-    if [[ "$SWITCH_ACTION" == "Yes" ]]; then
-        select_layout "$( basename "$LSELECTED_FULL" | cut -f 2- -d "_" )"
+    SWITCH_ACTION="$(dmenu-helper run_menu "  Do you want to reload the edited layout? " "Yes\nNo")"
+    if [[ $SWITCH_ACTION == "Yes" ]]; then
+        select_layout "$(basename "$LSELECTED_FULL" | cut -f 2- -d "_")"
     fi
 }
 
-if [[ "$1" != "" ]]; then
+if [[ $1 != "" ]]; then
     case $1 in
-        create) create_layout; exit 0;;
-        select) select_layout "$2"; exit 0;;
-        edit) edit_layout; exit 0;;
-        *) echo "Unknown operation: $1"; exit 1;;
+        create)
+            create_layout
+            exit 0
+            ;;
+        select)
+            select_layout "$2"
+            exit 0
+            ;;
+        edit)
+            edit_layout
+            exit 0
+            ;;
+        *)
+            echo "Unknown operation: $1"
+            exit 1
+            ;;
     esac
 fi
 
-MAIN_ACTION="$( dmenu-helper run_menu "   " " Create new layout\n Select existing layout\n Edit existing layout" )"
-[[ "$MAIN_ACTION" == "" ]] && exit 0
+MAIN_ACTION="$(dmenu-helper run_menu "   " " Create new layout\n Select existing layout\n Edit existing layout")"
+[[ $MAIN_ACTION == "" ]] && exit 0
 case "$MAIN_ACTION" in
-    ' Create new layout') create_layout; exit 0;;
-    ' Select existing layout') select_layout; exit 0;;
-    ' Edit existing layout') edit_layout; exit 0;;
+    ' Create new layout')
+        create_layout
+        exit 0
+        ;;
+    ' Select existing layout')
+        select_layout
+        exit 0
+        ;;
+    ' Edit existing layout')
+        edit_layout
+        exit 0
+        ;;
 esac

@@ -8,45 +8,49 @@ if type pkill &> /dev/null; then
 else
     while IFS=$'\n' read -r BAR_PID; do
         kill "$BAR_PID"
-    done < <( ps -e -o pid,cmd | tail -n +2 | awk '{print $1":"substr($0, index($0,$2))}' | sed -n '/^[0-9]\+:polybar/p' | cut -f 1 -d : )
+    done < <(ps -e -o pid,cmd | tail -n +2 | awk '{print $1":"substr($0, index($0,$2))}' | sed -n '/^[0-9]\+:polybar/p' | cut -f 1 -d :)
 fi
 
 # remove the state file from the previous instances
-rm -f "$( polybar-helper get_cache_path )"
+rm -f "$(polybar-helper get_cache_path)"
 
 # wait until the processes have been shut down
-while pgrep -u $UID -x polybar >/dev/null 2>&1; do sleep 1; done
+while pgrep -u $UID -x polybar > /dev/null 2>&1; do sleep 1; done
 
 # source all the variables defined in the dynamic variable file
 source "${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/env"
-export $( sed '/^[[:blank:]]*#/d;s/#.*//' "${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/env" | cut -d "=" -f 1 )
+export $(sed '/^[[:blank:]]*#/d;s/#.*//' "${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/env" | cut -d "=" -f 1)
 
 # then launch bars
-for M in $( polybar --list-monitors | cut -d: -f1 ); do
-    FONTS="$( polybar-helper get_font "$M" )"
-    export ICON_SIZE="$( polybar-helper get_iconsize "$M" )"
-    export TEXT_FONT="$( echo -e "$FONTS" | sed '1q;d' )"
-    export ICON_FONT="$( echo -e "$FONTS" | sed '2q;d' )"
+for M in $(polybar --list-monitors | cut -d: -f1); do
+    FONTS="$(polybar-helper get_font "$M")"
+    export ICON_SIZE="$(polybar-helper get_iconsize "$M")"
+    export TEXT_FONT="$(echo -e "$FONTS" | sed '1q;d')"
+    export ICON_FONT="$(echo -e "$FONTS" | sed '2q;d')"
     for BAR in "${BARS[@]}"; do
         MONITOR=$M polybar $BAR &
     done
 done
 
 # wait till all the bars have launched
-for BPID in $( pidof polybar ); do
-while
-    sleep 2
-    : ls /tmp/polybar_mqueue.$BPID > /dev/null 2>&1
-    [ $? -ne 0 ]
-do :; done
+for BPID in $(pidof polybar); do
+    while
+        sleep 2
+        : ls /tmp/polybar_mqueue.$BPID > /dev/null 2>&1
+        [ $? -ne 0 ]
+    do :; done
 done
 
 # get the process ID of all the instances of the second bar
-mapfile -t HIDEBAR_PIDS < <( pgrep "polybar" --list-full | grep -E "$(IFS="|$IFS"; printf '%s\n' "${BARS[@]:1}"; IFS="${IFS:1}")" | awk '{print $1};' )
+mapfile -t HIDEBAR_PIDS < <(pgrep "polybar" --list-full | grep -E "$(
+    IFS="|$IFS"
+    printf '%s\n' "${BARS[@]:1}"
+    IFS="${IFS:1}"
+)" | awk '{print $1};')
 
 # then hide the instances of the second bar, showing only ones of the first bar
 for BAR_PID in "${HIDEBAR_PIDS[@]}"; do
-    polybar-msg -p "$BAR_PID" cmd hide >/dev/null 2>&1
+    polybar-msg -p "$BAR_PID" cmd hide > /dev/null 2>&1
 done
 
 # initialize the state file for the helper script

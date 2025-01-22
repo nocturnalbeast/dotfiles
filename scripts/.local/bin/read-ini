@@ -2,7 +2,7 @@
 
 usage() {
     cat << EOF
-Usage: $( basename "$0" ) [-h] [-S] [-e] [-s SECTION] [-k KEY] -f FILE
+Usage: $(basename "$0") [-h] [-S] [-e] [-s SECTION] [-k KEY] -f FILE
 
 Parse and extract values from an INI file.
 
@@ -25,7 +25,7 @@ cleanup() {
 }
 
 error() {
-    echo "[$( date +'%Y-%m-%dT%H:%M:%S%z' )] ERROR: $*" >&2
+    echo "[$(date +'%Y-%m-%dT%H:%M:%S%z')] ERROR: $*" >&2
 }
 
 # options for the script
@@ -42,16 +42,16 @@ if [ $# -eq 0 ]; then
 fi
 
 # validate options
-if command -v getopt &>/dev/null; then
+if command -v getopt &> /dev/null; then
     getopt -T
     if [ $? -eq 4 ]; then
-        OPTS=$( getopt -o hf:s:k:Se --long help,file:,section:,key:,strict,escape -n "$( basename "$0" )" -- "$@" )
+        OPTS=$(getopt -o hf:s:k:Se --long help,file:,section:,key:,strict,escape -n "$(basename "$0")" -- "$@")
         if [ $? -ne 0 ]; then
             error "Failed to parse options."
             exit 1
         fi
     else
-        OPTS=$( getopt -o hf:s:k:Se -n "$( basename "$0" )" -- "$@" )
+        OPTS=$(getopt -o hf:s:k:Se -n "$(basename "$0")" -- "$@")
         if [ $? -ne 0 ]; then
             error "Failed to parse options."
             exit 1
@@ -66,14 +66,35 @@ fi
 eval set -- "$OPTS"
 while true; do
     case "$1" in
-        -h | --help ) usage; exit;;
-        -f | --file ) INI_FILE="$2"; shift 2;;
-        -s | --section ) INI_SECTION="$2"; shift 2;;
-        -k | --key ) INI_KEY="$2"; shift 2;;
-        -S | --strict ) STRICT_PARSE="true"; shift;;
-        -e | --escape ) ESCAPE_VALUE="true"; shift;;
-        -- ) shift; break;;
-        * ) break;;
+        -h | --help)
+            usage
+            exit
+            ;;
+        -f | --file)
+            INI_FILE="$2"
+            shift 2
+            ;;
+        -s | --section)
+            INI_SECTION="$2"
+            shift 2
+            ;;
+        -k | --key)
+            INI_KEY="$2"
+            shift 2
+            ;;
+        -S | --strict)
+            STRICT_PARSE="true"
+            shift
+            ;;
+        -e | --escape)
+            ESCAPE_VALUE="true"
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *) break ;;
     esac
 done
 
@@ -97,10 +118,10 @@ IFS_OLD="${IFS}"
 
 # setup shell behavior
 SWITCH_SHOPT=""
-if ! shopt -q extglob ;then
+if ! shopt -q extglob; then
     SWITCH_SHOPT="$SWITCH_SHOPT extglob"
 fi
-if ! shopt -q nocasematch ;then
+if ! shopt -q nocasematch; then
     SWITCH_SHOPT="$SWITCH_SHOPT nocasematch"
 fi
 shopt -q -s ${SWITCH_SHOPT}
@@ -112,14 +133,14 @@ while read -r LINE || [ -n "$LINE" ]; do
         continue
     fi
     # check if the line is the beginning of a section
-    if [[ "$LINE" =~ ^\[[a-zA-Z0-9_]{1,}\]$ ]]; then
+    if [[ $LINE =~ ^\[[a-zA-Z0-9_]{1,}\]$ ]]; then
         # if so, then set the CURRENT_SECTION variable to the name of the section
         CURRENT_SECTION="${LINE#[}"
         CURRENT_SECTION="${CURRENT_SECTION%]}"
         continue
     fi
     # check if the line isn't a valid key-value pair line
-    if ! [[ "$LINE" =~ ^[a-zA-Z0-9._-]{1,}[[:space:]]*= ]]; then
+    if ! [[ $LINE =~ ^[a-zA-Z0-9._-]{1,}[[:space:]]*= ]]; then
         if [ "$STRICT_PARSE" = "true" ]; then
             error "Invalid line content encountered: $LINE"
             exit
@@ -135,10 +156,10 @@ while read -r LINE || [ -n "$LINE" ]; do
     CURRENT_KEY="${CURRENT_KEY%%+([[:space:]])}"
     CURRENT_VAL="${CURRENT_VAL##+([[:space:]])}"
     # remove quotes around the value if they are present
-    if [[ "$CURRENT_VAL" =~ ^\".*\"$ ]]; then
+    if [[ $CURRENT_VAL =~ ^\".*\"$ ]]; then
         CURRENT_VAL="${CURRENT_VAL##\"}"
         CURRENT_VAL="${CURRENT_VAL%%\"}"
-    elif [[ "$CURRENT_VAL" =~ ^\'.*\'$ ]]; then
+    elif [[ $CURRENT_VAL =~ ^\'.*\'$ ]]; then
         CURRENT_VAL="${CURRENT_VAL##\'}"
         CURRENT_VAL="${CURRENT_VAL%%\'}"
     fi

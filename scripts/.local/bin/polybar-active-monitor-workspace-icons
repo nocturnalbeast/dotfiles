@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 
 usage() {
-	echo "$( basename "$0" ) : polybar module to show active monitor and workspace"
-	echo "Usage: $( basename "$0" ) [MONITOR_BG] [MONITOR_FG] [WORKSPACE_BG] [WORKSPACE_FG]"
-	echo "       $( basename "$0" ) noformat"
-	exit 0
+    echo "$(basename "$0") : polybar module to show active monitor and workspace"
+    echo "Usage: $(basename "$0") [MONITOR_BG] [MONITOR_FG] [WORKSPACE_BG] [WORKSPACE_FG]"
+    echo "       $(basename "$0") noformat"
+    exit 0
 }
 
 # check number of arguments before starting
 if [[ $# -ne 4 ]] && [[ $# -ne 1 ]]; then
-	usage
-	exit
+    usage
+    exit
 fi
 # check if the only argument is 'noformat' in case there is only one argument
 NOFORMAT="false"
-if [[ $# -eq 1 ]] && [[ "$1" == "noformat" ]]; then
-	NOFORMAT="true"
+if [[ $# -eq 1 ]] && [[ $1 == "noformat" ]]; then
+    NOFORMAT="true"
 else
-	usage
-	exit
+    usage
+    exit
 fi
 
 # define default icons for workspaces
@@ -36,7 +36,7 @@ DEFAULT_ICON=""
 
 # override the icons specified here with the workspace icons defined globally IF they exist
 if [[ -f "${XDG_CONFIG_HOME:="$HOME/.config"}/wm/workspace_icons" ]]; then
-	source "${XDG_CONFIG_HOME:="$HOME/.config"}/wm/workspace_icons"
+    source "${XDG_CONFIG_HOME:="$HOME/.config"}/wm/workspace_icons"
 fi
 
 # define icons for monitors
@@ -46,63 +46,63 @@ ICON_OTHER=""
 ICON_MIRROR=""
 
 # populate arrays with the data we need
-mapfile -t WKSP_OFFSETS < <( xprop -root -notype -f _NET_DESKTOP_VIEWPORT 0c '=$0+\n' _NET_DESKTOP_VIEWPORT | cut -f 2 -d = | tr -s ', ' '\n' | xargs -L2 | tr ' ' ',' )
+mapfile -t WKSP_OFFSETS < <(xprop -root -notype -f _NET_DESKTOP_VIEWPORT 0c '=$0+\n' _NET_DESKTOP_VIEWPORT | cut -f 2 -d = | tr -s ', ' '\n' | xargs -L2 | tr ' ' ',')
 while IFS=$'\n' read -r MONITOR_ENTRY; do
-	declare -a MONITORS+=( "${MONITOR_ENTRY%:*}" )
-	declare -a MONITOR_OFFSETS+=( "${MONITOR_ENTRY##*:}" )
-done < <( xrandr --current --listmonitors | tail -n+2 | sed 's/.*[0-9]*\/[0-9]*x[0-9]*\/[0-9]*+\([0-9]*\)+\([0-9]*\)[ ]\+\(.*\)/\3:\1,\2/g' ) 
+    declare -a MONITORS+=("${MONITOR_ENTRY%:*}")
+    declare -a MONITOR_OFFSETS+=("${MONITOR_ENTRY##*:}")
+done < <(xrandr --current --listmonitors | tail -n+2 | sed 's/.*[0-9]*\/[0-9]*x[0-9]*\/[0-9]*+\([0-9]*\)+\([0-9]*\)[ ]\+\(.*\)/\3:\1,\2/g')
 
 # check if all monitors have same number of workspaces
 # this would mean that the multihead setup will most likely contain the same workspace names (and icons) across all monitors
 # so use the same icons across all the workspaces
 USE_SAME_ICONS="false"
 # check if we have any environment variable that asks to disable this behavior
-if [[ "$POLYBAR_DISABLE_SAME_ICONS" != "false" ]]; then
-	if [[ "$( printf "%s\n" "${WKSP_OFFSETS[@]}" | sort | uniq --count | awk '{print $1}' | uniq | wc -l )" == "1" ]]; then
-		USE_SAME_ICONS="true"
-	fi
+if [[ $POLYBAR_DISABLE_SAME_ICONS != "false" ]]; then
+    if [[ "$(printf "%s\n" "${WKSP_OFFSETS[@]}" | sort | uniq --count | awk '{print $1}' | uniq | wc -l)" == "1" ]]; then
+        USE_SAME_ICONS="true"
+    fi
 fi
 
 # the main loop that tracks the focused desktop/workspace
 while IFS=$'\n' read -r CURR_WKSP; do
-	# get the workspace icon
-	CURR_WKSP="$( echo "$CURR_WKSP" | cut -f 2 -d '=' )"
-	CURR_WKSP_ICON_NAME="ICON_$CURR_WKSP"
-	if [[ "$USE_SAME_ICONS" != "false" ]]; then
-		CURR_WKSP_ICON_NAME="ICON_$(( CURR_WKSP % ( ${#WKSP_OFFSETS[@]} / ${#MONITOR_OFFSETS[@]} ) ))"
-	fi
-	if [[ "${!CURR_WKSP_ICON_NAME:+x}" != "x" ]]; then
-		CURR_WKSP_ICON_NAME="DEFAULT_ICON"
-	fi
-	# see if we are on a single-monitor or a multi-monitor setup
-    if [[ "${#MONITORS[@]}" == "1" ]]; then
-		if [[ "$NOFORMAT" == "true" ]]; then
-			echo "${!CURR_WKSP_ICON_NAME}"
-		else
-			echo "%{B"$3"}%{F"$4"}${!CURR_WKSP_ICON_NAME}%{B- F-}"
-		fi
-	else
-		# set a fallback for the monitor - assuming we don't detect it
-		CURR_MONITOR="${MONITORS[0]}"
-		for IDX in "${!MONITOR_OFFSETS[@]}"; do
-			if [[ "${MONITOR_OFFSETS[$IDX]}" == "${WKSP_OFFSETS[$CURR_WKSP]}" ]]; then
-				CURR_MONITOR="${MONITORS[$IDX]}"
-			fi
-		done
-		CURR_MONITOR_ICON_NAME=""
-		if [[ "$( display-helper are_monitors_mirrored )" == "yes" ]]; then
-			CURR_MONITOR_ICON_NAME="ICON_MIRROR"
-		else
-        	case $CURR_MONITOR in
-        		*"eDP"*) CURR_MONITOR_ICON_NAME="ICON_LAPTOP";;
-        		*"HDMI"*) CURR_MONITOR_ICON_NAME="ICON_EXTERNAL";;
-        		*) CURR_MONITOR_ICON_NAME="ICON_OTHER";;
-        	esac
-		fi
-		if [[ "$NOFORMAT" == "true" ]]; then
-			echo "${!CURR_MONITOR_ICON_NAME} | ${!CURR_WKSP_ICON_NAME}"
-		else
-			echo "%{B"$1"}%{F"$2"} ${!CURR_MONITOR_ICON_NAME} %{B- F-}%{B"$3"}%{F"$4"} ${!CURR_WKSP_ICON_NAME} %{B- F-}"
-		fi
-	fi
-done < <( xprop -root -spy -notype -f _NET_CURRENT_DESKTOP 0c '=$0\n' _NET_CURRENT_DESKTOP )
+    # get the workspace icon
+    CURR_WKSP="$(echo "$CURR_WKSP" | cut -f 2 -d '=')"
+    CURR_WKSP_ICON_NAME="ICON_$CURR_WKSP"
+    if [[ $USE_SAME_ICONS != "false" ]]; then
+        CURR_WKSP_ICON_NAME="ICON_$((CURR_WKSP % (${#WKSP_OFFSETS[@]} / ${#MONITOR_OFFSETS[@]})))"
+    fi
+    if [[ ${!CURR_WKSP_ICON_NAME:+x} != "x" ]]; then
+        CURR_WKSP_ICON_NAME="DEFAULT_ICON"
+    fi
+    # see if we are on a single-monitor or a multi-monitor setup
+    if [[ ${#MONITORS[@]} == "1" ]]; then
+        if [[ $NOFORMAT == "true" ]]; then
+            echo "${!CURR_WKSP_ICON_NAME}"
+        else
+            echo "%{B"$3"}%{F"$4"}${!CURR_WKSP_ICON_NAME}%{B- F-}"
+        fi
+    else
+        # set a fallback for the monitor - assuming we don't detect it
+        CURR_MONITOR="${MONITORS[0]}"
+        for IDX in "${!MONITOR_OFFSETS[@]}"; do
+            if [[ ${MONITOR_OFFSETS[$IDX]} == "${WKSP_OFFSETS[$CURR_WKSP]}" ]]; then
+                CURR_MONITOR="${MONITORS[$IDX]}"
+            fi
+        done
+        CURR_MONITOR_ICON_NAME=""
+        if [[ "$(display-helper are_monitors_mirrored)" == "yes" ]]; then
+            CURR_MONITOR_ICON_NAME="ICON_MIRROR"
+        else
+            case $CURR_MONITOR in
+                *"eDP"*) CURR_MONITOR_ICON_NAME="ICON_LAPTOP" ;;
+                *"HDMI"*) CURR_MONITOR_ICON_NAME="ICON_EXTERNAL" ;;
+                *) CURR_MONITOR_ICON_NAME="ICON_OTHER" ;;
+            esac
+        fi
+        if [[ $NOFORMAT == "true" ]]; then
+            echo "${!CURR_MONITOR_ICON_NAME} | ${!CURR_WKSP_ICON_NAME}"
+        else
+            echo "%{B"$1"}%{F"$2"} ${!CURR_MONITOR_ICON_NAME} %{B- F-}%{B"$3"}%{F"$4"} ${!CURR_WKSP_ICON_NAME} %{B- F-}"
+        fi
+    fi
+done < <(xprop -root -spy -notype -f _NET_CURRENT_DESKTOP 0c '=$0\n' _NET_CURRENT_DESKTOP)

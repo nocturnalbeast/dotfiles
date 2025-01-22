@@ -5,24 +5,24 @@
 
 DEPENDENCIES=(surfraw)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-    type -p "$DEPENDENCY" &>/dev/null || {
+    type -p "$DEPENDENCY" &> /dev/null || {
         echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
         exit 1
     }
 done
 
-SEARCH_ELVI=$( echo "${@:1}" )
-SEARCH_TERM=$( echo "${@:2}" )
+SEARCH_ELVI=$(echo "${@:1}")
+SEARCH_TERM=$(echo "${@:2}")
 
-if [[ -z "$SEARCH_ELVI" ]]; then
-    ACTION=$( dmenu-helper run_menu "  Engine: " "$( surfraw -elvi | awk -F'-' '{print $1}' | sed '/:/d' | awk '{$1=$1};1' )" )
-elif [[ -z "$SEARCH_TERM" ]]; then
-    ACTION=$( dmenu-helper run_menu "  Search $SEARCH_ELVI: " "" )
+if [[ -z $SEARCH_ELVI ]]; then
+    ACTION=$(dmenu-helper run_menu "  Engine: " "$(surfraw -elvi | awk -F'-' '{print $1}' | sed '/:/d' | awk '{$1=$1};1')")
+elif [[ -z $SEARCH_TERM ]]; then
+    ACTION=$(dmenu-helper run_menu "  Search $SEARCH_ELVI: " "")
 else
     surfraw $SEARCH_ELVI &
 fi
 
 case $ACTION in
     "") ;;
-    *) $0 $SEARCH_ELVI $ACTION;;
+    *) $0 $SEARCH_ELVI $ACTION ;;
 esac

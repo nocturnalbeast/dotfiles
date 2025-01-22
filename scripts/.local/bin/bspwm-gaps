@@ -15,7 +15,7 @@ MARKER_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/bspwm-gaps-ogm"
 [ "$#" -ge 1 ] || usage
 
 case "$1" in
-    increase|decrease|reset) MODE="$1" ;;
+    increase | decrease | reset) MODE="$1" ;;
     *) usage ;;
 esac
 
@@ -26,20 +26,19 @@ esac
 
 [ "$SIZE" = "" ] && SIZE="0"
 
-
 case "$MODE" in
     increase)
-        CURRENT_GAP="$( get_current_gap )"
+        CURRENT_GAP="$(get_current_gap)"
         [ ! -f "$MARKER_FILE" ] && echo "$CURRENT_GAP" > "$MARKER_FILE"
-        bspc config window_gap "$(( CURRENT_GAP + SIZE ))"
+        bspc config window_gap "$((CURRENT_GAP + SIZE))"
         ;;
     decrease)
-        CURRENT_GAP="$( get_current_gap )"
+        CURRENT_GAP="$(get_current_gap)"
         [ ! -f "$MARKER_FILE" ] && echo "$CURRENT_GAP" > "$MARKER_FILE"
-        bspc config window_gap "$(( CURRENT_GAP - SIZE ))"
+        bspc config window_gap "$((CURRENT_GAP - SIZE))"
         ;;
     reset)
-        [ -f "$MARKER_FILE" ] && bspc config window_gap "$( cat "$MARKER_FILE" )"
+        [ -f "$MARKER_FILE" ] && bspc config window_gap "$(cat "$MARKER_FILE")"
         rm -f "$MARKER_FILE"
         ;;
 esac

@@ -2,13 +2,13 @@
 
 DEPENDENCIES=(clipmenu)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-    type -p "$DEPENDENCY" &>/dev/null || {
+    type -p "$DEPENDENCY" &> /dev/null || {
         echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
         exit 1
     }
 done
 
-REGEX=$( dmenu-helper custom_menu "-l $CM_HISTLENGTH" " 﫧  " "$( clipdel ".*" )" )
-[[ "$REGEX" == "" ]] && exit 0
+REGEX=$(dmenu-helper custom_menu "-l $CM_HISTLENGTH" " 﫧  " "$(clipdel ".*")")
+[[ $REGEX == "" ]] && exit 0
 
 clipdel -d "$REGEX"

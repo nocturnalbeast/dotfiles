@@ -2,27 +2,27 @@
 
 DEPENDENCIES=(wmctrl)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-    type -p "$DEPENDENCY" &>/dev/null || {
+    type -p "$DEPENDENCY" &> /dev/null || {
         echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
         exit 1
     }
 done
 
-NUM_MONITORS="$( xrandr --current | grep -c ' connected ' )"
-mapfile -t WKSP_NAMES < <( xprop -root -notype -f _NET_DESKTOP_NAMES 8u '=$0+\n' _NET_DESKTOP_NAMES | tr -s "=, " "\n" | tail -n+2 )
+NUM_MONITORS="$(xrandr --current | grep -c ' connected ')"
+mapfile -t WKSP_NAMES < <(xprop -root -notype -f _NET_DESKTOP_NAMES 8u '=$0+\n' _NET_DESKTOP_NAMES | tr -s "=, " "\n" | tail -n+2)
 # this'll be the final list that is given to the menu
 declare -A WKSP_ENTRIES
 
 # check if we are on a single-display setup or a multi-display setup
-if [[ "$NUM_MONITORS" != "1" ]]; then
+if [[ $NUM_MONITORS != "1" ]]; then
     # if we are on a multi-display setup, then we'll need the monitors with the offsets
     # we need this since we need to match the _NET_DESKTOP_VIEWPORT output for each workspace with the respective monitor that it's on
     # thus creating a way to correctly identify which monitor a workspace is on
     while IFS=$'\n' read -r ENTRY; do
         declare -A MONITOR_OFFSETS+="( $ENTRY )"
-    done < <( xrandr --current | sed -n 's/\(.*\) connected.* [0-9]*x[0-9]*+\([0-9]*\)+\([0-9]*\).*/[\2,\3]=\1/p' )
+    done < <(xrandr --current | sed -n 's/\(.*\) connected.* [0-9]*x[0-9]*+\([0-9]*\)+\([0-9]*\).*/[\2,\3]=\1/p')
     # populate an array with the offsets of each workspace
-    mapfile -t WKSP_MONITOR_OFFSETS < <( xprop -root -notype -f _NET_DESKTOP_VIEWPORT 0c '=$0+\n' _NET_DESKTOP_VIEWPORT | cut -f 2 -d = | awk 'BEGIN{FS=", "} {for(i=1;i<=NF-1;i++) printf $i","$++i"\n";}' )
+    mapfile -t WKSP_MONITOR_OFFSETS < <(xprop -root -notype -f _NET_DESKTOP_VIEWPORT 0c '=$0+\n' _NET_DESKTOP_VIEWPORT | cut -f 2 -d = | awk 'BEGIN{FS=", "} {for(i=1;i<=NF-1;i++) printf $i","$++i"\n";}')
     # now iterate through all the workspaces and add the entries to the final list
     for WKSP_IDX in "${!WKSP_NAMES[@]}"; do
         WKSP_ENTRIES["$WKSP_IDX: [${MONITOR_OFFSETS["${WKSP_MONITOR_OFFSETS["$WKSP_IDX"]}"]}] ${WKSP_NAMES["$WKSP_IDX"]:1:-1}"]="$WKSP_IDX"
@@ -33,5 +33,5 @@ else
     done
 fi
 
-SELECTED_WKSP=$( dmenu-helper run_menu "   " "$( printf '%s\n' "${!WKSP_ENTRIES[@]}" | sort -n )" )
+SELECTED_WKSP=$(dmenu-helper run_menu "   " "$(printf '%s\n' "${!WKSP_ENTRIES[@]}" | sort -n)")
 [ "$SELECTED_WKSP" != "" ] && wmctrl -s "${WKSP_ENTRIES["$SELECTED_WKSP"]}"

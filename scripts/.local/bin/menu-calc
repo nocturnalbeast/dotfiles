@@ -5,14 +5,14 @@
 
 DEPENDENCIES=(xclip bc)
 for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-    type -p "$DEPENDENCY" &>/dev/null || {
+    type -p "$DEPENDENCY" &> /dev/null || {
         echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
         exit 1
     }
 done
 
-ANSWER=$( echo "$@" | bc -l | sed '/\./ s/\.\{0,1\}0\{1,\}$//' )
-ACTION=$( dmenu-helper run_menu "  $ANSWER " " Copy to clipboard\n Clear" )
+ANSWER=$(echo "$@" | bc -l | sed '/\./ s/\.\{0,1\}0\{1,\}$//')
+ACTION=$(dmenu-helper run_menu "  $ANSWER " " Copy to clipboard\n Clear")
 
 case $ACTION in
     " Clear") $0 ;;
