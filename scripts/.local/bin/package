@@ -73,28 +73,31 @@ get_package_manager_command() {
 
     # Debian-based distro commands
     DEBIAN_INSTALL_CMD="apt-get install"
-    DEBIAN_UPDATE_CMD="apt-get update; apt-get upgrade"
+    DEBIAN_UPDATE_CMD="apt-get -y update
+apt-get -y upgrade"
     DEBIAN_SEARCH_CMD="apt-cache search"
     DEBIAN_REMOVE_CMD="apt-get --purge remove"
-    DEBIAN_CLEAN_CMD="apt-get autoremove; apt-get autoclean"
+    DEBIAN_CLEAN_CMD="apt-get -y autoclean
+apt-get -y autoremove"
     DEBIAN_DESC_CMD="apt-cache show"
     DEBIAN_LIST_CMD="dpkg -l"
 
     # Red Hat-based distro commands (DNF)
     REDHAT_INSTALL_CMD="dnf install"
-    REDHAT_UPDATE_CMD="dnf update"
+    REDHAT_UPDATE_CMD="dnf --assumeyes update"
     REDHAT_SEARCH_CMD="dnf search"
     REDHAT_REMOVE_CMD="dnf remove"
-    REDHAT_CLEAN_CMD="dnf clean all; dnf autoremove"
+    REDHAT_CLEAN_CMD="dnf --assumeyes clean all
+dnf --assumeyes autoremove"
     REDHAT_DESC_CMD="dnf info"
     REDHAT_LIST_CMD="dnf list installed"
 
     # SUSE-based distro commands
     SUSE_INSTALL_CMD="zypper install"
-    SUSE_UPDATE_CMD="zypper update"
+    SUSE_UPDATE_CMD="zypper --non-interactive update"
     SUSE_SEARCH_CMD="zypper search"
     SUSE_REMOVE_CMD="zypper remove"
-    SUSE_CLEAN_CMD="zypper clean"
+    SUSE_CLEAN_CMD="zypper --non-interactive clean"
     SUSE_DESC_CMD="zypper info"
     SUSE_LIST_CMD="zypper packages --installed-only"
 
@@ -112,19 +115,19 @@ get_package_manager_command() {
         NEEDS_SU="false"
     fi
     ARCH_INSTALL_CMD="$ARCH_CMD -S --color auto"
-    ARCH_UPDATE_CMD="$ARCH_CMD -Syu --color auto"
+    ARCH_UPDATE_CMD="$ARCH_CMD --noconfirm -Syu --color auto"
     ARCH_SEARCH_CMD="$ARCH_CMD -Ss --color auto"
     ARCH_REMOVE_CMD="$ARCH_CMD -Rsn --color auto"
-    ARCH_CLEAN_CMD="$ARCH_CMD -Sc --color auto"
+    ARCH_CLEAN_CMD="$ARCH_CMD --noconfirm -Sc --color auto"
     ARCH_DESC_CMD="$ARCH_CMD -Q --info --color auto"
     ARCH_LIST_CMD="$ARCH_CMD -Q --color auto"
 
     # Void Linux commands
     VOID_INSTALL_CMD="xbps-install -S"
-    VOID_UPDATE_CMD="xbps-install -Su"
+    VOID_UPDATE_CMD="xbps-install -y -Su"
     VOID_SEARCH_CMD="xbps-query -Rs"
     VOID_REMOVE_CMD="xbps-remove -R"
-    VOID_CLEAN_CMD="xbps-remove -Oo"
+    VOID_CLEAN_CMD="xbps-remove -y -Oo"
     VOID_DESC_CMD="xbps-query -S"
     VOID_LIST_CMD="xbps-query -l"
 
@@ -181,7 +184,9 @@ get_package_manager_command() {
         eval "CMD=\$$CMD_VAR"
         SU_CMD=$(detect_sudo_binary "$OPERATION" "$NEEDS_SU")
         if [ -n "$SU_CMD" ]; then
-            echo "$SU_CMD $CMD"
+            echo "$CMD" | while IFS= read -r line; do
+                echo "$SU_CMD $line"
+            done
         else
             echo "$CMD"
         fi
@@ -205,31 +210,45 @@ main() {
     case $OPERATION in
         "install" | "i")
             CMD=$(get_package_manager_command "install")
-            $CMD $@
+            echo "$CMD" | while IFS= read -r command; do
+                $command $@
+            done
             ;;
         "update" | "u")
             CMD=$(get_package_manager_command "update")
-            $CMD
+            echo "$CMD" | while IFS= read -r command; do
+                $command
+            done
             ;;
         "search" | "s")
             CMD=$(get_package_manager_command "search")
-            $CMD $@
+            echo "$CMD" | while IFS= read -r command; do
+                $command $@
+            done
             ;;
         "remove" | "r")
             CMD=$(get_package_manager_command "remove")
-            $CMD $@
+            echo "$CMD" | while IFS= read -r command; do
+                $command $@
+            done
             ;;
         "clean" | "c")
             CMD=$(get_package_manager_command "clean")
-            $CMD
+            echo "$CMD" | while IFS= read -r command; do
+                $command
+            done
             ;;
         "desc" | "d")
             CMD=$(get_package_manager_command "desc")
-            $CMD $@
+            echo "$CMD" | while IFS= read -r command; do
+                $command $@
+            done
             ;;
         "list" | "l")
             CMD=$(get_package_manager_command "list")
-            $CMD
+            echo "$CMD" | while IFS= read -r command; do
+                $command
+            done
             ;;
         "-h" | "--help")
             usage
