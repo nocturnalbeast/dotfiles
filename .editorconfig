@@ -17,3 +17,7 @@ function_next_line = false
 keep_padding = false
 space_redirects = true
 switch_case_indent = true
+
+[*.md]
+indent_style = space
+indent_size = 2
