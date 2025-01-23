@@ -74,6 +74,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [tealdeer](https://github.com/dbrgn/tealdeer): A fast tldr client in Rust
     * [tmux](https://github.com/tmux/tmux): Terminal multiplexer
     * [trash-cli](https://github.com/andreafrancia/trash-cli): CLI interface to FreeDesktop.org trash
+    * [udiskie](https://github.com/coldfix/udiskie): Automounter for removable media
     * [ueberzug](https://github.com/seebye/ueberzug): X11 image display for terminals
     * [vivid](https://github.com/sharkdp/vivid): LS_COLORS generator
     * [xdotool](https://github.com/jordansissel/xdotool): Command-line X11 automation tool

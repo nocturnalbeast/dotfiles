@@ -1,0 +1,28 @@
+program_options:
+  tray: auto
+  menu: flat
+  automount: true
+  notify: true
+  password_cache: 30
+  file_manager: xdg-open
+  terminal: terminal
+  password_prompt:
+    - gnome-keyring-query
+    - get
+    - "{id_uuid}"
+
+notifications:
+  timeout: -1
+quickmenu_actions:
+  - mount
+  - unmount
+  - unlock
+  - terminal
+  - detach
+  - delete
+notification_actions:
+  device_mounted:
+    - browse
+  device_added:
+    - mount
+
