@@ -6,27 +6,27 @@
 # setup an array to store all DPIs
 DPIS=()
 # get DPI of each screen
-for ENTRY in $( xrandr --current | sed -n 's/^\([^ ]\{1,\}\)* connected.* \([0-9]\{1,\}\)x.* \([0-9]\{1,\}\)mm x .*/\1,\2,\3/p' ); do
+for ENTRY in $(xrandr --current | sed -n 's/^\([^ ]\{1,\}\)* connected.* \([0-9]\{1,\}\)x.* \([0-9]\{1,\}\)mm x .*/\1,\2,\3/p'); do
     OUTPUT="${ENTRY%%,*}"
     PIXELS="${ENTRY#*,}"
     PIXELS="${PIXELS%%,*}"
     MM="${ENTRY##*,}"
-    DPI="$(( PIXELS * 254 / 10 / MM ))"
+    DPI="$((PIXELS * 254 / 10 / MM))"
     # apply correction factor for laptops
-    if [[ "${OUTPUT::3}" == "eDP" ]]; then
-        DPI="$(( DPI * 96 / 144 ))"
+    if [[ ${OUTPUT::3} == "eDP" ]]; then
+        DPI="$((DPI * 96 / 144))"
     fi
     # round DPI
-    ROUNDED_DPI=$(( ( DPI + 24 ) / 48 * 48 ))
+    ROUNDED_DPI=$(((DPI + 24) / 48 * 48))
     if [[ $ROUNDED_DPI -gt 192 ]]; then
-        ROUNDED_DPI=$(( ( DPI + 48 ) / 96 * 96 ))
+        ROUNDED_DPI=$(((DPI + 48) / 96 * 96))
     elif [[ $ROUNDED_DPI -lt 96 ]]; then
         ROUNDED_DPI=96
     fi
     DPIS+=("$ROUNDED_DPI")
 done
 # sort DPIs
-DPIS=( $( printf "%s\n" "${DPIS[@]}" | sort -r -n ) )
+DPIS=($(printf "%s\n" "${DPIS[@]}" | sort -r -n))
 # use the highest one
 SELECTED_DPI=${DPIS[0]:-96}
 # get RGBA
@@ -40,11 +40,11 @@ if [[ ! -d "${XDG_CONFIG_HOME:-"$HOME/.config"}/xsettingsd" ]]; then
     mkdir -p "${XDG_CONFIG_HOME:-"$HOME/.config"}/xsettingsd"
 fi
 {
-    cat "${XDG_CONFIG_HOME:-"$HOME/.config"}/wm/xsettingsd.conf" 2>/dev/null
-    echo "Xft/DPI $(( SELECTED_DPI * 1024 ))"
+    cat "${XDG_CONFIG_HOME:-"$HOME/.config"}/wm/xsettingsd.conf" 2> /dev/null
+    echo "Xft/DPI $((SELECTED_DPI * 1024))"
     echo "Xft/RGBA \"$RGBA\""
-    echo "Gdk/WindowScalingFactor $(( SELECTED_DPI / 96 ))"
-    echo "Gdk/UnscaledDPI $(( SELECTED_DPI * 1024 / ( SELECTED_DPI / 96 ) ))"
+    echo "Gdk/WindowScalingFactor $((SELECTED_DPI / 96))"
+    echo "Gdk/UnscaledDPI $((SELECTED_DPI * 1024 / (SELECTED_DPI / 96)))"
 } > "${XDG_CONFIG_HOME:-"$HOME/.config"}/xsettingsd/xsettingsd.conf"
 echo "Xft.dpi: $SELECTED_DPI" | xrdb -merge
 # restart xsettingsd
@@ -53,6 +53,6 @@ if type pkill &> /dev/null; then
 else
     while IFS=$'\n' read -r BAR_PID; do
         kill "$BAR_PID"
-    done < <( ps -e -o pid,cmd | tail -n +2 | awk '{print $1":"substr($0, index($0,$2))}' | sed -n '/^[0-9]\+:xsettingsd/p' | cut -f 1 -d : )
+    done < <(ps -e -o pid,cmd | tail -n +2 | awk '{print $1":"substr($0, index($0,$2))}' | sed -n '/^[0-9]\+:xsettingsd/p' | cut -f 1 -d :)
 fi
 xsettingsd &

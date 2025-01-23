@@ -25,23 +25,23 @@ fi
 background restore
 
 # start audio
-if command -v pipewire >/dev/null 2>&1; then
+if command -v pipewire > /dev/null 2>&1; then
     if systemctl --user is-active --quiet pipewire.service; then
         systemctl --user restart pipewire.service
-    elif ! pgrep -x "pipewire" >/dev/null; then
+    elif ! pgrep -x "pipewire" > /dev/null; then
         pipewire &
     fi
 fi
 
 # launch music player server
-if command -v mopidy >/dev/null 2>&1; then
+if command -v mopidy > /dev/null 2>&1; then
     mopidy &
-elif command -v mpd >/dev/null 2>&1; then
+elif command -v mpd > /dev/null 2>&1; then
     mpd &
 fi
 
 # launch notification daemon
-if command -v notificationd >/dev/null 2>&1; then
+if command -v notificationd > /dev/null 2>&1; then
     notificationd start
 fi
 
@@ -79,16 +79,16 @@ fi
 #fi
 
 # networkmanager tray applet
-if command -v nm-applet >/dev/null 2>&1; then
+if command -v nm-applet > /dev/null 2>&1; then
     nm-applet &
 fi
 
 # bluetooth tray applet
-if command -v blueman-applet >/dev/null 2>&1; then
+if command -v blueman-applet > /dev/null 2>&1; then
     blueman-applet &
 fi
 
 # disk mounting tray applet
-if command -v udiskie >/dev/null 2>&1; then
+if command -v udiskie > /dev/null 2>&1; then
     udiskie -Avnt &
 fi

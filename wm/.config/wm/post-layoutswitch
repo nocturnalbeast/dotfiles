@@ -4,7 +4,7 @@
 # Add commands which are required to be run after such changes here.
 
 # get the currently running window manager
-WINDOW_MANAGER="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
+WINDOW_MANAGER="$(wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p")"
 # if running bspwm, then run the set-monitors script
 if [ "$WINDOW_MANAGER" = "bspwm" ]; then
     "${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-monitors
