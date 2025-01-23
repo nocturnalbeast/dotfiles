@@ -5,11 +5,11 @@
 # monitor
 
 # get the name of the primary monitor first
-PRIMARY_MONITOR="$( xrandr --current | grep "connected primary" | cut -f 1 -d " " )"
+PRIMARY_MONITOR="$(xrandr --current | grep "connected primary" | cut -f 1 -d " ")"
 # next, find the dimensions from polybar's helper script
-FB_DIMENSIONS="$( polybar-helper get_dimensions "$PRIMARY_MONITOR" | tr "\n" ":" )"
-FB_WINDOW_GAP="$( echo "$FB_DIMENSIONS" | cut -f 1 -d : )"
-FB_TOP_PADDING="$(( $( echo "$FB_DIMENSIONS" | cut -f 2 -d : ) + $( echo "$FB_DIMENSIONS" | cut -f 3 -d : ) ))"
+FB_DIMENSIONS="$(polybar-helper get_dimensions "$PRIMARY_MONITOR" | tr "\n" ":")"
+FB_WINDOW_GAP="$(echo "$FB_DIMENSIONS" | cut -f 1 -d :)"
+FB_TOP_PADDING="$(($(echo "$FB_DIMENSIONS" | cut -f 2 -d :) + $(echo "$FB_DIMENSIONS" | cut -f 3 -d :)))"
 # and set the fallback values obtained above to global config
 bspc config window_gap "$FB_WINDOW_GAP"
 bspc config top_padding "$FB_TOP_PADDING"
@@ -18,16 +18,14 @@ bspc config top_padding "$FB_TOP_PADDING"
 # consistently across all monitors
 
 # iterate across all monitors
-for MONITOR in $( bspc query --names -M ); do
+for MONITOR in $(bspc query --names -M); do
     # setup 10 workspaces for the monitor
     bspc monitor "$MONITOR" -d main inet code data play docs draw txns info misc
     # get the dimensions of the spacing from polybar's helper script
-    DIMENSIONS="$( polybar-helper get_dimensions "$MONITOR" | tr "\n" ":" )"
-    WINDOW_GAP="$( echo "$DIMENSIONS" | cut -f 1 -d : )"
-    TOP_PADDING="$(( $( echo "$DIMENSIONS" | cut -f 2 -d : ) + $( echo "$DIMENSIONS" | cut -f 3 -d : ) ))"
+    DIMENSIONS="$(polybar-helper get_dimensions "$MONITOR" | tr "\n" ":")"
+    WINDOW_GAP="$(echo "$DIMENSIONS" | cut -f 1 -d :)"
+    TOP_PADDING="$(($(echo "$DIMENSIONS" | cut -f 2 -d :) + $(echo "$DIMENSIONS" | cut -f 3 -d :)))"
     # assign the respective values in the config only for the specific monitor
     bspc config -m "$MONITOR" window_gap "$WINDOW_GAP"
     bspc config -m "$MONITOR" top_padding "$TOP_PADDING"
 done
-
-
