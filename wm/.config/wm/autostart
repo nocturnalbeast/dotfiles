@@ -9,8 +9,8 @@ is_wayland() {
     [ -n "$WAYLAND_DISPLAY" ]
 }
 
-# configure monitor layout and set dpi (for X11)
 if ! is_wayland; then
+    # configure monitor layout and set dpi (for X11)
     layout_file="${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout"
     if [ -f "$layout_file" ]; then
         "${XDG_CONFIG_HOME:-$HOME/.config}"/wm/layouts/"$(cat "$layout_file")" &
@@ -19,16 +19,21 @@ if ! is_wayland; then
     if [ -f "$dpi_script" ]; then
         "$dpi_script"
     fi
+else
+    # run xsettingsd with the source path
+    xsettingsd --config "${XDG_CONFIG_HOME:-$HOME/.config}/wm/xsettingsd.conf" &
 fi
 
 # restore the wallpaper
 background restore
 
 # start audio
-if command -v pipewire > /dev/null 2>&1; then
-    if systemctl --user is-active --quiet pipewire.service; then
+if systemctl --user list-unit-files pipewire.service > /dev/null 2>&1; then
+    if [ "$(systemctl --user is-active pipewire.service)" != "active" ]; then
         systemctl --user restart pipewire.service
-    elif ! pgrep -x "pipewire" > /dev/null; then
+    fi
+elif command -v pipewire > /dev/null 2>&1; then
+    if ! pgrep -x "pipewire" > /dev/null; then
         pipewire &
     fi
 fi
