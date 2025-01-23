@@ -42,7 +42,7 @@ contains() {
 #   $1 - Package name
 install_package() {
     if ! contains "$1" "$IGNORE_DIRS"; then
-        if stow -t "$HOME" "$1" >/dev/null 2>&1; then
+        if stow -t "$HOME" "$1" > /dev/null 2>&1; then
             echo "Installed $1"
         else
             echo "ERROR: Failed to install package $1" >&2
@@ -57,7 +57,7 @@ install_package() {
 #   $@ - Optional list of packages to install (if not provided, all packages will be installed)
 main() {
     case "$1" in
-        -h|--help)
+        -h | --help)
             usage
             exit 0
             ;;
