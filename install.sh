@@ -7,10 +7,15 @@ IGNORE_DIRS="repo_resources"
 
 usage() {
     cat << EOF
-Usage: $(basename "$0") [PACKAGES...]
+Usage: $(basename "$0") [OPTIONS] [PACKAGES...]
 
 Install dotfiles using GNU stow.
 If no packages are specified, all packages will be installed.
+
+Options:
+    -h, --help      Show this help message and exit
+    -r, --reinstall Reinstall (restow) packages even if they are already installed
+    -u, --uninstall Uninstall (remove) packages instead of installing them
 
 Arguments:
     PACKAGES    Space-separated list of packages to install
@@ -18,6 +23,8 @@ Arguments:
 Example:
     $(basename "$0")           # Install all packages
     $(basename "$0") nvim zsh  # Install only nvim and zsh packages
+    $(basename "$0") -r        # Reinstall all packages
+    $(basename "$0") -u nvim   # Uninstall nvim package
 EOF
 }
 
@@ -36,18 +43,43 @@ contains() {
     esac
 }
 
-# Install a single package using stow
+# Manage a package using stow (install, reinstall, or uninstall)
 #
 # Arguments:
 #   $1 - Package name
-install_package() {
+#   $2 - Action: "install", "reinstall", or "uninstall"
+stow_package() {
     if ! contains "$1" "$IGNORE_DIRS"; then
-        if stow -t "$HOME" "$1" > /dev/null 2>&1; then
-            echo "Installed $1"
-        else
-            echo "ERROR: Failed to install package $1" >&2
-            return 1
-        fi
+        case "$2" in
+            "reinstall")
+                if stow --override='.*' -Rt "$HOME" "$1" > /dev/null 2>&1; then
+                    echo "Reinstalled $1"
+                else
+                    echo "ERROR: Failed to reinstall package $1" >&2
+                    return 1
+                fi
+                ;;
+            "uninstall")
+                if stow -Dt "$HOME" "$1" > /dev/null 2>&1; then
+                    echo "Uninstalled $1"
+                else
+                    echo "ERROR: Failed to uninstall package $1" >&2
+                    return 1
+                fi
+                ;;
+            "install")
+                if stow -t "$HOME" "$1" > /dev/null 2>&1; then
+                    echo "Installed $1"
+                else
+                    echo "ERROR: Failed to install package $1" >&2
+                    return 1
+                fi
+                ;;
+            *)
+                echo "ERROR: Invalid action '$2' for package $1" >&2
+                return 1
+                ;;
+        esac
     fi
 }
 
@@ -56,23 +88,37 @@ install_package() {
 # Arguments:
 #   $@ - Optional list of packages to install (if not provided, all packages will be installed)
 main() {
-    case "$1" in
-        -h | --help)
-            usage
-            exit 0
-            ;;
-    esac
+    action="install"
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h | --help)
+                usage
+                exit 0
+                ;;
+            -r | --reinstall)
+                action="reinstall"
+                shift
+                ;;
+            -u | --uninstall)
+                action="uninstall"
+                shift
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
 
     if [ $# -eq 0 ]; then
-        # Install all packages
+        # Process all packages
         for pkg in $(find . -maxdepth 1 -mindepth 1 -type d -not -name '.*' | cut -f 2 -d '/'); do
-            install_package "$pkg"
+            stow_package "$pkg" "$action"
         done
     else
-        # Install specified packages
+        # Process specified packages
         for pkg in "$@"; do
             if [ -d "$pkg" ]; then
-                install_package "$pkg"
+                stow_package "$pkg" "$action"
             else
                 echo "ERROR: Package $pkg not found" >&2
             fi
