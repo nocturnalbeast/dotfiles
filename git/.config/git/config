@@ -2,10 +2,23 @@
     pager = delta
 
 [diff]
+    tool = difftastic
     colorMoved = default
+
+[difftool]
+    prompt = false
+
+[difftool "difftastic"]
+    cmd = difft "$LOCAL" "$REMOTE"
+
+[pager]
+    difftool = true
 
 [interactive]
     diffFilter = delta --color-only
+
+[merge]
+    conflictstyle = diff3
 
 [delta]
     features = unobtrusive-line-numbers decorations
@@ -88,6 +101,12 @@
     dh   = diff HEAD
     hub  = browse
     hubd = compare
+
+    # syntatic diff
+    sd    = difftool -t difftastic
+    sds   = difftool -t difftastic --staged
+    sdc   = difftool -t difftastic --staged
+    sdh   = difftool -t difftastic HEAD
 
     # index
     s  = status
