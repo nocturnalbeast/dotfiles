@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+case "$1" in
+"install")
+	echo "Setting up /etc/zshenv..."
+	# shellcheck disable=SC2016
+	echo 'export ZDOTDIR="${HOME}/.config/zsh"' | sudo tee -a /etc/zshenv
+	;;
+"uninstall")
+	echo "Removing /etc/zshenv..."
+	# shellcheck disable=SC2016
+	grep -v 'export ZDOTDIR="${HOME}/.config/zsh"' /etc/zshenv | sudo tee /etc/zshenv
+	;;
+*)
+	echo "Unknown action: $1"
+	exit 1
+	;;
+esac

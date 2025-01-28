@@ -3,7 +3,7 @@
 # A dotfiles package installer script.
 
 # Global configuration
-IGNORE_DIRS="repo_resources"
+IGNORE_DIRS="repo_resources bootstrap"
 
 usage() {
     cat << EOF
@@ -43,6 +43,24 @@ contains() {
     esac
 }
 
+# Run a package-specific bootstrap script
+#
+# Arguments:
+#   $1 - Package name
+#   $2 - Action: "install" or "uninstall"
+run_bootstrap() {
+    pkg="$1"
+    action="$2"
+    bootstrap_script="bootstrap/$pkg"
+
+    if [ -x "$bootstrap_script" ]; then
+        echo "Running bootstrap script for $pkg..."
+        if ! "./$bootstrap_script" "$action"; then
+            echo "Warning: Bootstrap script for $pkg failed"
+        fi
+    fi
+}
+
 # Manage a package using stow (install, reinstall, or uninstall)
 #
 # Arguments:
@@ -80,6 +98,12 @@ stow_package() {
                 return 1
                 ;;
         esac
+
+        # Run bootstrap script after stowing
+        case "$2" in
+            "install" | "reinstall") run_bootstrap "$1" "install" ;;
+            "uninstall") run_bootstrap "$1" "uninstall" ;;
+        esac
     fi
 }
 
@@ -110,12 +134,13 @@ main() {
     done
 
     if [ $# -eq 0 ]; then
-        # Process all packages
-        for pkg in $(find . -maxdepth 1 -mindepth 1 -type d -not -name '.*' | cut -f 2 -d '/'); do
+        for dir in $IGNORE_DIRS; do
+            ignore_args="$ignore_args -not -name $dir"
+        done
+        for pkg in $(find . -maxdepth 1 -mindepth 1 -type d -not -name '.*' $ignore_args | cut -f 2 -d '/'); do
             stow_package "$pkg" "$action"
         done
     else
-        # Process specified packages
         for pkg in "$@"; do
             if [ -d "$pkg" ]; then
                 stow_package "$pkg" "$action"
