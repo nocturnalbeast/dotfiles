@@ -1,0 +1,53 @@
+#!/usr/bin/env sh
+
+for cmd in shfmt file python3 taplo; do
+	if ! command -v "$cmd" >/dev/null 2>&1; then
+		echo "Error: $cmd is not installed. Please install it first."
+		exit 1
+	fi
+done
+
+is_shell_script() {
+	file "$1" | grep -q "shell script" ||
+		(file "$1" | grep -q "text" && head -n1 "$1" | grep -q "^#!.*\(bash\|sh\)")
+}
+
+is_toml() {
+	[ "${1##*.}" = "toml" ] && return 0
+	python3 -c '
+import sys
+import tomllib
+
+try:
+    with open(sys.argv[1], "rb") as f:
+        tomllib.load(f)
+    sys.exit(0)
+except Exception:
+    sys.exit(1)
+' "$1"
+}
+
+files=$(git diff --cached --name-only --diff-filter=d)
+
+if [ -z "$files" ]; then
+	exit 0
+fi
+
+echo "Checking files for formatting..."
+for file in $files; do
+	formatted=false
+	if is_shell_script "$file"; then
+		echo "Formatting shell script: $file"
+		shfmt -w "$file"
+		formatted=true
+	elif is_toml "$file"; then
+		echo "Formatting TOML file: $file"
+		taplo fmt "$file"
+		formatted=true
+	else
+		echo "Skipping $file (not a recognized format for automatic formatting)"
+	fi
+	[ "$formatted" = true ] && git add "$file"
+done
+
+exit 0
