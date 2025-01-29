@@ -107,6 +107,15 @@ stow_package() {
     fi
 }
 
+# Setup the git hook directory
+setup_git_hook() {
+    if [ -d ".git" ]; then
+        if ! git config --local core.hooksPath > /dev/null 2>&1; then
+            git config --local core.hooksPath repo_resources/git_hooks
+        fi
+    fi
+}
+
 # Main entry point that processes command-line arguments.
 #
 # Arguments:
@@ -132,6 +141,10 @@ main() {
                 ;;
         esac
     done
+
+    if [ "$action" != "uninstall" ]; then
+        setup_git_hook
+    fi
 
     if [ $# -eq 0 ]; then
         for dir in $IGNORE_DIRS; do
