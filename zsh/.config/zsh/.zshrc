@@ -463,6 +463,8 @@ zinit wait'0' lucid light-mode for \
 
 # programs from github releases - load binaries using zinit
 zinit wait'1' lucid from'gh-r' nocompile light-mode for \
+    id-as'lazygit' sbin'lazygit' \
+        @jesseduffield/lazygit \
     id-as'gh-cli' bpick'gh_*.tar.gz' mv'gh*/bin/gh -> gh' sbin'gh' atload'$ATLOAD_DIR/gh.zsh' \
         @cli/cli \
     id-as'gh-hub' cp'hub-*/etc/hub.zsh_completion -> _hub' pick'hub-*' mv'hub-*/bin/hub -> hub' sbin'hub' \
