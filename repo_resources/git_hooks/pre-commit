@@ -7,7 +7,7 @@ for cmd in shfmt file python3 taplo; do
 	fi
 done
 
-is_shell_script() {
+is_shell() {
 	file "$1" | grep -q "shell script" ||
 		(file "$1" | grep -q "text" && head -n1 "$1" | grep -q "^#!.*\(bash\|sh\)")
 }
@@ -27,6 +27,11 @@ except Exception:
 ' "$1"
 }
 
+is_python() {
+	[ "${1##*.}" = "py" ] && return 0
+	file "$1" | grep -iq "python script"
+}
+
 files=$(git diff --cached --name-only --diff-filter=d)
 
 if [ -z "$files" ]; then
@@ -36,7 +41,7 @@ fi
 echo "Checking files for formatting..."
 for file in $files; do
 	formatted=false
-	if is_shell_script "$file"; then
+	if is_shell "$file"; then
 		echo "Formatting shell script: $file"
 		shfmt -w "$file"
 		formatted=true
@@ -44,10 +49,20 @@ for file in $files; do
 		echo "Formatting TOML file: $file"
 		taplo fmt "$file"
 		formatted=true
+	elif is_python "$file"; then
+		echo "Formatting Python file: $file"
+		ruff format "$file"
+		formatted=true
 	else
 		echo "Skipping $file (not a recognized format for automatic formatting)"
 	fi
-	[ "$formatted" = true ] && git add "$file"
+	if [ "$formatted" = true ]; then
+		if ! git diff --quiet "$file"; then
+			echo "Formatted but not staged (has unstaged changes): $file"
+		else
+			git add "$file"
+		fi
+	fi
 done
 
 exit 0
