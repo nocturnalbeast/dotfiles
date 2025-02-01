@@ -54,9 +54,9 @@ run_bootstrap() {
     bootstrap_script="bootstrap/$pkg"
 
     if [ -x "$bootstrap_script" ]; then
-        echo "Running bootstrap script for $pkg..."
+        echo "INFO: Running bootstrap script for $pkg..."
         if ! "./$bootstrap_script" "$action"; then
-            echo "Warning: Bootstrap script for $pkg failed"
+            echo "ERROR: Bootstrap script for $pkg failed"
         fi
     fi
 }
@@ -90,7 +90,7 @@ stow_package() {
         case "$2" in
             "reinstall")
                 if stow --override='.*' -Rt "$HOME" "$1" > /dev/null 2>&1; then
-                    echo "Reinstalled $1"
+                    echo "INFO: Reinstalled $1"
                 else
                     echo "ERROR: Failed to reinstall package $1" >&2
                     return 1
@@ -98,11 +98,11 @@ stow_package() {
                 ;;
             "uninstall")
                 if ! is_stowed "$1"; then
-                    echo "Package $1 is not installed"
+                    echo "WARNING: Package $1 is not installed"
                     return 0
                 fi
                 if stow -Dt "$HOME" "$1" > /dev/null 2>&1; then
-                    echo "Uninstalled $1"
+                    echo "INFO: Uninstalled $1"
                 else
                     echo "ERROR: Failed to uninstall package $1" >&2
                     return 1
@@ -110,11 +110,11 @@ stow_package() {
                 ;;
             "install")
                 if is_stowed "$1"; then
-                    echo "Package $1 is already installed"
+                    echo "WARNING: Package $1 is already installed"
                     return 0
                 fi
                 if stow -t "$HOME" "$1" > /dev/null 2>&1; then
-                    echo "Installed $1"
+                    echo "INFO: Installed $1"
                 else
                     echo "ERROR: Failed to install package $1" >&2
                     return 1
