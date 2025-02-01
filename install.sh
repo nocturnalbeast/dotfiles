@@ -61,6 +61,25 @@ run_bootstrap() {
     fi
 }
 
+# Check if a stow package is already installed by checking if any of its files are symlinked
+#
+# Arguments:
+#   $1 - Package name
+#
+# Returns:
+#   0 if package is stowed, 1 otherwise
+is_stowed() {
+    pkg="$1"
+    output="$(stow -n -v -t "$HOME" "$pkg" 2>&1)"
+    if echo "$output" | grep -q "would cause conflicts\|^LINK:"; then
+        return 1
+    fi
+    if [ -z "$output" ] || echo "$output" | grep -q "^WARNING: in simulation mode"; then
+        return 0
+    fi
+    return 1
+}
+
 # Manage a package using stow (install, reinstall, or uninstall)
 #
 # Arguments:
@@ -78,6 +97,10 @@ stow_package() {
                 fi
                 ;;
             "uninstall")
+                if ! is_stowed "$1"; then
+                    echo "Package $1 is not installed"
+                    return 0
+                fi
                 if stow -Dt "$HOME" "$1" > /dev/null 2>&1; then
                     echo "Uninstalled $1"
                 else
@@ -86,6 +109,10 @@ stow_package() {
                 fi
                 ;;
             "install")
+                if is_stowed "$1"; then
+                    echo "Package $1 is already installed"
+                    return 0
+                fi
                 if stow -t "$HOME" "$1" > /dev/null 2>&1; then
                     echo "Installed $1"
                 else
