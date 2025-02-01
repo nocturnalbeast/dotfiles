@@ -142,6 +142,12 @@ main() {
         esac
     done
 
+    # Check if stow is installed
+    if ! command -v stow > /dev/null 2>&1; then
+        echo "Error: GNU stow is not installed. Please install it first."
+        exit 1
+    fi
+
     if [ "$action" != "uninstall" ]; then
         setup_git_hook
     fi
