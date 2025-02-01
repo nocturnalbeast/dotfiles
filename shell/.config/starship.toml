@@ -486,7 +486,7 @@ style = "bold cyan"
 ssh_only = true
 format = "[$localipv4]($style) 󰅂 "
 style = "bold green"
-disabled = false 
+disabled = false
 
 [lua]
 disabled = false
@@ -590,6 +590,7 @@ Amazon = "[ ](yellow)"
 Android = "[ ](green)"
 Arch = "[ ](cyan)"
 Artix = "[ ](cyan)"
+CachyOS = "[ ](red)"
 CentOS = "[ ](white)"
 Debian = "[ ](red)"
 DragonFly = "[](yellow)"
@@ -611,6 +612,7 @@ MidnightBSD = "[](white)"
 Mint = "[󰣭 ](green)"
 NetBSD = "[󰈿](yellow)"
 NixOS = "[ ](blue)"
+Nobara = "[ ](blue)"
 OpenBSD = "[ ](yellow)"
 OpenCloudOS = "[](white)"
 openEuler = "[](white)"
@@ -627,6 +629,7 @@ SUSE = "[ ](green)"
 Ubuntu = "[ ](red)"
 Ultramarine = "[](blue)"
 Unknown = "[ ](red)"
+Uos = "[ ](green)"
 Void = "[ ](green)"
 Windows = "[󰖳 ](blue)"
 
@@ -792,7 +795,9 @@ recognize_signal_code = true
 sigint_symbol = "[󰜺 ](red)"
 signal_symbol = "[󱐋](yellow)"
 style = "bold"
-success_symbol = ""
+success_symbol = "󰸞"
+success_style = "bold green"
+failure_style = "bold red"
 symbol = "[󱎘 ](red)"
 
 [sudo]
