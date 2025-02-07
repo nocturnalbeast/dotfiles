@@ -7,24 +7,23 @@ IGNORE_DIRS="repo_resources bootstrap"
 
 usage() {
     cat << EOF
-Usage: $(basename "$0") [OPTIONS] [PACKAGES...]
+Usage: $(basename "$0") ACTION [PACKAGES...]
 
-Install dotfiles using GNU stow.
+Manage dotfiles using GNU stow.
 If no packages are specified, all packages will be installed.
 
-Options:
-    -h, --help      Show this help message and exit
-    -r, --reinstall Reinstall (restow) packages even if they are already installed
-    -u, --uninstall Uninstall (remove) packages instead of installing them
-
 Arguments:
-    PACKAGES    Space-separated list of packages to install
+    ACTION       Action to perform: install, reinstall, or uninstall (required)
+    PACKAGES     Space-separated list of packages to manage (optional)
+
+Options:
+    -h, --help   Show this help message
 
 Example:
-    $(basename "$0")           # Install all packages
-    $(basename "$0") nvim zsh  # Install only nvim and zsh packages
-    $(basename "$0") -r        # Reinstall all packages
-    $(basename "$0") -u nvim   # Uninstall nvim package
+    $(basename "$0") install        # Install all packages
+    $(basename "$0") install tmux   # Install only tmux package
+    $(basename "$0") reinstall zsh  # Reinstall zsh package
+    $(basename "$0") uninstall gtk  # Uninstall gtk package
 EOF
 }
 
@@ -65,12 +64,14 @@ run_bootstrap() {
 #
 # Arguments:
 #   $1 - Package name
+#   $2 - Target directory
 #
 # Returns:
 #   0 if package is stowed, 1 otherwise
 is_stowed() {
     pkg="$1"
-    output="$(stow -n -v -t "$HOME" "$pkg" 2>&1)"
+    target="$2"
+    output="$(stow -n -v -t "$target" "$pkg" 2>&1)"
     if echo "$output" | grep -q "would cause conflicts\|^LINK:"; then
         return 1
     fi
@@ -85,11 +86,12 @@ is_stowed() {
 # Arguments:
 #   $1 - Package name
 #   $2 - Action: "install", "reinstall", or "uninstall"
+#   $3 - Target directory
 stow_package() {
     if ! contains "$1" "$IGNORE_DIRS"; then
         case "$2" in
             "reinstall")
-                if stow --override='.*' -Rt "$HOME" "$1" > /dev/null 2>&1; then
+                if stow --override='.*' -Rt "$3" "$1" > /dev/null 2>&1; then
                     echo "INFO: Reinstalled $1"
                 else
                     echo "ERROR: Failed to reinstall package $1" >&2
@@ -97,11 +99,11 @@ stow_package() {
                 fi
                 ;;
             "uninstall")
-                if ! is_stowed "$1"; then
-                    echo "WARNING: Package $1 is not installed"
-                    return 0
+                if ! is_stowed "$1" "$3"; then
+                    echo "ERROR: Package $1 is not installed"
+                    return 1
                 fi
-                if stow -Dt "$HOME" "$1" > /dev/null 2>&1; then
+                if stow -Dt "$3" "$1" > /dev/null 2>&1; then
                     echo "INFO: Uninstalled $1"
                 else
                     echo "ERROR: Failed to uninstall package $1" >&2
@@ -109,11 +111,11 @@ stow_package() {
                 fi
                 ;;
             "install")
-                if is_stowed "$1"; then
-                    echo "WARNING: Package $1 is already installed"
-                    return 0
+                if is_stowed "$1" "$3"; then
+                    echo "ERROR: Package $1 is already installed"
+                    return 1
                 fi
-                if stow -t "$HOME" "$1" > /dev/null 2>&1; then
+                if stow -t "$3" "$1" > /dev/null 2>&1; then
                     echo "INFO: Installed $1"
                 else
                     echo "ERROR: Failed to install package $1" >&2
@@ -146,28 +148,28 @@ setup_git_hook() {
 # Main entry point that processes command-line arguments.
 #
 # Arguments:
-#   $@ - Optional list of packages to install (if not provided, all packages will be installed)
+#   $1 - Action to perform (install, reinstall, uninstall)
+#   $@ - Optional list of packages to manage (if not provided, all packages will be installed)
 main() {
-    action="install"
-    while [ $# -gt 0 ]; do
-        case "$1" in
-            -h | --help)
-                usage
-                exit 0
-                ;;
-            -r | --reinstall)
-                action="reinstall"
-                shift
-                ;;
-            -u | --uninstall)
-                action="uninstall"
-                shift
-                ;;
-            *)
-                break
-                ;;
-        esac
-    done
+    # Show help if no arguments or help requested
+    if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+        usage
+        exit 0
+    fi
+
+    # Get the action
+    action="$1"
+    shift
+
+    # Validate action
+    case "$action" in
+        install | reinstall | uninstall) ;;
+        *)
+            echo "ERROR: Invalid action '$action'. Must be install, reinstall, or uninstall" >&2
+            usage
+            exit 1
+            ;;
+    esac
 
     # Check if stow is installed
     if ! command -v stow > /dev/null 2>&1; then
@@ -184,12 +186,12 @@ main() {
             ignore_args="$ignore_args -not -name $dir"
         done
         for pkg in $(find . -maxdepth 1 -mindepth 1 -type d -not -name '.*' $ignore_args | cut -f 2 -d '/'); do
-            stow_package "$pkg" "$action"
+            stow_package "$pkg" "$action" "$HOME"
         done
     else
         for pkg in "$@"; do
             if [ -d "$pkg" ]; then
-                stow_package "$pkg" "$action"
+                stow_package "$pkg" "$action" "$HOME"
             else
                 echo "ERROR: Package $pkg not found" >&2
             fi

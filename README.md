@@ -9,7 +9,7 @@
 
 These dotfiles are managed with [GNU stow](https://www.gnu.org/software/stow/), so you'll need it installed.
 
-To install these dotfiles, there is an installer script included. Clone the repository, and run the script `install.sh` to install all available packages.
+To install these dotfiles, there is an installer script included. Clone the repository, and run the script `install.sh install` to install all available packages.
 
 For a quick guide for managing and using dotfiles managed with [GNU stow](https://www.gnu.org/software/stow/), I recommend [alexpearce's guide](https://alexpearce.me/2016/02/managing-dotfiles-with-stow/) on the same.
 
