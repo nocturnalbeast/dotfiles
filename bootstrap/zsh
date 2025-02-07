@@ -10,6 +10,7 @@ case "$1" in
 		echo 'export ZDOTDIR="${HOME}/.config/zsh"' | sudo tee -a /etc/zshenv
 	fi
 	;;
+"reinstall") ;;
 "uninstall")
 	echo "Removing ZDOTDIR from system-wide zshenv..."
 	if [ -d "/etc/zsh" ]; then

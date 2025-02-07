@@ -93,6 +93,7 @@ stow_package() {
             "reinstall")
                 if stow --override='.*' -Rt "$3" "$1" > /dev/null 2>&1; then
                     echo "INFO: Reinstalled $1"
+                    run_bootstrap "$1" "reinstall"
                 else
                     echo "ERROR: Failed to reinstall package $1" >&2
                     return 1
@@ -105,6 +106,7 @@ stow_package() {
                 fi
                 if stow -Dt "$3" "$1" > /dev/null 2>&1; then
                     echo "INFO: Uninstalled $1"
+                    run_bootstrap "$1" "uninstall"
                 else
                     echo "ERROR: Failed to uninstall package $1" >&2
                     return 1
@@ -117,6 +119,7 @@ stow_package() {
                 fi
                 if stow -t "$3" "$1" > /dev/null 2>&1; then
                     echo "INFO: Installed $1"
+                    run_bootstrap "$1" "install"
                 else
                     echo "ERROR: Failed to install package $1" >&2
                     return 1
@@ -138,12 +141,6 @@ stow_package() {
                 echo "ERROR: Invalid action '$2' for package $1" >&2
                 return 1
                 ;;
-        esac
-
-        # Run bootstrap script after stowing
-        case "$2" in
-            "install" | "reinstall") run_bootstrap "$1" "install" ;;
-            "uninstall") run_bootstrap "$1" "uninstall" ;;
         esac
     fi
 }
@@ -169,11 +166,9 @@ main() {
         exit 0
     fi
 
-    # Get the action
     action="$1"
     shift
 
-    # Validate action
     case "$action" in
         install | reinstall | uninstall | check) ;;
         *)
@@ -183,7 +178,6 @@ main() {
             ;;
     esac
 
-    # Check if stow is installed
     if ! command -v stow > /dev/null 2>&1; then
         echo "ERROR: GNU stow is not installed. Please install it first."
         exit 1
