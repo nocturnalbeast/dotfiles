@@ -122,6 +122,18 @@ stow_package() {
                     return 1
                 fi
                 ;;
+            "check")
+                if is_stowed "$1" "$3"; then
+                    echo "INFO: Package $1 is installed"
+                else
+                    echo "INFO: Package $1 is not installed"
+                    if stow -nt "$3" "$1" > /dev/null 2>&1; then
+                        echo "INFO: Package $1 can be installed without conflicts"
+                    else
+                        echo "WARN: Package $1 has potential conflicts" >&2
+                    fi
+                fi
+                ;;
             *)
                 echo "ERROR: Invalid action '$2' for package $1" >&2
                 return 1
@@ -163,9 +175,9 @@ main() {
 
     # Validate action
     case "$action" in
-        install | reinstall | uninstall) ;;
+        install | reinstall | uninstall | check) ;;
         *)
-            echo "ERROR: Invalid action '$action'. Must be install, reinstall, or uninstall" >&2
+            echo "ERROR: Invalid action '$action'. Must be install, reinstall, uninstall, or check" >&2
             usage
             exit 1
             ;;
@@ -173,7 +185,7 @@ main() {
 
     # Check if stow is installed
     if ! command -v stow > /dev/null 2>&1; then
-        echo "Error: GNU stow is not installed. Please install it first."
+        echo "ERROR: GNU stow is not installed. Please install it first."
         exit 1
     fi
 
