@@ -1,20 +1,20 @@
 #!/usr/bin/env sh
 
 for cmd in shfmt file python3 taplo; do
-	if ! command -v "$cmd" >/dev/null 2>&1; then
-		echo "Error: $cmd is not installed. Please install it first."
-		exit 1
-	fi
+    if ! command -v "$cmd" > /dev/null 2>&1; then
+        echo "Error: $cmd is not installed. Please install it first."
+        exit 1
+    fi
 done
 
 is_shell() {
-	file "$1" | grep -q "shell script" ||
-		(file "$1" | grep -q "text" && head -n1 "$1" | grep -q "^#!.*\(bash\|sh\)")
+    file "$1" | grep -q "shell script" ||
+        (file "$1" | grep -q "text" && head -n1 "$1" | grep -q "^#!.*\(bash\|sh\)")
 }
 
 is_toml() {
-	[ "${1##*.}" = "toml" ] && return 0
-	python3 -c '
+    [ "${1##*.}" = "toml" ] && return 0
+    python3 -c '
 import sys
 import tomllib
 
@@ -28,41 +28,45 @@ except Exception:
 }
 
 is_python() {
-	[ "${1##*.}" = "py" ] && return 0
-	file "$1" | grep -iq "python script"
+    [ "${1##*.}" = "py" ] && return 0
+    file "$1" | grep -iq "python script"
 }
 
 files=$(git diff --cached --name-only --diff-filter=d)
 
 if [ -z "$files" ]; then
-	exit 0
+    exit 0
 fi
 
 echo "Checking files for formatting..."
 for file in $files; do
-	formatted=false
-	if is_shell "$file"; then
-		echo "Formatting shell script: $file"
-		shfmt -w "$file"
-		formatted=true
-	elif is_toml "$file"; then
-		echo "Formatting TOML file: $file"
-		taplo fmt "$file"
-		formatted=true
-	elif is_python "$file"; then
-		echo "Formatting Python file: $file"
-		ruff format "$file"
-		formatted=true
-	else
-		echo "Skipping $file (not a recognized format for automatic formatting)"
-	fi
-	if [ "$formatted" = true ]; then
-		if ! git diff --quiet "$file"; then
-			echo "Formatted but not staged (has unstaged changes): $file"
-		else
-			git add "$file"
-		fi
-	fi
+    formatted=false
+    # skip formatting a file that has unstaged changes
+    if ! git diff --quiet "$file"; then
+        echo "Skipping due to unstaged changes: $file"
+        continue
+    fi
+    if is_shell "$file"; then
+        echo "Formatting shell script: $file"
+        if shfmt -ci -sr -i 4 -s -w "$file"; then
+            formatted=true
+        fi
+    elif is_toml "$file"; then
+        echo "Formatting TOML file: $file"
+        if taplo fmt "$file"; then
+            formatted=true
+        fi
+    elif is_python "$file"; then
+        echo "Formatting Python file: $file"
+        if ruff format "$file"; then
+            formatted=true
+        fi
+    else
+        echo "Skipping $file (not a recognized format for automatic formatting)"
+    fi
+    if [ "$formatted" = true ]; then
+        git add "$file"
+    fi
 done
 
 exit 0

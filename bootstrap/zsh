@@ -2,25 +2,25 @@
 # shellcheck disable=SC2016
 
 case "$1" in
-"install")
-	echo "Adding ZDOTDIR to system-wide zshenv..."
-	if [ -d "/etc/zsh" ]; then
-		echo 'export ZDOTDIR="${HOME}/.config/zsh"' | sudo tee -a /etc/zsh/zshenv
-	else
-		echo 'export ZDOTDIR="${HOME}/.config/zsh"' | sudo tee -a /etc/zshenv
-	fi
-	;;
-"reinstall") ;;
-"uninstall")
-	echo "Removing ZDOTDIR from system-wide zshenv..."
-	if [ -d "/etc/zsh" ]; then
-		grep -v 'export ZDOTDIR="${HOME}/.config/zsh"' /etc/zsh/zshenv | sudo tee /etc/zsh/zshenv
-	else
-		grep -v 'export ZDOTDIR="${HOME}/.config/zsh"' /etc/zshenv | sudo tee /etc/zshenv
-	fi
-	;;
-*)
-	echo "Unknown action: $1"
-	exit 1
-	;;
+    "install")
+        echo "Adding ZDOTDIR to system-wide zshenv..."
+        if [ -d "/etc/zsh" ]; then
+            echo 'export ZDOTDIR="${HOME}/.config/zsh"' | sudo tee -a /etc/zsh/zshenv
+        else
+            echo 'export ZDOTDIR="${HOME}/.config/zsh"' | sudo tee -a /etc/zshenv
+        fi
+        ;;
+    "reinstall") ;;
+    "uninstall")
+        echo "Removing ZDOTDIR from system-wide zshenv..."
+        if [ -d "/etc/zsh" ]; then
+            grep -v 'export ZDOTDIR="${HOME}/.config/zsh"' /etc/zsh/zshenv | sudo tee /etc/zsh/zshenv
+        else
+            grep -v 'export ZDOTDIR="${HOME}/.config/zsh"' /etc/zshenv | sudo tee /etc/zshenv
+        fi
+        ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
 esac
