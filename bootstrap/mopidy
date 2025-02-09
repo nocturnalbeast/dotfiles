@@ -1,0 +1,27 @@
+#!/usr/bin/env sh
+
+case "$1" in
+    "install")
+        if ! command -v pipx > /dev/null 2>&1; then
+            python3 -m pip install --user pipx
+            python3 -m pipx ensurepath
+        fi
+
+        pipx install --python python3.12 --fetch-missing-python mopidy
+        PACKAGES="mopidy-autoplay mopidy-beets mopidy-local mopidy-mpd mopidy-mpris mopidy-scrobbler mopidy-soundcloud mopidy-youtube mopidy-ytmusic pygobject pytube yt-dlp ytmusicapi"
+        for package in $PACKAGES; do
+            pipx inject mopidy "$package"
+        done
+        ;;
+    "reinstall")
+        pipx uninstall mopidy
+        "$0" install
+        ;;
+    "uninstall")
+        pipx uninstall mopidy
+        ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
+esac
