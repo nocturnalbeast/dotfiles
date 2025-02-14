@@ -3,7 +3,6 @@
 # A script to control screen brightness using various backends with notifications.
 
 # Global configuration
-NOTIFICATION_ID=5555
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 ICON_LOW="$CONFIG_DIR/dunst/icons/brightness_low.svg"
 ICON_MEDIUM="$CONFIG_DIR/dunst/icons/brightness_medium.svg"
@@ -89,7 +88,7 @@ get_icon() {
 send_notification() {
     BRIGHTNESS="$1"
     ICON=$(get_icon "$BRIGHTNESS")
-    notify-send -i "$ICON" -h int:value:"$BRIGHTNESS" -u low -r "$NOTIFICATION_ID" "Brightness [$BRIGHTNESS%]"
+    notify-send -i "$ICON" -h int:value:"$BRIGHTNESS" -u low "Brightness [$BRIGHTNESS%]" --hint=string:x-dunst-stack-tag:brightness --hint=string:synchronous:brightness
 }
 
 # Changes brightness level.
