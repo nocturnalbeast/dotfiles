@@ -3,7 +3,6 @@
 # A script to control audio volume using various backends with notifications.
 
 # Global configuration
-NOTIFICATION_ID=4444
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 ICON_MUTED="$CONFIG_DIR/dunst/icons/volume_muted.svg"
 ICON_LOW="$CONFIG_DIR/dunst/icons/volume_low.svg"
@@ -111,12 +110,15 @@ send_notification() {
 
     case "$VOLUME_INFO" in
         *muted*)
-            notify-send -i "$(get_icon "$VOLUME" "$MUTED")" -u low "Volume [Muted]" -h int:value:"$VOLUME" -r "$NOTIFICATION_ID"
+            VOL_STR="Volume [Muted]"
             ;;
         *)
-            notify-send -i "$(get_icon "$VOLUME" "$MUTED")" -u low "Volume [$VOLUME%]" -h int:value:"$VOLUME" -r "$NOTIFICATION_ID"
+            VOL_STR="Volume [$VOLUME%]"
             ;;
+
     esac
+
+    notify-send -i "$(get_icon "$VOLUME" "$MUTED")" -u low "$VOL_STR" -h int:value:"$VOLUME" --hint=string:x-dunst-stack-tag:volume --hint=string:synchronous:volume
 }
 
 # Changes volume level.
