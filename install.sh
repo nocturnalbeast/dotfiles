@@ -130,10 +130,13 @@ stow_package() {
                     echo "INFO: Package $1 is installed"
                 else
                     echo "INFO: Package $1 is not installed"
-                    if stow -nt "$3" "$1" > /dev/null 2>&1; then
+                    # Capture stow's output to show conflicts
+                    conflicts=$(stow -nvt "$3" "$1" 2>&1)
+                    if [ $? -eq 0 ]; then
                         echo "INFO: Package $1 can be installed without conflicts"
                     else
-                        echo "WARN: Package $1 has potential conflicts" >&2
+                        echo "WARN: Package $1 has the following conflicts:" >&2
+                        echo "$conflicts" | grep -E "^\s+*" >&2
                     fi
                 fi
                 ;;
