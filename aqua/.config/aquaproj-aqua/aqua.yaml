@@ -1,0 +1,158 @@
+checksum:
+  enabled: true
+
+registries:
+  - type: standard
+    ref: v4.318.1
+
+packages:
+  # smart directory jumper
+  - name: ajeetdsouza/zoxide
+    version: v0.9.4
+  # json processing tool
+  - name: antonmedv/fx
+    version: 35.0.0
+  # file navigator
+  - name: antonmedv/walk
+    version: v1.12.0
+  # python linter and formatter
+  - name: astral-sh/ruff
+    version: 0.9.6
+  # python package installer
+  - name: astral-sh/uv
+    version: 0.6.0
+  # xdg compliance checker
+  - name: b3nj5m1n/xdg-ninja
+    version: v0.2.0.2
+  # fast search tool
+  - name: BurntSushi/ripgrep
+    version: 14.1.1
+  # disk usage analyzer
+  - name: Byron/dua-cli
+    version: v2.30.0
+  # disk space analyzer
+  - name: Canop/dysk
+    version: v2.10.0
+  # markdown viewer
+  - name: charmbracelet/glow
+    version: v2.0.0
+  # github cli
+  - name: cli/cli
+    version: v2.67.0
+  # system monitor
+  - name: ClementTsang/bottom
+    version: 0.10.2
+  # conventional commits tool
+  - name: cocogitto/cocogitto
+    version: 6.2.0
+  # better git diff
+  - name: dandavison/delta
+    version: 0.18.2
+  # interactive cheatsheet
+  - name: denisidoro/navi
+    version: v2.24.0
+  # structural diff tool
+  - name: Wilfred/difftastic
+    version: 0.63.0
+  # disk usage analyzer
+  - name: dundee/gdu
+    version: v5.30.1
+  # http client
+  - name: ducaale/xh
+    version: v0.23.1
+  # modern ls replacement
+  - name: eza-community/eza
+    version: v0.20.21
+  # system information tool
+  - name: fastfetch-cli/fastfetch
+    version: 2.36.1
+  # network utilization monitor
+  - name: imsnif/bandwhich
+    version: v0.23.1
+  # mass rename utility
+  - name: itchyny/mmv
+    version: v0.1.6
+  # development environment manager
+  - name: jdx/mise
+    version: v2025.2.5
+  # terminal ui for git
+  - name: jesseduffield/lazygit
+    version: v0.46.0
+  # lua formatter
+  - name: JohnnyMorganz/StyLua
+    version: v2.0.2
+  # systemd unit manager
+  - name: joehillen/sysz
+    version: 1.4.3
+  # json processor
+  - name: stedolan/jq
+    version: jq-1.7.1
+  # fuzzy finder
+  - name: junegunn/fzf
+    version: v0.60.0
+  # command snippet manager
+  - name: knqyf263/pet
+    version: v1.0.1
+  # shell script analysis
+  - name: koalaman/shellcheck
+    version: v0.10.0
+  # yaml processor
+  - name: mikefarah/yq
+    version: v4.45.1
+  # github hub
+  - name: mislav/hub
+    version: v2.14.2
+  # disk usage viewer
+  - name: muesli/duf
+    version: v0.8.1
+  # shell formatter (shfmt)
+  - name: mvdan/sh
+    version: v3.10.0
+  # trash cli utility
+  - name: oberblastmeister/trashy
+    version: v2.0.0
+  # compression tool
+  - name: ouch-org/ouch
+    version: 0.5.1
+  # cat with syntax highlighting
+  - name: sharkdp/bat
+    version: v0.25.0
+  # simple find alternative
+  - name: sharkdp/fd
+    version: v10.2.0
+  # hex viewer
+  - name: sharkdp/hexyl
+    version: v0.16.0
+  # command benchmarking tool
+  - name: sharkdp/hyperfine
+    version: v1.19.0
+  # ls_colors generator
+  - name: sharkdp/vivid
+    version: v0.10.1
+  # shell prompt
+  - name: starship/starship
+    version: v1.17.1
+  # terminal file manager
+  - name: sxyazi/yazi
+    version: v0.2.4
+  # toml toolkit (full)
+  - name: tamasfe/taplo/full
+    version: 0.8.1
+  # tldr pages client
+  - name: tealdeer-rs/tealdeer
+    version: v1.7.1
+  # code statistics
+  - name: XAMPPRocky/tokei
+    version: v12.1.2
+  # make json greppable
+  - name: tomnomnom/gron
+    version: v0.7.1
+  # jq for binary formats
+  - name: wader/fq
+    version: v0.9.0
+  # csv viewer
+  - name: wfxr/csview
+    version: v1.2.2
+  # personal terminal dashboard
+  - name: wtfutil/wtf
+    version: v0.43.0

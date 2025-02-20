@@ -1,0 +1,50 @@
+#!/usr/bin/env sh
+# shellcheck disable=SC2016
+
+BINDIR="${AQUA_ROOT_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/aquaproj-aqua}/bin"
+
+download_file() {
+    if command -v curl > /dev/null 2>&1; then
+        curl -sSfL -o "$1" "$2"
+        return $?
+    elif command -v wget > /dev/null 2>&1; then
+        wget -q -O "$1" "$2"
+        return $?
+    else
+        echo "Neither curl nor wget found. Please install either curl or wget first."
+        return 1
+    fi
+}
+
+case "$1" in
+    "install" | "reinstall")
+        if ! command -v aqua > /dev/null 2>&1; then
+            echo "Installing aqua..."
+            mkdir -p "$BINDIR"
+            echo "Downloading aqua binary..."
+            if ! download_file "$BINDIR/aqua-installer" "https://raw.githubusercontent.com/aquaproj/aqua-installer/refs/heads/main/aqua-installer"; then
+                echo "Failed to download aqua installer, exiting..."
+                exit 1
+            fi
+            chmod +x "$BINDIR/aqua-installer"
+            echo "Running aqua installer..."
+            if "$BINDIR/aqua-installer"; then
+                rm -f "$BINDIR/aqua-installer"
+            else
+                echo "Aqua installer failed, exiting..."
+                exit 1
+            fi
+        fi
+        cd "${XDG_CONFIG_HOME:-$HOME/.config}/aquaproj-aqua" || exit
+        "$BINDIR/aqua" install --all
+        cd - || exit
+        ;;
+    "uninstall")
+        echo "Uninstalling aqua..."
+        rm -rf "$BINDIR"
+        ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
+esac
