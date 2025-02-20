@@ -13,13 +13,13 @@ $localip\
 $directory\
 $vcsh\
 $git_branch\
-$fossil_branch\
-$fossil_metrics\
-$hg_branch\
 $git_commit\
 $git_state\
 $git_metrics\
 $git_status\
+$fossil_branch\
+$fossil_metrics\
+$hg_branch\
 $pijul_channel\
 $direnv\
 $kubernetes\
