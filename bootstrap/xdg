@@ -1,0 +1,32 @@
+#!/usr/bin/env sh
+
+case "$1" in
+    "install" | "reinstall")
+        echo "Creating XDG base directories..."
+        mkdir -p "${XDG_CACHE_HOME:-$HOME/.cache}"
+        mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}"
+        mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}"
+        mkdir -p "${XDG_STATE_HOME:-$HOME/.local/state}"
+
+        echo "Creating XDG user directories..."
+        if [ -f "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs" ]; then
+            # shellcheck disable=SC1091
+            . "${XDG_CONFIG_HOME:-$HOME/.config}/user-dirs.dirs"
+        else
+            echo "Warning: user-dirs.dirs not found, using default paths"
+        fi
+        mkdir -p "${XDG_DESKTOP_DIR:-$HOME/Desktop}"
+        mkdir -p "${XDG_DOCUMENTS_DIR:-$HOME/Documents}"
+        mkdir -p "${XDG_DOWNLOAD_DIR:-$HOME/Downloads}"
+        mkdir -p "${XDG_MUSIC_DIR:-$HOME/Music}"
+        mkdir -p "${XDG_PICTURES_DIR:-$HOME/Pictures}"
+        mkdir -p "${XDG_PUBLICSHARE_DIR:-$HOME/Public}"
+        mkdir -p "${XDG_TEMPLATES_DIR:-$HOME/Templates}"
+        mkdir -p "${XDG_VIDEOS_DIR:-$HOME/Videos}"
+        ;;
+    "uninstall") ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
+esac
