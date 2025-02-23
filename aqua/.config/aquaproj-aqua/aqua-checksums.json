@@ -776,6 +776,11 @@
       "algorithm": "sha256"
     },
     {
+      "id": "github_release/github.com/o2sh/onefetch/2.23.1/onefetch-linux.tar.gz",
+      "checksum": "2334102D9BE9671AC9EDC2A58502EF458BC43744838630A7975F30B9349D6DF9",
+      "algorithm": "sha256"
+    },
+    {
       "id": "github_release/github.com/oberblastmeister/trashy/v2.0.0/trash-x86_64-pc-windows-msvc.exe",
       "checksum": "B4FE6577613C624C874E8D1E4FF941694989242B569C99A723D12A4F5CFD11F6",
       "algorithm": "sha256"
@@ -1129,6 +1134,11 @@
       "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.318.1/registry.yaml",
       "checksum": "6FCAAD86728AB56A5A8538A0F78DB3CFD269FD1FF01C7B795ADFB9BED8D62CA4",
       "algorithm": "sha256"
+    },
+    {
+      "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.319.1/registry.yaml",
+      "checksum": "B62AF02FD8587E14E96C305879E093B4958AE082710A499D7F59072068B7EDAECD6FE4DCB7C50AB23BA9FAB3D7B85E978BF8FDF0F788572DC4B273165FA3943F",
+      "algorithm": "sha512"
     }
   ]
 }
