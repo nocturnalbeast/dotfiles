@@ -3,7 +3,7 @@ checksum:
 
 registries:
   - type: standard
-    ref: v4.318.1
+    ref: v4.319.1
 
 packages:
   # smart directory jumper
@@ -108,6 +108,9 @@ packages:
   # shell formatter (shfmt)
   - name: mvdan/sh
     version: v3.10.0
+  # git status in fetch style
+  - name: o2sh/onefetch
+    version: v2.23.1
   # trash cli utility
   - name: oberblastmeister/trashy
     version: v2.0.0
