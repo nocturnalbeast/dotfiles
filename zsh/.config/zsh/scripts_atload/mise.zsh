@@ -1,1 +1,1 @@
-eval "$(mise activate zsh)"
+zsh-defer eval "$(mise activate zsh)"
