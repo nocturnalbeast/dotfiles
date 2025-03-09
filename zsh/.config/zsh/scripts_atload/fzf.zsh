@@ -1,3 +1,5 @@
+(( ${+commands[fzf]} )) || ~[fzf]/install --bin
+
 # use alternate sequence since ** will expand paths
 export FZF_COMPLETION_TRIGGER='~~'
 # 80% seems to be good in most sizes and doesn't hide the actual prompt
