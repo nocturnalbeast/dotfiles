@@ -8,8 +8,8 @@ for cmd in shfmt file python3 taplo; do
 done
 
 is_shell() {
-    file "$1" | grep -q "shell script" ||
-        (file "$1" | grep -q "text" && head -n1 "$1" | grep -q "^#!.*\(bash\|sh\)")
+    (file "$1" | grep -q "shell script" && file "$1" | grep -qv "zsh script") ||
+        (file "$1" | grep -q "text" && head -n1 "$1" | grep -q "^#!.*\(bash\|sh\)" && head -n1 "$1" | grep -qv "zsh")
 }
 
 is_toml() {
