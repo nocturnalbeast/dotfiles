@@ -12,20 +12,18 @@ function zcompare() {
 
 # Run compilation in background
 {
-    # zcompile the zshrc
-    [[ -f "${ZDOTDIR}/.zshrc" ]] && zcompare "${ZDOTDIR}/.zshrc"
-
-    # zcompile files in the include directory
-    if [[ -d "${ZDOTDIR}/include" ]]; then
-        local file
-        for file in "${ZDOTDIR}/include"/*.zsh(N); do
-            zcompare "$file"
-        done
-    fi
+    # recursively zcompile all zsh files in ZDOTDIR
+    local file
+    for file in "${ZDOTDIR}"/**/*(.N); do
+        case "$file" in
+            *.zsh|*.zshrc|*.zshenv|*.zprofile|*.zlogin|*.zlogout)
+                [[ "$file" != *.zwc ]] && zcompare "$file"
+                ;;
+        esac
+    done
 
     # zcompile the completion cache
     if [[ -d "$HOME/.cache/zsh/zcompcache" ]]; then
-        local file
         for file in "$HOME/.cache/zsh/zcompcache"/*(.N); do
             [[ "$file" != *.zwc ]] && zcompare "$file"
         done

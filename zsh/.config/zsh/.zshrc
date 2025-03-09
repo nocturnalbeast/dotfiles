@@ -36,6 +36,9 @@ typeset -gx XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}
 # setup zsh cache directory and completion cache path
 ZSH_CACHE_DIR="${XDG_CACHE_HOME}/zsh"
 [[ ! -d "$ZSH_CACHE_DIR" ]] && mkdir -p "$ZSH_CACHE_DIR"
+
+# enable completion caching for better performance
+zstyle ':completion:*' use-cache yes
 zstyle ':completion:*' cache-path "${ZSH_CACHE_DIR}/zcompcache"
 
 
@@ -107,7 +110,16 @@ zsh-defer -a load_user_aliases
 zsh-defer -a source "$ZDOTDIR/include/completion.zsh"
 
 
-## 11: setup plugin manager
+## 11: miscellaneous settings
+
+# deduplicate PATH
+typeset -gU PATH path
+
+# word characters for shell operations
+typeset -g WORDCHARS='*?[]~=&;!#$%^(){}'
+
+
+## 12: setup plugin manager
 
 ZCOMET_HOME="$XDG_DATA_HOME/zsh/zcomet"
 ZCOMET_SCRIPT="$ZCOMET_HOME/bin/zcomet.zsh"
@@ -164,10 +176,30 @@ function load_snippet() {
 }
 
 
-## 12: load plugins
+## 13: load plugins
 
 # faster cache for binaries that generate initalization scripts which are normally passed into eval()
 load_plugin lazy mroth/evalcache
+
+# shell colors
+load_plugin lazy tinted-theming/tinted-shell
+
+# smarter cd
+# TODO: setup ranked completion for zsh-z
+load_plugin lazy agkozak/zsh-z
+load_plugin lazy Tarrasch/zsh-bd
+load_plugin lazy mollifier/cd-gitroot
+load_plugin lazy jocelynmallon/zshmarks
+
+# enhance git
+load_plugin lazy wfxr/forgit
+load_plugin lazy viko16/gitcd.plugin.zsh
+load_plugin lazy unixorn/git-extra-commands
+load_plugin lazy tj/git-extras
+load_plugin lazy k4rthik/git-cal
+load_plugin lazy paulirish/git-open
+load_plugin lazy paulirish/git-recent
+load_plugin lazy davidosomething/git-my
 
 # fzf integration
 load_plugin lazy junegunn/fzf shell completion.zsh
@@ -198,6 +230,9 @@ load_plugin lazy kevinywlui/zlong_alert.zsh
 # syntax highlighting
 load_plugin lazy zdharma-continuum/fast-syntax-highlighting
 
+# history-substring search
+load_plugin lazy zsh-users/zsh-history-substring-search
+
 # autosuggestions
 load_plugin lazy zsh-users/zsh-autosuggestions
 
@@ -209,34 +244,15 @@ load_plugin lazy RobSis/zsh-completion-generator
 # sudo helper
 load_snippet lazy https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/sudo/sudo.plugin.zsh
 
-# pip helpers and completion
-load_snippet lazy https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/pip/pip.plugin.zsh
-#load_snippet lazy https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/pip/_pip
+
+## 14: helpers and completions for certain commands using zcomet
+
+zsh-defer +sz zcomet trigger pip ohmyzsh plugins/pip
+zsh-defer +sz zcomet trigger git ohmyzsh plugins/gitfast
 
 
-## 13: cache cli tools initialization using evalcache
+## 15: post-setup tasks
 
-# disabled for now; see https://github.com/jdx/mise/discussions/3658
-#if command -v mise &> /dev/null; then
-#    zsh-defer -a _evalcache mise activate zsh
-#fi
+zsh-defer -a source "$ZDOTDIR/include/widgets.zsh"
 
-if command -v zoxide &> /dev/null; then
-    zsh-defer -a _evalcache zoxide init zsh
-fi
-
-if command -v navi &> /dev/null; then
-    zsh-defer -a _evalcache navi widget zsh
-fi
-
-
-## 13: post-startup / miscellaneous actions
-
-# initialize completions
 zcomet compinit
-
-# deduplicate PATH
-typeset -gU PATH path
-
-# word characters for shell operations
-typeset -g WORDCHARS='*?[]~=&;!#$%^(){}'

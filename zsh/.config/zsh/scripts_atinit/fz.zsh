@@ -1,3 +1,0 @@
-FZ_HISTORY_CD_CMD=__zoxide_z
-FZ_CMD=z
-FZ_SUBDIR_CMD=zz

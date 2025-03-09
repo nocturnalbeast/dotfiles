@@ -1,1 +1,0 @@
-alias cdgr="cd-gitroot"

@@ -5,10 +5,9 @@ function atclone() {
 }
 
 function atinit() {
-    return 0
+    alias cdgr='cd-gitroot'
 }
 
 function atload() {
-    abbrev-alias -g G="| grep"
+    return 0
 }
-

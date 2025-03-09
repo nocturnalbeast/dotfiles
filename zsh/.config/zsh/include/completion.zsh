@@ -75,9 +75,6 @@ zstyle ':completion:*' list-colors "${LS_COLORS}"
 # Complete . and .. special directories
 zstyle ':completion:*' special-dirs true
 
-# Enable completion caching for better performance
-zstyle ':completion:*' use-cache yes
-
 # Sort files by name in menu
 zstyle ':completion:*' file-sort name
 

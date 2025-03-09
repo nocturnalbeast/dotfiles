@@ -5,10 +5,11 @@ function atclone() {
 }
 
 function atinit() {
-    return 0
+    FZ_CMD=z
+    FZ_SUBDIR_CMD=zz
 }
 
 function atload() {
-    abbrev-alias -g G="| grep"
+    return 0
 }
 
