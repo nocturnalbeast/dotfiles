@@ -1,0 +1,70 @@
+#!/usr/bin/env sh
+
+has_cmd() {
+    for cmd in "$@"; do
+        command -v "$cmd" > /dev/null || return 1
+    done
+    return 0
+}
+
+mime=$(file -Lbs --mime-type "$1")
+category=${mime%%/*}
+kind=${mime##*/}
+ext=${1##*.}
+
+if [ -d "$1" ]; then
+    if has_cmd eza; then
+        eza -hl --git --color=always --icons "$1"
+    elif has_cmd exa; then
+        exa -hl --color=always --icons "$1"
+    else
+        ls -hl --color=always "$1"
+    fi
+elif [ "$kind" = json ]; then
+    if has_cmd jupyter bat && [ "$ext" = ipynb ]; then
+        jupyter nbconvert --to python --stdout "$1" | bat -p --color=always -plpython
+    elif has_cmd jq; then
+        jq -Cr . "$1"
+    fi
+elif [ "$kind" = vnd.sqlite3 ]; then
+    if has_cmd yes sqlite3 bat; then
+        yes .q | sqlite3 "$1" | bat -p --color=always -plsql
+    fi
+elif [ "$kind" = pdf ]; then
+    if has_cmd pdftotext sed; then
+        pdftotext -q "$1" -
+    fi
+elif [ "$kind" = rfc822 ]; then
+    if has_cmd bat; then
+        bat -p --color=always -lEmail "$1"
+    fi
+elif [ "$kind" = javascript ]; then
+    if has_cmd bat; then
+        bat -p --color=always -ljs "$1"
+    fi
+elif [ "$category" = image ]; then
+    if has_cmd chafa; then
+        chafa -f symbols "$1"
+    fi
+    if has_cmd exiftool; then
+        exiftool "$1" | bat -p --color=always -plyaml
+    fi
+elif [ "$category" = text ]; then
+    if has_cmd bat; then
+        bat -p --color=always "$1"
+    elif has_cmd pygmentize; then
+        pygmentize "$1" | less
+    fi
+elif [ "$kind" = vnd.openxmlformats-officedocument.spreadsheetml.sheet ] || [ "$kind" = vnd.ms-excel ]; then
+    in2csv "$1" | xsv table | bat -ltsv --color=always
+elif [ "$category" = archive ]; then
+    if has_cmd ouch; then
+        ouch list "$1"
+    fi
+elif [ "$kind" = "octet-stream" ]; then
+    if has_cmd hexyl; then
+        hexyl "$1"
+    fi
+else
+    exit 1
+fi
