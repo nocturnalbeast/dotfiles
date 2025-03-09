@@ -3,12 +3,9 @@ checksum:
 
 registries:
   - type: standard
-    ref: v4.319.1
+    ref: v4.324.2
 
 packages:
-  # smart directory jumper
-  - name: ajeetdsouza/zoxide
-    version: v0.9.4
   # json processing tool
   - name: antonmedv/fx
     version: 35.0.0
