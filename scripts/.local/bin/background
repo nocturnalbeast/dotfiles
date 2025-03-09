@@ -100,9 +100,11 @@ is_valid_mode() {
 # Arguments:
 #   $1 - Path to wallpaper image
 #   $2 - Mode to set the wallpaper (optional, defaults to fill)
+#   $3 - Type of operation (set / restore)
 set_wallpaper() {
     IMAGE="$1"
     MODE="${2:-fill}"
+    OPERATION="${3:-set}"
 
     if ! is_valid_mode "$MODE"; then
         echo "Invalid mode: $MODE" >&2
@@ -125,7 +127,9 @@ set_wallpaper() {
     SETTER_CMD=$(get_wallpaper_setter "$MODE" "$IMAGE")
     if [ -n "$SETTER_CMD" ]; then
         eval "$SETTER_CMD"
-        notify-send -u low -i "$IMAGE" "Wallpaper changed" "$(basename "$IMAGE")"
+        if [ "$OPERATION" = "set" ]; then
+            notify-send -u low -i "$IMAGE" "Wallpaper changed" "$(basename "$IMAGE")"
+        fi
     fi
 }
 
@@ -149,14 +153,14 @@ set_random_wallpaper() {
         return 1
     fi
 
-    set_wallpaper "$IMAGE" "$MODE"
+    set_wallpaper "$IMAGE" "$MODE" "set"
 }
 
 # Restore current wallpaper
 restore_wallpaper() {
     CURRENT="${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_wallpaper"
     if [ -r "$CURRENT" ]; then
-        set_wallpaper "$CURRENT" "fill"
+        set_wallpaper "$CURRENT" "fill" "restore"
     else
         echo "No current wallpaper found at: $CURRENT" >&2
         return 1
@@ -173,7 +177,7 @@ main() {
                 usage
                 exit 1
             fi
-            set_wallpaper "$1" "$2"
+            set_wallpaper "$1" "$2" "set"
             ;;
         random)
             shift
