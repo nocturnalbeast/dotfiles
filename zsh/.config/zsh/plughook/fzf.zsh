@@ -2,6 +2,7 @@
 
 function atclone() {
     (( ${+commands[fzf]} )) || ~[fzf]/install --bin
+    cp -f ~[fzf]/bin/* $ZPFX/bin
 }
 
 function atinit() {
@@ -28,6 +29,6 @@ function atinit() {
 }
 
 function atload() {
-    return 0
+    path=(${path:#~[fzf]/bin})
 }
 
