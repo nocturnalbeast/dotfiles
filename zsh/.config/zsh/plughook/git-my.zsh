@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 function atclone() {
-    return 0
+    cp -f ~[git-my]/git-my $ZPFX/bin
 }
 
 function atinit() {
@@ -9,6 +9,5 @@ function atinit() {
 }
 
 function atload() {
-    abbrev-alias -g G="| grep"
+    return 0
 }
-

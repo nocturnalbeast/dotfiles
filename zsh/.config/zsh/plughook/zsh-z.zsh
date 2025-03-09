@@ -5,10 +5,10 @@ function atclone() {
 }
 
 function atinit() {
-    return 0
+    ZSHZ_DATA="$XDG_CACHE_HOME/zsh-z"
+    ZSHZ_TILDE=1
 }
 
 function atload() {
-    abbrev-alias -g G="| grep"
+    return 0
 }
-

@@ -10,5 +10,12 @@ function atinit() {
 }
 
 function atload() {
-    return 0
+    # disabled for now due to prompt rendering lag; see https://github.com/jdx/mise/discussions/3658
+    #if command -v mise &> /dev/null; then
+    #    zsh-defer -a _evalcache mise activate zsh
+    #fi
+
+    if command -v navi &> /dev/null; then
+        zsh-defer -a _evalcache navi widget zsh
+    fi
 }
