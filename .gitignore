@@ -1,11 +1,25 @@
+# credentials
 git/.config/git/credentials
+
+# gtk user preferences
 gtk/.config/gtk-2.0/gtkfilechooser.ini
 gtk/.config/gtk-3.0/bookmarks
+
+# media player cache
 mopidy/.config/mopidy/podcast
+
+# neovim generated files
 neovim/.config/nvim/lua/packer_compiled.lua
 neovim/.config/nvim/.netrwhist
+
+# theme configuration
 themix/.config/oomox/*.json
-thunar/.config/Thunar/accels.scm
-thunar/.config/Thunar/renamerrc
 oomox/.config/oomox/recent_palette.json
 oomox/.config/oomox/ui_config.json
+
+# file manager preferences
+thunar/.config/Thunar/accels.scm
+thunar/.config/Thunar/renamerrc
+
+# zsh compiled files
+*.zwc
