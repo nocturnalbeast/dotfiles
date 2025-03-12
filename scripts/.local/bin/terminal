@@ -114,6 +114,32 @@ get_first_available() {
     echo ""
 }
 
+# Gets the default terminal from gsettings.
+#
+# Outputs:
+#   Writes default terminal name to stdout if found, empty string otherwise.
+get_default_terminal() {
+    if command_exists "gsettings"; then
+        terminal=$(gsettings get org.gnome.desktop.default-applications.terminal exec | tr -d "'")
+        if [ -n "$terminal" ] && command_exists "$terminal"; then
+            echo "$terminal"
+            return 0
+        fi
+        terminal=$(gsettings get org.cinnamon.desktop.default-applications.terminal exec | tr -d "'")
+        if [ -n "$terminal" ] && command_exists "$terminal"; then
+            echo "$terminal"
+            return 0
+        fi
+    elif [ -f "${XDG_CONFIG_HOME:-~/.config}/xfce4/helpers.rc" ]; then
+        terminal=$(grep -E -o 'TerminalEmulator=\w+' "${XDG_CONFIG_HOME:-~/.config}/xfce4/helpers.rc" | head -1 | cut -d'=' -f2)
+        if [ -n "$terminal" ] && command_exists "$terminal"; then
+            echo "$terminal"
+            return 0
+        fi
+    fi
+    echo ""
+}
+
 # Detects which terminal to use based on priority.
 #
 # Outputs:
@@ -132,6 +158,14 @@ detect_terminal() {
     if [ -n "$PARENT_TERMINAL" ]; then
         echo "Using parent terminal: $PARENT_TERMINAL" >&2
         echo "$PARENT_TERMINAL"
+        return 0
+    fi
+
+    # Check default terminal from DE settings
+    DEFAULT_TERMINAL=$(get_default_terminal)
+    if [ -n "$DEFAULT_TERMINAL" ]; then
+        echo "Using default terminal: $DEFAULT_TERMINAL" >&2
+        echo "$DEFAULT_TERMINAL"
         return 0
     fi
 
@@ -174,10 +208,15 @@ main() {
             usage
             exit 0
             ;;
+        -g | --get)
+            detect_terminal
+            exit 0
+            ;;
+        *)
+            SELECTED_TERMINAL=$(detect_terminal) || exit 1
+            exec "$SELECTED_TERMINAL" "$@"
+            ;;
     esac
-
-    SELECTED_TERMINAL=$(detect_terminal) || exit 1
-    exec "$SELECTED_TERMINAL" "$@"
 }
 
 main "$@"
