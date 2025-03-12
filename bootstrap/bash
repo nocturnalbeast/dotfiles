@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+# shellcheck disable=SC2016
+
+case "$1" in
+    "install")
+        if command -v bash > /dev/null 2>&1 && [ "$SHELL" != "$(command -v bash)" ]; then
+            read -r -p "Do you want to set the default shell to bash? [y/N] " response
+            if [ "$response" = "y" ]; then
+                chsh -s "$(command -v bash)"
+            fi
+        fi
+        ;;
+    "reinstall") ;;
+    "uninstall") ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
+esac
