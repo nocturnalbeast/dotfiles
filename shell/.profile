@@ -107,6 +107,7 @@ export QT_SCREEN_SCALE_FACTORS="1;1;1"
 export GDK_SCALE=1
 export GDK_DPI_SCALE=1
 export QT_LOGGING_RULES="*.debug=false"
+export QT_QPA_PLATFORMTHEME="qt5ct:qt6ct"
 
 # cli settings
 if command -v vivid > /dev/null 2>&1 && [ -f "$XDG_CONFIG_HOME/vivid/theme.yml" ]; then
