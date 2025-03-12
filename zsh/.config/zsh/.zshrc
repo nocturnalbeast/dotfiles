@@ -86,17 +86,11 @@ zsh-defer -dmszpr load_site_functions
 
 ## 9: setup environment variables
 
-# source system profile if it exists
-function load_system_profile() {
-    [[ -f /etc/profile ]] && source /etc/profile
+# source profile if it exists
+function load_profile() {
+    [[ -f "$HOME/.profile" ]] && source "$HOME/.profile"
 }
-zsh-defer -a load_system_profile
-
-# source user environment variables if it exists
-function load_user_env() {
-    [[ -f "${XDG_CONFIG_HOME}/shell/env" ]] && source "${XDG_CONFIG_HOME}/shell/env"
-}
-zsh-defer -a load_user_env
+zsh-defer -a load_profile
 
 # source user aliases if it exists
 function load_user_aliases() {
