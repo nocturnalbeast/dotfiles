@@ -13,9 +13,9 @@ neovim/.config/nvim/lua/packer_compiled.lua
 neovim/.config/nvim/.netrwhist
 
 # theme configuration
-themix/.config/oomox/*.json
-oomox/.config/oomox/recent_palette.json
-oomox/.config/oomox/ui_config.json
+themix/.config/oomox/recent_palette.json
+themix/.config/oomox/ui_config.json
+themix/.config/oomox/migrations/import_from_image.json
 
 # file manager preferences
 thunar/.config/Thunar/accels.scm
