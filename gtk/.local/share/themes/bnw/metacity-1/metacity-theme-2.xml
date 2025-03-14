@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <metacity_theme>
 <info>
-	<name>bnw</name>
+	<name></name>
 	<author>Satyajit Sahoo</author>
 	<copyright>GPL-3.0+</copyright>
 	<date>11 December 2013</date>
@@ -11,8 +11,8 @@
 <!-- ::: CONSTANTS ::: -->
 <constant name="C_titlebar_focused" value="#0f0f0f" />
 <constant name="C_titlebar_unfocused" value="#000000" />
-<constant name="C_border_focused" value="#3b3b3b" />
-<constant name="C_border_unfocused" value="#000000" />
+<constant name="C_border_focused" value="#1a1a1a" />
+<constant name="C_border_unfocused" value="#aaaaaa" />
 <constant name="C_title_focused" value="#ffffff" />
 <constant name="C_title_unfocused" value="blend/#f0f0f0/#000000/0.4" />
 <constant name="C_icons_focused" value="#ffffff" />
