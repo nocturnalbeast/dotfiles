@@ -191,33 +191,33 @@
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/ruff/0.10.0/ruff-aarch64-apple-darwin.tar.gz",
-      "checksum": "1DA279B8302CD86F50D38FC8AD62CD12F4D07C0C402C13A3BAC7DC244C7DB138",
+      "id": "github_release/github.com/astral-sh/ruff/0.11.0/ruff-aarch64-apple-darwin.tar.gz",
+      "checksum": "09EA313F2AAB3844432B46C6C5E3E066B26AE4953F4BAC1E545176E5DEA22306",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/ruff/0.10.0/ruff-aarch64-pc-windows-msvc.zip",
-      "checksum": "E40D9D7EFE47FCD1A5FFC2314EA45076D71CF83638550C5B95F9ECFFF3CBAC2B",
+      "id": "github_release/github.com/astral-sh/ruff/0.11.0/ruff-aarch64-pc-windows-msvc.zip",
+      "checksum": "49C1A9F99AA0E606D66960BE12BB21E40DA190E4798A18DF0BF361C99DC644AD",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/ruff/0.10.0/ruff-aarch64-unknown-linux-musl.tar.gz",
-      "checksum": "7B9FE2E2CECDE897FB35A1A0BB1CCD10DDE3395ACD81AEA7E5E6B0B24824E7C7",
+      "id": "github_release/github.com/astral-sh/ruff/0.11.0/ruff-aarch64-unknown-linux-musl.tar.gz",
+      "checksum": "60904D6D51B1A8DD49AB948DD1DE33CE439CA872C82FAA5DAB90FCE838539317",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/ruff/0.10.0/ruff-x86_64-apple-darwin.tar.gz",
-      "checksum": "2388AF7881C7E50026388E953FA6EAB7C1AE94C868926A6185C3CB38F9F15AA2",
+      "id": "github_release/github.com/astral-sh/ruff/0.11.0/ruff-x86_64-apple-darwin.tar.gz",
+      "checksum": "A208DEE9C1A7A063DACE746836FD2D7E5F7694D2142700D3964FCCF141ADA555",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/ruff/0.10.0/ruff-x86_64-pc-windows-msvc.zip",
-      "checksum": "F97160653DC9F9DDE5CDBE8B24A53CB93A43E54EE30DA6B995CF667C2E599FF2",
+      "id": "github_release/github.com/astral-sh/ruff/0.11.0/ruff-x86_64-pc-windows-msvc.zip",
+      "checksum": "92E87A04F5750312A5454610633F6AF91485578CC1DD944B4692D2FB5F6188DC",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/ruff/0.10.0/ruff-x86_64-unknown-linux-musl.tar.gz",
-      "checksum": "5E949F667A1DD76AB4382BA713FED3390DDC6088147BA0EB70FD8AA2EC564751",
+      "id": "github_release/github.com/astral-sh/ruff/0.11.0/ruff-x86_64-unknown-linux-musl.tar.gz",
+      "checksum": "3148CD8131EC4F525551B16A57186F5533C705950269CBEE7674D484CA6EEFE5",
       "algorithm": "sha256"
     },
     {
@@ -486,23 +486,23 @@
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jdx/mise/v2025.3.2/mise-v2025.3.2-linux-arm64-musl.tar.gz",
-      "checksum": "7746D2AB653CAA73128936DD2BC7704FE4F106FA58597D65F5020843767F3CEB",
+      "id": "github_release/github.com/jdx/mise/v2025.3.3/mise-v2025.3.3-linux-arm64-musl.tar.gz",
+      "checksum": "C436BEE9926634C8D4CD603BFF7C88B487A156E7E168DDBE75B19C9017C81DF8",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jdx/mise/v2025.3.2/mise-v2025.3.2-linux-x64-musl.tar.gz",
-      "checksum": "D8312658BD020B717A90BC2C3729625656C97B37C70EDDA645CE8BCBD68EDF56",
+      "id": "github_release/github.com/jdx/mise/v2025.3.3/mise-v2025.3.3-linux-x64-musl.tar.gz",
+      "checksum": "65E98CBFE520F0A42824C0B05157318422D567CB31D3B55F66E7414059044677",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jdx/mise/v2025.3.2/mise-v2025.3.2-macos-arm64.tar.gz",
-      "checksum": "D5F836D2E946201147BE4CA3467C547AB847A14F93B26C6A4F736804FC2107EF",
+      "id": "github_release/github.com/jdx/mise/v2025.3.3/mise-v2025.3.3-macos-arm64.tar.gz",
+      "checksum": "2354D76E58109D47A23ACB9936DFAC151BCF0C99C64E3D5B6F6551FD1953B19B",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jdx/mise/v2025.3.2/mise-v2025.3.2-macos-x64.tar.gz",
-      "checksum": "C1F58A5772B80E2D7FE64F6C0DD832C38C5146DEB763130F71F09984A5328ACB",
+      "id": "github_release/github.com/jdx/mise/v2025.3.3/mise-v2025.3.3-macos-x64.tar.gz",
+      "checksum": "79A4DCC9B5BEE1BC1C69A2AABDA1185F8F9272C58F6B3B072CB8A3193A3CC798",
       "algorithm": "sha256"
     },
     {
@@ -1091,8 +1091,8 @@
       "algorithm": "sha256"
     },
     {
-      "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.326.1/registry.yaml",
-      "checksum": "5F51EFFD6CD7DDBDCD9AE719AD2B3A6A2C6F756A160C093409302B9048E067830D632D0DBE90DE15A6DE60AC04EEB3E2E7C5A0D31A46FA05817467BF1C1B28C8",
+      "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.328.0/registry.yaml",
+      "checksum": "372E67D00BE1AE052F48EFBC193A2423E2198D2985D90437392B19784A5CC05A9A640D2E82404A83BB9B476376E7141407D549A2C8609A90D1C88DDA8513751F",
       "algorithm": "sha512"
     }
   ]
