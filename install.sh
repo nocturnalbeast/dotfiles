@@ -163,7 +163,6 @@ setup_git_hook() {
 #   $1 - Action to perform (install, reinstall, uninstall)
 #   $@ - Optional list of packages to manage (if not provided, all packages will be installed)
 main() {
-    # Show help if no arguments or help requested
     if [ $# -eq 0 ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
         usage
         exit 0
@@ -190,6 +189,14 @@ main() {
         setup_git_hook
     fi
 
+    sudo -v
+    (while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2> /dev/null) &
+    SUDO_PID=$!
+
     if [ $# -eq 0 ]; then
         for dir in $IGNORE_DIRS; do
             ignore_args="$ignore_args -not -name $dir"
@@ -206,6 +213,9 @@ main() {
             fi
         done
     fi
+
+    sudo -k
+    kill "$SUDO_PID" 2> /dev/null || true
 }
 
 main "$@"
