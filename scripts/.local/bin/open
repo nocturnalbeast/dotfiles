@@ -19,38 +19,19 @@ EOF
 #   Writes the detected command name to stdout.
 detect_opener_command() {
     if command -v handlr > /dev/null 2>&1; then
-        echo "handlr"
+        echo "handlr open"
     elif command -v mimeo > /dev/null 2>&1; then
-        echo "mimeo"
+        echo "mimeo -c"
     elif command -v xdg-open > /dev/null 2>&1; then
-        echo "xdg-open"
+        if [ "$(basename $0)" != "xdg-open" ]; then
+            echo "xdg-open"
+        else
+            echo "/usr/bin/xdg-open"
+        fi
     else
         echo "Error: No supported file opener command found" >&2
         echo "Please install one of: handlr, mimeo, xdg-open" >&2
     fi
-}
-
-# Opens a file or URL with the appropriate handler.
-#
-# Arguments:
-#   $1 - The opener command to use
-#   $2 - The file/URL to open
-open_file() {
-    OPENER="$1"
-    shift
-    TARGET="$1"
-
-    case $OPENER in
-        "handlr")
-            handlr open "$TARGET"
-            ;;
-        "mimeo")
-            mimeo -c "$TARGET"
-            ;;
-        "xdg-open")
-            xdg-open "$TARGET"
-            ;;
-    esac
 }
 
 # Main entry point that processes command-line arguments.
@@ -70,7 +51,7 @@ main() {
         *)
             OPENER_CMD=$(detect_opener_command)
             if [ -n "$OPENER_CMD" ]; then
-                open_file "$OPENER_CMD" "$@"
+                $OPENER_CMD "$@"
             else
                 exit 1
             fi

@@ -43,6 +43,9 @@ export NPM_CONFIG_USERCONFIG="$XDG_CONFIG_HOME/npm/npmrc"
 export GEM_PATH="$XDG_DATA_HOME/ruby/gems"
 export GEM_SPEC_CACHE="$XDG_DATA_HOME/ruby/specs"
 export GEM_HOME="$XDG_DATA_HOME/ruby/gems"
+export BUNDLE_USER_CONFIG="$XDG_CONFIG_HOME/bundle"
+export BUNDLE_USER_CACHE="$XDG_CACHE_HOME/bundle"
+export BUNDLE_USER_PLUGIN="$XDG_DATA_HOME/bundle"
 
 # system configuration
 export GNUPGHOME="$XDG_DATA_HOME/gnupg"
@@ -55,6 +58,7 @@ export XCURSOR_PATH="/usr/share/icons:$XDG_DATA_HOME/icons"
 # x11 configuration
 export XINITRC="$XDG_CONFIG_HOME/X11/xinitrc"
 export XSERVERRC="$XDG_CONFIG_HOME/X11/xserverrc"
+export ICEAUTHORITY="$XDG_CACHE_HOME/ICEauthority"
 
 ## path configuration
 
