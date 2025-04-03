@@ -4,9 +4,14 @@
 case "$1" in
     "install")
         if command -v zsh > /dev/null 2>&1 && [ "$SHELL" != "$(command -v zsh)" ]; then
-            read -r -p "Do you want to set the default shell to zsh? [y/N] " response
-            if [ "$response" = "y" ]; then
-                chsh -s "$(command -v zsh)"
+            if [ "$PREFERRED_SHELL" = "zsh" ]; then
+                echo "Setting zsh as default shell based on PREFERRED_SHELL environment variable"
+                sudo usermod -s "$(command -v zsh)" "$USER"
+            else
+                read -r -p "Do you want to set the default shell to zsh? [y/N] " response
+                if [ "$response" = "y" ]; then
+                    sudo usermod -s "$(command -v zsh)" "$USER"
+                fi
             fi
         fi
         echo "Adding ZDOTDIR to system-wide zshenv..."
