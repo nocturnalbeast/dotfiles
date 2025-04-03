@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+
+case "$1" in
+    "install" | "reinstall")
+        if command -v gsettings > /dev/null 2>&1; then
+            gsettings set org.gnome.desktop.default-applications.terminal exec kitty
+            gsettings set org.cinnamon.desktop.default-applications.terminal exec kitty
+        fi
+        if command -v dconf > /dev/null 2>&1; then
+            dconf write /org/gnome/desktop/applications/terminal/exec "'kitty'"
+            dconf write /org/cinnamon/desktop/applications/terminal/exec "'kitty'"
+        fi
+        ;;
+    "uninstall")
+        if command -v gsettings > /dev/null 2>&1; then
+            gsettings reset org.gnome.desktop.default-applications.terminal exec
+            gsettings reset org.cinnamon.desktop.default-applications.terminal exec
+        fi
+        if command -v dconf > /dev/null 2>&1; then
+            dconf reset /org/gnome/desktop/applications/terminal/exec
+            dconf reset /org/cinnamon/desktop/applications/terminal/exec
+        fi
+        ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
+esac
