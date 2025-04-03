@@ -42,8 +42,3 @@
 
 * wm:
   * add a stacking window manager as an alternative to the tiling window manager
-
-* zsh:
-  * add `pet` to shell config
-  * remove unnecessary `source` calls in zshrc
-  * experiment with `zsh-autocomplete`
