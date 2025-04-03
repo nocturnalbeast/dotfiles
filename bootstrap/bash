@@ -4,9 +4,14 @@
 case "$1" in
     "install")
         if command -v bash > /dev/null 2>&1 && [ "$SHELL" != "$(command -v bash)" ]; then
-            read -r -p "Do you want to set the default shell to bash? [y/N] " response
-            if [ "$response" = "y" ]; then
-                chsh -s "$(command -v bash)"
+            if [ "$PREFERRED_SHELL" = "bash" ]; then
+                echo "Setting bash as default shell based on PREFERRED_SHELL environment variable"
+                sudo usermod -s "$(command -v bash)" "$USER"
+            else
+                read -r -p "Do you want to set the default shell to bash? [y/N] " response
+                if [ "$response" = "y" ]; then
+                    sudo usermod -s "$(command -v bash)" "$USER"
+                fi
             fi
         fi
         ;;
