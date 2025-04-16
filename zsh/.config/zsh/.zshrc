@@ -161,7 +161,7 @@ function load_plugin() {
 function load_snippet() {
     local mode=${1:?"Mode (lazy/eager) required"}
     local url=${2:?"URL required"}
-    
+
     if [[ $mode == "lazy" ]]; then
         zsh-defer -a zcomet snippet "$url"
     else
