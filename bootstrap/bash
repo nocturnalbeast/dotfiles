@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-# shellcheck disable=SC2016
 
 case "$1" in
     "install")
@@ -8,7 +7,8 @@ case "$1" in
                 echo "Setting bash as default shell based on PREFERRED_SHELL environment variable"
                 sudo usermod -s "$(command -v bash)" "$USER"
             else
-                read -r -p "Do you want to set the default shell to bash? [y/N] " response
+                printf "Do you want to set the default shell to bash? [y/N] "
+                read -r response
                 if [ "$response" = "y" ]; then
                     sudo usermod -s "$(command -v bash)" "$USER"
                 fi
