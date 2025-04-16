@@ -55,7 +55,7 @@ detect_brightness_command() {
 get_brightness() {
     case "$1" in
         brightnessctl)
-            brightnessctl -P get
+            echo $(($(brightnessctl get) * 100 / $(brightnessctl max)))
             ;;
         xbacklight)
             xbacklight -get | cut -d '.' -f 1
