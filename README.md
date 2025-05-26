@@ -44,6 +44,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
   * CLI:
     * [bandwhich](https://github.com/imsnif/bandwhich): Network utilization monitor
     * [bat](https://github.com/sharkdp/bat): A cat clone with syntax highlighting
+    * [beets](https://beets.io): Music library manager and MusicBrainz tagger
     * [bottom](https://github.com/ClementTsang/bottom): Graphical process/system monitor
     * [brightnessctl](https://github.com/Hummer12007/brightnessctl): Backlight and LED control
     * [cava](https://github.com/karlstav/cava): Console-based audio visualizer
