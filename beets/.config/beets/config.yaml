@@ -1,0 +1,156 @@
+## paths
+directory: ~/music
+library: ~/.local/share/beets/data/library.db
+
+## main config
+import:
+  write: yes
+  move: yes
+paths:
+  default: "$albumartist/%title{$albumtype}s/$year - $album/%if{$disctotal == 1,,$disc-}$track - $title"
+  albumtype:remix: "$albumartist/Remixes/$year - $album/%if{$disctotal == 1,,$disc-}$track - $title"
+  albumtype:ep: "$albumartist/EPs/$year - $album/%if{$disctotal == 1,,$disc-}$track - $title"
+  albumtype:live: "$albumartist/Albums/$year - $album/%if{$disctotal == 1,,$disc-}$track - $title"
+original_date: yes
+per_disc_numbering: yes
+threaded: yes
+match:
+  strong_rec_thresh: 0.10
+  medium_rec_thresh: 0.25
+
+## plugin list
+plugins:
+  - acousticbrainz
+  - badfiles
+  - chroma
+  - discogs
+  - embedart
+  - fetchart
+  - inline
+  - lyrics
+  - mbsync
+  - missing
+  - replaygain
+  - scrub
+  - web
+  - zero
+
+## plugin configuration
+acousticbrainz:
+  auto: yes
+  base_url: "https://acousticbrainz.org"
+  force: yes
+  tags:
+    - average_loudness
+    - bpm
+    - chords_changes_rate
+    - chords_key
+    - chords_number_rate
+    - chords_scale
+    - danceable
+    - gender
+    - genre_rosamerica
+    - initial_key
+    - key_strength
+    - mood_acoustic
+    - mood_aggressive
+    - mood_electronic
+    - mood_happy
+    - mood_party
+    - mood_relaxed
+    - mood_sad
+    - moods_mirex
+    - rhythm
+    - timbre
+    - tonal
+    - voice_instrumental
+chroma:
+  auto: yes
+discogs:
+  #apikey: REDACTED
+  #apisecret: REDACTED
+  append_style_genre: no
+  index_tracks: no
+  separator: ", "
+  source_weight: 0.5
+  tokenfile: discogs_token.json
+  user_token: REDACTED
+  tags: [discogs_release_id]
+embedart:
+  auto: yes
+  compare_threshold: 0
+  ifempty: no
+  maxwidth: 0
+  quality: 0
+  remove_art_file: no
+fetchart:
+  auto: yes
+  minwidth: 0
+  maxwidth: 0
+  quality: 0
+  max_filesize: 0
+  enforce_ratio: no
+  cautious: no
+  sources:
+    - coverart
+    - itunes
+    - amazon
+    - albumart
+    - cover_art_url
+    - fanart
+    - filesystem
+  store_source: no
+  high_resolution: yes
+  deinterlace: no
+  cover_format:
+  #fanarttv_key: REDACTED
+  #lastfm_key: REDACTED
+lyrics:
+  auto: yes
+  #google_API_key: REDACTED
+  #google_engine_ID: REDACTED
+  #genius_api_key: REDACTED
+  force: no
+  local: no
+  synced: no
+  sources:
+    - genius
+    - tekstowo
+    - lrclib
+    - google
+  dist_thresh: 0.1
+missing:
+  count: yes
+  total: yes
+replaygain:
+  backend: ffmpeg
+  auto: yes
+  overwrite: no
+  parallel_on_import: no
+  peak: "true"
+  per_disc: no
+  r128_targetlevel: 84
+  r128: [Opus]
+  targetlevel: 89
+  threads: 4
+scrub:
+  auto: yes
+web:
+  host: 127.0.0.1
+  port: 8337
+  cors: ""
+  cors_supports_credentials: no
+  reverse_proxy: no
+  include_paths: no
+  readonly: yes
+zero:
+  auto: yes
+  fields:
+    - albumartist_credit
+    - albumartists_credit
+    - artist_credit
+    - artists_credit
+    - comp
+    - comments
+  keep_fields: []
+  update_database: no
