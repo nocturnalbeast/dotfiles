@@ -71,8 +71,8 @@ alias g="git"
 alias j="jobs"
 
 # music player
-if _has ncmpcpp-ueberzug; then
-    alias m="ncmpcpp-ueberzug"
+if _has rmpc; then
+    alias m="rmpc"
 else
     alias m="ncmpcpp"
 fi
