@@ -63,7 +63,7 @@ For a quick guide for managing and using dotfiles managed with [GNU stow](https:
     * [mmv](https://github.com/itchyny/mmv): Mass rename utility
     * [mopidy](https://github.com/mopidy/mopidy): Extensible music server
     * [navi](https://github.com/denisidoro/navi): Interactive command-line cheatsheet
-    * [rmpc](https://github.com/ravio/rmpc): Rusty Music Player Client - a modern MPD client
+    * [rmpc](https://github.com/mierak/rmpc): Rusty Music Player Client - a modern MPD client
     * [neovim](https://github.com/neovim/neovim): Hyperextensible Vim-based text editor
     * [newsboat](https://newsboat.org): Terminal RSS/Atom feed reader
     * [pipewire](https://pipewire.org): Low-latency audio/video router and processor
