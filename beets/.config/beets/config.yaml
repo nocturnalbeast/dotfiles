@@ -6,11 +6,13 @@ library: ~/.local/share/beets/data/library.db
 import:
   write: yes
   move: yes
+item_fields:
+  multidisc: 1 if disctotal > 1 else 0
 paths:
-  default: "$albumartist/%title{$albumtype}s/$year - $album/%if{$disctotal == 1,,$disc-}$track - $title"
-  albumtype:remix: "$albumartist/Remixes/$year - $album/%if{$disctotal == 1,,$disc-}$track - $title"
-  albumtype:ep: "$albumartist/EPs/$year - $album/%if{$disctotal == 1,,$disc-}$track - $title"
-  albumtype:live: "$albumartist/Albums/$year - $album/%if{$disctotal == 1,,$disc-}$track - $title"
+  default: "$albumartist/%title{$albumtype}s/$year - $album/%if{$multidisc,$disc-}$track - $title"
+  albumtype:remix: "$albumartist/Remixes/$year - $album/%if{$multidisc,$disc-}$track - $title"
+  albumtype:ep: "$albumartist/EPs/$year - $album/%if{$multidisc,$disc-}$track - $title"
+  albumtype:live: "$albumartist/Albums/$year - $album/%if{$multidisc,$disc-}$track - $title"
 original_date: yes
 per_disc_numbering: yes
 threaded: yes
