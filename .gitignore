@@ -23,3 +23,4 @@ thunar/.config/Thunar/renamerrc
 
 # zsh compiled files
 *.zwc
+zsh/.config/zsh/.zcompdump
