@@ -13,7 +13,7 @@ packages:
   # python linter and formatter
   - name: astral-sh/ruff@0.12.1
   # python package installer
-  - name: astral-sh/uv@0.7.15
+  - name: astral-sh/uv@0.7.16
   # xdg compliance checker
   - name: b3nj5m1n/xdg-ninja@v0.2.0.2
   # fast search tool
@@ -59,7 +59,7 @@ packages:
   # json processor
   - name: stedolan/jq@jq-1.8.0
   # fuzzy finder
-  - name: junegunn/fzf@v0.62.0
+  - name: junegunn/fzf@v0.63.0
   # command snippet manager
   - name: knqyf263/pet@v1.0.1
   # shell script analysis
