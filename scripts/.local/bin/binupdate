@@ -1,0 +1,236 @@
+#!/usr/bin/env bash
+
+# A script to update Aqua and its managed binaries with proper error handling and notifications.
+
+# Global configuration
+AQUA_CONFIG_DIR="${AQUA_CONFIG_DIR:-$HOME/.config/aquaproj-aqua}"
+AQUA_GITHUB_TOKEN=""
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS]
+
+A script to update Aqua and its managed binaries.
+
+This script performs the following operations in sequence:
+    1. Updates Aqua itself to the latest version
+    2. Updates all managed binaries to their latest versions
+    3. Updates checksums for all packages
+    4. Prunes outdated checksums
+
+Options:
+    -t, --token TOKEN    Set AQUA_GITHUB_TOKEN environment variable to avoid rate limiting
+    -h, --help          Show this help message
+
+Environment Variables:
+    AQUA_CONFIG_DIR    Path to Aqua configuration directory (default: ~/.config/aquaproj-aqua)
+    AQUA_GITHUB_TOKEN  GitHub token for API access (can also be set via -t/--token option)
+EOF
+}
+
+# Detects if the aqua command is available.
+#
+# Returns:
+#   0 if aqua command is found, 1 otherwise
+detect_aqua_command() {
+    if command -v aqua > /dev/null 2>&1; then
+        return 0
+    else
+        echo "Error: aqua command not found" >&2
+        echo "Please install Aqua first: https://aquaproj.github.io/" >&2
+        return 1
+    fi
+}
+
+# Checks if the Aqua configuration directory exists and is valid.
+#
+# Returns:
+#   0 if configuration is valid, 1 otherwise
+validate_configuration() {
+    if [[ ! -d $AQUA_CONFIG_DIR ]]; then
+        echo "Error: Aqua configuration directory not found: $AQUA_CONFIG_DIR" >&2
+        echo "Please set AQUA_CONFIG_DIR environment variable or ensure the default directory exists" >&2
+        return 1
+    fi
+
+    if [[ ! -f "$AQUA_CONFIG_DIR/aqua.yaml" ]]; then
+        echo "Error: aqua.yaml not found in $AQUA_CONFIG_DIR" >&2
+        return 1
+    fi
+
+    return 0
+}
+
+# Changes to the Aqua configuration directory.
+#
+# Returns:
+#   0 if successful, 1 otherwise
+change_to_config_directory() {
+    if ! cd "$AQUA_CONFIG_DIR" 2> /dev/null; then
+        echo "Error: Failed to change to configuration directory: $AQUA_CONFIG_DIR" >&2
+        return 1
+    fi
+    return 0
+}
+
+# Runs an aqua command with optional GitHub token.
+#
+# Arguments:
+#   $1... - The aqua command and its arguments
+#
+# Returns:
+#   0 if successful, 1 otherwise
+run_aqua_command() {
+    if [[ -n $AQUA_GITHUB_TOKEN ]]; then
+        AQUA_GITHUB_TOKEN="$AQUA_GITHUB_TOKEN" aqua "$@"
+    else
+        aqua "$@"
+    fi
+}
+
+# Updates Aqua itself to the latest version.
+#
+# Returns:
+#   0 if successful, 1 otherwise
+update_aqua() {
+    echo "Step 1: Updating Aqua itself..."
+    if run_aqua_command update-aqua; then
+        echo "Aqua updated successfully"
+        return 0
+    else
+        echo "Failed to update Aqua" >&2
+        return 1
+    fi
+}
+
+# Updates all managed binaries to their latest versions.
+#
+# Returns:
+#   0 if successful, 1 otherwise
+update_binaries() {
+    echo "Step 2: Updating all binaries..."
+    if run_aqua_command update; then
+        echo "Binaries updated successfully"
+        return 0
+    else
+        echo "Failed to update binaries" >&2
+        return 1
+    fi
+}
+
+# Updates checksums for all packages.
+#
+# Returns:
+#   0 if successful, 1 otherwise
+update_checksums() {
+    echo "Step 3: Updating checksums..."
+    if run_aqua_command update-checksum; then
+        echo "Checksums updated successfully"
+        return 0
+    else
+        echo "Failed to update checksums" >&2
+        return 1
+    fi
+}
+
+# Prunes outdated checksums.
+#
+# Returns:
+#   0 if successful, 1 otherwise
+prune_checksums() {
+    echo "Step 4: Pruning checksums..."
+    if run_aqua_command update-checksum -prune; then
+        echo "Checksums pruned successfully"
+        return 0
+    else
+        echo "Failed to prune checksums" >&2
+        return 1
+    fi
+}
+
+# Sends a notification about the update process completion.
+#
+# Arguments:
+#   $1 - Status message to display
+send_notification() {
+    local status="$1"
+    if command -v notify-send > /dev/null 2>&1; then
+        notify-send -u normal "Aqua Update" "$status" --hint=string:x-dunst-stack-tag:aqua-update
+    fi
+}
+
+# Main entry point.
+main() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -t | --token)
+                if [[ -z $2 ]]; then
+                    echo "Error: No token provided for $1 option" >&2
+                    usage
+                    exit 1
+                fi
+                AQUA_GITHUB_TOKEN="$2"
+                shift 2
+                ;;
+            -h | --help)
+                usage
+                exit 0
+                ;;
+            *)
+                echo "Error: Unknown option '$1'" >&2
+                usage
+                exit 1
+                ;;
+        esac
+    done
+
+    echo "Starting Aqua update process..."
+    echo "Configuration directory: $AQUA_CONFIG_DIR"
+    if [[ -n $AQUA_GITHUB_TOKEN ]]; then
+        echo "Using GitHub token for API access"
+    else
+        echo "No GitHub token provided - may hit rate limits"
+    fi
+
+    if ! detect_aqua_command; then
+        exit 1
+    fi
+
+    if ! validate_configuration; then
+        exit 1
+    fi
+
+    if ! change_to_config_directory; then
+        exit 1
+    fi
+
+    local failed_steps=0
+    if ! update_aqua; then
+        failed_steps=$((failed_steps + 1))
+    fi
+    if ! update_binaries; then
+        failed_steps=$((failed_steps + 1))
+    fi
+    if ! update_checksums; then
+        failed_steps=$((failed_steps + 1))
+    fi
+    if ! prune_checksums; then
+        failed_steps=$((failed_steps + 1))
+    fi
+
+    if [ "$failed_steps" -eq 0 ]; then
+        echo ""
+        echo "Aqua update process completed successfully!"
+        echo "All updates have been applied to the configuration in: $AQUA_CONFIG_DIR"
+        send_notification "Update completed successfully"
+        exit 0
+    else
+        echo ""
+        echo "Aqua update process completed with $failed_steps failed step(s)"
+        echo "Please check the output above for details"
+        send_notification "Update completed with $failed_steps error(s)"
+        exit 1
+    fi
+}
+
+main "$@"
