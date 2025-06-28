@@ -23,7 +23,7 @@ setopt extended_history
 # add | to output redirections in history
 setopt hist_allow_clobber
 
-[[ -z "$HISTFILE" ]] && HISTFILE="$XDG_CACHE_HOME/shell_history"
+export HISTFILE="$XDG_CACHE_HOME/shell_history"
 export HISTSIZE=50000
 export SAVEHIST=50000
 export HISTORY_IGNORE="(ls|ls *|pwd|zsh|exit|clear|cls)"
