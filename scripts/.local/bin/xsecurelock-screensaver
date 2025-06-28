@@ -2,7 +2,7 @@
 
 """Saver module for xsecurelock.
 
-It displays a background image, clock and custom status. 
+It displays a background image, clock and custom status.
 Configuration is done through environment variables:
 
  - XSECURELOCK_SAVER_IMAGE: path to the background image to use
