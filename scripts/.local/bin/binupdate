@@ -4,7 +4,6 @@
 
 # Global configuration
 AQUA_CONFIG_DIR="${AQUA_CONFIG_DIR:-$HOME/.config/aquaproj-aqua}"
-AQUA_GITHUB_TOKEN=""
 
 usage() {
     cat << EOF
