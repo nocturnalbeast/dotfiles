@@ -231,28 +231,28 @@
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/uv/0.7.16/uv-aarch64-apple-darwin.tar.gz",
-      "checksum": "A157919A2A615FAC5DE0FCEF5120A63DE7E6582FB6E0AE4428238AF347ED1054",
+      "id": "github_release/github.com/astral-sh/uv/0.7.18/uv-aarch64-apple-darwin.tar.gz",
+      "checksum": "C33CFAAB95DA1413A0403F643B7EDB1C5AF6798D8A2370196A80FC37B894DF48",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/uv/0.7.16/uv-aarch64-unknown-linux-musl.tar.gz",
-      "checksum": "C1536A85AA85CAE05C51D25B2819C5B9869F67C66C65948AADEB0C38C4BD51B3",
+      "id": "github_release/github.com/astral-sh/uv/0.7.18/uv-aarch64-unknown-linux-musl.tar.gz",
+      "checksum": "32872DA98E5C48945E45406D427B3B4FDC11F04E4B8F297F49F76724894EB61B",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/uv/0.7.16/uv-x86_64-apple-darwin.tar.gz",
-      "checksum": "414CB3C348B0482BC88FDABBC267973A11401E684A78FD471B2C4553FA8B6965",
+      "id": "github_release/github.com/astral-sh/uv/0.7.18/uv-x86_64-apple-darwin.tar.gz",
+      "checksum": "7A4A3350224A3A3904589EA306041AF68686D72EC4D4B68E34C15D25DFC5CB4A",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/uv/0.7.16/uv-x86_64-pc-windows-msvc.zip",
-      "checksum": "409D19C14A9B1CE83BF7331DBDA89984802EFB3A2FBF9FFDF149B22AB9CF2826",
+      "id": "github_release/github.com/astral-sh/uv/0.7.18/uv-x86_64-pc-windows-msvc.zip",
+      "checksum": "5A5B3EF7C6AEE0BB1101EF047F35A0FC7CC82E34EEF3286E54C5BADD261CB599",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/astral-sh/uv/0.7.16/uv-x86_64-unknown-linux-musl.tar.gz",
-      "checksum": "34C9DA84A673E6C06D2E081D72D953F278FE5BB6ABA0437210BA62817B340EB7",
+      "id": "github_release/github.com/astral-sh/uv/0.7.18/uv-x86_64-unknown-linux-musl.tar.gz",
+      "checksum": "C8B51ED978B5F95A7C34DFE39E1DCE966F7497FC12179F27507D507D9F3FF40B",
       "algorithm": "sha256"
     },
     {
@@ -521,23 +521,23 @@
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jdx/mise/v2025.6.8/mise-v2025.6.8-linux-arm64-musl.tar.gz",
-      "checksum": "55993C135036E89933AF39AFF0A0C847EBF556B834022E8B08178BBF8D627FBA",
+      "id": "github_release/github.com/jdx/mise/v2025.7.0/mise-v2025.7.0-linux-arm64-musl.tar.gz",
+      "checksum": "FE6F891A3F8B1A5618DA7AF198E3F9077D48B593714F8FD982AF19C0BD558236",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jdx/mise/v2025.6.8/mise-v2025.6.8-linux-x64-musl.tar.gz",
-      "checksum": "90C9F65B7850CBBFF7DBEBD598AE18D8E707FE2CFA32C636B54C5BA86EA5BCAA",
+      "id": "github_release/github.com/jdx/mise/v2025.7.0/mise-v2025.7.0-linux-x64-musl.tar.gz",
+      "checksum": "D0707EA8F10977681BDC4C666626B6BE69F644E0CF686B200DB0165D5E7A648D",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jdx/mise/v2025.6.8/mise-v2025.6.8-macos-arm64.tar.gz",
-      "checksum": "C3306EF0E83CEB45F6F9CB209CFF7E30875D5682FE97CD675B0CF471624F79C4",
+      "id": "github_release/github.com/jdx/mise/v2025.7.0/mise-v2025.7.0-macos-arm64.tar.gz",
+      "checksum": "23F16FF52DC867E6805A50DFB7D43991FDC19832C9B21C8182E4BD389C1D2748",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jdx/mise/v2025.6.8/mise-v2025.6.8-macos-x64.tar.gz",
-      "checksum": "6C1AC772CA9253B79D5CDBD68862F2D8C998147FA9737E07AF7B392C415FE81A",
+      "id": "github_release/github.com/jdx/mise/v2025.7.0/mise-v2025.7.0-macos-x64.tar.gz",
+      "checksum": "E00F1DCECB36D507AFA59577E3CEF128CFCFE42F76FE1FB1A57BE7E012C7CFD6",
       "algorithm": "sha256"
     },
     {
@@ -571,28 +571,28 @@
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jqlang/jq/jq-1.8.0/jq-linux-amd64",
-      "checksum": "8926C33326111BCD67A47A970B5A5DB933EF9194AD925994934C639C76A0605C",
+      "id": "github_release/github.com/jqlang/jq/jq-1.8.1/jq-linux-amd64",
+      "checksum": "020468DE7539CE70EF1BCEAF7CDE2E8C4F2CA6C3AFB84642AABC5C97D9FC2A0D",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jqlang/jq/jq-1.8.0/jq-linux-arm64",
-      "checksum": "1084E6BF5060A463DAF77193888D326C83E56BCFBC18A52E6EAA99DBE82A8B54",
+      "id": "github_release/github.com/jqlang/jq/jq-1.8.1/jq-linux-arm64",
+      "checksum": "6BC62F25981328EDD3CFCFE6FE51B073F2D7E7710D7EF7FCDAC28D4E384FC3D4",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jqlang/jq/jq-1.8.0/jq-macos-amd64",
-      "checksum": "A594F3740BF570F0DBC43FF102A9034C17719D1BB5B40F0192751234D67F172A",
+      "id": "github_release/github.com/jqlang/jq/jq-1.8.1/jq-macos-amd64",
+      "checksum": "E80DBE0D2A2597E3C11C404F03337B981D74B4A8504B70586C354B7697A7C27F",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jqlang/jq/jq-1.8.0/jq-macos-arm64",
-      "checksum": "AAF1EFBB376D6E3EAF61F63807C32C1DF519F5857DFC4F581826FA2DF4B715AE",
+      "id": "github_release/github.com/jqlang/jq/jq-1.8.1/jq-macos-arm64",
+      "checksum": "A9FE3EA2F86DFC72F6728417521EC9067B343277152B114F4E98D8CB0E263603",
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/jqlang/jq/jq-1.8.0/jq-windows-amd64.exe",
-      "checksum": "B45FCBB27DCB9E9848AC39889A8BF86457B8D9D31E7C56387C6EAB80008FD1F4",
+      "id": "github_release/github.com/jqlang/jq/jq-1.8.1/jq-windows-amd64.exe",
+      "checksum": "23CB60A1354EED6BCC8D9B9735E8C7B388CD1FDCB75726B93BC299EF22DD9334",
       "algorithm": "sha256"
     },
     {
@@ -1106,8 +1106,8 @@
       "algorithm": "sha256"
     },
     {
-      "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.381.0/registry.yaml",
-      "checksum": "1148706A7043A4B31063B6CA251EDBD32CABD760E86D3DA9325A3096AB6E0D4F40E0E91CB5D617581CE95A515C20CA7E2C444BC65A3AC84A8A9E067726552EFC",
+      "id": "registries/github_content/github.com/aquaproj/aqua-registry/v4.381.1/registry.yaml",
+      "checksum": "D836ECD0F1FA3B9F2D850BAE72922CA7DDF8F82B98A78C572762ABB70F8020EC87DF4B4D1F3C1F6A3F519FE134676145B5635104C3B8D8B6545163981E99F1FC",
       "algorithm": "sha512"
     }
   ]
