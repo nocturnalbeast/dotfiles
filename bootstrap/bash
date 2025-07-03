@@ -4,9 +4,9 @@ case "$1" in
     "install")
         if command -v bash > /dev/null 2>&1 && [ "$SHELL" != "$(command -v bash)" ]; then
             if [ "$PREFERRED_SHELL" = "bash" ]; then
-                echo "Setting bash as default shell based on PREFERRED_SHELL environment variable"
+                echo "Setting bash as default shell based on PREFERRED_SHELL"
                 sudo usermod -s "$(command -v bash)" "$USER"
-            else
+            elif [ -t 0 ] && [ -t 1 ]; then
                 printf "Do you want to set the default shell to bash? [y/N] "
                 read -r response
                 if [ "$response" = "y" ]; then
