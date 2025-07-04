@@ -14,6 +14,8 @@ else
     CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}"
 fi
 CACHE_FILE="$CACHE_DIR/media-control-recent"
+ICON_PLAY="󰐊"
+ICON_PAUSE="󰏤"
 
 usage() {
     cat << EOF
@@ -38,6 +40,8 @@ Operations:
                     If ARGUMENT is provided, use it for metadata formatting
     continuousinfo  Follow playback information with live updates
                     If ARGUMENT is provided, use it for metadata formatting
+    icon            Show current playback icon (if paused, shows play icon and vice versa)
+    continuousicon  Follow playback icon with live updates (if paused, shows play icon and vice versa)
 EOF
 }
 
@@ -363,6 +367,25 @@ Album: {{album}}'
     fi
 }
 
+# Gets current playback icon.
+#
+# Arguments:
+#   $1 - Optional "follow" flag for continuous updates
+#
+# Outputs:
+#   Writes playback icon to stdout.
+get_icon() {
+    FOLLOW_MODE="$1"
+
+    if [ "$FOLLOW_MODE" = "follow" ]; then
+        playerctl -p "$PREFERRED_PLAYER" -F metadata -f "{{status}}" 2> /dev/null | while read -r EVENT; do
+            [ "$EVENT" = "Playing" ] && echo "$ICON_PAUSE" || echo "$ICON_PLAY"
+        done
+    else
+        [ "$(playerctl -p "$PREFERRED_PLAYER" metadata -f "{{status}}" 2> /dev/null)" = "Playing" ] && echo "$ICON_PAUSE" || echo "$ICON_PLAY"
+    fi
+}
+
 # Main entry point that processes command-line arguments.
 #
 # Arguments:
@@ -416,6 +439,12 @@ main() {
             ;;
         continuousinfo)
             get_info "$2" "follow"
+            ;;
+        icon)
+            get_icon
+            ;;
+        continuousicon)
+            get_icon "follow"
             ;;
         *)
             usage
