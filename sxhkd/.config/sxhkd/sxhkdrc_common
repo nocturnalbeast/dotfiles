@@ -108,19 +108,19 @@ XF86AudioMute
 
 # play/pause
 XF86AudioPlay
-    media-control toggle
+    mediactl toggle
 
 # stop
 XF86AudioStop
-    media-control stop
+    mediactl stop
 
 # skip to the next track
 XF86AudioNext
-    media-control next
+    mediactl next
 
 # go back to the previous track
 XF86AudioPrev
-    media-control prev
+    mediactl prev
 
 
 ## display brightness control
