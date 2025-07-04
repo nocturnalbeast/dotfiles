@@ -23,16 +23,16 @@ case "$1" in
         # reconfigure, assuming settings were modified outside of this script
         configure
         # pause music player and notifications
-        CURRENT_PLAYER_STATE="$(media-control info '{{status}}')"
+        CURRENT_PLAYER_STATE="$(mediactl info '{{status}}')"
         if [ "$CURRENT_PLAYER_STATE" = "Playing" ]; then
-            media-control toggle
+            mediactl toggle
         fi
         dunstctl set-paused true
         # lock screen (provide random wallpaper while doing so)
         env XSECURELOCK_SAVER_IMAGE="$(get_random_wallpaper)" xsecurelock
         # after unlock, restore playback and notifications
         if [ "$CURRENT_PLAYER_STATE" = "Playing" ]; then
-            media-control toggle
+            mediactl toggle
         fi
         dunstctl set-paused false
         ;;
