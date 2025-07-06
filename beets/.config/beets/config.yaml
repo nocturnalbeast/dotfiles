@@ -40,6 +40,7 @@ plugins:
   - scrub
   - web
   - zero
+  - duplicates
 
 ## plugin configuration
 acousticbrainz:
