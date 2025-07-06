@@ -89,7 +89,7 @@ embedart:
   ifempty: no
   maxwidth: 0
   quality: 0
-  remove_art_file: no
+  remove_art_file: yes
 fetchart:
   auto: yes
   minwidth: 0
@@ -99,32 +99,28 @@ fetchart:
   enforce_ratio: no
   cautious: no
   sources:
-    - coverart
+    - filesystem
     - itunes
     - amazon
+    - coverart
     - albumart
-    - cover_art_url
-    - fanart
-    - filesystem
+    - lastfm
+    - fanarttv
   store_source: no
   high_resolution: yes
   deinterlace: no
-  cover_format:
+  cover_format: JPEG
   #fanarttv_key: REDACTED
   #lastfm_key: REDACTED
 lyrics:
   auto: yes
-  #google_API_key: REDACTED
-  #google_engine_ID: REDACTED
   #genius_api_key: REDACTED
   force: no
   local: no
   synced: no
   sources:
     - genius
-    - tekstowo
     - lrclib
-    - google
   dist_thresh: 0.1
 missing:
   count: yes
