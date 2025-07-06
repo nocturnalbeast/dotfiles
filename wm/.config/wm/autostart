@@ -52,7 +52,7 @@ fi
 
 # launch compositor
 if ! is_wayland; then
-    picom --experimental-backends &
+    picom &
 fi
 
 # TODO: rework clipboard manager for Wayland
