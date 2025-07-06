@@ -16,6 +16,8 @@ Any additional arguments will be passed to the daemon on start.
 Operations:
     start   Start the notification daemon
     stop    Stop all notification daemons
+    pause   Pause all notification daemons
+    resume  Resume all notification daemons
     -h      Show this help message
 EOF
 }
@@ -102,9 +104,7 @@ terminate_daemons() {
 # Arguments:
 #   $@ - Arguments to pass to the daemon
 start_daemon() {
-    DAEMON_LIST=$(get_daemon_list)
-
-    SELECTED_DAEMON=$(get_first_available "$DAEMON_LIST")
+    SELECTED_DAEMON=$(get_first_available "$(get_daemon_list)")
     if [ -z "$SELECTED_DAEMON" ]; then
         echo "No notification daemon found!" >&2
         return 1
@@ -127,6 +127,36 @@ stop_daemons() {
     echo "All notification daemons stopped." >&2
 }
 
+# Pauses all notification daemons.
+pause_daemons() {
+    echo "Pausing all notification daemons..." >&2
+    SELECTED_DAEMON=$(get_first_available "$(get_daemon_list)")
+    if [ -z "$SELECTED_DAEMON" ]; then
+        echo "No notification daemon found!" >&2
+        return 1
+    fi
+    if [ "$SELECTED_DAEMON" == "dunst" ]; then
+        dunstctl set-paused true > /dev/null 2>&1
+    elif [ "$SELECTED_DAEMON" == "mako" ]; then
+        makoctl mode -s do-not-disturb > /dev/null 2>&1
+    fi
+}
+
+# Resumes all notification daemons.
+resume_daemons() {
+    echo "Resuming all notification daemons..." >&2
+    SELECTED_DAEMON=$(get_first_available "$(get_daemon_list)")
+    if [ -z "$SELECTED_DAEMON" ]; then
+        echo "No notification daemon found!" >&2
+        return 1
+    fi
+    if [ "$SELECTED_DAEMON" == "dunst" ]; then
+        dunstctl set-paused false > /dev/null 2>&1
+    elif [ "$SELECTED_DAEMON" == "mako" ]; then
+        makoctl mode -r do-not-disturb > /dev/null 2>&1
+    fi
+}
+
 # Main entry point that processes command-line arguments.
 #
 # Arguments:
@@ -140,6 +170,12 @@ main() {
             ;;
         stop)
             stop_daemons
+            ;;
+        pause)
+            pause_daemons
+            ;;
+        resume)
+            resume_daemons
             ;;
         -h | --help)
             usage
