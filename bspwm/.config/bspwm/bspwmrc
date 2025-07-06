@@ -27,4 +27,3 @@ bspc config external_rules_command "${XDG_CONFIG_HOME:-$HOME/.config}/bspwm/exte
 # lastly, call the autostart script and start other bspwm-related stuff separately
 "${XDG_CONFIG_HOME:-$HOME/.config}"/wm/autostart
 bspwm-pow-af &
-bspwm-noactiveborders &
