@@ -8,11 +8,15 @@ import:
   move: yes
 item_fields:
   multidisc: 1 if disctotal > 1 else 0
+  nonstandardalbum: 1 if albumdisambig != "" else 0
+  disc0: f"{disc}"
+  first_artist: albumartists[0] if len(albumartists) else artists[0]
 paths:
-  default: "$albumartist/%title{$albumtype}s/$year - $album/%if{$multidisc,$disc-}$track - $title"
-  albumtype:remix: "$albumartist/Remixes/$year - $album/%if{$multidisc,$disc-}$track - $title"
-  albumtype:ep: "$albumartist/EPs/$year - $album/%if{$multidisc,$disc-}$track - $title"
-  albumtype:live: "$albumartist/Albums/$year - $album/%if{$multidisc,$disc-}$track - $title"
+  default: "$first_artist/%title{$albumtype}s/$year - $album %if{$nonstandardalbum,[%title{$albumdisambig}] }/%if{$multidisc,$disc0-}$track - $title"
+  albumtype:remix: "$first_artist/Remixes/$year - $album %if{$nonstandardalbum,[%title{$albumdisambig}] }/%if{$multidisc,$disc0-}$track - $title"
+  albumtype:ep: "$first_artist/EPs/$year - $album %if{$nonstandardalbum,[%title{$albumdisambig}] }/%if{$multidisc,$disc0-}$track - $title"
+  albumtype:live: "$first_artist/Albums/$year - $album %if{$nonstandardalbum,[%title{$albumdisambig}] }/%if{$multidisc,$disc0-}$track - $title"
+  comp: "Various Artists/%title{$albumtype}s/$year - $album %if{$nonstandardalbum,[%title{$albumdisambig}] }/%if{$multidisc,$disc0-}$track - $title"
 original_date: yes
 per_disc_numbering: yes
 threaded: yes
@@ -148,11 +152,5 @@ web:
 zero:
   auto: yes
   fields:
-    - albumartist_credit
-    - albumartists_credit
-    - artist_credit
-    - artists_credit
-    - comp
     - comments
-  keep_fields: []
   update_database: no
