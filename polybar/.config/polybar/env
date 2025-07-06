@@ -2,8 +2,7 @@
 WINDOW_MANAGER="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
 
 # for temperature module
-TEMP_HWMON_PATH="/sys/devices/platform/coretemp.0/hwmon/hwmon7/temp1_input"
-TEMP_THERMAL_ZONE=9
+TEMP_THERMAL_ZONE=2
 
 # for battery module
 BATT_BATTERY="BAT0"
@@ -13,4 +12,81 @@ BATT_ADAPTER="AC"
 BRIG_CARD="intel_backlight"
 
 # for network module
-NTWK_INTERFACE="wlo1"
+NTWK_INTERFACE="$(\ls /sys/class/ieee80211/*/device/net/ | head -1)"
+
+# workspace icons
+ICON_WORKSPACE_0=""
+ICON_WORKSPACE_1="󰇧"
+ICON_WORKSPACE_2="󰅴"
+ICON_WORKSPACE_3="󰉋"
+ICON_WORKSPACE_4="󰈯"
+ICON_WORKSPACE_5="󰈙"
+ICON_WORKSPACE_6=""
+ICON_WORKSPACE_7="󰇚"
+ICON_WORKSPACE_8="󰓅"
+ICON_WORKSPACE_9=""
+ICON_WORKSPACE_DEFAULT=""
+
+# monitor icons
+ICON_MONITOR_EXTERNAL="󰍹"
+ICON_MONITOR_OTHER="󰍺"
+ICON_MONITOR_MIRROR=""
+ICON_MONITOR_DEFAULT="󰌢"
+
+# bar switch icon
+ICON_BARSWITCH="󰔡"
+
+# media icons
+ICON_MEDIA_PREV="󰒮"
+ICON_MEDIA_NEXT="󰒭"
+
+# keyboard icons
+ICON_KEYBOARD="󰌌"
+ICON_CAPS_LOCK="󰌎"
+ICON_SCROLL_LOCK="󰍽"
+ICON_NUM_LOCK="󰎠"
+
+# clock icon
+ICON_CLOCK="󰥔"
+
+# volume icons
+ICON_VOLUME_MUTED="󰝟"
+ICON_VOLUME_LOW="󰕿"
+ICON_VOLUME_MEDIUM="󰖀"
+ICON_VOLUME_HIGH="󰕾"
+
+# brightness icons
+ICON_BRIGHTNESS_0="󰃚"
+ICON_BRIGHTNESS_1="󰃛"
+ICON_BRIGHTNESS_2="󰃜"
+ICON_BRIGHTNESS_3="󰃝"
+ICON_BRIGHTNESS_4="󰃞"
+ICON_BRIGHTNESS_5="󰃟"
+ICON_BRIGHTNESS_6="󰃠"
+
+# battery icons
+ICON_BATTERY_0="󰂎"
+ICON_BATTERY_1="󰁺"
+ICON_BATTERY_2="󰁻"
+ICON_BATTERY_3="󰁼"
+ICON_BATTERY_4="󰁽"
+ICON_BATTERY_5="󰁾"
+ICON_BATTERY_6="󰁿"
+ICON_BATTERY_7="󰂀"
+ICON_BATTERY_8="󰂁"
+ICON_BATTERY_9="󰂂"
+ICON_BATTERY_10="󰁹"
+
+# system icons
+ICON_SYSTEM_CPU="󰍛"
+ICON_SYSTEM_MEMORY=""
+ICON_SYSTEM_SWAP="󰣂"
+ICON_SYSTEM_TEMP="󰈐"
+ICON_SYSTEM_TEMP_WARN=""
+ICON_SYSTEM_DISK="󰋊"
+ICON_SYSTEM_DISK_HOME="󰋜"
+ICON_SYSTEM_DISK_UNMOUNTED="󱎘"
+
+# network icons
+ICON_NETWORK_CONNECTED="󰌘"
+ICON_NETWORK_DISCONNECTED="󰌙"
