@@ -68,7 +68,9 @@ if [ -d "$HOME/.local/bin" ]; then
 fi
 
 # third-party binaries
-if [ -d "$HOME/bin" ]; then
+if [ -d "$HOME/.bin" ]; then
+    export PATH="$HOME/.bin:$PATH"
+elif [ -d "$HOME/bin" ]; then
     export PATH="$HOME/bin:$PATH"
 fi
 
