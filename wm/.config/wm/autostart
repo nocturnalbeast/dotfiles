@@ -55,11 +55,10 @@ if ! is_wayland; then
     picom &
 fi
 
-# TODO: rework clipboard manager for Wayland
 # launch clipboard manager
-#if command -v clipmenud >/dev/null 2>&1; then
-#    clipmenud &
-#fi
+if command -v clipcatd > /dev/null 2>&1; then
+    clipcatd &
+fi
 
 # TODO: rework screen locker for Wayland
 # launch screen autolocker
