@@ -104,6 +104,13 @@ export VIDEO="mpv"
 export IMAGE="imv"
 export FILES="nemo"
 
+# default menu
+if [ -n "$WAYLAND_DISPLAY" ]; then
+    export MENU_BACKEND="tofi"
+else
+    export MENU_BACKEND="dmenu"
+fi
+
 ## theming
 
 # gui settings
