@@ -50,9 +50,9 @@ if command -v notificationd > /dev/null 2>&1; then
     notificationd start
 fi
 
-# launch compositor
+# launch compositor for X11 WMs
 if ! is_wayland; then
-    picom &
+    picom -b
 fi
 
 # launch clipboard manager
