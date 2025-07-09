@@ -15,8 +15,8 @@ WKSP_8_WINDOWS=(telegramdesktop uget-gtk)
 WKSP_9_WINDOWS=(systemmonitor)
 WKSP_10_WINDOWS=(meld)
 
-# arrays to store applications that need to be 'followed' i.e. change focus to them as they launch
-FOLLOW_WINDOWS=(st alacritty xterm uxterm urxvt qutebrowser firefox chromium-browser librewolf neovim gnvim thunar gparted mpv libreoffice libreoffice-startcenter zathura gimp pinta inkscape telegramdesktop uget-gtk systemmonitor)
+# arrays to store applications that need to be 'followed' i.e. change focus to them as they launch (only includes applications not already in workspace arrays since those are auto-followed)
+FOLLOW_WINDOWS=()
 
 # first, let's change the positional arguments into labels we can understand
 WINDOW_ID="$1"
@@ -43,7 +43,7 @@ done
 for WKSP_IDX in $(seq 1 $WKSP_PER_MONITOR); do
     WKSP="WKSP_${WKSP_IDX}_WINDOWS[@]"
     if [[ " ${!WKSP} " =~ " ${WINDOW_CLASS,,} " ]]; then
-        RULES="$RULES desktop=^$((FOCUSED_MONITOR_NUM * WKSP_PER_MONITOR + WKSP_IDX))"
+        RULES="$RULES desktop=^$((FOCUSED_MONITOR_NUM * WKSP_PER_MONITOR + WKSP_IDX)) follow=on"
     fi
 done
 
