@@ -16,7 +16,7 @@ WKSP_9_WINDOWS=(systemmonitor)
 WKSP_10_WINDOWS=(meld)
 
 # arrays to store applications that need to be 'followed' i.e. change focus to them as they launch
-FOLLOW_WINDOWS=(st alacritty xterm uxterm urxvt qutebrowser firefox neovim gnvim thunar gparted mpv libreoffice libreoffice-startcenter zathura gimp pinta inkscape telegramdesktop uget-gtk systemmonitor)
+FOLLOW_WINDOWS=(st alacritty xterm uxterm urxvt qutebrowser firefox chromium-browser librewolf neovim gnvim thunar gparted mpv libreoffice libreoffice-startcenter zathura gimp pinta inkscape telegramdesktop uget-gtk systemmonitor)
 
 # first, let's change the positional arguments into labels we can understand
 WINDOW_ID="$1"
