@@ -1,6 +1,0 @@
-#!/usr/bin/env sh
-
-# This is another example - single monitor output only - i.e. only the laptop
-# display is enabled
-
-xrandr --output eDP1 --primary --mode 1366x768 --pos 0x0 --rotate normal --output HDMI1 --off --output VIRTUAL1 --off
