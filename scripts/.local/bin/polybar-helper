@@ -244,7 +244,7 @@ disable_bars() {
     if [[ $1 == "all" ]]; then
         polybar-msg cmd hide > /dev/null 2>&1
     else
-        FOCUS_MON="$(display-helper get_focused_display)"
+        FOCUS_MON="$(display focused)"
         mapfile -t PIDS_ACTIVE < <(grep "visible$" "$STATE_FILE" | cut -f 3 -d : | tr "," "\n")
         for PID in "${PIDS_ACTIVE[@]}"; do
             eval $(xdotool getwindowgeometry --shell "$(xdotool search --pid "$PID")")
