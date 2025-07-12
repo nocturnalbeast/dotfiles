@@ -26,7 +26,7 @@ for IDX in ${!WINDOW_IDS[*]}; do
     # check if we are on a single-display or a multi-display setup
     if [[ $NUM_MONITORS != "1" ]]; then
         # get the monitor the window is in
-        WINDOW_DISPLAY="$(display-helper get_display_for_window "${WINDOW_IDS[$IDX]}")"
+        WINDOW_DISPLAY="$(display window-display "${WINDOW_IDS[$IDX]}")"
         # append all this data to the array containing window entries
         WINDOW_ENTRIES["$IDX: [$WINDOW_DISPLAY - $WINDOW_WORKSPACE] $WINDOW_NAME"]="${WINDOW_IDS[$IDX]}"
     else

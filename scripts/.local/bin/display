@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+
+# A multi-display management utility.
+
+# Global configuration
+DEPENDENCIES=("xrandr" "wmctrl" "xdotool" "xwininfo")
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [COMMAND]
+
+A multi-display management utility.
+
+Operations:
+    menu                 Run the display layout menu
+    focused              Get the currently focused display
+    window-display ID    Get the display a window is on, given its window ID
+    mirrored             Check if monitors are in mirrored configuration
+    help                 Show this help message
+EOF
+    exit 0
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &> /dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Get the currently focused display
+#
+# Outputs:
+#   The name of the currently focused display
+get_focused_display() {
+    local focus_mon=""
+    local aw_offset
+    aw_offset="$(wmctrl -d | grep ' * ' | awk '{print $6}')"
+    while IFS= read -r entry; do
+        read -r mon_name mon_offset < <(
+            echo "$entry" | awk -F':' '{print $1, $2}'
+        )
+        if [[ $aw_offset == "$mon_offset" ]]; then
+            focus_mon="$mon_name"
+            break
+        fi
+    done < <(xrandr --current | sed -n 's/\([^ ]*\) connected.* [0-9]*x[0-9]*+\([0-9]*\)+\([0-9]*\).*/\1:\2,\3/p')
+    if [[ -z $focus_mon ]]; then
+        local x y
+        source <(xdotool getactivewindow getwindowgeometry --shell 2> /dev/null)
+        if [[ -z $X || -z $Y ]]; then
+            source <(xdotool getmouselocation --shell 2> /dev/null)
+        fi
+        x="$X"
+        y="$Y"
+        while IFS= read -r entry; do
+            read -r mon_name mon_width mon_height mon_x_start mon_y_start < <(
+                echo "$entry" | awk -F'-' '{for(i=1;i<=NF-4;i++) printf $i (i<NF-4?"-":" "); printf "%s %s %s %s\n", $(NF-3), $(NF-2), $(NF-1), $NF;}'
+            )
+            mon_x_end=$((10#$mon_x_start + 10#$mon_width))
+            mon_y_end=$((10#$mon_y_start + 10#$mon_height))
+            if [[ $x -ge $mon_x_start ]] && [[ $x -lt $mon_x_end ]] && [[ $y -ge $mon_y_start ]] && [[ $y -lt $mon_y_end ]]; then
+                focus_mon="$mon_name"
+                break
+            fi
+        done < <(xrandr --current | sed -n 's/\([^ ]*\) connected.* \([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\1-\2-\3-\4-\5/p')
+    fi
+    if [[ -z $focus_mon ]]; then
+        focus_mon="$(xrandr --current | grep "connected primary" | cut -f 1 -d " ")"
+    fi
+    echo "$focus_mon"
+}
+
+# Get the display a window is on
+#
+# Arguments:
+#   $1 - The window ID
+#
+# Outputs:
+#   The name of the display the window is on
+get_display_for_window() {
+    local focus_mon=""
+    local x y w h
+    if [[ -z $1 ]]; then
+        echo "Error: Window ID required" >&2
+        return 1
+    fi
+    eval $(xwininfo -id "$1" | sed -n -e "s/^ \+Absolute upper-left X: \+\([0-9]\+\).*/x=\1/p" \
+        -e "s/^ \+Absolute upper-left Y: \+\([0-9]\+\).*/y=\1/p" \
+        -e "s/^ \+Width: \+\([0-9]\+\).*/w=\1/p" \
+        -e "s/^ \+Height: \+\([0-9]\+\).*/h=\1/p")
+    local found=0
+    while IFS= read -r entry; do
+        read -r mon_name mon_width mon_height mon_x_start mon_y_start < <(
+            echo "$entry" | awk -F'-' '{for(i=1;i<=NF-4;i++) printf $i (i<NF-4?"-":" "); printf "%s %s %s %s\n", $(NF-3), $(NF-2), $(NF-1), $NF;}'
+        )
+        mon_x_end=$((10#$mon_x_start + 10#$mon_width))
+        mon_y_end=$((10#$mon_y_start + 10#$mon_height))
+        if [[ $x -ge $mon_x_start ]] && [[ $x -lt $mon_x_end ]] && [[ $y -ge $mon_y_start ]] && [[ $y -lt $mon_y_end ]]; then
+            focus_mon="$mon_name"
+            found=1
+            break
+        fi
+    done < <(xrandr --current | sed -n 's/\([^ ]*\) connected.* \([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\1-\2-\3-\4-\5/p')
+    echo "$focus_mon"
+}
+
+# Check if monitors are in mirrored configuration
+#
+# Outputs:
+#   "yes" if monitors are in mirrored configuration, "no" otherwise
+are_monitors_mirrored() {
+    local monitor_count unique_positions
+    monitor_count=$(xrandr --current --listmonitors | awk 'NR>1 {count++} END {print count+0}')
+    if [[ $monitor_count -le 1 ]]; then
+        echo "no"
+        return
+    fi
+    unique_positions=$(xrandr --current --listmonitors | awk 'NR>1 {split($3, a, "+"); print a[2] "," a[3]}' | sort -u | wc -l)
+    if [[ $unique_positions -eq 1 ]]; then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Run the display layout menu
+run_menu() {
+    if ! command -v menu-displaylayout &> /dev/null; then
+        echo "Error: menu-displaylayout not found" >&2
+        return 1
+    fi
+    menu-displaylayout &
+}
+
+# Main entry point
+main() {
+    check_dependencies
+
+    case "$1" in
+        menu) run_menu ;;
+        focused) get_focused_display ;;
+        window-display) get_display_for_window "$2" ;;
+        mirrored) are_monitors_mirrored ;;
+        --help | -h) usage ;;
+        "") usage ;;
+        *)
+            echo "Error: Unknown command '$1'" >&2
+            usage
+            ;;
+    esac
+}
+
+main "$@"
