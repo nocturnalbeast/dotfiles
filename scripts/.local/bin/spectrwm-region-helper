@@ -20,7 +20,7 @@ if [ "$1" == "disable_padding" ]; then
     done
 else
     # get the height reserved for the polybar instance
-    mapfile -t BAR_DIMENSIONS < <(polybar-helper get_dimensions)
+    mapfile -t BAR_DIMENSIONS < <(polybarctl get_dimensions)
     TTL_BARHEIGHT="$((${BAR_DIMENSIONS[2]} + 2 * ${BAR_DIMENSIONS[1]}))"
     # get the padding already defined in spectrwm config file
     RG_PADDING="$(awk -F "=" '/^[ ]*region_padding/ {print $2}' "$SPECTRWM_CONFIG_PATH" | tr -d ' ')"
