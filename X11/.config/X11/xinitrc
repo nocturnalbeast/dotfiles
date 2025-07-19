@@ -19,17 +19,17 @@ for FILE in "/etc/X11/Xresources" "${XDG_CONFIG_HOME:-"$HOME/.config"}/X11/xreso
 done
 
 # load keymaps using xkbmap
-if type setxkbmap >/dev/null 2>&1; then
+if type setxkbmap > /dev/null 2>&1; then
     for FILE in "/etc/X11/Xkbmap" "$HOME/.Xkbmap"; do
         if [ -f "$FILE" ]; then
-            setxkbmap "$( cat "$FILE" )"
+            setxkbmap "$(cat "$FILE")"
             XKB_IN_USE=yes
         fi
     done
 fi
 
 # load keymaps using xmodmap if not using xkbmap
-if type xmodmap >/dev/null 2>&1; then
+if type xmodmap > /dev/null 2>&1; then
     if [ -z "$XKB_IN_USE" ]; then
         for FILE in "/etc/X11/Xmodmap" "$HOME/.Xmodmap"; do
             if [ -f "$FILE" ]; then
@@ -42,7 +42,7 @@ unset XKB_IN_USE
 
 # source all system xinitrc shell scripts
 if [ -d /etc/X11/xinit/xinitrc.d ]; then
-    for FILE in /etc/X11/xinit/xinitrc.d/* ; do
+    for FILE in /etc/X11/xinit/xinitrc.d/*; do
         if [ -x "$FILE" ] && [ ! -d "$FILE" ]; then
             . "$FILE"
         fi
@@ -50,8 +50,14 @@ if [ -d /etc/X11/xinit/xinitrc.d ]; then
 fi
 
 # launch with dbus if it exists and if there is no environment variable defined to disable it
-if type dbus-launch >/dev/null 2>&1 && [ "$DBUS_LAUNCH" != "false" ]; then
-    exec dbus-launch $@
+if [ "$DBUS_LAUNCH" != "false" ]; then
+    if systemctl --user list-unit-files dbus.service > /dev/null 2>&1; then
+        if [ "$(systemctl --user is-active dbus.service)" != "active" ]; then
+            systemctl --user restart dbus.service
+        fi
+    elif command -v dbus-launch > /dev/null 2>&1; then
+        exec dbus-launch --exit-with-session $@
+    fi
 else
     exec $@
 fi
