@@ -1,0 +1,346 @@
+#!/usr/bin/env bash
+
+# A polybar management utility.
+
+# Global configuration
+CONFIG_FILE="${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/config.ini"
+ENV_FILE="${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/env"
+STATE_FILE="${XDG_CACHE_HOME:="$HOME/.cache"}/polybar/state"
+DEPENDENCIES=("polybar" "xdotool" "xprop" "xwininfo" "bc" "awk" "sed" "grep" "notify-send" "read-ini")
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [OPERATION]
+
+A polybar management utility.
+
+Operations:
+  start           Start the bars
+  init            Initialize state file (used after starting polybar)
+  get_state       Returns the global state of the bars (are they hidden or not?)
+  get_cache_path  Returns the path of the cache file used to track bar states
+  get_bars        List all polybar instances with their WIDs and PIDs
+  is_hidden       Returns 'yes' if all bars are hidden, 'no' otherwise
+  switch          Switch the active bar
+  enable          Show the active bar
+  disable         Hide the active bar
+  toggle          Toggle between showing/hiding the active bar
+  pad_enable      Enable top padding reserved by the window manager
+  pad_disable     Disable top padding reserved by the window manager
+  pad_toggle      Toggle top padding reserved by the window manager
+  toggle_all      Toggle both padding and bar visibility
+  get_dimensions  Get the current dimensions of the bar as specified in the config file
+  get_font        Get the font strings for the bars based on config options
+  get_iconsize    Get the height for the icons in the tray (glyph font height)
+  help            Show this help message
+EOF
+    exit 0
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &> /dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Helper to calculate percentage or return value as-is
+calc_percent() {
+    local value base result
+    value="$1"
+    base="$2"
+    if [[ ${value: -1} == "%" ]]; then
+        local percent=${value::-1}
+        result=$(echo "scale=4; $base * $percent / 100" | bc)
+        printf '%d' "$(echo "($result+0.5)/1" | bc)"
+    else
+        echo "$value"
+    fi
+}
+
+# Get the current bar dimensions for a monitor
+get_dimensions() {
+    local monitor resolution scr_width scr_height horz_margin vert_margin bar_height
+    monitor="$1"
+    if [[ -n $monitor ]]; then
+        resolution="$(polybar --list-monitors | awk -v m="$monitor" -F': |[+]' '$1==m{print $2}')"
+    fi
+    if [[ -z $resolution ]]; then
+        resolution="$(polybar --list-monitors | awk -F': |[+]' '/\(primary\)/{print $2}')"
+    fi
+    scr_width="${resolution%x*}"
+    scr_height="${resolution#*x}"
+    horz_margin="$(read-ini -f "$CONFIG_FILE" -k "horz-margin")"
+    horz_margin="$(calc_percent "$horz_margin" "$scr_width")"
+    horz_margin=$((horz_margin - (horz_margin % 2)))
+    vert_margin="$(read-ini -f "$CONFIG_FILE" -k "vert-margin")"
+    vert_margin="$(calc_percent "$vert_margin" "$scr_height")"
+    vert_margin=$((vert_margin - (vert_margin % 2)))
+    bar_height="$(read-ini -f "$CONFIG_FILE" -k "bar-height")"
+    bar_height="$(calc_percent "$bar_height" "$scr_height")"
+    echo -e "$horz_margin\n$vert_margin\n$bar_height\n$((scr_width - 2 * horz_margin))"
+}
+
+# Get the font strings for the bar
+get_font() {
+    local bar_height text_font_size icon_font_size text_font_offset icon_font_offset text_font icon_font monospace_font
+    bar_height="$(get_dimensions "$1" | sed -n '3p')"
+    text_font_size="$(read-ini -f "$CONFIG_FILE" -k "text-font-height")"
+    text_font_size="$(calc_percent "$text_font_size" "$bar_height")"
+    icon_font_size="$(read-ini -f "$CONFIG_FILE" -k "icon-font-height")"
+    icon_font_size="$(calc_percent "$icon_font_size" "$bar_height")"
+    text_font_offset=$((((bar_height - text_font_size) * text_font_size / (bar_height * 2)) + ((text_font_size > (bar_height / 2)) ? ((10 * text_font_size - 5 * bar_height) / text_font_size) : 0)))
+    icon_font_offset=$((((bar_height - icon_font_size) * icon_font_size / (bar_height * 2)) + ((icon_font_size > (bar_height / 2)) ? ((10 * icon_font_size - 5 * bar_height) / icon_font_size) : 0)))
+    text_font="$(read-ini -f "$CONFIG_FILE" -k "text-font")"
+    icon_font="$(read-ini -f "$CONFIG_FILE" -k "icon-font")"
+    monospace_font="$(read-ini -f "$CONFIG_FILE" -k "monospace-font")"
+    echo "text-font=${text_font}:pixelsize=${text_font_size};${text_font_offset}"
+    echo "icon-font=${icon_font}:pixelsize=${icon_font_size};${icon_font_offset}"
+    if [[ -n $monospace_font ]]; then
+        echo "monospace-font=${monospace_font}"
+    fi
+}
+
+# Get the icon size for the tray
+get_iconsize() {
+    local bar_height icon_font_size
+    bar_height="$(get_dimensions "$1" | sed -n '3p')"
+    icon_font_size="$(read-ini -f "$CONFIG_FILE" -k "icon-font-height")"
+    icon_font_size="$(calc_percent "$icon_font_size" "$bar_height")"
+    echo "$icon_font_size"
+}
+
+# Enumerate all bar instances
+get_bars() {
+    declare -A BARS_WIDS
+    declare -A BARS_PIDS
+    mapfile -t WIDS < <(xdotool search --class "Polybar")
+    for WID in "${WIDS[@]}"; do
+        local WNAME WPID
+        WNAME=$(xprop -id "$WID" -notype -f WM_NAME 8s '=$0\n' WM_NAME | cut -f 2 -d = | sed 's/^"//;s/"$//')
+        WPID=$(xprop -id "$WID" -notype -f _NET_WM_PID 0c '=$0\n' _NET_WM_PID | cut -f 2 -d =)
+        if [[ -z ${BARS_WIDS[$WNAME]} ]]; then
+            BARS_WIDS[$WNAME]="$WID"
+            BARS_PIDS[$WNAME]="$WPID"
+        else
+            BARS_WIDS[$WNAME]+=",$WID"
+            BARS_PIDS[$WNAME]+=",$WPID"
+        fi
+    done
+    for BAR in "${!BARS_WIDS[@]}"; do
+        echo "$BAR:${BARS_WIDS[$BAR]}:${BARS_PIDS[$BAR]}"
+    done
+}
+
+# start the bars
+start_bars() {
+    if type pkill &> /dev/null; then
+        pkill polybar
+    else
+        while IFS=$'\n' read -r BAR_PID; do
+            kill "$BAR_PID"
+        done < <(ps -e -o pid,cmd | tail -n +2 | awk '{print $1":"substr($0, index($0,$2))}' | sed -n '/^[0-9]\+:polybar/p' | cut -f 1 -d :)
+    fi
+    while pgrep -u $UID -x polybar > /dev/null 2>&1; do sleep 1; done
+
+    rm -f "$STATE_FILE"
+
+    set -a
+    source "$ENV_FILE"
+    set +a
+
+    for M in $(polybar --list-monitors | cut -d: -f1); do
+        FONTS="$(get_font "$M")"
+        export ICON_SIZE="$(get_iconsize "$M")"
+        while IFS='=' read -r key value; do
+            case "$key" in
+                text-font) export TEXT_FONT="$value" ;;
+                icon-font) export ICON_FONT="$value" ;;
+                monospace-font) export MONOSPACE_FONT="$value" ;;
+            esac
+        done < <(echo -e "$FONTS")
+        for BAR in $BARLIST; do
+            MONITOR=$M polybar $BAR &
+        done
+    done
+
+    for BPID in $(pidof polybar); do
+        while
+            sleep 1
+            : ls /tmp/polybar_mqueue.$BPID > /dev/null 2>&1
+            [ $? -ne 0 ]
+        do :; done
+    done
+
+    local FIRST_BAR="${BARLIST%% *}"
+    mapfile -t HIDEBAR_PIDS < <(pgrep "polybar" --list-full | grep -v "polybar $FIRST_BAR" | awk '{print $1};')
+    for BAR_PID in "${HIDEBAR_PIDS[@]}"; do
+        polybar-msg -p "$BAR_PID" cmd hide > /dev/null 2>&1
+    done
+
+    init_state
+}
+
+# Initialize state file for bar instances
+init_state() {
+    local all_states=()
+    rm -f "$STATE_FILE"
+    if [[ ! -d "$(dirname $STATE_FILE)" ]]; then
+        mkdir -p "$(dirname $STATE_FILE)"
+    fi
+    get_bars > "$STATE_FILE"
+    while IFS= read -r line; do
+        local wids state visible=0 hidden=0 total=0
+        wids=$(echo "$line" | cut -f 2 -d : | tr "," " ")
+        for wid in $wids; do
+            local wstate
+            wstate=$(xwininfo -id "$wid" | awk -F: '/Map State:/ {gsub(/ /, "", $2); print $2}')
+            case "$wstate" in
+                IsViewable) visible=$((visible + 1)) ;;
+                *) hidden=$((hidden + 1)) ;;
+            esac
+            total=$((total + 1))
+        done
+        if ((visible == total)); then
+            state=visible
+        elif ((hidden == total)); then
+            state=hidden
+        else
+            state=unknown
+        fi
+        all_states+=("$line:$state")
+    done < "$STATE_FILE"
+    printf "%s\n" "${all_states[@]}" > "$STATE_FILE"
+}
+
+# Window manager padding helpers
+bspwm_get_padding() { bspc config top_padding; }
+bspwm_enable_padding() { "${XDG_CONFIG_HOME:-$HOME/.config}/bspwm/set-monitors"; }
+bspwm_disable_padding() { bspc config top_padding 0; }
+spectrwm_get_padding() { sed -n "s/^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:\(.*\)/\1/p" "${XDG_CONFIG_HOME:="$HOME/.config"}/spectrwm/spectrwm.conf" | rev | cut -f 1 -d '+' | rev; }
+spectrwm_enable_padding() { spectrwm-region-helper; }
+spectrwm_disable_padding() { spectrwm-region-helper disable_padding; }
+get_window_manager() { wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p"; }
+get_padding() { $(get_window_manager)_get_padding 2> /dev/null; }
+enable_padding() { $(get_window_manager)_enable_padding 2> /dev/null; }
+disable_padding() { $(get_window_manager)_disable_padding 2> /dev/null; }
+toggle_padding() { if [[ "$(get_padding)" != "0" ]]; then disable_padding 2> /dev/null; else enable_padding 2> /dev/null; fi; }
+
+# Switch the states of the bars (i.e. make visible bar invisible, and vice-versa)
+switch_bar() {
+    polybar-msg cmd toggle > /dev/null 2>&1
+    sed -i 's/visible/@@/gi; s/hidden/visible/gi; s/@@/hidden/gi' "$STATE_FILE"
+}
+
+# Show the active bar
+enable_bars() {
+    [[ ! -f $STATE_FILE ]] && return
+    if [[ "$(get_padding)" != "0" ]]; then
+        mapfile -t PIDS_ACTIVE < <(awk -F: '$4=="visible"{split($3,p,","); for(i in p) print p[i]}' "$STATE_FILE")
+        for BAR_PID in "${PIDS_ACTIVE[@]}"; do
+            polybar-msg -p "$BAR_PID" cmd show > /dev/null 2>&1
+        done
+    fi
+}
+
+# Check if bars are visible
+are_bars_hidden() {
+    local wids state hidden=0 total=0
+    mapfile -t wids < <(xdotool search --class "Polybar")
+    for wid in "${wids[@]}"; do
+        state=$(xwininfo -id "$wid" | awk -F: '/Map State:/ {gsub(/ /, "", $2); print $2}')
+        if [[ $state != "IsViewable" ]]; then
+            hidden=$((hidden + 1))
+        fi
+        total=$((total + 1))
+    done
+    if ((total > 0 && hidden == total)); then
+        echo "yes"
+    else
+        echo "no"
+    fi
+}
+
+# Hide specified bars
+disable_bars() {
+    if [[ $1 == "all" ]]; then
+        polybar-msg cmd hide > /dev/null 2>&1
+    else
+        local focus_mon pids_active pid wid x y mon_name mon_width mon_height mon_x_start mon_y_start mon_x_end mon_y_end
+        focus_mon="$(display focused)"
+        [[ ! -f $STATE_FILE ]] && return
+        mapfile -t pids_active < <(awk -F: '$4=="visible"{split($3,p,","); for(i in p) print p[i]}' "$STATE_FILE")
+        for pid in "${pids_active[@]}"; do
+            mapfile -t wids < <(xdotool search --pid "$pid")
+            for wid in "${wids[@]}"; do
+                eval $(xdotool getwindowgeometry --shell "$wid")
+                while IFS= read -r entry; do
+                    read -r mon_name mon_width mon_height mon_x_start mon_y_start < <(
+                        echo "$entry" | awk -F'-' '{for(i=1;i<=NF-4;i++) printf $i (i<NF-4?"-":" "); printf "%s %s %s %s\n", $(NF-3), $(NF-2), $(NF-1), $NF;}'
+                    )
+                    mon_x_end=$((10#$mon_x_start + 10#$mon_width))
+                    mon_y_end=$((10#$mon_y_start + 10#$mon_height))
+                    if [[ $X -ge $mon_x_start && $X -lt $mon_x_end && $Y -ge $mon_y_start && $Y -lt $mon_y_end && $mon_name == "$focus_mon" ]]; then
+                        polybar-msg -p "$pid" cmd hide > /dev/null 2>&1
+                        break 2
+                    fi
+                done < <(xrandr --current | sed -n 's/\([^ ]*\) connected.* \([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\1-\2-\3-\4-\5/p')
+            done
+        done
+    fi
+}
+
+# Hide / show the bars
+toggle_bars() {
+    if [[ "$(are_bars_hidden)" == "yes" ]]; then
+        enable_bars
+    else
+        disable_bars all
+    fi
+}
+
+# Hide / show the bars with the spacing for the bars as well
+toggle_all() {
+    if [[ "$(are_bars_hidden)" == "yes" ]] && [[ "$(get_padding)" == "0" ]]; then
+        enable_padding
+        enable_bars
+    else
+        disable_bars all
+        disable_padding
+    fi
+}
+
+main() {
+    check_dependencies
+    case "$1" in
+        start) start_bars ;;
+        init) init_state ;;
+        get_state) are_bars_hidden ;;
+        get_cache_path) echo "$STATE_FILE" ;;
+        get_bars) get_bars ;;
+        is_hidden) are_bars_hidden ;;
+        switch) switch_bar ;;
+        enable) enable_bars ;;
+        disable) disable_bars "$2" ;;
+        toggle) toggle_bars ;;
+        pad_enable) enable_padding ;;
+        pad_disable) disable_padding ;;
+        pad_toggle) toggle_padding ;;
+        toggle_all) toggle_all ;;
+        get_dimensions) get_dimensions "$2" ;;
+        get_font) get_font "$2" ;;
+        get_iconsize) get_iconsize "$2" ;;
+        help | --help | -h) usage ;;
+        "") usage ;;
+        *)
+            echo "Unknown operation: $1"
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
