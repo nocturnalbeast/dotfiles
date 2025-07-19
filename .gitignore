@@ -24,3 +24,6 @@ thunar/.config/Thunar/renamerrc
 # zsh compiled files
 *.zwc
 zsh/.config/zsh/.zcompdump
+
+# icon caches
+gtk/.local/share/icons/**/*.cache
