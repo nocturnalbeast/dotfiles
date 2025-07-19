@@ -1,3 +1,6 @@
+# list of bars to launch
+BARLIST="mainbar monbar"
+
 # for dynamic wm-restack option
 WINDOW_MANAGER="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
 
