@@ -76,11 +76,16 @@ fi
 # set numlock key to off
 #numlockx off &
 
-# TODO: test with waybar
 # launch system bars
-#if command -v polybar polybar-start >/dev/null 2>&1; then
-#    polybar-start
-#fi
+if ! is_wayland; then
+    if command -v polybar polybarctl > /dev/null 2>&1; then
+        polybarctl start
+    fi
+else
+    if command -v waybar > /dev/null 2>&1; then
+        waybar &
+    fi
+fi
 
 # networkmanager tray applet
 if command -v nm-applet > /dev/null 2>&1; then
