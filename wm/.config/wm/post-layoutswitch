@@ -11,5 +11,5 @@ if [ "$WINDOW_MANAGER" = "bspwm" ]; then
 fi
 # restore wallpaper using background script
 background restore
-# restart all polybar instances using polybar-start
-polybar-start
+# restart all polybar instances
+polybarctl start
