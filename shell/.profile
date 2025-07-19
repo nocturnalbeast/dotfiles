@@ -139,12 +139,6 @@ export BAT_PAGER="$PAGER"
 export DELTA_PAGER="$PAGER"
 export MANROFFOPT="-c" # fix formatting with bat while using as man pager
 
-# clipmenu settings
-if command -v clipmenu > /dev/null 2>&1; then
-    export CM_DIR="$XDG_RUNTIME_DIR"
-    export CM_HISTLENGTH=5
-fi
-
 # xsecurelock settings
 if command -v xsecurelock > /dev/null 2>&1; then
     export XSECURELOCK_AUTH_BACKGROUND_COLOR="rgb:0d/0d/0d"
