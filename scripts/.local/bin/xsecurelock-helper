@@ -18,7 +18,7 @@ EOF
 # Global configuration
 DEPENDENCIES=(xset xss-lock xsecurelock notificationd)
 SCRIPT_PATH="$(readlink -f "$0")"
-WALLPAPER_ROOT="$HOME/.local/wallpapers"
+WALLPAPER_ROOT="$HOME/.local/share/wallpapers"
 TIMEOUT="${XSECURELOCK_SAVER_TIMEOUT:-300}"
 NOTIFY_TIME="$((TIMEOUT / 10))"
 
