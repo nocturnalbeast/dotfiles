@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+# A control script for managing xsecurelock screen locking.
+
+# Global configuration
+DEPENDENCIES=(xset xss-lock xsecurelock notificationd)
+SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") COMMAND
+
+A control script for managing xsecurelock screen locking.
+
+Commands:
+    start         Start the screen locker daemon.
+    lock          Lock the screen immediately.
+    -h, --help    Show this help message.
+EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for dependency in "${DEPENDENCIES[@]}"; do
+        type -p "$dependency" &> /dev/null || {
+            echo "error: Could not find '${dependency}', is it installed?" >&2
+            return 1
+        }
+    done
+}
+
+# Configure screen saver and DPMS settings
+configure() {
+    local timeout="${XSECURELOCK_SAVER_TIMEOUT:-300}"
+    local notify_time="$((timeout / 10))"
+
+    xset s "$((timeout - notify_time))" "$notify_time"
+    xset dpms "$((timeout * 3))" "$((timeout * 32 / 10))" "$((timeout * 34 / 10))"
+}
+
+# Get a random wallpaper path
+get_random_wallpaper() {
+    local wallpaper_root="$HOME/.local/share/wallpapers"
+    find "$(readlink -f "$wallpaper_root")" -iregex '.*.\(jpg\|jpeg\|png\|gif\)' -type f | shuf -n 1
+}
+
+# Start the screen locker daemon
+start_locker() {
+    configure
+
+    local dimmer_path
+    if [ -f /usr/libexec/xsecurelock/dimmer ]; then
+        dimmer_path=/usr/libexec/xsecurelock/dimmer
+    elif [ -f /usr/local/libexec/xsecurelock/dimmer ]; then
+        dimmer_path=/usr/local/libexec/xsecurelock/dimmer
+    else
+        echo "error: Could not find 'dimmer', is it installed?" >&2
+        return 1
+    fi
+
+    xss-lock -n "$dimmer_path" -l "$SCRIPT_PATH" lock &
+}
+
+# Lock the screen immediately
+lock_screen() {
+    configure
+
+    local current_player_state
+    current_player_state="$(mediactl info '{{status}}')"
+    if [ "$current_player_state" = "Playing" ]; then
+        mediactl toggle
+    fi
+
+    notificationd pause
+
+    env XSECURELOCK_SAVER_IMAGE="$(get_random_wallpaper)" xsecurelock
+
+    if [ "$current_player_state" = "Playing" ]; then
+        mediactl toggle
+    fi
+
+    notificationd resume
+}
+
+# Main entry point
+main() {
+    case "$1" in
+        start)
+            check_dependencies && start_locker
+            ;;
+        lock)
+            check_dependencies && lock_screen
+            ;;
+        -h | --help)
+            usage
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
