@@ -6,7 +6,7 @@
 CONFIG_FILE="${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/config.ini"
 ENV_FILE="${XDG_CONFIG_HOME:="$HOME/.config"}/polybar/env"
 STATE_FILE="${XDG_CACHE_HOME:="$HOME/.cache"}/polybar/state"
-DEPENDENCIES=("polybar" "xdotool" "xprop" "xwininfo" "bc" "awk" "sed" "grep" "notify-send" "read-ini")
+DEPENDENCIES=("polybar" "xdotool" "xprop" "xwininfo" "bc" "awk" "sed" "grep" "notify-send")
 
 usage() {
     cat << EOF
@@ -73,14 +73,11 @@ get_dimensions() {
     fi
     scr_width="${resolution%x*}"
     scr_height="${resolution#*x}"
-    horz_margin="$(read-ini -f "$CONFIG_FILE" -k "horz-margin")"
-    horz_margin="$(calc_percent "$horz_margin" "$scr_width")"
+    horz_margin="$(calc_percent "$HORZ_MARGIN" "$scr_width")"
     horz_margin=$((horz_margin - (horz_margin % 2)))
-    vert_margin="$(read-ini -f "$CONFIG_FILE" -k "vert-margin")"
-    vert_margin="$(calc_percent "$vert_margin" "$scr_height")"
+    vert_margin="$(calc_percent "$VERT_MARGIN" "$scr_height")"
     vert_margin=$((vert_margin - (vert_margin % 2)))
-    bar_height="$(read-ini -f "$CONFIG_FILE" -k "bar-height")"
-    bar_height="$(calc_percent "$bar_height" "$scr_height")"
+    bar_height="$(calc_percent "$BAR_HEIGHT" "$scr_height")"
     echo -e "$horz_margin\n$vert_margin\n$bar_height\n$((scr_width - 2 * horz_margin))"
 }
 
@@ -88,19 +85,16 @@ get_dimensions() {
 get_font() {
     local bar_height text_font_size icon_font_size text_font_offset icon_font_offset text_font icon_font monospace_font
     bar_height="$(get_dimensions "$1" | sed -n '3p')"
-    text_font_size="$(read-ini -f "$CONFIG_FILE" -k "text-font-height")"
-    text_font_size="$(calc_percent "$text_font_size" "$bar_height")"
-    icon_font_size="$(read-ini -f "$CONFIG_FILE" -k "icon-font-height")"
-    icon_font_size="$(calc_percent "$icon_font_size" "$bar_height")"
+    text_font_size="$(calc_percent "$TEXT_FONT_SIZE" "$bar_height")"
+    icon_font_size="$(calc_percent "$ICON_FONT_SIZE" "$bar_height")"
+    monospace_font_size="$(calc_percent "$MONOSPACE_FONT_SIZE" "$bar_height")"
     text_font_offset=$((((bar_height - text_font_size) * text_font_size / (bar_height * 2)) + ((text_font_size > (bar_height / 2)) ? ((10 * text_font_size - 5 * bar_height) / text_font_size) : 0)))
     icon_font_offset=$((((bar_height - icon_font_size) * icon_font_size / (bar_height * 2)) + ((icon_font_size > (bar_height / 2)) ? ((10 * icon_font_size - 5 * bar_height) / icon_font_size) : 0)))
-    text_font="$(read-ini -f "$CONFIG_FILE" -k "text-font")"
-    icon_font="$(read-ini -f "$CONFIG_FILE" -k "icon-font")"
-    monospace_font="$(read-ini -f "$CONFIG_FILE" -k "monospace-font")"
-    echo "text-font=${text_font}:pixelsize=${text_font_size};${text_font_offset}"
-    echo "icon-font=${icon_font}:pixelsize=${icon_font_size};${icon_font_offset}"
-    if [[ -n $monospace_font ]]; then
-        echo "monospace-font=${monospace_font}"
+    monospace_font_offset=$((((bar_height - monospace_font_size) * monospace_font_size / (bar_height * 2)) + ((monospace_font_size > (bar_height / 2)) ? ((10 * monospace_font_size - 5 * bar_height) / monospace_font_size) : 0)))
+    echo "text-font=${TEXT_FONT}:pixelsize=${text_font_size};${text_font_offset}"
+    echo "icon-font=${ICON_FONT}:pixelsize=${icon_font_size};${icon_font_offset}"
+    if [[ -n $MONOSPACE_FONT ]]; then
+        echo "monospace-font=${MONOSPACE_FONT};${monospace_font_offset}"
     fi
 }
 
@@ -108,8 +102,7 @@ get_font() {
 get_iconsize() {
     local bar_height icon_font_size
     bar_height="$(get_dimensions "$1" | sed -n '3p')"
-    icon_font_size="$(read-ini -f "$CONFIG_FILE" -k "icon-font-height")"
-    icon_font_size="$(calc_percent "$icon_font_size" "$bar_height")"
+    icon_font_size="$(calc_percent "$ICON_FONT_SIZE" "$bar_height")"
     echo "$icon_font_size"
 }
 
@@ -147,10 +140,6 @@ start_bars() {
     while pgrep -u $UID -x polybar > /dev/null 2>&1; do sleep 1; done
 
     rm -f "$STATE_FILE"
-
-    set -a
-    source "$ENV_FILE"
-    set +a
 
     for M in $(polybar --list-monitors | cut -d: -f1); do
         FONTS="$(get_font "$M")"
@@ -315,6 +304,11 @@ toggle_all() {
 
 main() {
     check_dependencies
+
+    set -a
+    source "$ENV_FILE"
+    set +a
+
     case "$1" in
         start) start_bars ;;
         init) init_state ;;
