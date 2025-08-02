@@ -1,5 +1,32 @@
+#          _     _
+#  ___ ___| |_ _| |_ ___ ___
+# | . | . | | | | . | .'|  _|
+# |  _|___|_|_  |___|__,|_|
+# |_|       |___|
+
+# use this file instead of config.ini to avoid having to edit the config file
+
 # list of bars to launch
 BARLIST="mainbar monbar"
+
+# styling
+COLORS_FILE="${HOME}/.config/polybar/colors.ini"
+STYLES_DIR="${HOME}/.config/polybar/styles/blocks"
+
+# dimensions
+BAR_HEIGHT="2.5%"
+VERT_MARGIN="0.78125%"
+HORZ_MARGIN="0.439238653%"
+
+# font configuration
+TEXT_FONT="Inter:style=Regular:antialias=true:autohint=true"
+ICON_FONT="Symbols Nerd Font:antialias=true"
+MONOSPACE_FONT="monospace:style=Regular:antialias=true:autohint=true"
+
+# font sizes
+TEXT_FONT_SIZE="50%"
+ICON_FONT_SIZE="75%"
+MONOSPACE_FONT_SIZE="50%"
 
 # for dynamic wm-restack option
 WINDOW_MANAGER="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
