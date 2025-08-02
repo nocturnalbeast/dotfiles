@@ -60,21 +60,8 @@ if command -v clipcatd > /dev/null 2>&1; then
     clipcatd &
 fi
 
-# TODO: rework screen locker for Wayland
 # launch screen autolocker
-#if command -v xsecurelock xss-lock xset >/dev/null 2>&1; then
-#    xsecurelock-helper start &
-#elif command -v light-locker >/dev/null 2>&1; then
-#    light-locker &
-#fi
-
-# TODO: make this conditional / use a script instead
-# hide cursor when inactive
-#unclutter &
-
-# TODO: make this conditional / use a script instead
-# set numlock key to off
-#numlockx off &
+lockctl start
 
 # launch system bars
 if ! is_wayland; then
@@ -100,4 +87,14 @@ fi
 # disk mounting tray applet
 if command -v udiskie > /dev/null 2>&1; then
     udiskie -Avnt &
+fi
+
+# additional stuff for X11 WMs
+if ! is_wayland; then
+    # make sure the default root window uses the correct pointer
+    xsetroot -cursor_name left_ptr
+    # hide cursor when inactive
+    unclutter &
+    # set numlock key to off
+    numlockx off &
 fi
