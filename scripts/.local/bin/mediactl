@@ -378,6 +378,7 @@ get_icon() {
     FOLLOW_MODE="$1"
 
     if [ "$FOLLOW_MODE" = "follow" ]; then
+        if [ "$(playerctl status 2> /dev/null)" = "" ]; then echo "$ICON_PLAY"; fi
         playerctl -p "$PREFERRED_PLAYER" -F metadata -f "{{status}}" 2> /dev/null | while read -r EVENT; do
             [ "$EVENT" = "Playing" ] && echo "$ICON_PAUSE" || echo "$ICON_PLAY"
         done
