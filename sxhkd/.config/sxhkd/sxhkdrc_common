@@ -143,4 +143,4 @@ super + {_,shift} + backslash
 ## screenlock
 
 super + minus
-    xsecurelock-helper lock
+    lockctl lock
