@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+# A control script for managing screen locking across different environments.
+
+# Global configuration
+WAYLAND_LOCKERS=(swaylock hyprlock gtklock waylock)
+X11_LOCKERS=(xsecurelock light-locker-command)
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") COMMAND
+
+A control script for managing screen locking across different environments.
+
+Commands:
+    start         Start the screen locker daemon.
+    lock          Lock the screen using the best available locker.
+    -h, --help    Show this help message.
+EOF
+}
+
+# Detect environment (Wayland or X11)
+detect_environment() {
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        echo "wayland"
+    elif [ -n "$DISPLAY" ]; then
+        echo "x11"
+    else
+        echo "tty"
+    fi
+}
+
+# Check for required dependencies
+check_dependencies() {
+    local environment
+    environment=$(detect_environment)
+
+    if [ "$environment" = "wayland" ]; then
+        for locker in "${WAYLAND_LOCKERS[@]}"; do
+            if command -v "$locker" &> /dev/null; then
+                return 0
+            fi
+        done
+        echo "error: No Wayland screen locker found. Install one of: ${WAYLAND_LOCKERS[*]}" >&2
+        return 1
+    elif [ "$environment" = "x11" ]; then
+        for locker in "${X11_LOCKERS[@]}"; do
+            if command -v "$locker" &> /dev/null; then
+                return 0
+            fi
+        done
+        echo "error: No X11 screen locker found. Install one of: ${X11_LOCKERS[*]}" >&2
+        return 1
+    else
+        echo "error: No display server detected" >&2
+        return 1
+    fi
+}
+
+# Start the screen locker daemon
+start_locker() {
+    local environment
+    environment=$(detect_environment)
+
+    if [ "$environment" = "x11" ]; then
+        if command -v xsecurelockctl &> /dev/null; then
+            xsecurelockctl start
+        fi
+    fi
+}
+
+# Lock the screen using the best available locker
+lock_screen() {
+    local environment
+    environment=$(detect_environment)
+
+    if [ "$environment" = "wayland" ]; then
+        if command -v swaylock &> /dev/null; then
+            swaylock
+        elif command -v hyprlock &> /dev/null; then
+            hyprlock
+        elif command -v gtklock &> /dev/null; then
+            gtklock
+        elif command -v waylock &> /dev/null; then
+            waylock
+        fi
+    elif [ "$environment" = "x11" ]; then
+        if command -v xsecurelockctl &> /dev/null; then
+            xsecurelockctl lock
+        elif command -v light-locker-command &> /dev/null; then
+            light-locker-command --lock
+        fi
+    fi
+}
+
+# Main entry point
+main() {
+    case "$1" in
+        start)
+            check_dependencies && start_locker
+            ;;
+        lock)
+            check_dependencies && lock_screen
+            ;;
+        -h | --help)
+            usage
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
