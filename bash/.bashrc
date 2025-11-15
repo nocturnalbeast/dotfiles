@@ -22,9 +22,23 @@ fi
 
 # shell-specific settings
 shopt -s autocd
-HISTCONTROL=ignoreboth
-HISTFILE="${XDG_CACHE_HOME:-$HOME/.cache}/shell_history"
-HISTSIZE=50000
 
 # prompt theme
 eval "$(starship init bash)"
+
+# if atuin is present, use atuin for history management
+if command -v atuin > /dev/null 2>&1; then
+    unset HISTFILE
+    eval "$(atuin init bash --disable-up-arrow)"
+    tmpfile=$(mktemp)
+    atuin search --cmd-only --limit 100 > "$tmpfile"
+    history -r "$tmpfile"
+    rm -f "$tmpfile"
+    export ATUIN_INIT=1
+else
+    export HISTFILE="$XDG_CACHE_HOME/shell_history"
+    export HISTSIZE=50000
+    export HISTFILESIZE=50000
+    export HISTIGNORE="ls:ls *:pwd:exit:clear:cls:zsh"
+    export ATUIN_INIT=0
+fi
