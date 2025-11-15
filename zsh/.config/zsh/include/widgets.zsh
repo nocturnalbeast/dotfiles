@@ -226,7 +226,13 @@ fzf-tinted-theme() {
 zle -N fzf-tinted-theme
 
 bindkey '^Y' fzf-cd  # ctrl+y - directory navigation
-bindkey '^R' fzf-history  # ctrl+r - history search
+# ctrl+r - history search
+if [[ "$ATUIN_INIT" != "1" ]]; then
+    bindkey '^R' fzf-history
+else
+    # use atuin if initialized
+    bindkey '^R' atuin-search
+fi
 bindkey '^K' fzf-kill-proc-by-list  # ctrl+k - kill process by pid
 bindkey '^P' fzf-kill-proc-by-port  # ctrl+p - kill process by port
 bindkey '^T' fzf-tinted-theme  # ctrl+t - theme selection

@@ -23,7 +23,17 @@ setopt extended_history
 # add | to output redirections in history
 setopt hist_allow_clobber
 
-export HISTFILE="$XDG_CACHE_HOME/shell_history"
-export HISTSIZE=50000
-export SAVEHIST=50000
-export HISTORY_IGNORE="(ls|ls *|pwd|zsh|exit|clear|cls)"
+# if atuin is present, use atuin for history management
+if command -v atuin >/dev/null 2>&1; then
+    unset HISTFILE
+    eval "$(atuin init zsh --disable-up-arrow)"
+    fc -R =(atuin search --cmd-only --limit 100)
+    export ATUIN_INIT=1
+else
+    export HISTFILE="$XDG_CACHE_HOME/shell_history"
+    export HISTSIZE=50000
+    export SAVEHIST=50000
+    export HISTORY_IGNORE="(ls|ls *|pwd|zsh|exit|clear|cls)"
+    export ATUIN_INIT=0
+fi
+
