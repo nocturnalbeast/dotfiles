@@ -16,6 +16,7 @@ This script performs the following operations in sequence:
     2. Updates all managed binaries to their latest versions
     3. Updates checksums for all packages
     4. Prunes outdated checksums
+    5. Installs the updated binaries
 
 Options:
     -t, --token TOKEN    Set AQUA_GITHUB_TOKEN environment variable to avoid rate limiting
@@ -147,6 +148,21 @@ prune_checksums() {
     fi
 }
 
+# Installs the updated binaries.
+#
+# Returns:
+#   0 if successful, 1 otherwise
+install_binaries() {
+    echo "Step 5: Installing updated binaries..."
+    if run_aqua_command install; then
+        echo "Binaries installed successfully"
+        return 0
+    else
+        echo "Failed to install binaries" >&2
+        return 1
+    fi
+}
+
 # Sends a notification about the update process completion.
 #
 # Arguments:
@@ -214,6 +230,9 @@ main() {
         failed_steps=$((failed_steps + 1))
     fi
     if ! prune_checksums; then
+        failed_steps=$((failed_steps + 1))
+    fi
+    if ! install_binaries; then
         failed_steps=$((failed_steps + 1))
     fi
 
