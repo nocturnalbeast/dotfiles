@@ -1,0 +1,13 @@
+[theme]
+name = "default"
+parent = ""
+
+[colors]
+AlertInfo = "#3399ff"
+AlertWarn = "#ffff33"
+AlertError = "#ff3333"
+Annotation = "#b3b3b3"
+Base = "#ffffff"
+Guidance = "#33ff33"
+Important = "#ff33ff"
+Title = "#ffffff"

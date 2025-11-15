@@ -1,0 +1,95 @@
+db_path = "~/.local/share/atuin/history.db"
+key_path = "~/.local/share/atuin/key"
+session_path = "~/.local/share/atuin/session"
+
+dialect = "uk"
+
+auto_sync = false
+update_check = false
+# sync_address = "https://api.atuin.sh"
+# sync_frequency = "10m"
+
+search_mode = "fuzzy"
+filter_mode = "global"
+
+filter_mode_shell_up_key_binding = "global"
+search_mode_shell_up_key_binding = "fuzzy"
+
+workspaces = true
+
+style = "full"
+invert = false
+inline_height = 20
+show_preview = true
+max_preview_height = 4
+show_help = false
+show_tabs = false
+
+exit_mode = "return-original"
+
+history_format = "[{time}] {directory} : {command}"
+history_filter = []
+cwd_filter = []
+
+store_failed = true
+secrets_filter = true
+
+ctrl_n_shortcuts = true
+
+network_timeout = 30
+network_connect_timeout = 5
+local_timeout = 5
+
+enter_accept = true
+
+keymap_mode = "emacs"
+keymap_cursor = { emacs = "blink-block", vim_insert = "blink-block", vim_normal = "steady-block" }
+
+[stats]
+common_subcommands = [
+  "apt",
+  "cargo",
+  "composer",
+  "dnf",
+  "docker",
+  "git",
+  "go",
+  "ip",
+  "kubectl",
+  "nix",
+  "nmcli",
+  "npm",
+  "pecl",
+  "pnpm",
+  "podman",
+  "port",
+  "systemctl",
+  "tmux",
+  "yarn",
+]
+common_prefix = ["sudo", "doas"]
+
+[sync]
+records = true
+
+[dotfiles]
+enabled = false
+
+[keys]
+scroll_exits = true
+prefix = "a"
+
+[preview]
+strategy = "auto"
+
+[daemon]
+enabled = false
+# sync_frequency = 300
+socket_path = "~/.local/share/atuin/atuin.sock"
+systemd_socket = false
+tcp_port = 8889
+
+[theme]
+name = "default"
+debug = false
+max_depth = 10
