@@ -169,6 +169,13 @@ function load_snippet() {
     fi
 }
 
+function update_plugins() {
+    zcomet self-update
+    zcomet update
+    rm -f "$XDG_CACHE_HOME/zcompdump"
+    zcomet compinit
+}
+
 
 ## 13: load plugins
 
