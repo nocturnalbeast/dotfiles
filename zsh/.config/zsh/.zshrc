@@ -217,8 +217,7 @@ load_plugin lazy garabik/grc
 load_plugin lazy hlissner/zsh-autopair
 
 # remind you of your aliases
-# disabling till https://github.com/MichaelAquilina/zsh-you-should-use/issues/148 is fixed
-# load_plugin lazy MichaelAquilina/zsh-you-should-use
+load_plugin lazy MichaelAquilina/zsh-you-should-use
 
 # alias expansion
 load_plugin lazy momo-lab/zsh-abbrev-alias
