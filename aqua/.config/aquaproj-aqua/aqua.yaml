@@ -110,3 +110,5 @@ packages:
   - name: wtfutil/wtf@v0.48.0
   # syncable and central terminal history
   - name: atuinsh/atuin@v18.11.0
+  # tui coding agent
+  - name: anomalyco/opencode@v1.1.34

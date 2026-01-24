@@ -131,6 +131,31 @@
       "algorithm": "sha256"
     },
     {
+      "id": "github_release/github.com/anomalyco/opencode/v1.1.34/opencode-darwin-arm64.zip",
+      "checksum": "7FCE2F01747A884793644B4844356304E5A3226FF4619FF9670C4E1153328127",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/anomalyco/opencode/v1.1.34/opencode-darwin-x64.zip",
+      "checksum": "FE9CF46B2B436090937FC89E039002D0614C6383231B8ACE9782886DE28877E5",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/anomalyco/opencode/v1.1.34/opencode-linux-arm64.tar.gz",
+      "checksum": "0C0B47B25A0E9732F80E8E152EC3C8BA01E8CB60F829A5EE9634EF1A3456F703",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/anomalyco/opencode/v1.1.34/opencode-linux-x64.tar.gz",
+      "checksum": "9773D85D306E13797DDC8E0E55E610A59DE98D53814D0BEA0C03B91289CC6FF6",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/anomalyco/opencode/v1.1.34/opencode-windows-x64.zip",
+      "checksum": "2ECF5682187714057CD51C178AE29687672A2BD753A919D3D1D49591D23A1FEC",
+      "algorithm": "sha256"
+    },
+    {
       "id": "github_release/github.com/antonmedv/fx/39.2.0/fx_darwin_amd64",
       "checksum": "2AD7D0A6E1EA67AB10A22CC06825FDC776511E8F412926D1C752B630EAC12E02",
       "algorithm": "sha256"
@@ -243,11 +268,6 @@
     {
       "id": "github_release/github.com/astral-sh/uv/0.9.26/uv-x86_64-unknown-linux-musl.tar.gz",
       "checksum": "708B752876AEEB753257E1D55470569789E465684C1D3BC1760DB26360B6C28B",
-      "algorithm": "sha256"
-    },
-    {
-      "id": "github_release/github.com/atuinsh/atuin/v18.11.0/atuin-aarch64-apple-darwin.tar.gz",
-      "checksum": "B8C8F4584F801873B511ECF74DBFFF1194DD9727745DB9EE9FF6542EAF796AA1",
       "algorithm": "sha256"
     },
     {
