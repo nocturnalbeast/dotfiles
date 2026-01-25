@@ -128,6 +128,21 @@ get_bars() {
     done
 }
 
+# Generate temporary config with expanded include paths
+generate_temp_config() {
+    local temp_config="$1"
+    local config_file="$2"
+
+    # Copy the main config to temp file
+    cp "$config_file" "$temp_config"
+
+    # Replace include-file and include-directory with expanded paths
+    sed -i "s|^include-file = \${env:COLORS_FILE}$|include-file = $COLORS_FILE|" "$temp_config"
+    sed -i "s|^include-directory = \${env:STYLES_DIR}$|include-directory = $STYLES_DIR|" "$temp_config"
+
+    echo "$temp_config"
+}
+
 # start the bars
 start_bars() {
     if type pkill &> /dev/null; then
@@ -141,6 +156,11 @@ start_bars() {
 
     rm -f "$STATE_FILE"
 
+    # Generate temporary config with expanded include paths
+    local temp_config
+    temp_config=$(mktemp /tmp/polybar-config.XXXXXX.ini)
+    generate_temp_config "$temp_config" "$CONFIG_FILE"
+
     for M in $(polybar --list-monitors | cut -d: -f1); do
         FONTS="$(get_font "$M")"
         export ICON_SIZE="$(get_iconsize "$M")"
@@ -152,7 +172,7 @@ start_bars() {
             esac
         done < <(echo -e "$FONTS")
         for BAR in $BARLIST; do
-            MONITOR=$M polybar $BAR &
+            MONITOR=$M polybar -c "$temp_config" $BAR &
         done
     done
 
@@ -165,12 +185,15 @@ start_bars() {
     done
 
     local FIRST_BAR="${BARLIST%% *}"
-    mapfile -t HIDEBAR_PIDS < <(pgrep "polybar" --list-full | grep -v "polybar $FIRST_BAR" | awk '{print $1};')
+    mapfile -t HIDEBAR_PIDS < <(pgrep "polybar" --list-full | grep -v " $FIRST_BAR$" | awk '{print $1};')
     for BAR_PID in "${HIDEBAR_PIDS[@]}"; do
         polybar-msg -p "$BAR_PID" cmd hide > /dev/null 2>&1
     done
 
     init_state
+
+    # Clean up temporary config file
+    rm -f "$temp_config"
 }
 
 # Initialize state file for bar instances
@@ -305,10 +328,6 @@ toggle_all() {
 main() {
     check_dependencies
 
-    set -a
-    source "$ENV_FILE"
-    set +a
-
     case "$1" in
         start) start_bars ;;
         init) init_state ;;
@@ -336,5 +355,9 @@ main() {
             ;;
     esac
 }
+
+set -a
+source "$ENV_FILE"
+set +a
 
 main "$@"

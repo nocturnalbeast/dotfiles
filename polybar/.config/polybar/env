@@ -10,11 +10,12 @@
 BARLIST="mainbar monbar"
 
 # styling
-COLORS_FILE="${HOME}/.config/polybar/colors.ini"
-STYLES_DIR="${HOME}/.config/polybar/styles/blocks"
+COLORS_FILE="$HOME/.config/polybar/colors.ini"
+STYLES_DIR="$HOME/.config/polybar/styles/blocks"
 
 # dimensions
 BAR_HEIGHT="2.5%"
+BAR_WIDTH="100%"
 VERT_MARGIN="0.78125%"
 HORZ_MARGIN="0.439238653%"
 
