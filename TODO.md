@@ -20,10 +20,6 @@
   * rewrite config in lua
   * rename top-level folder from `nvim` to `neovim`
 
-* polybar:
-  * add window list module
-  * investigate how state management can be reworked (which is currently done using the `~/.cache/bar_state` file and uses the `polybar-helper` script)
-
 * scripts:
   * implement scratchpad script
   * set unified metadata header for all scripts
