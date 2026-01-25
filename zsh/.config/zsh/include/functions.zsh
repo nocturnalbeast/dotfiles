@@ -39,7 +39,10 @@ function cd-down() {
         cd -q "$candidate" && redraw-prompt
     else
         command -v ftb-tmux-popup &> /dev/null && fzf_cmd="ftb-tmux-popup"
-        dir=$(find ${1} ! -path . -type d -printf '%P\n' 2> /dev/null | $fzf_cmd +m --header="Change directory to child from $PWD" --exit-0) && cd "$dir"
+        local -a dirs
+        dirs=(${1}/**/*(/ND))
+        dirs=(${dirs#$1/})
+        dir=$(printf '%s\n' ${dirs[@]} | $fzf_cmd +m --header="Change directory to child from $PWD" --exit-0) && cd "$dir"
     fi
     redraw-prompt
 }

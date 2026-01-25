@@ -21,14 +21,14 @@ __unified_precmd() {
     STARSHIP_JOBS_COUNT=${#jobstates}
 
     local ret="$?"
-    if test "$_prompt_executing" != "0"
+    if [[ "$_prompt_executing" != "0" ]]
     then
       _PROMPT_SAVE_PS1="$PS1"
       _PROMPT_SAVE_PS2="$PS2"
       PS1=$'%{\e]133;P;k=i\a%}'$PS1$'%{\e]133;B\a\e]122;> \a%}'
       PS2=$'%{\e]133;P;k=s\a%}'$PS2$'%{\e]133;B\a%}'
     fi
-    if test "$_prompt_executing" != ""
+    if [[ "$_prompt_executing" != "" ]]
     then
        printf "\033]133;D;%s;aid=%s\007" "$ret" "$$"
     fi
@@ -73,7 +73,7 @@ VIRTUAL_ENV_DISABLE_PROMPT=1
 
 setopt promptsubst
 
-if [ "$(uname)" == "Darwin" ] && command -v "brew" > /dev/null 2>&1; then
+if [[ "$(uname)" == "Darwin" ]] && command -v "brew" > /dev/null 2>&1; then
     STARSHIP_BIN="/opt/homebrew/bin/starship"
 else
     STARSHIP_BIN="/usr/bin/starship"
