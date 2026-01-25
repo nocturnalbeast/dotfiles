@@ -1,5 +1,17 @@
 #!/usr/bin/env zsh
 
+function _resolve_atuin_binary() {
+    local bin_path
+
+    bin_path=$(command -v atuin 2>/dev/null) && { echo "$bin_path"; return 0 }
+
+    [[ -n "$AQUA_ROOT_DIR" && -x "$AQUA_ROOT_DIR/bin/atuin" ]] && { echo "$AQUA_ROOT_DIR/bin/atuin"; return 0 }
+
+    [[ -x "$HOME/.local/share/aquaproj-aqua/bin/atuin" ]] && { echo "$HOME/.local/share/aquaproj-aqua/bin/atuin"; return 0 }
+
+    return 1
+}
+
 # append history to file rather than overwriting
 setopt append_history
 # remove older dups when trimming history
@@ -24,7 +36,7 @@ setopt extended_history
 setopt hist_allow_clobber
 
 # if atuin is present, use atuin for history management
-if command -v atuin >/dev/null 2>&1; then
+if local ATUIN_BIN=$(_resolve_atuin_binary); then
     unset HISTFILE
 
     ATUIN_INIT_CACHE="${XDG_CACHE_HOME}/atuin-init.zsh"
@@ -37,7 +49,7 @@ if command -v atuin >/dev/null 2>&1; then
         if [[ -f "$ATUIN_INIT_CACHE" ]]; then
             local atuin_mtime
             local cache_mtime
-            atuin_mtime=$(stat -c %Y "$(command -v atuin)" 2>/dev/null || stat -f %m "$(command -v atuin)")
+            atuin_mtime=$(stat -c %Y "$ATUIN_BIN" 2>/dev/null || stat -f %m "$ATUIN_BIN")
             cache_mtime=$(stat -c %Y "$ATUIN_INIT_CACHE" 2>/dev/null || stat -f %m "$ATUIN_INIT_CACHE")
 
             if [[ $cache_mtime -ge $atuin_mtime ]]; then
@@ -49,13 +61,13 @@ if command -v atuin >/dev/null 2>&1; then
             source "$ATUIN_INIT_CACHE"
         else
             mkdir -p "$(dirname "$ATUIN_INIT_CACHE")"
-            atuin init zsh --disable-up-arrow > "$ATUIN_INIT_CACHE"
+            "$ATUIN_BIN" init zsh --disable-up-arrow > "$ATUIN_INIT_CACHE"
             source "$ATUIN_INIT_CACHE"
         fi
     }
 
     function _atuin_load_initial_history() {
-        fc -R =(atuin search --cmd-only --limit 100)
+        fc -R =("$ATUIN_BIN" search --cmd-only --limit 100)
     }
 
     function _atuin_init_deferred() {
