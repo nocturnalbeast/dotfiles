@@ -51,8 +51,8 @@
       "algorithm": "sha256"
     },
     {
-      "id": "github_release/github.com/Canop/dysk/v2.10.1/dysk_2.10.1.zip",
-      "checksum": "78247209C51505510EEF8F86C92D0B96C15FA3F9DA58D5108928BD65E57FC151",
+      "id": "github_release/github.com/Canop/dysk/v3.5.0/dysk_3.5.0.zip",
+      "checksum": "F7904D99FAB653B6163B683DC6FE03FA6E886866252E44183191866F5DDDEDBB",
       "algorithm": "sha256"
     },
     {
@@ -443,6 +443,21 @@
     {
       "id": "github_release/github.com/dundee/gdu/v5.32.0/gdu_windows_amd64.exe.zip",
       "checksum": "1B9F0C7F394867DEFDE5FE70F0F6B2E3BC6354A016D33687DC8785A1761DB699",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/eza-community/eza/v0.23.4/eza.exe_x86_64-pc-windows-gnu.tar.gz",
+      "checksum": "4D4F87F6BC8E6EE176789C28BEE698234CE0275DA013709EB16B0F14819C1688",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/eza-community/eza/v0.23.4/eza_aarch64-unknown-linux-gnu.tar.gz",
+      "checksum": "366E8430225F9955C3DC659B452150C169894833CCFEF455E01765E265A3EDDA",
+      "algorithm": "sha256"
+    },
+    {
+      "id": "github_release/github.com/eza-community/eza/v0.23.4/eza_x86_64-unknown-linux-musl.tar.gz",
+      "checksum": "D231BB3EE33B08C76279B5888845DCEB7034D055C42BB9BE46DBE0DAE39394DF",
       "algorithm": "sha256"
     },
     {
