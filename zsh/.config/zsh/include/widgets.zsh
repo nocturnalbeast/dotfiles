@@ -22,9 +22,10 @@ fzf-cd() {
     [[ -n "$WIDGET" ]] && zle reset-prompt
 
     if [[ $ret -eq 0 ]]; then
-        local action selection
-        action=$(head -1 <<< "$output")
-        selection=$(tail -n +2 <<< "$output")
+        local -a output_lines
+        output_lines=(${(f)output})
+        local action=$output_lines[1]
+        local selection=${output_lines[2,-1]}
 
         if [[ -n "$selection" ]]; then
             if [[ "$action" == "$ZSH_FZF_EXEC_KEY" ]] && [[ -n "$WIDGET" ]]; then
@@ -56,8 +57,10 @@ fzf-history() {
     [[ -n "$WIDGET" ]] && zle reset-prompt
 
     if [[ $ret -eq 0 ]]; then
-        local action=$(head -1 <<< "$output")
-        local cmd=$(tail -n1 <<< "$output" | sed 's/^[[:space:]]*[0-9]*[[:space:]]*//')
+        local -a output_lines
+        output_lines=(${(f)output})
+        local action=$output_lines[1]
+        local cmd=${output_lines[-1]##[[:space:]]#[0-9]##[[:space:]]#}
 
         if [[ "$action" == "$ZSH_FZF_EXEC_KEY" ]] && [[ -n "$WIDGET" ]]; then
             BUFFER="$cmd"
@@ -89,9 +92,13 @@ fzf-kill-proc-by-list() {
     [[ -n "$WIDGET" ]] && zle reset-prompt
 
     if [[ $ret -eq 0 ]]; then
-        local action=$(head -1 <<< "$output")
-        local selected=$(tail -n1 <<< "$output")
-        local pid=$(awk '{print $2}' <<< "$selected")
+        local -a output_lines
+        output_lines=(${(f)output})
+        local action=$output_lines[1]
+        local selected=$output_lines[-1]
+        local -a selected_parts
+        selected_parts=(${=selected})
+        local pid=$selected_parts[2]
 
         if [[ "$action" == "$ZSH_FZF_EXEC_KEY" ]] && [[ -n "$WIDGET" ]]; then
             BUFFER="kill -9 $pid"
@@ -120,9 +127,13 @@ fzf-kill-proc-by-port() {
     [[ -n "$WIDGET" ]] && zle reset-prompt
 
     if [[ $ret -eq 0 ]]; then
-        local action=$(head -1 <<< "$output")
-        local selected=$(tail -n1 <<< "$output")
-        local pid=$(grep -oP '(?<=pid=)\d+(?=,)' <<< "$selected")
+        local -a output_lines
+        output_lines=(${(f)output})
+        local action=$output_lines[1]
+        local selected=$output_lines[-1]
+        local pid
+        [[ $selected =~ 'pid=([0-9]+),' ]]
+        pid=$match[1]
 
         if [[ "$action" == "$ZSH_FZF_EXEC_KEY" ]] && [[ -n "$WIDGET" ]]; then
             BUFFER="sudo kill -9 $pid"
@@ -151,7 +162,7 @@ fzf-tinted-theme() {
         original_theme=$(cat "$TINTED_CACHE/current_theme")
     fi
 
-    local preview_cmd="THEME=\$(echo {} | sed 's/^[[:space:]]*//'); "
+    local preview_cmd='local sel={}; THEME=${${sel}##[[:space:]]#}; '
     preview_cmd+="THEME_PATH=\$(find $TINTED_SHELL_PATH/scripts/\$THEME.sh -type f 2>/dev/null); "
     preview_cmd+="if [[ -n \$THEME_PATH ]]; then "
     preview_cmd+="source \$THEME_PATH; "
@@ -200,8 +211,10 @@ fzf-tinted-theme() {
     [[ -n "$WIDGET" ]] && zle reset-prompt
 
     if [[ $ret -eq 0 ]]; then
-        local action=$(head -1 <<< "$output")
-        local selection=$(tail -n1 <<< "$output" | sed 's/^[[:space:]]*//')
+        local -a output_lines
+        output_lines=(${(f)output})
+        local action=$output_lines[1]
+        local selection=${output_lines[-1]##[[:space:]]#}
 
         if [[ "$action" == "$ZSH_FZF_EXEC_KEY" ]] && [[ -n "$WIDGET" ]]; then
             BUFFER="tinted \"${selection#base*-}\""

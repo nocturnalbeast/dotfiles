@@ -23,8 +23,8 @@ function zcompare() {
     done
 
     # zcompile the completion cache
-    if [[ -d "$HOME/.cache/zsh/zcompcache" ]]; then
-        for file in "$HOME/.cache/zsh/zcompcache"/*(.N); do
+    if [[ -d "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompcache" ]]; then
+        for file in "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompcache"/*(.N); do
             [[ "$file" != *.zwc ]] && zcompare "$file"
         done
     fi

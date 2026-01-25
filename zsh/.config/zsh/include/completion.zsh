@@ -113,7 +113,7 @@ zstyle ':completion:*:functions' ignored-patterns '(_*|pre(cmd|exec))'
 
 # Match settings
 zstyle ':completion:*:match:*' original only
-zstyle -e ':completion:*:approximate:*' max-errors 'reply=( $(( ($#PREFIX+$#SUFFIX)/3 )) numeric )'
+zstyle ':completion:*:approximate:*' max-errors 2
 
 # Allow completion with elevated privileges
 zstyle ':completion::complete:*' gain-privileges 1
@@ -218,7 +218,7 @@ zstyle ':completion:*:*:zcompile:*' ignored-patterns '(*~|*.zwc|*.zwc.old)'
 zstyle ':completion:*:functions' ignored-patterns '(_*|pre(cmd|exec)|prompt_*|TRAP*|_trap*|_zsh_autosuggest*|_zsh_highlight*)'
 
 # Better directory handling
-zstyle -e ':completion:*' special-dirs '[[ $PREFIX = (../)#(|.|..) ]] && reply=(..)'
+zstyle ':completion:*' special-dirs '..'
 zstyle ':completion:*:cd:*' ignore-parents parent pwd
 
 # Exclude version control directories

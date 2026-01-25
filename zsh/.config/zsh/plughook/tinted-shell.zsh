@@ -39,21 +39,34 @@ function atload() {
         
         local full_theme=""
         
-        if [[ "$type" == "base16" || "$type" == "auto" ]]; then
-            if [[ -f ~[tinted-shell]/scripts/base16-$theme.sh ]]; then
-                full_theme="base16-$theme"
+        # check if theme already includes prefix
+        if [[ "$theme" == base16-* || "$theme" == base24-* ]]; then
+            if [[ -f ~[tinted-shell]/scripts/$theme.sh ]]; then
+                full_theme="$theme"
             fi
-        fi
-        
-        if [[ "$type" == "base24" || ("$type" == "auto" && -z "$full_theme") ]]; then
-            if [[ -f ~[tinted-shell]/scripts/base24-$theme.sh ]]; then
-                full_theme="base24-$theme"
+        else
+            if [[ "$type" == "base16" || "$type" == "auto" ]]; then
+                if [[ -f ~[tinted-shell]/scripts/base16-$theme.sh ]]; then
+                    full_theme="base16-$theme"
+                fi
+            fi
+            
+            if [[ "$type" == "base24" || ("$type" == "auto" && -z "$full_theme") ]]; then
+                if [[ -f ~[tinted-shell]/scripts/base24-$theme.sh ]]; then
+                    full_theme="base24-$theme"
+                fi
             fi
         fi
         
         if [[ -n "$full_theme" ]]; then
             print -n "$full_theme" >| "$TINTED_SHELL_CACHE/current_theme"
             source ~[tinted-shell]/scripts/$full_theme.sh
+            
+            # apply theme with tinty if available
+            if command -v tinty >/dev/null 2>&1; then
+                tinty apply "$full_theme" 2>/dev/null || true
+            fi
+            
             echo "Applied theme: $full_theme"
         else
             echo "Theme '$theme' not found"
