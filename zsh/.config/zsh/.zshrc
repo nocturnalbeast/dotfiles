@@ -75,21 +75,14 @@ autoload -Uz zsh-defer
 zprofile_end "zsh_defer_setup"
 
 
-## 7: configure command history
-
-zprofile_start "history.zsh"
-source "$ZDOTDIR/include/history.zsh"
-zprofile_end "history.zsh"
-
-
-## 8: define keybindings
+## 7: define keybindings
 
 zprofile_start "keybindings.zsh"
 source "$ZDOTDIR/include/keybindings.zsh"
 zprofile_end "keybindings.zsh"
 
 
-## 9: load functions
+## 8: load functions
 
 zprofile_start "functions.zsh"
 source "$ZDOTDIR/include/functions.zsh"
@@ -104,7 +97,7 @@ function load_site_functions() {
 zsh-defer -dmszpr load_site_functions
 
 
-## 10: setup environment variables
+## 9: setup environment variables
 
 # source profile if it exists
 function load_profile() {
@@ -119,14 +112,14 @@ function load_user_aliases() {
 zsh-defer -a load_user_aliases
 
 
-## 11: define completion behavior
+## 10: define completion behavior
 
 zprofile_start "completion_defer_schedule"
 zsh-defer -a source "$ZDOTDIR/include/completion.zsh"
 zprofile_end "completion_defer_schedule"
 
 
-## 12: miscellaneous settings
+## 11: miscellaneous settings
 
 # deduplicate PATH
 typeset -gU PATH path
@@ -135,7 +128,7 @@ typeset -gU PATH path
 typeset -g WORDCHARS='*?[]~=&;!#$%^(){}'
 
 
-## 13: setup plugin manager
+## 12: setup plugin manager
 
 ZCOMET_HOME="$XDG_DATA_HOME/zsh/zcomet"
 ZCOMET_SCRIPT="$ZCOMET_HOME/bin/zcomet.zsh"
@@ -211,7 +204,7 @@ function update_plugins() {
 }
 
 
-## 14: load plugins
+## 13: load plugins
 
 # faster cache for binaries that generate initalization scripts which are normally passed into eval()
 load_plugin lazy mroth/evalcache
@@ -278,6 +271,13 @@ load_plugin lazy RobSis/zsh-completion-generator
 
 # sudo helper
 load_snippet lazy https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/sudo/sudo.plugin.zsh
+
+
+## 14: configure command history
+
+zprofile_start "history_defer_schedule"
+zsh-defer -a source "$ZDOTDIR/include/history.zsh"
+zprofile_end "history_defer_schedule"
 
 
 ## 15: helpers and completions for certain commands using zcomet

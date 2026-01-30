@@ -11,7 +11,11 @@ function atinit() {
 function atload() {
     # setup lesspipe
     if command -v lesspipe.sh >/dev/null 2>&1; then
-        eval "$(lesspipe.sh)"
+        if (( $+functions[_evalcache] )); then
+            _evalcache lesspipe.sh
+        else
+            eval "$(lesspipe.sh)"
+        fi
     fi
     path=(${path:#~[fzf-tab-source]/bin})
 }
