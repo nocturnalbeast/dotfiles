@@ -24,7 +24,7 @@ setopt extended_history
 setopt hist_allow_clobber
 
 # if atuin is present, use atuin for history management
-if command -v atuin >/dev/null 2>&1; then
+if (( $+commands[atuin] )); then
     unset HISTFILE
     if (( $+functions[_evalcache] )); then
         _evalcache atuin init zsh --disable-up-arrow

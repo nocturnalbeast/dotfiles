@@ -5,11 +5,3 @@ function atclone() {
     cp -fv "$ZCOMET_HOME/repos/garabik/grc/colourfiles/conf.*" "$ZCOMET_HOME/repos/garabik/grc/grc.conf" "$XDG_CONFIG_HOME/grc"
 }
 
-function atinit() {
-    return 0
-}
-
-function atload() {
-    return 0
-}
-

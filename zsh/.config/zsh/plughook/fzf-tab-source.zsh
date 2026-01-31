@@ -1,16 +1,8 @@
 #!/usr/bin/env zsh
 
-function atclone() {
-    return 0
-}
-
-function atinit() {
-    return 0
-}
-
 function atload() {
     # setup lesspipe
-    if command -v lesspipe.sh >/dev/null 2>&1; then
+    if (( $+commands[lesspipe.sh] )); then
         if (( $+functions[_evalcache] )); then
             _evalcache lesspipe.sh
         else

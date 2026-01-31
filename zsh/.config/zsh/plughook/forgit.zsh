@@ -5,10 +5,6 @@ function atclone() {
     return 0
 }
 
-function atinit() {
-    return 0
-}
-
 function atload() {
     export FORGIT_IGNORE_PAGER='bat -l gitignore --color always --style numbers'
     path=(${path:#~[forgit]/bin})

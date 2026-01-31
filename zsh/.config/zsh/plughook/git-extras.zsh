@@ -6,10 +6,6 @@ function atclone() {
     cd -
 }
 
-function atinit() {
-    return 0
-}
-
 function atload() {
     path=(${path:#~[git-extras]/bin})
 }

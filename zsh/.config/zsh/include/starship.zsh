@@ -6,6 +6,23 @@ zmodload zsh/mathfunc
 
 _prompt_executing=""
 
+ZSH_TRANSIENT_PROMPT_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/zsh-transient-prompt"
+
+if [[ ! -d "$ZSH_TRANSIENT_PROMPT_DIR" ]]; then
+    mkdir -p "$(dirname "$ZSH_TRANSIENT_PROMPT_DIR")"
+    git clone --quiet --depth=1 https://github.com/olets/zsh-transient-prompt.git "$ZSH_TRANSIENT_PROMPT_DIR" 2>/dev/null || {
+        print -P "%F{red}Failed to clone zsh-transient-prompt%f" >&2
+    }
+fi
+
+update_zsh_transient_prompt() {
+    [[ -d "$ZSH_TRANSIENT_PROMPT_DIR" ]] && {
+        print -P "%F{blue}Updating zsh-transient-prompt...%f"
+        git -C "$ZSH_TRANSIENT_PROMPT_DIR" pull --quiet
+        print -P "%F{green}zsh-transient-prompt updated%f"
+    }
+}
+
 __starship_get_time() {
     (( STARSHIP_CAPTURED_TIME = int(rint(EPOCHREALTIME * 1000)) ))
 }
@@ -13,7 +30,7 @@ __starship_get_time() {
 __unified_precmd() {
     STARSHIP_CMD_STATUS=$? STARSHIP_PIPE_STATUS=(${pipestatus[@]})
     if (( ${+STARSHIP_START_TIME} )); then
-        __starship_get_time && (( STARSHIP_DURATION = STARSHIP_CAPTURED_TIME - STARSHIP_START_TIME ))
+        __starship_get_time && STARSHIP_DURATION=$(( STARSHIP_CAPTURED_TIME - STARSHIP_START_TIME ))
         unset STARSHIP_START_TIME
     else
         unset STARSHIP_DURATION STARSHIP_CMD_STATUS STARSHIP_PIPE_STATUS
@@ -73,12 +90,26 @@ VIRTUAL_ENV_DISABLE_PROMPT=1
 
 setopt promptsubst
 
-if [[ "$(uname)" == "Darwin" ]] && command -v "brew" > /dev/null 2>&1; then
+if [[ "$OSTYPE" == darwin* ]] && (( $+commands[brew] )); then
     STARSHIP_BIN="/opt/homebrew/bin/starship"
 else
     STARSHIP_BIN="/usr/bin/starship"
 fi
 
-PROMPT='$($STARSHIP_BIN prompt --terminal-width="$COLUMNS" --keymap="${KEYMAP:-}" --status="$STARSHIP_CMD_STATUS" --pipestatus="${STARSHIP_PIPE_STATUS[*]}" --cmd-duration="${STARSHIP_DURATION:-}" --jobs="$STARSHIP_JOBS_COUNT")'
-RPROMPT='$($STARSHIP_BIN prompt --right --terminal-width="$COLUMNS" --keymap="${KEYMAP:-}" --status="$STARSHIP_CMD_STATUS"--pipestatus="${STARSHIP_PIPE_STATUS[*]}" --cmd-duration="${STARSHIP_DURATION:-}" --jobs="$STARSHIP_JOBS_COUNT")'
+if [[ ! -x "$STARSHIP_BIN" ]]; then
+    STARSHIP_BIN="${commands[starship]}"
+fi
+
+PROMPT='$($STARSHIP_BIN prompt --terminal-width="$COLUMNS" --keymap="${KEYMAP:-}" --status="${STARSHIP_CMD_STATUS:-}" --pipestatus="${STARSHIP_PIPE_STATUS[*]:-}" --cmd-duration="${STARSHIP_DURATION:-}" --jobs="$STARSHIP_JOBS_COUNT")'
+RPROMPT='$($STARSHIP_BIN prompt --right --terminal-width="$COLUMNS" --keymap="${KEYMAP:-}" --status="${STARSHIP_CMD_STATUS:-}" --pipestatus="${STARSHIP_PIPE_STATUS[*]:-}" --cmd-duration="${STARSHIP_DURATION:-}" --jobs="$STARSHIP_JOBS_COUNT")'
 PROMPT2="$($STARSHIP_BIN prompt --continuation)"
+
+if [[ -f "$ZSH_TRANSIENT_PROMPT_DIR/transient-prompt.zsh-theme" ]]; then
+    source "$ZSH_TRANSIENT_PROMPT_DIR/transient-prompt.zsh-theme"
+    
+    typeset -g TRANSIENT_PROMPT_PROMPT="$PROMPT"
+    typeset -g TRANSIENT_PROMPT_RPROMPT="$RPROMPT"
+    typeset -g TRANSIENT_PROMPT_TRANSIENT_PROMPT='$($STARSHIP_BIN module character)'
+else
+    print -P "%F{yellow}zsh-transient-prompt not available, transient prompt disabled%f" >&2
+fi

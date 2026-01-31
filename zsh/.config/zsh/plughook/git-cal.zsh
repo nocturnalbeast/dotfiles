@@ -9,10 +9,3 @@ function atclone() {
      rm -rf $ZPFX/bin/site_perl)
 }
 
-function atinit() {
-    return 0
-}
-
-function atload() {
-    return 0
-}
