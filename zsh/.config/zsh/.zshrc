@@ -75,29 +75,31 @@ autoload -Uz zsh-defer
 zprofile_end "zsh_defer_setup"
 
 
-## 7: define keybindings
+## 7: define user functions
+
+zprofile_start "functions.zsh"
+source "$ZDOTDIR/include/functions.zsh"
+zprofile_end "functions.zsh"
+
+
+## 8: define keybindings
 
 zprofile_start "keybindings.zsh"
 source "$ZDOTDIR/include/keybindings.zsh"
 zprofile_end "keybindings.zsh"
 
 
-## 8: load functions
+## 9: load site functions
 
-zprofile_start "functions.zsh"
-source "$ZDOTDIR/include/functions.zsh"
-zprofile_end "functions.zsh"
-
-# load site functions if directory exists
 function load_site_functions() {
-    local site_funcs=(/usr/share/zsh/site-functions/*(.N:A))
+    local site_funcs=(/usr/share/zsh/site-functions/^_*(.N:A))
     (( $#site_funcs )) && source $^site_funcs
     unset site_funcs
 }
-zsh-defer -dmszpr load_site_functions
+zsh-defer -a +12 load_site_functions
 
 
-## 9: setup environment variables
+## 10: setup environment variables
 
 # source profile if it exists
 function load_profile() {
@@ -112,14 +114,14 @@ function load_user_aliases() {
 zsh-defer -a load_user_aliases
 
 
-## 10: define completion behavior
+## 11: define completion behavior
 
 zprofile_start "completion_defer_schedule"
 zsh-defer -a source "$ZDOTDIR/include/completion.zsh"
 zprofile_end "completion_defer_schedule"
 
 
-## 11: miscellaneous settings
+## 12: miscellaneous settings
 
 # deduplicate PATH
 typeset -gU PATH path
@@ -128,7 +130,7 @@ typeset -gU PATH path
 typeset -g WORDCHARS='*?[]~=&;!#$%^(){}'
 
 
-## 12: setup plugin manager
+## 13: setup plugin manager
 
 ZCOMET_HOME="$XDG_DATA_HOME/zsh/zcomet"
 ZCOMET_SCRIPT="$ZCOMET_HOME/bin/zcomet.zsh"
@@ -146,43 +148,48 @@ zprofile_start "zcomet_init"
 source "$ZCOMET_SCRIPT"
 zprofile_end "zcomet_init"
 
+function _load_plugin_with_hooks() {
+    local plugin=$1 hook_script=$2 mode=$3
+    shift 3
+
+    if [[ -f $hook_script ]]; then
+        source $hook_script
+        (( $+functions[atinit] )) && atinit
+        zcomet load $plugin $@
+        (( $+functions[atload] )) && atload
+        unfunction atclone atinit atload 2>/dev/null
+    else
+        zcomet load $plugin $@
+    fi
+
+    zprofile_plugin_loaded "$mode" "$plugin"
+}
+
 function load_plugin() {
     setopt extendedglob
 
     local mode=${1:?"Mode (lazy/eager) required"}
     local plugin=${2:?"Plugin name required"}
-    local hook_script="$ZDOTDIR/plughook/${${plugin##*/}%@*}.zsh"
     local plugin_name=${${plugin##*/}%@*}
+    local hook_script="$ZDOTDIR/plughook/${plugin_name}.zsh"
     shift 2
 
     zprofile_load_plugin "$mode" "$plugin"
 
     if [[ ! -d $ZCOMET_HOME/repos/${plugin%%@*} ]]; then
-        source $hook_script
-        atinit
-        zcomet load $plugin $@
-        atload
-        zprofile_plugin_loaded "$mode" "$plugin"
-    elif [[ $mode == lazy ]]; then
-        local func_name="_deferred_load_${plugin_name//-/_}"
-        eval "function $func_name() {
+        _zcomet_clone_repo $plugin
+        if [[ -f $hook_script ]]; then
             source $hook_script
-            atinit
-            zcomet load $plugin $@
-            atload
-            zprofile_plugin_loaded '$mode' '$plugin'
-            unfunction $func_name 2>/dev/null
-        }"
-        zsh-defer -12dmspzpr $func_name
-    else
-        source $hook_script
-        atinit
-        zcomet load $plugin $@
-        atload
-        zprofile_plugin_loaded "$mode" "$plugin"
+            (( $+functions[atclone] )) && atclone
+            unfunction atclone atinit atload 2>/dev/null
+        fi
     fi
 
-    unfunction atclone atinit atload 2>/dev/null
+    if [[ $mode == lazy ]]; then
+        zsh-defer -a +12 _load_plugin_with_hooks "$plugin" "$hook_script" "$mode" "$@"
+    else
+        _load_plugin_with_hooks "$plugin" "$hook_script" "$mode" "$@"
+    fi
 }
 
 function load_snippet() {
@@ -190,7 +197,7 @@ function load_snippet() {
     local url=${2:?"URL required"}
 
     if [[ $mode == "lazy" ]]; then
-        zsh-defer -a zcomet snippet "$url"
+        zsh-defer -a +12 zcomet snippet "$url"
     else
         zcomet snippet "$url"
     fi
@@ -204,7 +211,7 @@ function update_plugins() {
 }
 
 
-## 13: load plugins
+## 14: load plugins
 
 # faster cache for binaries that generate initalization scripts which are normally passed into eval()
 load_plugin lazy mroth/evalcache
@@ -273,27 +280,27 @@ load_plugin lazy RobSis/zsh-completion-generator
 load_snippet lazy https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/sudo/sudo.plugin.zsh
 
 
-## 14: configure command history
+## 15: configure command history
 
 zprofile_start "history_defer_schedule"
 zsh-defer -a source "$ZDOTDIR/include/history.zsh"
 zprofile_end "history_defer_schedule"
 
 
-## 15: helpers and completions for certain commands using zcomet
+## 16: helpers and completions for certain commands using zcomet
 
-zsh-defer +sz zcomet trigger pip ohmyzsh plugins/pip
-zsh-defer +sz zcomet trigger git ohmyzsh plugins/gitfast
+zsh-defer -a +12 zcomet trigger pip ohmyzsh plugins/pip
+zsh-defer -a +12 zcomet trigger git ohmyzsh plugins/gitfast
 
 
-## 16: post-setup tasks
+## 17: post-setup tasks
 
 zprofile_start "widgets_defer_schedule"
 zsh-defer -a source "$ZDOTDIR/include/widgets.zsh"
 zprofile_end "widgets_defer_schedule"
 
 zprofile_start "compinit"
-zcomet compinit
+zsh-defer +a zcomet compinit
 zprofile_end "compinit"
 
 if (( _ZSH_PROFILE_ENABLED && _ZSH_PROFILE_PLUGINS_ENABLED )); then

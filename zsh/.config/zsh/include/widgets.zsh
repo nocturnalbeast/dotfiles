@@ -5,11 +5,18 @@ ZSH_FZF_PASTE_KEY=${ZSH_FZF_PASTE_KEY:-'space'}
 ZSH_FZF_EXEC_KEY=${ZSH_FZF_EXEC_KEY:-'enter'}
 ZSH_FZF_EXTRA_PASTE_KEYS=${ZSH_FZF_EXTRA_PASTE_KEYS:-'right'}
 
+# Cache command availability check at startup for performance
+typeset -g HAS_FD=0
+
+if (( ${+commands[fd]} )); then
+    HAS_FD=1
+fi
+
 # interactive directory navigation with fzf
 fzf-cd() {
     local cmd output ret
 
-    if (( ${+commands[fd]} )); then
+    if (( HAS_FD )); then
         cmd=(fd --type d --min-depth 1 --follow --exclude '.*' --exclude '/dev/*' --exclude '/proc/*' --exclude '/sys/*')
     else
         cmd=(find -L . -mindepth 1 \( -path '*/\.*' -o -fstype 'sysfs' -o -fstype 'devfs' -o -fstype 'devtmpfs' -o -fstype 'proc' \) -prune -o -type d -print)
@@ -159,7 +166,7 @@ fzf-tinted-theme() {
     local original_theme=""
 
     if [[ -f "$TINTED_CACHE/current_theme" ]]; then
-        original_theme=$(cat "$TINTED_CACHE/current_theme")
+        original_theme=$(<$TINTED_CACHE/current_theme)
     fi
 
     local preview_cmd='local sel={}; THEME=${${sel}##[[:space:]]#}; '
@@ -199,8 +206,7 @@ fzf-tinted-theme() {
 
     preview_cmd+="fi"
 
-    output=$(find $TINTED_SHELL_PATH/scripts -type f -name "*.sh" | \
-              sed 's|.*/\(base[0-9]\+-.*\)\.sh$|\1|' | sort | \
+    output=$(printf '%s\n' $TINTED_SHELL_PATH/scripts/*.sh(:t:r) | sort | \
               fzf --expect=$ZSH_FZF_EXEC_KEY,$ZSH_FZF_PASTE_KEY \
                   --preview="$preview_cmd" \
                   --preview-window="right:40%:wrap" \

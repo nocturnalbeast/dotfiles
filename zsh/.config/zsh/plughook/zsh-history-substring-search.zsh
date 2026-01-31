@@ -1,13 +1,5 @@
 #!/usr/bin/env zsh
 
-function atclone() {
-    return 0
-}
-
-function atinit() {
-    return 0
-}
-
 function atload() {
     HISTORY_SUBSTRING_SEARCH_FUZZY=true
     HISTORY_SUBSTRING_SEARCH_HIGHLIGHT_FOUND='fg=yellow,bold'

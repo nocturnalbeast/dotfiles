@@ -1,9 +1,5 @@
 #!/usr/bin/env zsh
 
-function atclone() {
-    return 0
-}
-
 function atinit() {
     export BOOKMARKS_FILE="${XDG_DATA_HOME:-$HOME/.local/share}/zshmarks"
     alias cm="bookmark"
@@ -12,6 +8,3 @@ function atinit() {
     alias md="jump"
 }
 
-function atload() {
-    return 0
-}

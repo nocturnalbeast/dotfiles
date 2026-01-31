@@ -1,5 +1,17 @@
 #!/usr/bin/env zsh
 
+# Cache command availability checks at startup for performance
+typeset -g FTB_TMUX_POPUP_CMD="fzf-tmux"
+typeset -g HAS_FD=0
+
+if (( $+commands[ftb-tmux-popup] )); then
+    FTB_TMUX_POPUP_CMD="ftb-tmux-popup"
+fi
+
+if (( ${+commands[fd]} )); then
+    HAS_FD=1
+fi
+
 function redraw-prompt() {
     emulate -L zsh
     local f
@@ -33,17 +45,28 @@ function cd-up() {
 }
 
 function cd-down() {
-    local candidate=${dirstack[1]#$PWD/}
-    local fzf_cmd="fzf-tmux"
-    if [[ $candidate != */* ]]; then
-        cd -q "$candidate" && redraw-prompt
+    local fzf_cmd="$FTB_TMUX_POPUP_CMD"
+    local candidate
+
+    if (( $#dirstack )); then
+        candidate=${dirstack[1]#$PWD/}
     else
-        command -v ftb-tmux-popup &> /dev/null && fzf_cmd="ftb-tmux-popup"
-        local -a dirs
-        dirs=(${1}/**/*(/ND))
-        dirs=(${dirs#$1/})
-        dir=$(printf '%s\n' ${dirs[@]} | $fzf_cmd +m --header="Change directory to child from $PWD" --exit-0) && cd "$dir"
+        candidate="$PWD"
     fi
+
+    if [[ $candidate != */* ]]; then
+        cd -q "$candidate"
+    else
+        local dir
+        if (( HAS_FD )); then
+            dir=$(fd -t d --follow . "$PWD" | $fzf_cmd +m --select-1 --exit-0 --header="Change directory to child from $PWD")
+        else
+            dir=$(find "$PWD" -mindepth 1 -type d -print | $fzf_cmd +m --select-1 --exit-0 --header="Change directory to child from $PWD")
+        fi
+
+        [[ -n "$dir" ]] && cd "$dir"
+    fi
+
     redraw-prompt
 }
 

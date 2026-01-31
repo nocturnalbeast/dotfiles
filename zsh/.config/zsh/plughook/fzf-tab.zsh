@@ -1,16 +1,8 @@
 #!/usr/bin/env zsh
 
-function atclone() {
-    return 0
-}
-
-function atinit() {
-    return 0
-}
-
 function atload() {
     # use tmux popup instead of plain fzf
-    if command -v tmux &>/dev/null && [[ -n "$TMUX" ]]; then
+    if (( $+commands[tmux] )) && [[ -n "$TMUX" ]]; then
         zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
         zstyle ':fzf-tab:*' popup-min-size 80 12
     fi

@@ -1,12 +1,8 @@
 #!/usr/bin/env zsh
 
-function atclone() {
-    return 0
-}
-
 function atinit() {
     # Check if we can actually send notifications
-    if ! command -v notify-send &> /dev/null || [ "$XDG_SESSION_TYPE" = "tty" ]; then
+    if ! (( $+commands[notify-send] )) || [ "$XDG_SESSION_TYPE" = "tty" ]; then
         zlong_send_notifications=false
         return 0
     fi
@@ -32,9 +28,5 @@ function atinit() {
     # Custom notification message format using similar format to auto-notify
     # Note: Must be wrapped in single quotes then double quotes for proper evaluation
     zlong_message='"Command $cmd: execution complete." "Completed in $ftime"'
-}
-
-function atload() {
-    return 0
 }
 

@@ -1,19 +1,7 @@
 #!/usr/bin/env zsh
 
-function atclone() {
-    return 0
-}
-
 function atinit() {
-    function is_ssh() {
-        if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-            return true
-        else
-            return false
-        fi
-    }
-
-    if is_ssh; then
+    if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
         export ZSH_TAB_TITLE_PREFIX="$USER@$HOST - zsh: "
     else
         export ZSH_TAB_TITLE_DEFAULT_DISABLE_PREFIX=true
@@ -24,9 +12,5 @@ function atinit() {
     export ZSH_TAB_TITLE_ENABLE_FULL_COMMAND=true
     export ZSH_TAB_TITLE_DISABLE_AUTO_TITLE=false
     export ZSH_TAB_TITLE_ADDITIONAL_TERMS='alacritty|kitty|foot'
-}
-
-function atload() {
-    return 0
 }
 

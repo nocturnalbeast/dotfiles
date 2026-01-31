@@ -77,10 +77,6 @@ bindkey '^[[117;6u' redo # ctrl+shift+u
 bindkey '^[[2~' overwrite-mode # insert
 
 # shift+arrow keys to move around directories
-zle -N cd-back
-zle -N cd-forward
-zle -N cd-up
-zle -N cd-down
 bindkey '^[[1;2D' cd-back
 bindkey '^[[1;2C' cd-forward
 bindkey '^[[1;2A' cd-up
