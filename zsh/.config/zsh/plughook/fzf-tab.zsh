@@ -8,6 +8,7 @@ function atload() {
     fi
 
     zstyle -d ':completion:*' format
+    zstyle ':fzf-tab:*' query-string ''
 
     # let fzf-tab take over
     zstyle ':completion:*' menu no
