@@ -210,9 +210,9 @@ load_plugin lazy tinted-theming/tinted-shell
 # smarter cd
 # TODO: setup ranked completion for zsh-z
 load_plugin lazy agkozak/zsh-z
-load_plugin lazy Tarrasch/zsh-bd
 load_plugin lazy mollifier/cd-gitroot
 load_plugin lazy jocelynmallon/zshmarks
+zsh-defer -a zcomet trigger bd Tarrasch/zsh-bd
 
 # enhance git
 load_plugin lazy wfxr/forgit
@@ -225,7 +225,7 @@ load_plugin lazy paulirish/git-recent
 load_plugin lazy davidosomething/git-my
 
 # fzf integration
-load_plugin lazy junegunn/fzf shell completion.zsh
+load_plugin lazy junegunn/fzf
 load_plugin lazy Aloxaf/fzf-tab
 load_plugin lazy Freed-Wu/fzf-tab-source
 
