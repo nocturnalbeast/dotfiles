@@ -10,10 +10,12 @@
 [[ $- != *i* ]] && return
 
 
-## 1: initialize profiling if enabled
+## 1: setup profiling via zprof
 
-source "$ZDOTDIR/include/profile.zsh"
-[[ -n "$ZSH_PROFILE" ]] && zprofile_init
+if [ -n "${ZSH_PROFILE_STARTUP:+x}" ]; then
+    zmodload zsh/zprof
+    echo "Zsh profiling enabled. Run: ZSH_PROFILE_STARTUP=1 zsh -i -c exit"
+fi
 
 
 ## 2: make sure options are reset
@@ -23,14 +25,11 @@ emulate -L zsh
 
 ## 3: load shell options
 
-zprofile_start "shell_options"
 source "$ZDOTDIR/include/options.zsh"
-zprofile_end "shell_options"
 
 
 ## 4: setup required directories and paths
 
-zprofile_start "directory_setup"
 # xdg base directory specification
 typeset -gx XDG_DATA_HOME=${XDG_DATA_HOME:-"$HOME/.local/share"}
 typeset -gx XDG_STATE_HOME=${XDG_STATE_HOME:-"$HOME/.local/state"}
@@ -49,20 +48,10 @@ ZSH_CACHE_DIR="${XDG_CACHE_HOME}/zsh"
 # enable completion caching for better performance
 zstyle ':completion:*' use-cache yes
 zstyle ':completion:*' cache-path "${ZSH_CACHE_DIR}/zcompcache"
-zprofile_end "directory_setup"
 
 
-## 5: set prompt theme
+## 5: initialize generic lazy loading
 
-# using starship for the consistent prompt across shells
-zprofile_start "starship_prompt"
-source "$ZDOTDIR/include/starship.zsh"
-zprofile_end "starship_prompt"
-
-
-## 6: initialize generic lazy loading
-
-zprofile_start "zsh_defer_setup"
 ZSH_DEFER_DIR="${XDG_DATA_HOME}/zsh-defer"
 [[ ! -d "$ZSH_DEFER_DIR" ]] && {
     git clone --quiet --depth=1 https://github.com/romkatv/zsh-defer.git "$ZSH_DEFER_DIR" 2>/dev/null || {
@@ -72,21 +61,27 @@ ZSH_DEFER_DIR="${XDG_DATA_HOME}/zsh-defer"
 }
 fpath+=("$ZSH_DEFER_DIR")
 autoload -Uz zsh-defer
-zprofile_end "zsh_defer_setup"
+
+
+## 6: set prompt theme
+
+# using starship for the consistent prompt across shells
+# we use an intermediate prompt to mitigate the startup lag of starship
+export PROMPT='
+%B%F{magenta}%1~%f%b
+%F{cyan}󰚭%f %F{green}❯%f'
+export RPROMPT=''
+zsh-defer -a +pr source "$ZDOTDIR/include/starship.zsh"
 
 
 ## 7: define user functions
 
-zprofile_start "functions.zsh"
 source "$ZDOTDIR/include/functions.zsh"
-zprofile_end "functions.zsh"
 
 
 ## 8: define keybindings
 
-zprofile_start "keybindings.zsh"
 source "$ZDOTDIR/include/keybindings.zsh"
-zprofile_end "keybindings.zsh"
 
 
 ## 9: load site functions
@@ -96,7 +91,7 @@ function load_site_functions() {
     (( $#site_funcs )) && source $^site_funcs
     unset site_funcs
 }
-zsh-defer -a +12 load_site_functions
+zsh-defer -a load_site_functions
 
 
 ## 10: setup environment variables
@@ -116,9 +111,7 @@ zsh-defer -a load_user_aliases
 
 ## 11: define completion behavior
 
-zprofile_start "completion_defer_schedule"
 zsh-defer -a source "$ZDOTDIR/include/completion.zsh"
-zprofile_end "completion_defer_schedule"
 
 
 ## 12: miscellaneous settings
@@ -144,9 +137,7 @@ zstyle ':*:compinit' arguments $([[ $ZCOMPDUMP_PATH(#qNmh-24) ]] && echo -C || e
         return 1
     }
 }
-zprofile_start "zcomet_init"
 source "$ZCOMET_SCRIPT"
-zprofile_end "zcomet_init"
 
 function _load_plugin_with_hooks() {
     local plugin=$1 hook_script=$2 mode=$3
@@ -161,8 +152,6 @@ function _load_plugin_with_hooks() {
     else
         zcomet load $plugin $@
     fi
-
-    zprofile_plugin_loaded "$mode" "$plugin"
 }
 
 function load_plugin() {
@@ -174,7 +163,6 @@ function load_plugin() {
     local hook_script="$ZDOTDIR/plughook/${plugin_name}.zsh"
     shift 2
 
-    zprofile_load_plugin "$mode" "$plugin"
 
     if [[ ! -d $ZCOMET_HOME/repos/${plugin%%@*} ]]; then
         _zcomet_clone_repo $plugin
@@ -186,7 +174,7 @@ function load_plugin() {
     fi
 
     if [[ $mode == lazy ]]; then
-        zsh-defer -a +12 _load_plugin_with_hooks "$plugin" "$hook_script" "$mode" "$@"
+        zsh-defer -a _load_plugin_with_hooks "$plugin" "$hook_script" "$mode" "$@"
     else
         _load_plugin_with_hooks "$plugin" "$hook_script" "$mode" "$@"
     fi
@@ -197,7 +185,7 @@ function load_snippet() {
     local url=${2:?"URL required"}
 
     if [[ $mode == "lazy" ]]; then
-        zsh-defer -a +12 zcomet snippet "$url"
+        zsh-defer -a zcomet snippet "$url"
     else
         zcomet snippet "$url"
     fi
@@ -282,33 +270,20 @@ load_snippet lazy https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/sudo/su
 
 ## 15: configure command history
 
-zprofile_start "history_defer_schedule"
 zsh-defer -a source "$ZDOTDIR/include/history.zsh"
-zprofile_end "history_defer_schedule"
 
 
 ## 16: helpers and completions for certain commands using zcomet
 
-zsh-defer -a +12 zcomet trigger pip ohmyzsh plugins/pip
-zsh-defer -a +12 zcomet trigger git ohmyzsh plugins/gitfast
+zsh-defer -a zcomet trigger pip ohmyzsh plugins/pip
+zsh-defer -a zcomet trigger git ohmyzsh plugins/gitfast
 
 
 ## 17: post-setup tasks
 
-zprofile_start "widgets_defer_schedule"
 zsh-defer -a source "$ZDOTDIR/include/widgets.zsh"
-zprofile_end "widgets_defer_schedule"
+zsh-defer -a zcomet compinit
 
-zprofile_start "compinit"
-zsh-defer +a zcomet compinit
-zprofile_end "compinit"
-
-if (( _ZSH_PROFILE_ENABLED && _ZSH_PROFILE_PLUGINS_ENABLED )); then
-    # Force all deferred plugins to load for profiling
-    while (( $#_zsh_defer_tasks )); do
-        local task=${_zsh_defer_tasks[1]}
-        shift _zsh_defer_tasks
-        _zsh-defer-apply $task 2>/dev/null
-    done
+if [ -n "${ZSH_PROFILE_STARTUP:+x}" ]; then
+    zprof
 fi
-zprofile_report
