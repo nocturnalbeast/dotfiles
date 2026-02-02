@@ -139,6 +139,19 @@ zstyle ':*:compinit' arguments $([[ $ZCOMPDUMP_PATH(#qNmh-24) ]] && echo -C || e
 }
 source "$ZCOMET_SCRIPT"
 
+# Initialize ZCOMET array for internal function access
+if [[ -z ${ZCOMET[REPOS_DIR]} ]]; then
+    local zcomet_home_dir
+    zstyle -s :zcomet: home-dir zcomet_home_dir
+    : ${zcomet_home_dir:=$ZCOMET_HOME}
+    local zcomet_repos_dir
+    zstyle -s :zcomet: repos-dir zcomet_repos_dir
+    : ${ZCOMET[REPOS_DIR]:=${zcomet_repos_dir:-${zcomet_home_dir}/repos}}
+    local zcomet_git_server
+    zstyle -s :zcomet: gitserver zcomet_git_server
+    : ${ZCOMET[GITSERVER]:=${zcomet_git_server:-github.com}}
+fi
+
 function _load_plugin_with_hooks() {
     local plugin=$1 hook_script=$2 mode=$3
     shift 3
@@ -202,7 +215,7 @@ function update_plugins() {
 ## 14: load plugins
 
 # faster cache for binaries that generate initalization scripts which are normally passed into eval()
-load_plugin lazy mroth/evalcache
+load_plugin lazy QuarticCat/zsh-smartcache
 
 # shell colors
 load_plugin lazy tinted-theming/tinted-shell
@@ -234,9 +247,13 @@ load_plugin lazy mdumitru/fancy-ctrl-z
 
 # colorize command output
 load_plugin lazy garabik/grc
+load_plugin lazy Freed-Wu/zsh-help
 
 # pair brackets and quotations
 load_plugin lazy hlissner/zsh-autopair
+
+# vim easymotion-like movements in command line
+load_plugin lazy hchbaw/zce.zsh
 
 # remind you of your aliases
 load_plugin lazy MichaelAquilina/zsh-you-should-use
