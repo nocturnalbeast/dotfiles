@@ -26,8 +26,8 @@ setopt hist_allow_clobber
 # if atuin is present, use atuin for history management
 if (( $+commands[atuin] )); then
     unset HISTFILE
-    if (( $+functions[_evalcache] )); then
-        _evalcache atuin init zsh --disable-up-arrow
+    if (( $+functions[smartcache] )); then
+        smartcache eval atuin init zsh --disable-up-arrow
     else
         eval "$(atuin init zsh --disable-up-arrow)"
     fi
