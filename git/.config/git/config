@@ -135,3 +135,9 @@
     rea = remote add
     rex = remote rm
     rem = remote rename
+
+[include]
+    path = ~/.local/share/tinted-theming/tinty/tinted-delta-configs-file.gitconfig
+
+[safe]
+    directory = /opt/provision
