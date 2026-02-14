@@ -46,3 +46,6 @@ __pycache__/
 
 # ruff cache
 .ruff_cache/
+
+# font-manager file
+fontconfig/.config/fontconfig/conf.d/09-Directories.conf
