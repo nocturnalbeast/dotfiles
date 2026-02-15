@@ -1,28 +1,64 @@
 #!/usr/bin/env bash
 
-# Source: menu-surfraw from https://github.com/TomboFry/menu-surfraw
-# simplified script for use with only dmenu, added styling snippets
+# A web search menu for quick searches with any search engine.
 
-DEPENDENCIES=(surfraw)
-for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-    type -p "$DEPENDENCY" &> /dev/null || {
-        echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
-        exit 1
-    }
-done
+# Global configuration
+DEPENDENCIES=(menu surfraw xdg-open)
 
-SEARCH_ELVI=$(echo "${@:1}")
-SEARCH_TERM=$(echo "${@:2}")
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [ENGINE] [SEARCH_TERM]
 
-if [[ -z $SEARCH_ELVI ]]; then
-    ACTION=$(dmenu-helper run_menu "  Engine: " "$(surfraw -elvi | awk -F'-' '{print $1}' | sed '/:/d' | awk '{$1=$1};1')")
-elif [[ -z $SEARCH_TERM ]]; then
-    ACTION=$(dmenu-helper run_menu "  Search $SEARCH_ELVI: " "")
-else
-    surfraw $SEARCH_ELVI &
-fi
+A web search menu for quick searches with any search engine.
 
-case $ACTION in
-    "") ;;
-    *) $0 $SEARCH_ELVI $ACTION ;;
-esac
+If ENGINE or SEARCH_TERM are not provided, prompts for them interactively.
+
+Arguments:
+    ENGINE         The surfraw elvi (search engine) to use. If omitted, prompts for selection.
+    SEARCH_TERM    The search query. If omitted, prompts for input.
+
+Examples:
+    $(basename "$0")
+    $(basename "$0") google
+    $(basename "$0") google "search term"
+EOF
+}
+
+# Checks if all required dependencies are available in PATH.
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &> /dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Main entry point
+main() {
+    check_dependencies
+    case "$1" in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+    esac
+
+    SEARCH_ELVI="$1"
+    shift
+    SEARCH_TERM="$*"
+
+    if [[ -z $SEARCH_ELVI ]]; then
+        SEARCH_ELVI=$(surfraw -elvi | awk -F'-' '{print $1}' | sed '/:/d' | awk '{$1=$1};1' | menu run -p "  Engine: ")
+        [[ -z $SEARCH_ELVI ]] && exit 1
+    fi
+
+    if [[ -z $SEARCH_TERM ]]; then
+        SEARCH_TERM=$(menu run -p "  Search $SEARCH_ELVI: ")
+        [[ -z $SEARCH_TERM ]] && exit 1
+    fi
+
+    surfraw -browser="${BROWSER:-xdg-open}" "$SEARCH_ELVI" "$SEARCH_TERM"
+}
+
+main "$@"
