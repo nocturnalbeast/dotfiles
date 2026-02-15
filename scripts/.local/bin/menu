@@ -11,8 +11,8 @@ Provides a unified interface for multiple menu programs (dmenu, rofi, bemenu,
 tofi, wofi, yofi) with automatic backend selection based on display server.
 
 Usage:
-    pymenu run [-p PROMPT]
-    pymenu backend [BACKEND]
+    menu run [-p PROMPT]
+    menu backend [BACKEND]
 """
 
 import argparse
@@ -779,7 +779,7 @@ def run_menu(config: MenuConfig, prompt: str):
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="pymenu",
+        prog="menu",
         description="A menu-backend agnostic script to launch custom menus.",
     )
     subparsers = parser.add_subparsers(dest="operation", help="Operations")
