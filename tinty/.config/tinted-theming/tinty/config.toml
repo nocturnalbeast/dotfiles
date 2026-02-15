@@ -1,0 +1,42 @@
+#  _   _     _
+# | |_|_|___| |_ _ _
+# |  _| |   |  _| | |
+# |_| |_|_|_|_| |_  |
+#               |___|
+
+shell = "zsh -c '{}'"
+default-scheme = "base24-one-black"
+
+[[items]]
+path = "https://github.com/tinted-theming/tinted-shell"
+name = "tinted-shell"
+themes-dir = "scripts"
+hook = "echo %n > ~/.cache/tinted-shell/current_theme && source %f"
+supported-systems = ["base16", "base24"]
+
+[[items]]
+path = "https://github.com/tinted-theming/tinted-terminal"
+name = "tinted-terminal"
+themes-dir = "themes/kitty"
+hook = "cp -f %f ~/.config/kitty/theme.conf && for sock in /tmp/kitty-*; do kitty @ --to unix:$sock set-colors --all --configured ~/.config/kitty/theme.conf 2>&1; done"
+supported-systems = ["base16", "base24"]
+
+[[items]]
+path = "https://github.com/tinted-theming/tinted-tmux"
+name = "tinted-tmux"
+themes-dir = "colors"
+hook = "~/.config/tmux/scripts/genstatusbar.py %n"
+supported-systems = ["base16", "base24"]
+
+[[items]]
+path = "https://github.com/tinted-theming/tinted-fzf"
+name = "tinted-fzf"
+themes-dir = "sh"
+hook = "mkdir -p ~/.cache/tinted-fzf && cp -f %f ~/.cache/tinted-fzf/theme.sh && source %f"
+supported-systems = ["base16", "base24"]
+
+[[items]]
+path = "https://github.com/tinted-theming/tinted-delta"
+name = "tinted-delta"
+themes-dir = "configs"
+supported-systems = ["base16", "base24"]
