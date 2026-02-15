@@ -7,73 +7,73 @@
 ## commonly used applications
 
 # terminal
-super + Return 
+hyper + Return 
     terminal
 
 # browser
-super + w
+hyper + w
     $BROWSER
 
 # private browser
-super + shift + w
+hyper + shift + w
     $BROWSER $BROWSER_PRIVATE_OPT
 
 # file manager
-super + e
+hyper + e
     $FILES
 
 
 ## menus
 
 # super menu
-super + s
+hyper + s
     menu-allmenus
 
 # launch an app / refresh app list
-super + {_,shift} + space
+hyper + {_,shift} + space
     menu-apps {launch,refresh}
 
 # terminal app menu
-super + shift + Return
+hyper + shift + Return
     menu-terminalapps
 
 # power menu
-super + p
+hyper + p
     menu-power
 
 # copy clipboard entry / delete clipboard entry
-super + {_,shift} + x
+hyper + {_,shift} + x
     menu-clip{board,delete}
 
 # web video download / stream menu
-super + v
+hyper + v
     menu-video
 
 # web search menu
-super + o
+hyper + o
     menu-surfraw
 
 # window select menu
-super + bracketleft
+hyper + bracketleft
     menu-window
 
 # window hide menu
-super + shift + bracketleft
+hyper + shift + bracketleft
     menu-window-hide
 
 # workspace select menu
-super + bracketright
+hyper + bracketright
     menu-workspace
 
 # calculator menu
-super + equal
+hyper + equal
     menu-calc
 
 
 ## notifications
 
 # close / take action on notification
-super + {_,shift} + n
+hyper + {_,shift} + n
     dunstctl {close,action}
 
 
@@ -84,11 +84,11 @@ Print
     screenshot full
 
 # take a screenshot of the focused window
-super + Print
+hyper + Print
     screenshot window
 
 # take a screenshot of any selected window or region
-super + shift + Print
+hyper + shift + Print
     screenshot select
 
 
@@ -136,11 +136,11 @@ XF86MonBrightnessDown
 
 ## bar control
 
-super + {_,shift} + backslash
+hyper + {_,shift} + backslash
     polybarctl {switch,toggle_all}
 
 
 ## screenlock
 
-super + minus
+hyper + minus
     lockctl lock
