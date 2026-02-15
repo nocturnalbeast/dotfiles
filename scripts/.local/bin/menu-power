@@ -1,56 +1,156 @@
 #!/usr/bin/env bash
 
-# Source: shutdownmenu from https://github.com/MaryHal/dmenu-suite
-# adapted to match setup and added styling snippets
+# A menu for power operations.
 
-MAIN_MENU="⏻ Shutdown\n⏼ Reboot\n⏾ Sleep\n Lock\n Logout\n Clear pending"
-DELAY_MENU="now\n+60\n+45\n+30\n+15\n+10\n+5\n+3\n+2\n+1"
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [OPERATION]
 
-ACTION=$(dmenu-helper run_menu " 漣  " "$MAIN_MENU")
-[ -z "$ACTION" ] && exit
+A menu for power operations.
+
+Operations:
+    shutdown      Shutdown the system.
+    reboot        Reboot the system.
+    sleep         Put the system to sleep.
+    lock          Lock the screen.
+    logout        Log out from the current session.
+    clear         Clear any pending shutdown.
+    -h, --help    Show this help message.
+EOF
+}
+
+# Global configuration
+DEPENDENCIES=(menu notify-send systemctl)
+X11_DEPENDENCIES=(wmctrl)
+WAYLAND_DEPENDENCIES=()
 
 ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/power.svg"
 
-case "$ACTION" in
-    '⏻ Shutdown')
-        DELAY=$(dmenu-helper run_menu "Delay: " "$DELAY_MENU")
-        [ -z "$DELAY" ] && exit
-        if [ "$DELAY" == "now" ]; then
-            notify-send -u normal "Shutting down now..." -i "$ICON"
+# Detect environment (Wayland or X11 or text-only)
+detect_environment() {
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        echo "wayland"
+    elif [ -n "$DISPLAY" ]; then
+        echo "x11"
+    else
+        echo "tty"
+    fi
+}
+
+# Check for required dependencies
+check_dependencies() {
+    local CURRENT_ENVIRONMENT
+    CURRENT_ENVIRONMENT=$(detect_environment)
+    if [ "$CURRENT_ENVIRONMENT" = "wayland" ]; then
+        DEPENDENCIES+=("${WAYLAND_DEPENDENCIES[@]}")
+    elif [ "$CURRENT_ENVIRONMENT" = "x11" ]; then
+        DEPENDENCIES+=("${X11_DEPENDENCIES[@]}")
+    fi
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &> /dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Shutdown the system
+do_shutdown() {
+    local DELAY
+    DELAY=$(menu run -p "⏻ Delay: " <<< $'now\n+60\n+45\n+30\n+15\n+10\n+5\n+3\n+2\n+1')
+    [ -z "$DELAY" ] && exit 0
+
+    if [ "$DELAY" == "now" ]; then
+        notify-send -u normal "Shutting down now..." -i "$ICON"
+        /sbin/shutdown -P now
+    else
+        notify-send -u normal "Shutting down in $DELAY minutes..." -i "$ICON"
+        /sbin/shutdown -P "+$DELAY"
+    fi
+}
+
+# Reboot the system
+do_reboot() {
+    local DELAY
+    DELAY=$(menu run -p "⏼ Delay: " <<< $'now\n+60\n+45\n+30\n+15\n+10\n+5\n+3\n+2\n+1')
+    [ -z "$DELAY" ] && exit 0
+
+    if [ "$DELAY" == "now" ]; then
+        notify-send -u normal "Rebooting now..." -i "$ICON"
+        /sbin/shutdown -r now
+    else
+        notify-send -u normal "Rebooting in $DELAY minutes..." -i "$ICON"
+        /sbin/shutdown -r "+$DELAY"
+    fi
+}
+
+# Put the system to sleep
+do_sleep() {
+    notify-send -u low "Suspending now..." -i "$ICON"
+    systemctl suspend
+}
+
+# Lock the screen
+do_lock() {
+    if command -v lockctl &> /dev/null; then
+        lockctl lock
+    else
+        notify-send -u critical "Could not find lockctl, could not lock screen." -i "$ICON"
+    fi
+}
+
+# Log out from the current session
+do_logout() {
+    if [ "$(detect_environment)" == "wayland" ]; then
+        if [ "$XDG_SESSION_DESKTOP" == "hyprland" ]; then
+            hyprctl dispatch exit
         else
-            notify-send -u normal "Shutting down in $DELAY minutes..." -i "$ICON"
+            notify-send -u critical "Unknown environment, could not log out." -i "$ICON"
         fi
-        shutdown -P "$DELAY"
-        ;;
-    '⏼ Reboot')
-        DELAY=$(dmenu-helper run_menu "Delay: " "$DELAY_MENU")
-        [ -z "$DELAY" ] && exit
-        if [ "$DELAY" == "now" ]; then
-            notify-send -u normal "Rebooting now..." -i "$ICON"
-        else
-            notify-send -u normal "Rebooting in $DELAY minutes..." -i "$ICON"
-        fi
-        shutdown -r "$DELAY"
-        ;;
-    '⏾ Sleep')
-        notify-send -u low "Suspending now..." -i "$ICON"
-        systemctl suspend
-        ;;
-    ' Lock')
-        light-locker-command --lock
-        ;;
-    ' Logout')
+    elif [ "$(detect_environment)" == "x11" ]; then
+        local WM
         WM="$(wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p")"
         if [ "$WM" == "bspwm" ]; then
             bspc quit
         elif [ "$WM" == "spectrwm" ]; then
             kill -INT $(pidof spectrwm)
         else
-            notify-send -u normal "Unknown environment, could not log out." -i "$ICON"
+            notify-send -u critical "Unknown environment, could not log out." -i "$ICON"
         fi
-        ;;
-    ' Clear pending')
-        notify-send -u normal "Cleared pending shutdown" -i "$ICON"
-        shutdown -c
-        ;;
-esac
+    else
+        notify-send -u critical "Unknown environment, could not log out." -i "$ICON"
+    fi
+}
+
+# Clear any pending shutdown
+do_clear() {
+    notify-send -u normal "Cleared pending shutdown" -i "$ICON"
+    /sbin/shutdown -c
+}
+
+# Main entry point
+main() {
+    check_dependencies
+
+    local OPERATION="$1"
+
+    if [ -z "$OPERATION" ]; then
+        OPERATION=$(menu run -p " 󰚥  " <<< $'󰐥 Shutdown\n󰤁 Reboot\n󰤄 Sleep\n󰌾 Lock\n󰍃 Logout\n󰜺 Clear pending' | cut -d' ' -f2 | tr '[:upper:]' '[:lower:]')
+    fi
+
+    case "$OPERATION" in
+        shutdown) do_shutdown ;;
+        reboot) do_reboot ;;
+        sleep) do_sleep ;;
+        lock) do_lock ;;
+        logout) do_logout ;;
+        clear) do_clear ;;
+        -h | --help) usage ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
