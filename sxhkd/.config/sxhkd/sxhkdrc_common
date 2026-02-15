@@ -43,7 +43,7 @@ hyper + p
 
 # copy clipboard entry / delete clipboard entry
 hyper + {_,shift} + x
-    menu-clip{board,delete}
+    menu-clip {paste,delete}
 
 # web video download / stream menu
 hyper + v
