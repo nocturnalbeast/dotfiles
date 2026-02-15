@@ -1,22 +1,84 @@
 #!/usr/bin/env bash
 
-# Source: menu-calc from https://github.com/onespaceman/menu-calc
-# added dependency checking script and some styling
+# A calculator menu.
 
-DEPENDENCIES=(xclip bc)
-for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-    type -p "$DEPENDENCY" &> /dev/null || {
-        echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
-        exit 1
-    }
-done
+# Global configuration
+DEPENDENCIES=(bc menu)
+X11_DEPENDENCIES=(xclip)
+WAYLAND_DEPENDENCIES=(wl-copy)
 
-ANSWER=$(echo "$@" | bc -l | sed '/\./ s/\.\{0,1\}0\{1,\}$//')
-ACTION=$(dmenu-helper run_menu "  $ANSWER " " Copy to clipboard\n Clear")
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [EXPRESSION]
 
-case $ACTION in
-    " Clear") $0 ;;
-    " Copy to clipboard") echo -n "$ANSWER" | xclip ;;
-    "") ;;
-    *) $0 "$ANSWER $ACTION" ;;
-esac
+A calculator menu.
+
+If EXPRESSION is not provided, prompts for input.
+
+Examples:
+    $(basename "$0")
+    $(basename "$0") "2+2"
+EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        DEPENDENCIES+=("${WAYLAND_DEPENDENCIES[@]}")
+    elif [ -n "$DISPLAY" ]; then
+        DEPENDENCIES+=("${X11_DEPENDENCIES[@]}")
+    fi
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &> /dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Evaluate the expression using bc
+#
+# Arguments:
+#   $* - The expression to evaluate
+# Outputs:
+#   The evaluated expression
+calc_answer() {
+    echo "$*" | bc -l | sed '/\./ s/\.\{0,1\}0\{1,\}$//'
+}
+
+# Main entry point
+main() {
+    check_dependencies
+    case "$1" in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+    esac
+
+    if [ $# -eq 0 ]; then
+        EXPRESSION=$(menu run -p "  " <<< "")
+    else
+        EXPRESSION="$*"
+    fi
+
+    [ -z "$EXPRESSION" ] && exit 0
+
+    ANSWER=$(calc_answer "$EXPRESSION")
+    ACTION=$(menu run -p "  $ANSWER " <<< $' Copy to clipboard\n Clear')
+
+    case $ACTION in
+        " Clear") exec "$0" ;;
+        " Copy to clipboard")
+            if [ -n "$WAYLAND_DISPLAY" ]; then
+                printf "%s" "$ANSWER" | wl-copy
+            elif [ -n "$DISPLAY" ]; then
+                printf "%s" "$ANSWER" | xclip
+            fi
+            ;;
+        "") ;;
+        *) exec "$0" "$ANSWER $ACTION" ;;
+    esac
+}
+
+main "$@"
