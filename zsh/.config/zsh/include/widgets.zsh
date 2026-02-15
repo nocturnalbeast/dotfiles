@@ -160,19 +160,11 @@ zle -N fzf-kill-proc-by-port
 
 # interactive theme selection with fzf and live preview
 fzf-tinted-theme() {
-    local output ret theme_type
-    local TINTED_SHELL_PATH="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/zcomet/repos/tinted-theming/tinted-shell"
-    local TINTED_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/tinted-shell"
-    local original_theme=""
-
-    if [[ -f "$TINTED_CACHE/current_theme" ]]; then
-        original_theme=$(<$TINTED_CACHE/current_theme)
-    fi
+    local output ret
+    local original_theme=$(tinty current 2>/dev/null)
 
     local preview_cmd='local sel={}; THEME=${${sel}##[[:space:]]#}; '
-    preview_cmd+="THEME_PATH=\$(find $TINTED_SHELL_PATH/scripts/\$THEME.sh -type f 2>/dev/null); "
-    preview_cmd+="if [[ -n \$THEME_PATH ]]; then "
-    preview_cmd+="source \$THEME_PATH; "
+    preview_cmd+="tinty apply \$THEME 2>/dev/null; "
 
     preview_cmd+="echo \"\033[1;37mTheme: \$THEME\033[0m\n\"; "
 
@@ -202,11 +194,10 @@ fzf-tinted-theme() {
     for i in {16..23}; do
         preview_cmd+="echo -en \"\033[38;5;${i}m███ \"; "
     done
-    preview_cmd+="echo -e \"\033[0m\"; "
+    preview_cmd+="echo -e \"\033[0m\""
 
-    preview_cmd+="fi"
-
-    output=$(printf '%s\n' $TINTED_SHELL_PATH/scripts/*.sh(:t:r) | sort | \
+    FZF_DEFAULT_OPTS=${FZF_DEFAULT_OPTS// --color=[^ ]##/}
+    output=$(tinty list | \
               fzf --expect=$ZSH_FZF_EXEC_KEY,$ZSH_FZF_PASTE_KEY \
                   --preview="$preview_cmd" \
                   --preview-window="right:40%:wrap" \
@@ -223,20 +214,17 @@ fzf-tinted-theme() {
         local selection=${output_lines[-1]##[[:space:]]#}
 
         if [[ "$action" == "$ZSH_FZF_EXEC_KEY" ]] && [[ -n "$WIDGET" ]]; then
-            BUFFER="tinted \"${selection#base*-}\""
+            BUFFER="tinty apply \"$selection\""
             zle redisplay
             zle accept-line
         elif [[ "$action" == "$ZSH_FZF_PASTE_KEY" ]] && [[ -n "$WIDGET" ]]; then
-            theme_path="$TINTED_SHELL_PATH/scripts/$selection.sh"
-            BUFFER="source $theme_path"
+            BUFFER="tinty apply \"$selection\""
             zle redisplay
             zle accept-line
         fi
     else
         if [[ -n "$original_theme" ]] && [[ -n "$WIDGET" ]]; then
-            if [[ -f "$TINTED_SHELL_PATH/scripts/$original_theme.sh" ]]; then
-                source "$TINTED_SHELL_PATH/scripts/$original_theme.sh" 2>/dev/null
-            fi
+            tinty apply "$original_theme" 2>/dev/null
         fi
     fi
 
