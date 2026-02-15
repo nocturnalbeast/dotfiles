@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+
+# A menu for clipboard operations.
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") OPERATION
+
+A menu for clipboard operations.
+
+Operations:
+    paste         Show clipboard history for pasting.
+    delete        Show clipboard history for deletion.
+    clear         Clear all clipboard history.
+    insert        Insert text into clipboard history.
+    -h, --help    Show this help message.
+
+Piping content to the script will insert it into the clipboard history.
+EOF
+}
+
+# Global configuration
+DEPENDENCIES=(clipcatctl menu notify-send)
+X11_DEPENDENCIES=(xclip xdotool)
+WAYLAND_DEPENDENCIES=(wl-copy wl-paste)
+
+# Detect environment (Wayland or X11 or text-only)
+detect_environment() {
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        echo "wayland"
+    elif [ -n "$DISPLAY" ]; then
+        echo "x11"
+    else
+        echo "tty"
+    fi
+}
+
+# Check for required dependencies
+check_dependencies() {
+    local CURRENT_ENVIRONMENT
+    CURRENT_ENVIRONMENT=$(detect_environment)
+    if [ "$CURRENT_ENVIRONMENT" = "wayland" ]; then
+        DEPENDENCIES+=("${WAYLAND_DEPENDENCIES[@]}")
+    elif [ "$CURRENT_ENVIRONMENT" = "x11" ]; then
+        DEPENDENCIES+=("${X11_DEPENDENCIES[@]}")
+    fi
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &> /dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Show clipboard history for pasting
+paste_clipboard() {
+    local SELECTION
+    SELECTION=$(clipcatctl list | menu run -p " 󰢨 ")
+    [[ $SELECTION == "" ]] && exit 0
+
+    clipcatctl promote "$(echo "$SELECTION" | cut -d':' -f1)" > /dev/null
+
+    case "$(detect_environment)" in
+        wayland) wl-paste ;;
+        x11) xdotool key ctrl+v ;;
+        tty) clipcatctl get "$(echo "$SELECTION" | cut -d':' -f1)" ;;
+        *)
+            echo "error: Unknown display environment" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# Show clipboard history for deletion
+delete_clipboard() {
+    local SELECTION
+    SELECTION=$(clipcatctl list | menu run -p " 󱘙 ")
+    [[ $SELECTION == "" ]] && exit 0
+
+    clipcatctl remove "$(echo "$SELECTION" | cut -d':' -f1)" > /dev/null
+}
+
+# Clear all clipboard history
+clear_clipboard() {
+    local CONFIRM
+    CONFIRM=$(menu run -p " 󱘝  Clear all clipboard history? " <<< $'yes\nno')
+    [[ $CONFIRM != "yes" ]] && exit 0
+    clipcatctl clear
+    if [ "$(detect_environment)" != "tty" ]; then
+        notify-send "Clipboard history cleared"
+    else
+        echo "Clipboard history cleared"
+    fi
+}
+
+# Insert text into clipboard history
+insert_clipboard() {
+    local TEXT
+    if [ -n "$1" ]; then
+        TEXT="$1"
+    else
+        TEXT=$(menu run -p " ✏️  Enter text to insert: ")
+    fi
+
+    [[ $TEXT == "" ]] && exit 0
+
+    clipcatctl insert "$TEXT" > /dev/null
+
+    if [ "$(detect_environment)" != "tty" ]; then
+        notify-send "Text inserted into clipboard history"
+    else
+        echo "Text inserted into clipboard history"
+    fi
+}
+
+# Main entry point
+main() {
+    check_dependencies
+
+    # Handle piped input
+    if [ -p /dev/stdin ]; then
+        clipcatctl insert "$(cat)" > /dev/null
+        exit 0
+    fi
+
+    local OPERATION="$1"
+    if [ -z "$OPERATION" ]; then
+        OPERATION=$(menu run -p " 󰅌 " <<< $'󰢨 Paste\n󱘙 Delete\n󱘝 Clear\n󱌟 Insert' | cut -d' ' -f2 | tr '[:upper:]' '[:lower:]')
+    fi
+
+    case "$OPERATION" in
+        paste)
+            paste_clipboard
+            ;;
+        delete)
+            delete_clipboard
+            ;;
+        clear)
+            clear_clipboard
+            ;;
+        insert)
+            shift
+            insert_clipboard "$*"
+            ;;
+        -h | --help)
+            usage
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
