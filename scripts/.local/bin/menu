@@ -1,0 +1,825 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.9"
+# dependencies = []
+# ///
+
+"""
+A menu-backend agnostic script to launch custom menus.
+
+Provides a unified interface for multiple menu programs (dmenu, rofi, bemenu,
+tofi, wofi, yofi) with automatic backend selection based on display server.
+
+Usage:
+    pymenu run [-p PROMPT]
+    pymenu backend [BACKEND]
+"""
+
+import argparse
+import math
+import os
+import re
+import shutil
+import subprocess
+import sys
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Optional
+
+
+SUPPORTED_BACKENDS_X11 = ["rofi", "dmenu", "bemenu"]
+SUPPORTED_BACKENDS_WAYLAND = ["tofi", "yofi", "wofi", "bemenu", "rofi"]
+FALLBACK_BACKEND_X11 = "dmenu"
+FALLBACK_BACKEND_WAYLAND = "tofi"
+
+WIDTH_MULTIPLIER = 1.0
+
+
+def warn_unsupported(feature: str, backend: str = "bemenu"):
+    print(f"Warning: {feature} is not supported by {backend}", file=sys.stderr)
+
+
+def source_bash_config(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    try:
+        cmd = f'set -a && source "{path}" && env'
+        result = subprocess.run(
+            ["bash", "-c", cmd],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        env = {}
+        for line in result.stdout.splitlines():
+            if "=" in line:
+                key, _, value = line.partition("=")
+                if key.startswith("MENU_"):
+                    env[key] = value
+        return env
+    except (subprocess.TimeoutExpired, OSError):
+        return {}
+
+
+@dataclass
+class MenuConfig:
+    backend: Optional[str] = None
+    font: Optional[str] = None
+    border_width: Optional[str] = None
+    color_bg: str = "#000000"
+    color_fg: str = "#ffffff"
+    color_header_bg: str = "#000000"
+    color_header_fg: str = "#ffffff"
+    color_selected_bg: str = "#000000"
+    color_selected_fg: str = "#ffffff"
+    color_border: str = "#000000"
+    color_separator: str = "#000000"
+    color_selected_fg_active: str = "#ffffff"
+    color_selected_fg_urgent: str = "#ffffff"
+    width: Optional[int] = None
+    height: Optional[int] = None
+    padding_x: int = 0
+    padding_y: int = 0
+    line_height: int = 30
+    position: str = "top"
+    layout_rows: Optional[int | str] = None
+    layout_columns: Optional[int | str] = None
+    overlay: bool = False
+
+    @classmethod
+    def from_dict(cls, data: dict[str, str]) -> "MenuConfig":
+        def get_str(key: str) -> Optional[str]:
+            return data.get(key) or None
+
+        def get_int(key: str, default: int) -> int:
+            val = data.get(key)
+            if val and val.isdigit():
+                return int(val)
+            return default
+
+        def get_optional_int(key: str) -> Optional[int]:
+            val = data.get(key)
+            if val and val.isdigit():
+                return int(val)
+            return None
+
+        def get_bool(key: str) -> bool:
+            val = data.get(key, "")
+            return val.lower() == "true"
+
+        layout_rows_val = get_str("MENU_LAYOUT_ROWS")
+        if layout_rows_val == "auto":
+            layout_rows: Optional[int | str] = "auto"
+        elif layout_rows_val and layout_rows_val.isdigit():
+            layout_rows = int(layout_rows_val)
+        else:
+            layout_rows = None
+
+        layout_columns_val = get_str("MENU_LAYOUT_COLUMNS")
+        if layout_columns_val == "auto":
+            layout_columns: Optional[int | str] = "auto"
+        elif layout_columns_val and layout_columns_val.isdigit():
+            layout_columns = int(layout_columns_val)
+        else:
+            layout_columns = None
+
+        return cls(
+            backend=get_str("MENU_BACKEND"),
+            font=get_str("MENU_FONT"),
+            border_width=get_str("MENU_BORDER_WIDTH"),
+            color_bg=get_str("MENU_COLOR_BG") or "#000000",
+            color_fg=get_str("MENU_COLOR_FG") or "#ffffff",
+            color_header_bg=get_str("MENU_COLOR_HEADER_BG") or "#000000",
+            color_header_fg=get_str("MENU_COLOR_HEADER_FG") or "#ffffff",
+            color_selected_bg=get_str("MENU_COLOR_SELECTED_BG") or "#000000",
+            color_selected_fg=get_str("MENU_COLOR_SELECTED_FG") or "#ffffff",
+            color_border=get_str("MENU_COLOR_BORDER") or "#000000",
+            color_separator=get_str("MENU_COLOR_SEPARATOR") or "#000000",
+            color_selected_fg_active=get_str("MENU_COLOR_SELECTED_FG_ACTIVE")
+            or "#ffffff",
+            color_selected_fg_urgent=get_str("MENU_COLOR_SELECTED_FG_URGENT")
+            or "#ffffff",
+            width=get_optional_int("MENU_WIDTH"),
+            height=get_optional_int("MENU_HEIGHT"),
+            padding_x=get_int("MENU_PADDING_X", 0),
+            padding_y=get_int("MENU_PADDING_Y", 0),
+            line_height=get_int("MENU_LINE_HEIGHT", 30),
+            position=get_str("MENU_POSITION") or "top",
+            layout_rows=layout_rows,
+            layout_columns=layout_columns,
+            overlay=get_bool("MENU_OVERLAY"),
+        )
+
+
+def load_config() -> MenuConfig:
+    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    config_path = config_home / "profile.d/gui/10-menu.sh.nosource"
+    config_data = source_bash_config(config_path)
+    for key, value in config_data.items():
+        if key not in os.environ:
+            os.environ[key] = value
+    env_data = {k: v for k, v in os.environ.items() if k.startswith("MENU_")}
+    return MenuConfig.from_dict(env_data)
+
+
+class MenuBackend(ABC):
+    name: str
+
+    @classmethod
+    @abstractmethod
+    def is_available(cls) -> bool:
+        pass
+
+    @abstractmethod
+    def get_options(
+        self,
+        prompt: str,
+        config: MenuConfig,
+        max_line_length: int = 0,
+        input_line_count: int = 0,
+    ) -> list[str]:
+        pass
+
+
+class TofiBackend(MenuBackend):
+    name = "tofi"
+
+    @classmethod
+    def is_available(cls) -> bool:
+        return shutil.which(cls.name) is not None
+
+    def get_options(
+        self,
+        prompt: str,
+        config: MenuConfig,
+        max_line_length: int = 0,
+        input_line_count: int = 0,
+    ) -> list[str]:
+        opts = ["--ascii-input=false", "--fuzzy-match=true", "--require-match=false"]
+        if prompt:
+            opts.append(f"--prompt-text={prompt}")
+        return opts
+
+
+class WofiBackend(MenuBackend):
+    name = "wofi"
+
+    @classmethod
+    def is_available(cls) -> bool:
+        return shutil.which(cls.name) is not None
+
+    def get_options(
+        self,
+        prompt: str,
+        config: MenuConfig,
+        max_line_length: int = 0,
+        input_line_count: int = 0,
+    ) -> list[str]:
+        opts = ["--dmenu"]
+        if prompt:
+            opts.append(f"--prompt={prompt}")
+        return opts
+
+
+class YofiBackend(MenuBackend):
+    name = "yofi"
+
+    @classmethod
+    def is_available(cls) -> bool:
+        return shutil.which(cls.name) is not None
+
+    def get_options(
+        self,
+        prompt: str,
+        config: MenuConfig,
+        max_line_length: int = 0,
+        input_line_count: int = 0,
+    ) -> list[str]:
+        opts = []
+        if prompt:
+            opts.extend(["--prompt", prompt])
+        return opts
+
+
+class BemenuBackend(MenuBackend):
+    name = "bemenu"
+
+    @classmethod
+    def is_available(cls) -> bool:
+        return shutil.which(cls.name) is not None
+
+    def get_options(
+        self,
+        prompt: str,
+        config: MenuConfig,
+        max_line_length: int = 0,
+        input_line_count: int = 0,
+    ) -> list[str]:
+        opts = ["--ignorecase", "--wrap", "--scrollbar", "autohide"]
+
+        is_wayland = "WAYLAND_DISPLAY" in os.environ
+
+        if is_wayland:
+            screen_w, screen_h = get_screen_dimensions_wayland()
+            polybar_horz, polybar_vert = 0, 0
+        else:
+            screen_w, screen_h = get_screen_dimensions_x11()
+            polybar_horz, polybar_vert, _, _ = get_polybar_dimensions()
+
+        margin = polybar_horz + config.padding_x
+
+        if config.font:
+            for f in config.font.split("\n"):
+                if f.strip():
+                    opts.extend(["--fn", f.strip()])
+                    break
+
+        if config.line_height:
+            opts.extend(["-H", str(config.line_height)])
+
+        if config.border_width:
+            opts.extend(["-B", config.border_width])
+
+        opts.extend(
+            [
+                "--tb",
+                config.color_header_bg,
+                "--tf",
+                config.color_header_fg,
+                "--nb",
+                config.color_bg,
+                "--nf",
+                config.color_fg,
+                "--hb",
+                config.color_selected_bg,
+                "--hf",
+                config.color_selected_fg,
+                "--ab",
+                config.color_bg,
+                "--af",
+                config.color_fg,
+                "--fb",
+                config.color_bg,
+                "--ff",
+                config.color_fg,
+                "--sb",
+                config.color_selected_bg,
+                "--sf",
+                config.color_selected_fg,
+                "--scb",
+                config.color_selected_bg,
+                "--scf",
+                config.color_selected_fg,
+                "--bdr",
+                config.color_border,
+            ]
+        )
+
+        width_factor = (config.width or 100) / 100
+        opts.extend(["-W", f"{width_factor:.3f}"])
+
+        opts.extend(["-M", str(margin)])
+
+        if config.position == "bottom":
+            opts.append("-b")
+        elif config.position == "center":
+            opts.append("-c")
+        elif config.position in ("left", "right"):
+            warn_unsupported(f"position={config.position}")
+            opts.append("-c")
+
+        if config.layout_columns and config.layout_columns not in (1, "1"):
+            warn_unsupported("grid/columns layout")
+
+        line_height = config.line_height or 30
+        if config.height and config.height > 0:
+            max_rows = max(1, int(screen_h * config.height / 100 / line_height))
+        else:
+            max_rows = max(1, int(screen_h / line_height))
+
+        if config.layout_rows == "auto":
+            if input_line_count > 0:
+                rows = min(input_line_count, max_rows)
+            else:
+                rows = max_rows
+            opts.extend(["-l", str(rows)])
+        elif isinstance(config.layout_rows, int) and config.layout_rows > 0:
+            opts.extend(["-l", str(config.layout_rows)])
+        elif config.height and config.height > 0:
+            rows = max(1, int(screen_h * config.height / 100 / line_height))
+            opts.extend(["-l", str(rows)])
+
+        if prompt:
+            opts.extend(["-p", prompt])
+
+        return opts
+
+
+class RofiBackend(MenuBackend):
+    name = "rofi"
+
+    @classmethod
+    def is_available(cls) -> bool:
+        return shutil.which(cls.name) is not None
+
+    def get_options(
+        self,
+        prompt: str,
+        config: MenuConfig,
+        max_line_length: int = 0,
+        input_line_count: int = 0,
+    ) -> list[str]:
+        opts = ["-dmenu"]
+        if prompt:
+            opts.extend(["-p", prompt])
+
+        color_window = (
+            f"{config.color_bg},{config.color_border},{config.color_separator}"
+        )
+        color_normal = f"{config.color_bg},{config.color_fg},{config.color_bg},{config.color_selected_bg},{config.color_selected_fg}"
+        color_active = f"{config.color_bg},{config.color_fg},{config.color_bg},{config.color_selected_bg},{config.color_selected_fg_active}"
+        color_urgent = f"{config.color_bg},{config.color_fg},{config.color_bg},{config.color_selected_bg},{config.color_selected_fg_urgent}"
+
+        opts.extend(
+            [
+                "-color-window",
+                color_window,
+                "-color-normal",
+                color_normal,
+                "-color-active",
+                color_active,
+                "-color-urgent",
+                color_urgent,
+            ]
+        )
+
+        return opts
+
+
+class DmenuBackend(MenuBackend):
+    name = "dmenu"
+
+    @classmethod
+    def is_available(cls) -> bool:
+        return shutil.which(cls.name) is not None
+
+    def get_options(
+        self,
+        prompt: str,
+        config: MenuConfig,
+        max_line_length: int = 0,
+        input_line_count: int = 0,
+    ) -> list[str]:
+        opts: list[str] = []
+        screen_w, screen_h = get_screen_dimensions_x11()
+        polybar_horz, polybar_vert, polybar_height, _ = get_polybar_dimensions()
+
+        base_x = polybar_horz
+        base_y = polybar_vert
+        padding_x = base_x + config.padding_x
+        padding_y = base_y + config.padding_y
+
+        if config.font:
+            for f in config.font.split("\n"):
+                if f.strip():
+                    opts.extend(["-fn", f.strip()])
+
+        if config.line_height:
+            opts.extend(["-h", str(config.line_height)])
+        if config.color_bg:
+            opts.extend(["-nb", config.color_bg])
+        if config.color_fg:
+            opts.extend(["-nf", config.color_fg])
+        if config.color_selected_bg:
+            opts.extend(["-sb", config.color_selected_bg])
+        if config.color_selected_fg:
+            opts.extend(["-sf", config.color_selected_fg])
+        if config.border_width:
+            opts.extend(["-bw", config.border_width])
+
+        char_width = parse_font_pixelsize(config.font) or config.line_height
+        line_height = config.line_height
+
+        if config.height and config.height > 0:
+            constrained_height = screen_h * config.height // 100 - 2 * padding_y
+            max_possible_rows = max(1, constrained_height // line_height)
+        else:
+            max_possible_rows = max(1, (screen_h - 2 * padding_y) // line_height)
+
+        if config.width and config.width > 0:
+            max_menu_width = screen_w * config.width // 100 - 2 * padding_x
+        else:
+            max_menu_width = screen_w - 2 * padding_x
+
+        item_width = int(max(max_line_length, 1) * char_width * WIDTH_MULTIPLIER)
+
+        rows = None
+        cols = None
+
+        if config.layout_columns == "auto" or config.layout_rows == "auto":
+            if input_line_count > 0:
+                if config.layout_columns == "auto" and config.layout_rows == "auto":
+                    rows, cols = calculate_balanced_grid(
+                        input_line_count,
+                        max_possible_rows,
+                        max_menu_width,
+                        item_width,
+                        line_height,
+                    )
+                elif config.layout_columns == "auto":
+                    rows = min(input_line_count, max_possible_rows)
+                    if isinstance(config.layout_rows, int) and config.layout_rows > 0:
+                        rows = min(config.layout_rows, max_possible_rows)
+                    cols = max(1, math.ceil(input_line_count / rows))
+                    available_cols = max_menu_width // item_width
+                    cols = min(cols, available_cols)
+                else:
+                    rows = min(input_line_count, max_possible_rows)
+                    if (
+                        isinstance(config.layout_columns, int)
+                        and config.layout_columns > 0
+                    ):
+                        cols = config.layout_columns
+            else:
+                if config.layout_columns == "auto":
+                    cols = max(1, max_menu_width // item_width)
+                if config.layout_rows == "auto":
+                    rows = max_possible_rows
+        else:
+            if isinstance(config.layout_rows, int) and config.layout_rows > 0:
+                rows = config.layout_rows
+            elif config.height and config.height > 0:
+                total_menu_h = screen_h * config.height // 100
+                rows = max(1, total_menu_h // line_height)
+            if isinstance(config.layout_columns, int) and config.layout_columns > 0:
+                cols = config.layout_columns
+
+        if config.width:
+            dmenu_w = max_menu_width
+        elif cols and cols > 1:
+            dmenu_w = min(cols * item_width, max_menu_width)
+        elif max_line_length > 0:
+            dmenu_w = item_width + 2 * padding_x
+        else:
+            dmenu_w = max_menu_width
+        dmenu_w = max(100, dmenu_w)
+
+        if config.position == "top":
+            dmenu_x = (screen_w - dmenu_w) // 2
+            dmenu_y = padding_y
+            opts.extend(["-X", str(dmenu_x), "-Y", str(dmenu_y), "-W", str(dmenu_w)])
+        elif config.position == "bottom":
+            dmenu_x = (screen_w - dmenu_w) // 2
+            if rows:
+                dmenu_y = screen_h - ((rows + 1) * line_height) - base_y
+            else:
+                dmenu_y = screen_h - (2 * line_height) - base_y
+            opts.extend(["-X", str(dmenu_x), "-Y", str(dmenu_y), "-W", str(dmenu_w)])
+        elif config.position == "left":
+            dmenu_x = padding_x
+            dmenu_y = (screen_h - ((rows or 1) * line_height)) // 2
+            opts.extend(["-X", str(dmenu_x), "-Y", str(dmenu_y), "-W", str(dmenu_w)])
+        elif config.position == "right":
+            dmenu_x = screen_w - dmenu_w - padding_x
+            dmenu_y = (screen_h - ((rows or 1) * line_height)) // 2
+            opts.extend(["-X", str(dmenu_x), "-Y", str(dmenu_y), "-W", str(dmenu_w)])
+        elif config.position == "center":
+            opts.append("-c")
+        else:
+            dmenu_x = (screen_w - dmenu_w) // 2
+            dmenu_y = base_y
+            opts.extend(["-X", str(dmenu_x), "-Y", str(dmenu_y), "-W", str(dmenu_w)])
+
+        if cols and cols > 1:
+            opts.extend(["-g", str(cols)])
+
+        if rows:
+            opts.extend(["-l", str(rows)])
+
+        if prompt:
+            opts.extend(["-p", prompt])
+
+        return opts
+
+
+def get_screen_dimensions_x11() -> tuple[int, int]:
+    try:
+        result = subprocess.run(
+            ["xdpyinfo"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        for line in result.stdout.splitlines():
+            if "dimensions:" in line:
+                parts = line.split()
+                for i, part in enumerate(parts):
+                    if "x" in part and part.replace("x", "").isdigit():
+                        w, h = part.split("x")
+                        return int(w), int(h)
+    except (subprocess.TimeoutExpired, OSError, ValueError):
+        pass
+    return 1920, 1080
+
+
+def get_polybar_dimensions() -> tuple[int, int, int, int]:
+    try:
+        result = subprocess.run(
+            ["polybarctl", "get_dimensions"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        lines = result.stdout.strip().splitlines()
+        if len(lines) >= 4:
+            horz_margin = int(lines[0])
+            vert_margin = int(lines[1])
+            bar_height = int(lines[2])
+            bar_width = int(lines[3])
+            return horz_margin, vert_margin, bar_height, bar_width
+    except (subprocess.TimeoutExpired, OSError, ValueError):
+        pass
+    return 0, 0, 0, 0
+
+
+def parse_font_pixelsize(font_string: Optional[str]) -> Optional[int]:
+    if not font_string:
+        return None
+    first_font = font_string.split("\n")[0].strip()
+    match = re.search(r"pixelsize=(\d+)", first_font)
+    if match:
+        return int(match.group(1))
+    return None
+
+
+def calculate_balanced_grid(
+    item_count: int,
+    max_rows: int,
+    max_width: int,
+    item_width: int,
+    line_height: int,
+) -> tuple[int, int]:
+    if item_count <= 0:
+        return 1, 1
+
+    max_cols = max(1, max_width // item_width) if item_width > 0 else 1
+
+    if item_count <= max_rows:
+        return item_count, 1
+
+    best_rows, best_cols = max_rows, 1
+    best_score = float("inf")
+
+    for cols in range(1, max_cols + 1):
+        rows_needed = math.ceil(item_count / cols)
+        if rows_needed > max_rows:
+            continue
+        visual_ratio = (
+            (rows_needed * line_height) / (cols * item_width)
+            if cols > 0
+            else float("inf")
+        )
+        score = abs(visual_ratio - 1.0)
+        if score < best_score:
+            best_score = score
+            best_rows, best_cols = rows_needed, cols
+
+    if best_cols == 1 and max_cols > 1:
+        best_cols = max_cols
+        best_rows = max_rows
+
+    return best_rows, best_cols
+
+
+def get_screen_dimensions_wayland() -> tuple[int, int]:
+    try:
+        result = subprocess.run(
+            ["wlr-randr"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        for line in result.stdout.splitlines():
+            match = re.search(r"(\d+)x(\d+)", line)
+            if match:
+                return int(match.group(1)), int(match.group(2))
+    except (subprocess.TimeoutExpired, OSError):
+        pass
+    return 1920, 1080
+
+
+def get_screen_height_wayland() -> int:
+    _, h = get_screen_dimensions_wayland()
+    return h
+
+
+BACKEND_CLASSES: dict[str, type[MenuBackend]] = {
+    "tofi": TofiBackend,
+    "wofi": WofiBackend,
+    "yofi": YofiBackend,
+    "bemenu": BemenuBackend,
+    "rofi": RofiBackend,
+    "dmenu": DmenuBackend,
+}
+
+
+def get_menu_backend(config: MenuConfig) -> MenuBackend:
+    is_wayland = "WAYLAND_DISPLAY" in os.environ
+    supported = SUPPORTED_BACKENDS_WAYLAND if is_wayland else SUPPORTED_BACKENDS_X11
+    fallback = FALLBACK_BACKEND_WAYLAND if is_wayland else FALLBACK_BACKEND_X11
+
+    if config.backend:
+        backend_lower = config.backend.lower()
+        if backend_lower in BACKEND_CLASSES:
+            backend_cls = BACKEND_CLASSES[backend_lower]
+            if backend_cls.is_available():
+                return backend_cls()
+
+    for backend_name in supported:
+        if backend_name in BACKEND_CLASSES:
+            backend_cls = BACKEND_CLASSES[backend_name]
+            if backend_cls.is_available():
+                return backend_cls()
+
+    fallback_cls = BACKEND_CLASSES.get(fallback, DmenuBackend)
+    return fallback_cls()
+
+
+def set_menu_backend(backend_name: str) -> bool:
+    if not shutil.which(backend_name):
+        print(f"Error: Backend '{backend_name}' not found", file=sys.stderr)
+        return False
+
+    print(f"Setting '{backend_name}' as the menu backend...")
+
+    config_home = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
+    config_path = config_home / "profile.d/gui/10-menu.sh.nosource"
+
+    if not config_path.exists():
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(f"MENU_BACKEND={backend_name}\n")
+        os.environ["MENU_BACKEND"] = backend_name
+        return True
+
+    content = config_path.read_text()
+    lines = content.splitlines()
+    found = False
+    new_lines = []
+    in_conditional = 0
+
+    for line in lines:
+        stripped = line.strip()
+        if (
+            stripped.startswith("if ")
+            or stripped.startswith("for ")
+            or stripped == "while"
+        ):
+            in_conditional += 1
+        if stripped in ("fi", "done") or stripped.startswith("done "):
+            in_conditional -= 1
+            in_conditional = max(0, in_conditional)
+
+        if in_conditional == 0 and stripped.startswith("MENU_BACKEND="):
+            new_lines.append(f"MENU_BACKEND={backend_name}")
+            found = True
+        else:
+            new_lines.append(line)
+
+    if not found:
+        if new_lines and new_lines[-1].strip():
+            new_lines.append("")
+        new_lines.append(f"MENU_BACKEND={backend_name}")
+
+    new_content = "\n".join(new_lines)
+    if not new_content.endswith("\n"):
+        new_content += "\n"
+
+    config_path.write_text(new_content)
+    os.environ["MENU_BACKEND"] = backend_name
+    return True
+
+
+def toggle_polybar():
+    if shutil.which("polybarctl"):
+        subprocess.run(["polybarctl", "toggle"], timeout=5)
+
+
+def run_menu(config: MenuConfig, prompt: str):
+    stdin_data = None
+    max_line_length = len(prompt)
+    input_line_count = 0
+
+    if not sys.stdin.isatty():
+        stdin_data = sys.stdin.read()
+        lines = stdin_data.splitlines()
+        input_line_count = len(lines)
+        for line in lines:
+            max_line_length = max(max_line_length, len(line))
+
+    backend = get_menu_backend(config)
+    options = backend.get_options(prompt, config, max_line_length, input_line_count)
+
+    if config.overlay:
+        toggle_polybar()
+
+    try:
+        cmd = [backend.name] + options
+        result = subprocess.run(
+            cmd,
+            input=stdin_data,
+            capture_output=False,
+            text=True,
+        )
+        sys.exit(result.returncode)
+    finally:
+        if config.overlay:
+            toggle_polybar()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="pymenu",
+        description="A menu-backend agnostic script to launch custom menus.",
+    )
+    subparsers = parser.add_subparsers(dest="operation", help="Operations")
+
+    run_parser = subparsers.add_parser(
+        "run", help="Create a menu using the options provided"
+    )
+    run_parser.add_argument(
+        "-p",
+        "--prompt",
+        default="Select an option: ",
+        help="The prompt to display in the menu",
+    )
+
+    backend_parser = subparsers.add_parser(
+        "backend", help="Get or set the menu backend"
+    )
+    backend_parser.add_argument(
+        "backend_name",
+        nargs="?",
+        help="The backend to set (optional)",
+    )
+
+    args = parser.parse_args()
+
+    if args.operation == "run":
+        config = load_config()
+        run_menu(config, args.prompt)
+    elif args.operation == "backend":
+        if args.backend_name:
+            success = set_menu_backend(args.backend_name)
+            sys.exit(0 if success else 1)
+        else:
+            config = load_config()
+            backend = get_menu_backend(config)
+            print(backend.name)
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
