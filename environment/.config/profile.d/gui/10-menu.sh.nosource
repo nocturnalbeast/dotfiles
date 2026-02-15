@@ -4,38 +4,38 @@
 
 # menu backend selection
 if [ -n "$WAYLAND_DISPLAY" ]; then
-    export MENU_BACKEND="tofi"
+    MENU_BACKEND="tofi"
 elif [ -n "$DISPLAY" ]; then
-    export MENU_BACKEND="dmenu"
+    MENU_BACKEND="dmenu"
 else
-    export MENU_BACKEND="fzf"
+    MENU_BACKEND="fzf"
 fi
 
 # menu layout
-MENU_OVERLAY="true"     # hide polybar/system bar while menu is active
-MENU_POSITION="top"     # menu position: top, bottom, left, right, center
-MENU_LAYOUT_COLUMNS="5" # number of columns in the menu
-MENU_LAYOUT_ROWS="max"  # number of rows (integer or 'max' for auto)
+MENU_OVERLAY="false"       # hide system bar while menu is active
+MENU_POSITION="top"        # menu position: top, bottom, left, right, center
+MENU_LAYOUT_COLUMNS="auto" # number of columns in the menu (integer or 'auto' for dynamic)
+MENU_LAYOUT_ROWS="auto"    # number of rows (integer or 'auto' for dynamic)
 
 # menu geometry
 MENU_WIDTH="100"                                             # menu width as percent of screen
-MENU_HEIGHT="15"                                             # menu height as percent of screen
+MENU_HEIGHT="25"                                             # menu height as percent of screen
 MENU_LINE_HEIGHT="$(polybarctl get_dimensions | sed '3q;d')" # menu line height in pixels
 MENU_FONT="$(polybarctl get_font | cut -d '=' -f 2-)"        # menu font(s)
 
 # menu padding and borders
-MENU_PADDING_X="10"   # horizontal padding (pixels)
-MENU_PADDING_Y="6"    # vertical padding (pixels)
+MENU_PADDING_X="0"    # horizontal padding (pixels)
+MENU_PADDING_Y="0"    # vertical padding (pixels)
 MENU_BORDER_WIDTH="0" # border width (pixels)
 
-# menu colors
-MENU_COLOR_HEADER_BG="#FFFFFF"          # header background color
-MENU_COLOR_HEADER_FG="#000000"          # header foreground color
-MENU_COLOR_BG="#CACACA"                 # menu background color
-MENU_COLOR_FG="#000000"                 # menu text color
-MENU_COLOR_SELECTED_BG="#181818"        # selected item background
-MENU_COLOR_SELECTED_FG="#EAEAEA"        # selected item foreground
-MENU_COLOR_SELECTED_FG_ACTIVE="#EAEAEA" # selected item fg (active)
-MENU_COLOR_SELECTED_FG_URGENT="#EAEAEA" # selected item fg (urgent)
-MENU_COLOR_BORDER="#ffffff"             # menu border color
-MENU_COLOR_SEPARATOR="#123456"          # menu separator color
+# menu colors (blended from polybar/colors.ini)
+MENU_COLOR_BG="#121212"                 # menu background color (normal-content-background)
+MENU_COLOR_FG="#EAEAEA"                 # menu text color (normal-content-foreground)
+MENU_COLOR_HEADER_BG="#3F3F3F"          # header background color (header-background)
+MENU_COLOR_HEADER_FG="#CDCDCD"          # header foreground color (header-foreground)
+MENU_COLOR_SELECTED_BG="#EAEAEA"        # selected item background (focused-content-background)
+MENU_COLOR_SELECTED_FG="#121212"        # selected item foreground (focused-content-foreground)
+MENU_COLOR_SELECTED_FG_ACTIVE="#CDCDCD" # selected item fg (active)
+MENU_COLOR_SELECTED_FG_URGENT="#CDCDCD" # selected item fg (urgent)
+MENU_COLOR_BORDER="#3F3F3F"             # menu border color (same as header)
+MENU_COLOR_SEPARATOR="#606060"          # menu separator color (same as bg)
