@@ -1,12 +1,80 @@
 #!/usr/bin/env bash
 
-SELECTION=$(dmenu-helper run_menu " ﮊ  " "$(ps -e -o pid,user,cmd | tail -n +2 | awk '{print $1":"$2":"substr($0, index($0,$3))}')")
+# A process killer menu.
 
-[[ -z $SELECTION ]] && exit
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [PID]
 
-PROC=$(cut -d : -f 1 <<< "$SELECTION")
-NAME=$(cut -d : -f 3- <<< "$SELECTION")
-[[ -z $PROC ]] && exit
+A process killer menu.
 
-notify-send -u normal "Killing process $PROC" "$NAME"
-kill "$PROC"
+If PID is not provided, prompts for selection.
+
+Examples:
+    $(basename "$0")
+    $(basename "$0") 1234
+EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    DEPENDENCIES=(ps kill notify-send menu)
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &> /dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Get a list of running processes
+#
+# Outputs:
+#   A list of running processes in the format 'PID:USER:COMMAND'
+get_processes() {
+    ps -e -o pid,user,cmd | tail -n +2 | awk '{print $1":"$2":"substr($0, index($0,$3))}'
+}
+
+# Kill a process by PID
+#
+# Arguments:
+#   $1 - The PID to kill
+kill_process() {
+    local PID="$1"
+    local NAME
+    NAME=$(ps -p "$PID" -o cmd= 2> /dev/null)
+    if [ -n "$NAME" ]; then
+        notify-send -u normal "Killing process $PID" "$NAME"
+        kill "$PID"
+    else
+        notify-send -u critical "Process $PID not found"
+        exit 1
+    fi
+}
+
+# Main entry point
+main() {
+    check_dependencies
+    case "$1" in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+    esac
+
+    if [ $# -eq 0 ]; then
+        SELECTION=$(menu run -p " 󰚌 " <<< "$(get_processes)")
+        [[ -z $SELECTION ]] && exit 0
+
+        PROC=$(cut -d : -f 1 <<< "$SELECTION")
+        NAME=$(cut -d : -f 3- <<< "$SELECTION")
+        [[ -z $PROC ]] && exit 0
+
+        notify-send -u normal "Killing process $PROC" "$NAME"
+        kill "$PROC"
+    else
+        kill_process "$1"
+    fi
+}
+
+main "$@"

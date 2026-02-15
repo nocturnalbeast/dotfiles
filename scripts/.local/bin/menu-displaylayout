@@ -1,114 +1,230 @@
 #!/usr/bin/env bash
 
+# A menu for managing display layouts.
+
+# Global configuration
+DEPENDENCIES=(menu arandr notify-send)
 CURRENT_LAYOUT="${XDG_CONFIG_HOME:="$HOME/.config"}/wm/current_layout"
 LAYOUTS_DIR="${XDG_CONFIG_HOME:="$HOME/.config"}/wm/layouts"
+TEMP_LAYOUT="/tmp/edit_layout.sh"
 
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [OPERATION] [ARGS]
+
+A menu for managing display layouts.
+
+Operations:
+    create              Create a new screen layout
+    select [NAME]       Select and apply a screen layout
+    edit                Edit an existing screen layout
+    help                Display this help message
+
+If no operation is provided, an interactive menu will be shown.
+EOF
+    exit "${1:-0}"
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for dependency in "${DEPENDENCIES[@]}"; do
+        if ! command -v "$dependency" &> /dev/null; then
+            echo "error: Could not find '${dependency}', is it installed?" >&2
+            return 1
+        fi
+    done
+}
+
+# Get a list of all layouts
+#
+# Outputs:
+#   Writes list of layout names to stdout
+get_layout_list() {
+    find "$LAYOUTS_DIR" -maxdepth 1 -type f 2> /dev/null |
+        xargs -n 1 basename 2> /dev/null |
+        grep "^$(hostname)_" |
+        cut -f 2- -d "_" || echo ""
+}
+
+# Create a new layout
 create_layout() {
-    SL_NAME=""
-    CL_ACTION="$(dmenu-helper run_menu "  How do you want to create the new layout? " " Graphical\n Command-line")"
-    [[ $CL_ACTION == "" ]] && exit 0
-    case $CL_ACTION in
-        ' Graphical')
-            MARKER_FILE="$(mktemp)"
+    local sl_name=""
+    local cl_action
+
+    cl_action="$(printf "󰇀 Graphical\n Command-line" | menu run -p " 󰨇  How do you want to create the new layout? " | cut -d' ' -f2 | tr '[:upper:]' '[:lower:]')"
+    [[ -z $cl_action ]] && return 0
+
+    case "$cl_action" in
+        'graphical')
+            local marker_file
+            local lfile
+
+            marker_file="$(mktemp)"
             arandr
-            LFILE="$(find "$HOME/.screenlayout" -type f -newer "$MARKER_FILE" -printf "%T+ %p %f\n" | sort -r | head -1 | cut -f 3 -d " ")"
-            rm "$MARKER_FILE"
-            if [[ $LFILE == "" ]]; then
+            lfile="$(find "$HOME/.screenlayout" -type f -newer "$marker_file" -printf "%T+ %p %f\n" 2> /dev/null | sort -r | head -1 | cut -f 3 -d " ")"
+            rm "$marker_file"
+
+            if [[ -z $lfile ]]; then
                 notify-send -u normal "No layout files found in ~/.screenlayout! Make sure to save to default save location."
-                exit 1
+                return 1
             else
-                SL_NAME="$LAYOUTS_DIR/$(hostname)_$(basename "$LFILE" | rev | cut -f 2- -d "." | rev)"
-                mv "$HOME/.screenlayout/$LFILE" "$SL_NAME"
-                rmdir "$HOME/.screenlayout" 2> /dev/null
+                sl_name="$LAYOUTS_DIR/$(hostname)_$(basename "$lfile" | rev | cut -f 2- -d "." | rev)"
+                mv "$HOME/.screenlayout/$lfile" "$sl_name"
+                chmod +x "$sl_name"
+                rmdir "$HOME/.screenlayout" 2> /dev/null || true
             fi
             ;;
-        ' Command-line')
-            LNAME="$(dmenu-helper run_menu "  Name the new layout: " "")"
-            [[ $LNAME == "" ]] && exit 0
-            SL_NAME="$LAYOUTS_DIR/$(hostname)_$LNAME"
-            $TERMINAL -c "$EDITOR $SL_NAME"
+        'command-line')
+            local lname
+
+            lname="$(menu run -p "  Name the new layout: ")"
+            [[ -z $lname ]] && return 0
+
+            sl_name="$LAYOUTS_DIR/$(hostname)_$lname"
+            $TERMINAL -c "$EDITOR $sl_name"
+            chmod +x "$sl_name" 2> /dev/null || true
             ;;
     esac
-    if [[ $SL_NAME != "" ]]; then
-        SWITCH_ACTION="$(dmenu-helper run_menu "  Do you want to switch to the newly created layout? " "Yes\nNo")"
-        if [[ $SWITCH_ACTION == "Yes" ]]; then
-            select_layout "$(basename "$SL_NAME" | cut -f 2- -d "_")"
+
+    if [[ -n $sl_name ]]; then
+        local switch_action
+
+        switch_action="$(printf "Yes\nNo" | menu run -p " 󰨇  Do you want to switch to the newly created layout? ")"
+        if [[ $switch_action == "Yes" ]]; then
+            select_layout "$(basename "$sl_name" | cut -f 2- -d "_")"
         fi
     else
         notify-send -u normal "Error in creating layout!"
     fi
 }
 
+# Select and apply a layout
+#
+# Arguments:
+#   $1 - Optional layout name to select directly
 select_layout() {
-    if [[ $1 != "" ]]; then
-        LSELECTED="$1"
+    local lselected
+    local lselected_full
+
+    if [[ -n $1 ]]; then
+        lselected="$1"
     else
-        LSELECTED="$(dmenu-helper run_menu "  Select a layout to switch to: " "$(find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$(hostname)_" | cut -f 2- -d "_")")"
+        local layouts
+        layouts="$(get_layout_list)"
+        echo "$layouts" >&2
+        if [[ -z $layouts ]]; then
+            notify-send -u normal "No layouts found. Create one first."
+            return 1
+        fi
+        lselected="$(printf "%s" "$layouts" | menu run -p " 󰨇  Select a layout to switch to: ")"
     fi
-    [[ $LSELECTED == "" ]] && exit 0
-    LSELECTED_FULL="$LAYOUTS_DIR/$(hostname)_$LSELECTED"
-    echo "$(hostname)_$LSELECTED" > "$CURRENT_LAYOUT"
-    $LSELECTED_FULL
-    "${XDG_CONFIG_HOME:="$HOME/.config"}"/wm/post-layoutswitch
-    notify-send -u low "Screen layout changed to $LSELECTED_FULL"
+
+    [[ -z $lselected ]] && return 0
+
+    lselected_full="$LAYOUTS_DIR/$(hostname)_$lselected"
+
+    if [[ ! -f $lselected_full ]]; then
+        notify-send -u critical "Layout file not found: $lselected_full"
+        return 1
+    fi
+
+    # Update current layout file
+    echo "$(hostname)_$lselected" > "$CURRENT_LAYOUT"
+
+    # Apply the layout
+    if [[ -x $lselected_full ]]; then
+        "$lselected_full"
+    else
+        chmod +x "$lselected_full" 2> /dev/null
+        bash "$lselected_full"
+    fi
+
+    # Run post-layout switch script if it exists
+    local post_script="${XDG_CONFIG_HOME:="$HOME/.config"}/wm/post-layoutswitch"
+    if [[ -x $post_script ]]; then
+        "$post_script"
+    fi
+
+    notify-send -u low "Screen layout changed to $lselected"
 }
 
+# Edit an existing layout
 edit_layout() {
-    LSELECTED="$(dmenu-helper run_menu "  Select a layout to edit: " "$(find "$LAYOUTS_DIR" -maxdepth 1 -type f | xargs -n 1 basename | grep "^$(hostname)_" | cut -f 2- -d "_")")"
-    [[ $LSELECTED == "" ]] && exit 0
-    LSELECTED_FULL="$LAYOUTS_DIR/$(hostname)_$LSELECTED"
-    EL_ACTION="$(dmenu-helper run_menu "  How do you want to edit the selected layout? " " Graphical\n Command-line")"
-    [[ $EL_ACTION == "" ]] && exit 0
-    case $EL_ACTION in
-        ' Graphical')
-            cp "$LSELECTED_FULL" /tmp/edit_layout.sh
-            arandr /tmp/edit_layout.sh
-            cp /tmp/edit_layout.sh "$LSELECTED_FULL"
+    local layouts
+    layouts="$(get_layout_list)"
+    if [[ -z $layouts ]]; then
+        notify-send -u normal "No layouts found. Create one first."
+        return 1
+    fi
+
+    local lselected
+    local lselected_full
+    local el_action
+
+    lselected="$(printf "%s" "$layouts" | menu run -p " 󰨇  Select a layout to edit: ")"
+    [[ -z $lselected ]] && return 0
+
+    lselected_full="$LAYOUTS_DIR/$(hostname)_$lselected"
+
+    if [[ ! -f $lselected_full ]]; then
+        notify-send -u critical "Layout file not found: $lselected_full"
+        return 1
+    fi
+
+    el_action="$(printf "󰇀 Graphical\n Command-line" | menu run -p " 󰨇  How do you want to edit the selected layout? " | cut -d' ' -f2 | tr '[:upper:]' '[:lower:]')"
+    [[ -z $el_action ]] && return 0
+
+    case "$el_action" in
+        'graphical')
+            cp "$lselected_full" "$TEMP_LAYOUT"
+            arandr "$TEMP_LAYOUT"
+            if [[ -f $TEMP_LAYOUT ]]; then
+                cp "$TEMP_LAYOUT" "$lselected_full"
+                chmod +x "$lselected_full" 2> /dev/null
+            else
+                notify-send -u critical "Failed to edit layout: temporary file not created"
+                return 1
+            fi
             ;;
-        ' Command-line')
-            $TERMINAL -c "$EDITOR $LSELECTED_FULL"
+        'command-line')
+            $TERMINAL -c "$EDITOR $lselected_full"
             ;;
     esac
-    SWITCH_ACTION="$(dmenu-helper run_menu "  Do you want to reload the edited layout? " "Yes\nNo")"
-    if [[ $SWITCH_ACTION == "Yes" ]]; then
-        select_layout "$(basename "$LSELECTED_FULL" | cut -f 2- -d "_")"
+
+    local switch_action
+    switch_action="$(printf "Yes\nNo" | menu run -p " 󰨇  Do you want to reload the edited layout? ")"
+    if [[ $switch_action == "Yes" ]]; then
+        select_layout "$lselected"
     fi
 }
 
-if [[ $1 != "" ]]; then
-    case $1 in
+# Main entry point
+main() {
+    check_dependencies
+
+    local OPERATION="$1"
+    if [ -z "$OPERATION" ]; then
+        OPERATION=$(menu run -p " 󰨇  " <<< $'󱇬 Create new layout\n󰒅 Select existing layout\n󰏫 Edit existing layout' | cut -d' ' -f2 | tr '[:upper:]' '[:lower:]')
+    fi
+
+    case "$OPERATION" in
         create)
             create_layout
-            exit 0
             ;;
         select)
             select_layout "$2"
-            exit 0
             ;;
         edit)
             edit_layout
-            exit 0
+            ;;
+        -h | --help)
+            usage
             ;;
         *)
-            echo "Unknown operation: $1"
+            usage
             exit 1
             ;;
     esac
-fi
+}
 
-MAIN_ACTION="$(dmenu-helper run_menu "   " " Create new layout\n Select existing layout\n Edit existing layout")"
-[[ $MAIN_ACTION == "" ]] && exit 0
-case "$MAIN_ACTION" in
-    ' Create new layout')
-        create_layout
-        exit 0
-        ;;
-    ' Select existing layout')
-        select_layout
-        exit 0
-        ;;
-    ' Edit existing layout')
-        edit_layout
-        exit 0
-        ;;
-esac
+main "$@"
