@@ -1,108 +1,203 @@
 #!/usr/bin/env bash
 
+# Display active monitor and workspace icons for polybar.
+
 usage() {
-    echo "$(basename "$0") : polybar module to show active monitor and workspace"
-    echo "Usage: $(basename "$0") [MONITOR_BG] [MONITOR_FG] [WORKSPACE_BG] [WORKSPACE_FG]"
-    echo "       $(basename "$0") noformat"
+    cat << EOF
+Usage: $(basename "$0") [MONITOR_BG] [MONITOR_FG] [WORKSPACE_BG] [WORKSPACE_FG]
+       $(basename "$0") noformat
+
+Display active monitor and workspace icons for polybar.
+
+Options:
+  noformat                      Display without polybar formatting
+  MONITOR_BG MONITOR_FG         Background and foreground colors for monitor icon
+  WORKSPACE_BG WORKSPACE_FG     Background and foreground colors for workspace icon
+EOF
+    exit 1
+}
+
+# Global configuration
+DEPENDENCIES=(xprop xrandr display)
+
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &> /dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Clean up function for graceful exit
+cleanup() {
+    jobs -p | xargs -r kill > /dev/null 2>&1
     exit 0
 }
 
-# check number of arguments before starting
-if [[ $# -ne 4 ]] && [[ $# -ne 1 ]]; then
-    usage
-    exit
-fi
-# check if the only argument is 'noformat' in case there is only one argument
-NOFORMAT="false"
-if [[ $# -eq 1 ]] && [[ $1 == "noformat" ]]; then
-    NOFORMAT="true"
-else
-    usage
-    exit
-fi
+# Get workspace offsets from X properties
+get_workspace_offsets() {
+    xprop -root -notype -f _NET_DESKTOP_VIEWPORT 0c '=$0+\n' _NET_DESKTOP_VIEWPORT |
+        cut -f 2 -d = |
+        tr -s ', ' '\n' |
+        xargs -L2 |
+        tr ' ' ','
+}
 
-# define default icons for workspaces
-ICON_0=""
-ICON_1=""
-ICON_2=""
-ICON_3=""
-ICON_4=""
-ICON_5=""
-ICON_6=""
-ICON_7=""
-ICON_8=""
-ICON_9=""
-DEFAULT_ICON=""
+# Get monitor information from xrandr
+get_monitor_info() {
+    xrandr --current --listmonitors |
+        tail -n+2 |
+        sed 's/.*[0-9]*\/[0-9]*x[0-9]*\/[0-9]*+\([0-9]*\)+\([0-9]*\)[ ]\+\(.*\)/\3:\1,\2/g'
+}
 
-# override the icons specified here with the workspace icons defined globally IF they exist
-if [[ -f "${XDG_CONFIG_HOME:="$HOME/.config"}/wm/workspace_icons" ]]; then
-    source "${XDG_CONFIG_HOME:="$HOME/.config"}/wm/workspace_icons"
-fi
+# Determine if we should use the same icons across all workspaces
+should_use_same_icons() {
+    local wksp_offsets=("$@")
 
-# define icons for monitors
-ICON_LAPTOP=""
-ICON_EXTERNAL=""
-ICON_OTHER=""
-ICON_MIRROR=""
+    [[ $POLYBAR_DISABLE_SAME_ICONS == "false" ]] && return 1
 
-# populate arrays with the data we need
-mapfile -t WKSP_OFFSETS < <(xprop -root -notype -f _NET_DESKTOP_VIEWPORT 0c '=$0+\n' _NET_DESKTOP_VIEWPORT | cut -f 2 -d = | tr -s ', ' '\n' | xargs -L2 | tr ' ' ',')
-while IFS=$'\n' read -r MONITOR_ENTRY; do
-    declare -a MONITORS+=("${MONITOR_ENTRY%:*}")
-    declare -a MONITOR_OFFSETS+=("${MONITOR_ENTRY##*:}")
-done < <(xrandr --current --listmonitors | tail -n+2 | sed 's/.*[0-9]*\/[0-9]*x[0-9]*\/[0-9]*+\([0-9]*\)+\([0-9]*\)[ ]\+\(.*\)/\3:\1,\2/g')
+    local unique_counts
+    unique_counts=$(printf "%s\n" "${wksp_offsets[@]}" | sort | uniq --count | awk '{print $1}' | uniq | wc -l)
+    [[ $unique_counts == "1" ]]
+}
 
-# check if all monitors have same number of workspaces
-# this would mean that the multihead setup will most likely contain the same workspace names (and icons) across all monitors
-# so use the same icons across all the workspaces
-USE_SAME_ICONS="false"
-# check if we have any environment variable that asks to disable this behavior
-if [[ $POLYBAR_DISABLE_SAME_ICONS != "false" ]]; then
-    if [[ "$(printf "%s\n" "${WKSP_OFFSETS[@]}" | sort | uniq --count | awk '{print $1}' | uniq | wc -l)" == "1" ]]; then
-        USE_SAME_ICONS="true"
+# Get monitor icon based on monitor name and mirroring status
+get_monitor_icon() {
+    local monitor="$1"
+
+    if [[ "$(display mirrored)" == "yes" ]]; then
+        echo "ICON_MONITOR_MIRROR"
+    else
+        case "$monitor" in
+            *"eDP"*) echo "ICON_MONITOR_DEFAULT" ;;
+            *"HDMI"*) echo "ICON_MONITOR_EXTERNAL" ;;
+            *) echo "ICON_MONITOR_OTHER" ;;
+        esac
     fi
-fi
+}
 
-# the main loop that tracks the focused desktop/workspace
-while IFS=$'\n' read -r CURR_WKSP; do
-    # get the workspace icon
-    CURR_WKSP="$(echo "$CURR_WKSP" | cut -f 2 -d '=')"
-    CURR_WKSP_ICON_NAME="ICON_$CURR_WKSP"
-    if [[ $USE_SAME_ICONS != "false" ]]; then
-        CURR_WKSP_ICON_NAME="ICON_$((CURR_WKSP % (${#WKSP_OFFSETS[@]} / ${#MONITOR_OFFSETS[@]})))"
-    fi
-    if [[ ${!CURR_WKSP_ICON_NAME:+x} != "x" ]]; then
-        CURR_WKSP_ICON_NAME="DEFAULT_ICON"
-    fi
-    # see if we are on a single-monitor or a multi-monitor setup
-    if [[ ${#MONITORS[@]} == "1" ]]; then
-        if [[ $NOFORMAT == "true" ]]; then
-            echo "${!CURR_WKSP_ICON_NAME}"
+# Find which monitor contains the given workspace
+get_workspace_monitor() {
+    local curr_wksp="$1"
+    local -n monitors="$2"
+    local -n monitor_offsets="$3"
+    local -n wksp_offsets="$4"
+
+    local curr_monitor="${monitors[0]}"
+
+    for idx in "${!monitor_offsets[@]}"; do
+        if [[ ${monitor_offsets[$idx]} == "${wksp_offsets[$curr_wksp]}" ]]; then
+            curr_monitor="${monitors[$idx]}"
+            break
+        fi
+    done
+
+    echo "$curr_monitor"
+}
+
+# Format and output the workspace and monitor information
+output_formatted() {
+    local noformat="$1"
+    local monitor_bg="$2"
+    local monitor_fg="$3"
+    local workspace_bg="$4"
+    local workspace_fg="$5"
+    local monitor_icon="$6"
+    local workspace_icon="$7"
+    local is_single_monitor="$8"
+
+    if [[ $is_single_monitor == "true" ]]; then
+        if [[ $noformat == "true" ]]; then
+            echo "$workspace_icon"
         else
-            echo "%{B"$3"}%{F"$4"}${!CURR_WKSP_ICON_NAME}%{B- F-}"
+            echo "%{B$workspace_bg}%{F$workspace_fg}$workspace_icon%{B- F-}"
         fi
     else
-        # set a fallback for the monitor - assuming we don't detect it
-        CURR_MONITOR="${MONITORS[0]}"
-        for IDX in "${!MONITOR_OFFSETS[@]}"; do
-            if [[ ${MONITOR_OFFSETS[$IDX]} == "${WKSP_OFFSETS[$CURR_WKSP]}" ]]; then
-                CURR_MONITOR="${MONITORS[$IDX]}"
-            fi
-        done
-        CURR_MONITOR_ICON_NAME=""
-        if [[ "$(display-helper are_monitors_mirrored)" == "yes" ]]; then
-            CURR_MONITOR_ICON_NAME="ICON_MIRROR"
+        if [[ $noformat == "true" ]]; then
+            echo "$monitor_icon | $workspace_icon"
         else
-            case $CURR_MONITOR in
-                *"eDP"*) CURR_MONITOR_ICON_NAME="ICON_LAPTOP" ;;
-                *"HDMI"*) CURR_MONITOR_ICON_NAME="ICON_EXTERNAL" ;;
-                *) CURR_MONITOR_ICON_NAME="ICON_OTHER" ;;
-            esac
-        fi
-        if [[ $NOFORMAT == "true" ]]; then
-            echo "${!CURR_MONITOR_ICON_NAME} | ${!CURR_WKSP_ICON_NAME}"
-        else
-            echo "%{B"$1"}%{F"$2"} ${!CURR_MONITOR_ICON_NAME} %{B- F-}%{B"$3"}%{F"$4"} ${!CURR_WKSP_ICON_NAME} %{B- F-}"
+            echo "%{B$monitor_bg}%{F$monitor_fg} $monitor_icon %{B- F-}%{B$workspace_bg}%{F$workspace_fg} $workspace_icon %{B- F-}"
         fi
     fi
-done < <(xprop -root -spy -notype -f _NET_CURRENT_DESKTOP 0c '=$0\n' _NET_CURRENT_DESKTOP)
+}
+
+# Main function
+main() {
+    # Set up signal handling for graceful exit
+    trap cleanup SIGINT SIGTERM EXIT
+
+    # Check dependencies
+    check_dependencies
+
+    # Parse arguments
+    local noformat="false"
+    local monitor_bg monitor_fg workspace_bg workspace_fg
+
+    if [[ $# -eq 1 && $1 == "noformat" ]]; then
+        noformat="true"
+    elif [[ $# -eq 4 ]]; then
+        monitor_bg="$1"
+        monitor_fg="$2"
+        workspace_bg="$3"
+        workspace_fg="$4"
+    else
+        usage
+    fi
+
+    # Get workspace and monitor information
+    mapfile -t wksp_offsets < <(get_workspace_offsets)
+
+    # Initialize arrays
+    declare -a monitors=()
+    declare -a monitor_offsets=()
+
+    while IFS=$'\n' read -r monitor_entry; do
+        monitors+=("${monitor_entry%:*}")
+        monitor_offsets+=("${monitor_entry##*:}")
+    done < <(get_monitor_info)
+
+    # Determine if we should use same icons across all workspaces
+    local use_same_icons="false"
+    should_use_same_icons "${wksp_offsets[@]}" && use_same_icons="true"
+
+    # Monitor for workspace changes
+    while IFS=$'\n' read -r curr_wksp; do
+        # Extract workspace number
+        curr_wksp="$(echo "$curr_wksp" | cut -f 2 -d '=')"
+
+        # Determine workspace icon name
+        local wksp_icon_name="ICON_WORKSPACE_$curr_wksp"
+        if [[ $use_same_icons == "true" ]]; then
+            wksp_icon_name="ICON_WORKSPACE_$((curr_wksp % (${#wksp_offsets[@]} / ${#monitor_offsets[@]})))"
+        fi
+
+        # Use default icon if the specific one isn't defined
+        if [[ -z ${!wksp_icon_name} ]]; then
+            wksp_icon_name="ICON_WORKSPACE_DEFAULT"
+        fi
+
+        # Single monitor vs multi-monitor setup
+        local is_single_monitor="false"
+        [[ ${#monitors[@]} -eq 1 ]] && is_single_monitor="true"
+
+        if [[ $is_single_monitor == "true" ]]; then
+            output_formatted "$noformat" "" "" "$workspace_bg" "$workspace_fg" "" "${!wksp_icon_name}" "true"
+        else
+            # Find which monitor contains the current workspace
+            local curr_monitor
+            curr_monitor=$(get_workspace_monitor "$curr_wksp" monitors monitor_offsets wksp_offsets)
+            echo "$curr_monitor" >&2
+
+            # Get monitor icon
+            local monitor_icon_name
+            monitor_icon_name=$(get_monitor_icon "$curr_monitor")
+
+            output_formatted "$noformat" "$monitor_bg" "$monitor_fg" "$workspace_bg" "$workspace_fg" "${!monitor_icon_name}" "${!wksp_icon_name}" "false"
+        fi
+    done < <(xprop -root -spy -notype -f _NET_CURRENT_DESKTOP 0c '=$0\n' _NET_CURRENT_DESKTOP)
+}
+
+# Run the main function
+main "$@"

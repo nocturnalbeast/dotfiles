@@ -1,36 +1,164 @@
 #!/usr/bin/env bash
 
-SCREENSHOTS_DIR="$XDG_PICTURES_DIR/screenshots"
-[ ! -d "$SCREENSHOTS_DIR" ] && mkdir -p "$SCREENSHOTS_DIR"
+# A script for taking screenshots.
 
-MAIM_OPTS="-u"
-SLOP_OPTS="-b 2 -c 0,0,0,0.9 -q"
+usage() {
+    cat << EOF
+Usage: $(basename "$0") MODE
 
-IMAGE_PATH="$SCREENSHOTS_DIR/$(date +%Y-%m-%d_%H:%M:%S).png"
+A script for taking screenshots.
 
-STATUS="1"
-case $1 in
-    full)
-        maim $MAIM_OPTS "$IMAGE_PATH"
-        STATUS="$?"
-        ;;
-    window)
-        maim $MAIM_OPTS -B -i $(xdotool getactivewindow) "$IMAGE_PATH"
-        STATUS="$?"
-        ;;
-    select)
-        maim $MAIM_OPTS $SLOP_OPTS -s -B "$IMAGE_PATH"
-        STATUS="$?"
-        ;;
-    *)
-        echo -e "Unknown operation: '$1'\n Only allowed operations - full, window, select."
-        exit 1
-        ;;
-esac
+Modes:
+    full          Capture the entire screen.
+    window        Capture the active window.
+    select        Capture a selected area.
+    selectwindow  Capture a selected window.
+    -h, --help    Show this help message.
+EOF
+}
 
-if [ $STATUS -ne 0 ]; then
-    dunstify "Failed to take screenshot."
-else
-    ACTION=$(dunstify --action="default,Open image" "Screenshot taken." "Path: $IMAGE_PATH")
-    [ "$ACTION" == "default" ] && pqiv "$IMAGE_PATH" &
-fi
+# Global configuration
+DEPENDENCIES=(maim notify-send)
+X11_DEPENDENCIES=(xdotool)
+WAYLAND_DEPENDENCIES=(grim slurp jq)
+SCREENSHOTS_DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}/screenshots"
+
+# Detect environment (Wayland or X11 or text-only)
+detect_environment() {
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        echo "wayland"
+    elif [ -n "$DISPLAY" ]; then
+        echo "x11"
+    else
+        echo "tty"
+    fi
+}
+
+# Check for required dependencies
+check_dependencies() {
+    local CURRENT_ENVIRONMENT
+    CURRENT_ENVIRONMENT=$(detect_environment)
+    if [ "$CURRENT_ENVIRONMENT" = "wayland" ]; then
+        DEPENDENCIES+=("${WAYLAND_DEPENDENCIES[@]}")
+    elif [ "$CURRENT_ENVIRONMENT" = "x11" ]; then
+        DEPENDENCIES+=("${X11_DEPENDENCIES[@]}")
+    fi
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" &> /dev/null || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Ensure screenshots directory exists
+ensure_screenshots_dir() {
+    [ ! -d "$SCREENSHOTS_DIR" ] && mkdir -p "$SCREENSHOTS_DIR"
+}
+
+# Generate image path with timestamp
+generate_image_path() {
+    echo "$SCREENSHOTS_DIR/$(date +%Y-%m-%d_%H:%M:%S).png"
+}
+
+# Capture full screen
+capture_full_screen() {
+    local IMAGE_PATH
+    IMAGE_PATH=$(generate_image_path)
+
+    if [ "$(detect_environment)" == "x11" ]; then
+        maim -u "$IMAGE_PATH"
+    elif [ "$(detect_environment)" == "wayland" ]; then
+        grim "$IMAGE_PATH"
+    fi
+
+    handle_screenshot_result $? "$IMAGE_PATH"
+}
+
+# Capture active window
+capture_active_window() {
+    local IMAGE_PATH
+    IMAGE_PATH=$(generate_image_path)
+
+    if [ "$(detect_environment)" == "x11" ]; then
+        maim -u -B -i $(xdotool getactivewindow) "$IMAGE_PATH"
+    elif [ "$(detect_environment)" == "wayland" ]; then
+        grim -g "$(yprop | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')" "$IMAGE_PATH"
+    fi
+    handle_screenshot_result $? "$IMAGE_PATH"
+}
+
+# Capture selected area
+capture_selected_area() {
+    local IMAGE_PATH
+    IMAGE_PATH=$(generate_image_path)
+
+    if [ "$(detect_environment)" == "x11" ]; then
+        maim -u -b 2 -c 0,0,0,0.9 -q -s -B "$IMAGE_PATH"
+    elif [ "$(detect_environment)" == "wayland" ]; then
+        slurp | grim -g - "$IMAGE_PATH"
+    fi
+
+    handle_screenshot_result $? "$IMAGE_PATH"
+}
+
+# Capture selected window
+capture_selected_window() {
+    local IMAGE_PATH
+    IMAGE_PATH=$(generate_image_path)
+
+    if [ "$(detect_environment)" == "x11" ]; then
+        maim -u -b 2 -c 0,0,0,0.9 -q -s -B "$IMAGE_PATH"
+    elif [ "$(detect_environment)" == "wayland" ]; then
+        yprop | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | grim -g - "$IMAGE_PATH"
+    fi
+
+    handle_screenshot_result $? "$IMAGE_PATH"
+}
+
+# Handle screenshot result
+handle_screenshot_result() {
+    local STATUS=$1
+    local IMAGE_PATH=$2
+
+    if [ $STATUS -ne 0 ]; then
+        notify-send "Error" "Failed to take screenshot."
+        return 1
+    else
+        notify-send -i "$IMAGE_PATH" "Screenshot taken" "Path: $IMAGE_PATH"
+        return 0
+    fi
+}
+
+# Main entry point
+main() {
+    check_dependencies
+    ensure_screenshots_dir
+
+    local MODE="$1"
+
+    case "$MODE" in
+        full)
+            capture_full_screen
+            ;;
+        window)
+            capture_active_window
+            ;;
+        select)
+            capture_selected_area
+            ;;
+        selectwindow)
+            capture_selected_window
+            ;;
+        -h | --help)
+            usage
+            ;;
+        *)
+            echo "error: Unknown mode '$MODE'" >&2
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"

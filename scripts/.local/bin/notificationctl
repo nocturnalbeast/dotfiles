@@ -1,6 +1,9 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # A unified interface for notification control (dunst/mako)
+
+# Global configuration
+DEPENDENCIES=(pgrep jq)
 
 usage() {
     cat << EOF
@@ -16,107 +19,126 @@ Commands:
     is-paused          Check if notifications are paused
     toggle             Toggle notification display (pause/resume)
     count              Display the number of notifications
-    help               Show this help message
+    -h, --help         Show this help message
 EOF
 }
 
+# Check for required dependencies
+check_dependencies() {
+    for dependency in "${DEPENDENCIES[@]}"; do
+        if ! command -v "$dependency" &> /dev/null; then
+            echo "error: Could not find '${dependency}', is it installed?" >&2
+            return 1
+        fi
+    done
+}
+
+# Get the appropriate notification controller
+#
+# Outputs:
+#   Writes controller name to stdout
 get_controller() {
     if pgrep -x mako > /dev/null 2>&1 && command -v makoctl > /dev/null 2>&1; then
         echo "makoctl"
     elif pgrep -x dunst > /dev/null 2>&1 && command -v dunstctl > /dev/null 2>&1; then
         echo "dunstctl"
     else
-        echo "Error: No supported notification daemon running" >&2
-        exit 1
+        echo "error: No supported notification daemon running" >&2
+        return 1
     fi
 }
 
-# Normalize commands between dunst and mako
-run_command() {
-    CONTROLLER=$(get_controller)
+# Main entry point
+main() {
     case "$1" in
-        history)
-            "$CONTROLLER" history
+        history | close | close-all | action | is-paused | toggle | count)
+            check_dependencies && {
+                local controller
+                controller=$(get_controller) || return 1
+
+                case "$1" in
+                    history)
+                        "$controller" history
+                        ;;
+                    close)
+                        if [ "$controller" = "makoctl" ]; then
+                            if [ -n "$2" ]; then
+                                makoctl dismiss -n "$2"
+                            else
+                                makoctl dismiss
+                            fi
+                        else
+                            if [ -n "$2" ]; then
+                                dunstctl close-notification "$2"
+                            else
+                                dunstctl close
+                            fi
+                        fi
+                        ;;
+                    close-all)
+                        if [ "$controller" = "makoctl" ]; then
+                            makoctl dismiss --all
+                        else
+                            dunstctl close-all
+                        fi
+                        ;;
+                    action)
+                        if [ "$controller" = "makoctl" ]; then
+                            if [ -n "$2" ] && [ -n "$3" ]; then
+                                makoctl invoke -n "$2" "$3"
+                            else
+                                makoctl invoke
+                            fi
+                        else
+                            if [ -n "$2" ] && [ -n "$3" ]; then
+                                dunstctl action "$2" "$3"
+                            else
+                                dunstctl action
+                            fi
+                        fi
+                        ;;
+                    is-paused)
+                        if [ "$controller" = "makoctl" ]; then
+                            makoctl mode | grep -q "^do-not-disturb$"
+                        else
+                            dunstctl is-paused
+                        fi
+                        ;;
+                    toggle)
+                        if [ "$controller" = "makoctl" ]; then
+                            if makoctl mode | grep -q "^do-not-disturb$"; then
+                                makoctl mode -r do-not-disturb > /dev/null 2>&1
+                            else
+                                makoctl mode -a do-not-disturb > /dev/null 2>&1
+                            fi
+                        else
+                            dunstctl set-paused toggle > /dev/null 2>&1
+                        fi
+                        ;;
+                    count)
+                        if [ "$controller" = "makoctl" ]; then
+                            makoctl list | jq '.data[] | length'
+                        else
+                            dunstctl count history
+                        fi
+                        ;;
+                esac
+            }
             ;;
-        close)
-            if [ "$CONTROLLER" = "makoctl" ]; then
-                if [ -n "$2" ]; then
-                    makoctl dismiss -n "$2"
-                else
-                    makoctl dismiss
-                fi
-            else
-                if [ -n "$2" ]; then
-                    dunstctl close-notification "$2"
-                else
-                    dunstctl close
-                fi
-            fi
-            ;;
-        close-all)
-            if [ "$CONTROLLER" = "makoctl" ]; then
-                makoctl dismiss --all
-            else
-                dunstctl close-all
-            fi
-            ;;
-        action)
-            if [ "$CONTROLLER" = "makoctl" ]; then
-                if [ -n "$2" ] && [ -n "$3" ]; then
-                    makoctl invoke -n "$2" "$3"
-                else
-                    makoctl invoke
-                fi
-            else
-                if [ -n "$2" ] && [ -n "$3" ]; then
-                    dunstctl action "$2" "$3"
-                else
-                    dunstctl action
-                fi
-            fi
-            ;;
-        is-paused)
-            if [ "$CONTROLLER" = "makoctl" ]; then
-                makoctl mode | grep -q "^do-not-disturb$"
-            else
-                dunstctl is-paused
-            fi
-            ;;
-        toggle)
-            if [ "$CONTROLLER" = "makoctl" ]; then
-                if makoctl mode | grep -q "^do-not-disturb$"; then
-                    makoctl mode -r do-not-disturb > /dev/null 2>&1
-                else
-                    makoctl mode -a do-not-disturb > /dev/null 2>&1
-                fi
-            else
-                dunstctl set-paused toggle > /dev/null 2>&1
-            fi
-            ;;
-        count)
-            if [ "$CONTROLLER" = "makoctl" ]; then
-                makoctl list | jq '.data[] | length'
-            else
-                dunstctl count history
-            fi
-            ;;
-        help)
+        -h | --help)
             usage
             ;;
         *)
-            echo "Unknown command: $1" >&2
-            usage >&2
-            exit 1
+            if [ -z "$1" ]; then
+                usage
+                exit 1
+            else
+                echo "error: Unknown command: $1" >&2
+                usage >&2
+                exit 1
+            fi
             ;;
     esac
 }
 
-case "$1" in
-    "")
-        usage >&2
-        exit 1
-        ;;
-    *)
-        run_command "$@"
-        ;;
-esac
+main "$@"

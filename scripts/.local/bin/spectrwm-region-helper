@@ -1,49 +1,193 @@
 #!/usr/bin/env bash
 
-# path to config file
+# A helper script for managing spectrwm region configuration.
+
+# Global configuration
 SPECTRWM_CONFIG_PATH="${XDG_CONFIG_HOME:="$HOME/.config"}/spectrwm/spectrwm.conf"
+DEPENDENCIES=(xdpyinfo awk sed polybarctl spectrwm)
 
-# have an array where we'll be putting those lines to insert in the spectrwm config
-declare -a REGION_LINES
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [OPTION]
 
-# then get the resolution lines into another array
-mapfile -t RESOLUTIONS < <(xdpyinfo | awk '/dimensions/{print $2}')
+A helper script for managing spectrwm region configuration.
 
-# try to keep spacing intact, so we need to extract it
-IFS=$':' read -r SPR1 SPR2 SPR3 < <(sed -n "s/^\([ ]*\)region\([ ]*\)=\([ ]*\)screen\[[0-9]*\]:.*$/\1:\2:\3/p" "$SPECTRWM_CONFIG_PATH" | head -1)
+Options:
+    disable_padding    Disable padding and reserve no space for polybar
+    -h, --help         Show this help message
 
-# check if disable_padding option is set, in which case we don't need to reserve space for polybar
-if [ "$1" == "disable_padding" ]; then
-    IDX_D=1
-    for RESOLUTION in "${RESOLUTIONS[@]}"; do
-        REGION_LINES+=("${SPR1}region${SPR2}=${SPR3}screen[$((IDX_D++))]:${RESOLUTION}+0+0")
+If no option is provided, region configuration will include polybar padding.
+EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for dependency in "${DEPENDENCIES[@]}"; do
+        if ! command -v "$dependency" &> /dev/null; then
+            echo "error: Could not find '${dependency}', is it installed?" >&2
+            return 1
+        fi
     done
-else
-    # get the height reserved for the polybar instance
-    mapfile -t BAR_DIMENSIONS < <(polybarctl get_dimensions)
-    TTL_BARHEIGHT="$((${BAR_DIMENSIONS[2]} + 2 * ${BAR_DIMENSIONS[1]}))"
-    # get the padding already defined in spectrwm config file
-    RG_PADDING="$(awk -F "=" '/^[ ]*region_padding/ {print $2}' "$SPECTRWM_CONFIG_PATH" | tr -d ' ')"
-    # effective height to reserve is bar_height - region_padding
-    EFF_BARHEIGHT="$((TTL_BARHEIGHT - RG_PADDING))"
-    # convert the data above into some entries that we can replace in the spectrwm config file
-    for IDX in "${!RESOLUTIONS[@]}"; do
-        RES_HEIGHT="$(echo "${RESOLUTIONS[$IDX]}" | cut -f 2 -d 'x')"
-        RES_WIDTH="$(echo "${RESOLUTIONS[$IDX]}" | cut -f 1 -d 'x')"
-        ALLOWED_HEIGHT="$((RES_HEIGHT - EFF_BARHEIGHT))"
-        SCREEN_IDX="$((IDX + 1))"
-        REGION_LINES+=("${SPR1}region${SPR2}=${SPR3}screen[${SCREEN_IDX}]:${RES_WIDTH}x${ALLOWED_HEIGHT}+0+${EFF_BARHEIGHT}")
+}
+
+# Get screen resolutions
+#
+# Outputs:
+#   Writes resolution lines to stdout
+get_resolutions() {
+    xdpyinfo | awk '/dimensions/{print $2}'
+}
+
+# Extract spacing from spectrwm config
+#
+# Outputs:
+#   Writes spacing components to stdout
+get_spacing() {
+    sed -n "s/^\([ ]*\)region\([ ]*\)=\([ ]*\)screen\[[0-9]*\]:.*$/\1:\2:\3/p" "$SPECTRWM_CONFIG_PATH" | head -1
+}
+
+# Get polybar dimensions
+#
+# Outputs:
+#   Writes polybar dimensions to stdout
+get_bar_dimensions() {
+    polybarctl get_dimensions
+}
+
+# Get region padding from spectrwm config
+#
+# Outputs:
+#   Writes region padding value to stdout
+get_region_padding() {
+    awk -F "=" '/^[ ]*region_padding/ {print $2}' "$SPECTRWM_CONFIG_PATH" | tr -d ' '
+}
+
+# Generate region lines for disable_padding mode
+#
+# Arguments:
+#   $1 - Spacing prefix
+#   $2 - Spacing separator
+#   $3 - Spacing suffix
+#   $4 - Array of resolutions
+#
+# Outputs:
+#   Writes region lines to stdout
+generate_disable_padding_regions() {
+    local spacing_prefix="$1"
+    local spacing_separator="$2"
+    local spacing_suffix="$3"
+    shift 3
+    local resolutions=("$@")
+    local idx=1
+
+    for resolution in "${resolutions[@]}"; do
+        echo "${spacing_prefix}region${spacing_separator}=${spacing_suffix}screen[$((idx++))]:${resolution}+0+0"
     done
-fi
+}
 
-# replace them in the spectrwm config file
-REPLACE_LINENR="$(grep -n "^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:.*$" "$SPECTRWM_CONFIG_PATH" | cut -d : -f 1 | head -1)"
-sed -i '/^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:.*$/d' "$SPECTRWM_CONFIG_PATH"
-for ((IDX = ${#REGION_LINES[@]} - 1; IDX >= 0; IDX--)); do
-    TEMP_FILE="$(mktemp)"
-    awk -v n="$REPLACE_LINENR" -v s="${REGION_LINES[IDX]}" 'NR == n {print s} {print}' "$SPECTRWM_CONFIG_PATH" > "$TEMP_FILE"
-    mv "$TEMP_FILE" "$SPECTRWM_CONFIG_PATH"
-done
+# Generate region lines with polybar padding
+#
+# Arguments:
+#   $1 - Spacing prefix
+#   $2 - Spacing separator
+#   $3 - Spacing suffix
+#   $4 - Array of resolutions
+#   $5 - Effective bar height
+#
+# Outputs:
+#   Writes region lines to stdout
+generate_padding_regions() {
+    local spacing_prefix="$1"
+    local spacing_separator="$2"
+    local spacing_suffix="$3"
+    local effective_bar_height="$5"
+    shift 3
+    local resolutions=("$@")
 
-# now restart spectrwm so that it reloads the configuration file
-kill -1 "$(pidof spectrwm)"
+    for idx in "${!resolutions[@]}"; do
+        local res_height
+        local res_width
+        local allowed_height
+        local screen_idx
+
+        res_height=$(echo "${resolutions[$idx]}" | cut -f 2 -d 'x')
+        res_width=$(echo "${resolutions[$idx]}" | cut -f 1 -d 'x')
+        allowed_height=$((res_height - effective_bar_height))
+        screen_idx=$((idx + 1))
+
+        echo "${spacing_prefix}region${spacing_separator}=${spacing_suffix}screen[${screen_idx}]:${res_width}x${allowed_height}+0+${effective_bar_height}"
+    done
+}
+
+# Replace region lines in spectrwm config
+#
+# Arguments:
+#   $1 - Array of region lines to insert
+update_config() {
+    local region_lines=("$@")
+    local replace_line_nr
+    local temp_file
+
+    replace_line_nr=$(grep -n "^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:.*$" "$SPECTRWM_CONFIG_PATH" | cut -d : -f 1 | head -1)
+
+    sed -i '/^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:.*$/d' "$SPECTRWM_CONFIG_PATH"
+
+    for ((idx = ${#region_lines[@]} - 1; idx >= 0; idx--)); do
+        temp_file=$(mktemp)
+        awk -v n="$replace_line_nr" -v s="${region_lines[idx]}" 'NR == n {print s} {print}' "$SPECTRWM_CONFIG_PATH" > "$temp_file"
+        mv "$temp_file" "$SPECTRWM_CONFIG_PATH"
+    done
+}
+
+# Restart spectrwm to reload configuration
+restart_spectrwm() {
+    kill -1 "$(pidof spectrwm)"
+}
+
+# Main entry point
+main() {
+    case "$1" in
+        disable_padding)
+            check_dependencies && {
+                local resolutions
+                local spacing_components
+                local region_lines=()
+
+                mapfile -t resolutions < <(get_resolutions)
+                IFS=$':' read -r spacing_prefix spacing_separator spacing_suffix < <(get_spacing)
+
+                mapfile -t region_lines < <(generate_disable_padding_regions "$spacing_prefix" "$spacing_separator" "$spacing_suffix" "${resolutions[@]}")
+                update_config "${region_lines[@]}"
+                restart_spectrwm
+            }
+            ;;
+        -h | --help)
+            usage
+            ;;
+        *)
+            check_dependencies && {
+                local resolutions
+                local spacing_components
+                local bar_dimensions
+                local region_padding
+                local total_bar_height
+                local effective_bar_height
+                local region_lines=()
+
+                mapfile -t resolutions < <(get_resolutions)
+                IFS=$':' read -r spacing_prefix spacing_separator spacing_suffix < <(get_spacing)
+                mapfile -t bar_dimensions < <(get_bar_dimensions)
+                region_padding=$(get_region_padding)
+
+                total_bar_height=$((${bar_dimensions[2]} + 2 * ${bar_dimensions[1]}))
+                effective_bar_height=$((total_bar_height - region_padding))
+
+                mapfile -t region_lines < <(generate_padding_regions "$spacing_prefix" "$spacing_separator" "$spacing_suffix" "${resolutions[@]}" "$effective_bar_height")
+                update_config "${region_lines[@]}"
+                restart_spectrwm
+            }
+            ;;
+    esac
+}
+
+main "$@"
