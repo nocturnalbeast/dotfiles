@@ -1,37 +1,109 @@
 #!/usr/bin/env bash
 
-DEPENDENCIES=(wmctrl)
-for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-    type -p "$DEPENDENCY" &> /dev/null || {
-        echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
-        exit 1
-    }
-done
+# A menu for workspace selection and management.
 
-NUM_MONITORS="$(xrandr --current | grep -c ' connected ')"
-mapfile -t WKSP_NAMES < <(xprop -root -notype -f _NET_DESKTOP_NAMES 8u '=$0+\n' _NET_DESKTOP_NAMES | tr -s "=, " "\n" | tail -n+2)
-# this'll be the final list that is given to the menu
-declare -A WKSP_ENTRIES
+# Global configuration
+DEPENDENCIES=(wmctrl xrandr xprop)
 
-# check if we are on a single-display setup or a multi-display setup
-if [[ $NUM_MONITORS != "1" ]]; then
-    # if we are on a multi-display setup, then we'll need the monitors with the offsets
-    # we need this since we need to match the _NET_DESKTOP_VIEWPORT output for each workspace with the respective monitor that it's on
-    # thus creating a way to correctly identify which monitor a workspace is on
-    while IFS=$'\n' read -r ENTRY; do
-        declare -A MONITOR_OFFSETS+="( $ENTRY )"
-    done < <(xrandr --current | sed -n 's/\(.*\) connected.* [0-9]*x[0-9]*+\([0-9]*\)+\([0-9]*\).*/[\2,\3]=\1/p')
-    # populate an array with the offsets of each workspace
-    mapfile -t WKSP_MONITOR_OFFSETS < <(xprop -root -notype -f _NET_DESKTOP_VIEWPORT 0c '=$0+\n' _NET_DESKTOP_VIEWPORT | cut -f 2 -d = | awk 'BEGIN{FS=", "} {for(i=1;i<=NF-1;i++) printf $i","$++i"\n";}')
-    # now iterate through all the workspaces and add the entries to the final list
-    for WKSP_IDX in "${!WKSP_NAMES[@]}"; do
-        WKSP_ENTRIES["$WKSP_IDX: [${MONITOR_OFFSETS["${WKSP_MONITOR_OFFSETS["$WKSP_IDX"]}"]}] ${WKSP_NAMES["$WKSP_IDX"]:1:-1}"]="$WKSP_IDX"
+usage() {
+    cat << EOF
+Usage: $(basename "$0")
+
+A menu for workspace selection and management.
+
+This script displays a menu of available workspaces and allows you to switch to them.
+EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for dependency in "${DEPENDENCIES[@]}"; do
+        if ! command -v "$dependency" &> /dev/null; then
+            echo "error: Could not find '${dependency}', is it installed?" >&2
+            return 1
+        fi
     done
-else
-    for WKSP_IDX in "${!WKSP_NAMES[@]}"; do
-        WKSP_ENTRIES["$WKSP_IDX: ${WKSP_NAMES["$WKSP_IDX"]:1:-1}"]="$WKSP_IDX"
-    done
-fi
+}
 
-SELECTED_WKSP=$(dmenu-helper run_menu "   " "$(printf '%s\n' "${!WKSP_ENTRIES[@]}" | sort -n)")
-[ "$SELECTED_WKSP" != "" ] && wmctrl -s "${WKSP_ENTRIES["$SELECTED_WKSP"]}"
+# Build workspace entries for multi-display setup
+#
+# Arguments:
+#   $1 - Array of workspace names
+#   $2 - Array of workspace monitor offsets
+#   $3 - Associative array of monitor offsets
+#
+# Outputs:
+#   Writes workspace entries to stdout
+build_multi_display_entries() {
+    local -n ws_names="$1"
+    local -n ws_monitor_offsets="$2"
+    local -n mon_offsets="$3"
+
+    for workspace_idx in "${!ws_names[@]}"; do
+        local monitor_name="${mon_offsets["${ws_monitor_offsets["$workspace_idx"]}"]}"
+        local workspace_name="${ws_names["$workspace_idx"]:1:-1}"
+        echo "$workspace_idx: [$monitor_name] $workspace_name"
+    done
+}
+
+# Build workspace entries for single display setup
+#
+# Arguments:
+#   $1 - Array of workspace names
+#
+# Outputs:
+#   Writes workspace entries to stdout
+build_single_display_entries() {
+    local -n ws_names="$1"
+
+    for workspace_idx in "${!ws_names[@]}"; do
+        local workspace_name="${ws_names["$workspace_idx"]:1:-1}"
+        echo "$workspace_idx: $workspace_name"
+    done
+}
+
+# Main entry point
+main() {
+    check_dependencies || return 1
+
+    local num_monitors
+    local workspace_names
+    local workspace_entries=()
+    local selected_workspace
+    local workspace_id
+
+    num_monitors=$(xrandr --current | grep -c ' connected ')
+    mapfile -t workspace_names < <(xprop -root -notype -f _NET_DESKTOP_NAMES 8u '=$0+\n' _NET_DESKTOP_NAMES | tr -s "=, " "\n" | tail -n+2)
+
+    if [[ $num_monitors != "1" ]]; then
+        # Multi-display setup
+        local monitor_offsets
+        local workspace_monitor_offsets
+
+        mapfile -t monitor_offsets < <(xrandr --current | sed -n 's/\(.*\) connected.* [0-9]*x[0-9]*+\([0-9]*\)+\([0-9]*\).*/[\2,\3]=\1/p')
+        mapfile -t workspace_monitor_offsets < <(xprop -root -notype -f _NET_DESKTOP_VIEWPORT 0c '=$0+\n' _NET_DESKTOP_VIEWPORT | cut -f 2 -d = | awk 'BEGIN{FS=", "} {for(i=1;i<=NF-1;i++) printf $i","$++i"\n";}')
+
+        # Build associative array for monitor offsets
+        declare -A monitor_offsets_map
+        for entry in "${monitor_offsets[@]}"; do
+            declare -A monitor_offsets_map+="( $entry )"
+        done
+
+        mapfile -t workspace_entries < <(build_multi_display_entries workspace_names workspace_monitor_offsets monitor_offsets_map)
+    else
+        # Single display setup
+        mapfile -t workspace_entries < <(build_single_display_entries workspace_names)
+    fi
+
+    # Create associative array for workspace selection
+    declare -A workspace_map
+    for entry in "${workspace_entries[@]}"; do
+        workspace_id=$(echo "$entry" | cut -d: -f1)
+        workspace_map["$entry"]="$workspace_id"
+    done
+
+    selected_workspace=$(printf '%s\n' "${!workspace_map[@]}" | sort -n | menu run -p "  ")
+    [ -n "$selected_workspace" ] && wmctrl -s "${workspace_map["$selected_workspace"]}"
+}
+
+main "$@"
