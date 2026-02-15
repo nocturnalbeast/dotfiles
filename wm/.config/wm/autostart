@@ -89,12 +89,21 @@ if command -v udiskie > /dev/null 2>&1; then
     udiskie -Avnt &
 fi
 
-# additional stuff for X11 WMs
+# keyboard configuration for x11
+if ! is_wayland; then
+    # map caps lock to hyper (hold) and escape (tap)
+    setxkbmap -option caps:hyper
+    if command -v xcape > /dev/null 2>&1; then
+        xcape -e 'Hyper_L=Escape' -t 200
+    fi
+    # set numlock key to off
+    numlockx off &
+fi
+
+# mouse configuration for x11
 if ! is_wayland; then
     # make sure the default root window uses the correct pointer
     xsetroot -cursor_name left_ptr
     # hide cursor when inactive
     unclutter &
-    # set numlock key to off
-    numlockx off &
 fi
