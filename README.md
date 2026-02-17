@@ -7,11 +7,72 @@
 
 ## Usage
 
-These dotfiles are managed with [GNU stow](https://www.gnu.org/software/stow/), so you'll need it installed.
+These dotfiles are managed with [GNU stow](https://www.gnu.org/software/stow/), so you'll need it installed. Python 3.11+ is required for the installer script.
 
-To install these dotfiles, there is an installer script included. Clone the repository, and run the script `install.sh install` to install all available packages.
+### Basic Installation
 
-For a quick guide for managing and using dotfiles managed with [GNU stow](https://www.gnu.org/software/stow/), I recommend [alexpearce's guide](https://alexpearce.me/2016/02/managing-dotfiles-with-stow/) on the same.
+Clone the repository and run the installer:
+
+```sh
+./install install              # Install all packages
+./install install git zsh      # Install specific packages
+./install install --tag cli    # Install all CLI packages
+```
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `install` | Install packages |
+| `reinstall` | Reinstall packages (force override) |
+| `uninstall` | Uninstall packages |
+| `check` | Check installation status and conflicts |
+| `list` | List all packages |
+| `list-tags` | List all available tags |
+| `status` | Show installation status of all packages |
+
+### Tag-based Management
+
+Packages can be managed using tags for easy grouping:
+
+```sh
+./install install --tag shell                 # Install all shell packages
+./install install --tag x11 --tag gui         # Install packages matching ANY tag
+./install list --tag x11 --tag wayland --and  # Packages with BOTH tags
+./install uninstall --tag wayland             # Uninstall all Wayland packages
+```
+
+### Cross-Platform Support
+
+Packages are tagged with supported platforms. By default, only packages compatible with your OS are installed:
+
+```sh
+./install install              # Only installs packages for current OS
+./install list --platform      # Show platform info for all packages
+./install --os macos list      # Simulate macOS (for testing)
+./install --os macos status    # See what's available on macOS
+```
+
+| Flag | Description |
+|------|-------------|
+| `--os` | Target OS (linux, macos, windows) |
+| `--arch` | Target architecture (x86_64, arm64) |
+| `--platform` | Show OS/arch info in list output |
+| `--all`, `-a` | Show all packages including unavailable ones |
+| `--include-unavailable` | Install even if platform doesn't match |
+
+### Package Metadata
+
+Each package has a `.package.toml` file with metadata:
+
+```toml
+enabled = true  # set false to skip package
+description = "example description"
+tags = ["tag1", "tag2"]
+os = ["linux", "macos"]  # supported platforms (empty = all)
+arch = []  # architecture restrictions (empty = all)
+condition = "<shell command>"
+```
 
 ## Components
 
