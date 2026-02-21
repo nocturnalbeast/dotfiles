@@ -1,0 +1,6 @@
+enabled = true
+description = "Thunar file manager"
+tags = ["gui", "filemgmt", "x11", "wayland"]
+os = ["linux"]
+arch = []
+condition = ""

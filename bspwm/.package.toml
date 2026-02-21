@@ -1,0 +1,6 @@
+enabled = true
+description = "bspwm: Tiling window manager"
+tags = ["gui", "wm", "x11"]
+os = ["linux"]
+arch = []
+condition = ""

@@ -1,0 +1,6 @@
+enabled = true
+description = "bat: cat clone with syntax highlighting"
+tags = ["cli", "shell"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

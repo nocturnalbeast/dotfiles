@@ -1,0 +1,6 @@
+enabled = true
+description = "Git configuration"
+tags = ["cli", "shell", "vcs"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

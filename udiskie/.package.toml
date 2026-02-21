@@ -1,0 +1,6 @@
+enabled = true
+description = "udiskie: Automounter for removable media"
+tags = ["cli", "gui", "mount", "x11", "wayland"]
+os = ["linux"]
+arch = []
+condition = ""

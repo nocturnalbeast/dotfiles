@@ -1,0 +1,6 @@
+enabled = true
+description = "Beets: Music library manager"
+tags = ["cli", "media", "music"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

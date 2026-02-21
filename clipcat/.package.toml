@@ -1,0 +1,6 @@
+enabled = true
+description = "clipcat: Clipboard manager"
+tags = ["cli", "gui", "x11", "wayland"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

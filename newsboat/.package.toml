@@ -1,0 +1,6 @@
+enabled = true
+description = "newsboat: RSS feed reader"
+tags = ["cli", "media", "rss", "web"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

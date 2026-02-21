@@ -1,0 +1,6 @@
+enabled = true
+description = "Fontconfig settings"
+tags = ["gui", "theming", "x11", "wayland", "fonts"]
+os = ["linux"]
+arch = []
+condition = ""

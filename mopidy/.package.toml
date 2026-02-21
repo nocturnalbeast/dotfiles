@@ -1,0 +1,6 @@
+enabled = true
+description = "Mopidy: Music server"
+tags = ["cli", "media", "music"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

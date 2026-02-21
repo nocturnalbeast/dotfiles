@@ -1,0 +1,6 @@
+enabled = true
+description = "X11 configuration (xinit, Xresources)"
+tags = ["gui", "x11"]
+os = ["linux"]
+arch = []
+condition = ""

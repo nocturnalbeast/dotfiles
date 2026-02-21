@@ -1,0 +1,6 @@
+enabled = true
+description = "Window manager helper scripts"
+tags = ["gui", "wm", "scripts", "x11", "wayland"]
+os = ["linux"]
+arch = []
+condition = ""

@@ -1,0 +1,6 @@
+enabled = true
+description = "Python configuration"
+tags = ["cli", "language"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

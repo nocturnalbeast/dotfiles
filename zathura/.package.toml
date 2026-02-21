@@ -1,0 +1,6 @@
+enabled = true
+description = "zathura: Document viewer"
+tags = ["gui", "media", "x11", "wayland"]
+os = ["linux"]
+arch = []
+condition = ""

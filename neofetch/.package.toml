@@ -1,0 +1,6 @@
+enabled = true
+description = "neofetch: System information"
+tags = ["cli", "shell"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

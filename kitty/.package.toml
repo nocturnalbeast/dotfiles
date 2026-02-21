@@ -1,0 +1,6 @@
+enabled = true
+description = "kitty: GPU-based terminal emulator"
+tags = ["gui", "terminal", "x11", "wayland"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

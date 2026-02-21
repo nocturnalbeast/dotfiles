@@ -1,0 +1,6 @@
+enabled = true
+description = "surfraw: CLI search utilities"
+tags = ["cli", "web"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

@@ -1,0 +1,6 @@
+enabled = true
+description = "fastfetch: System information tool"
+tags = ["cli", "shell"]
+os = ["linux", "macos"]
+arch = []
+condition = ""
