@@ -1,0 +1,6 @@
+enabled = true
+description = "mako: Notification daemon for Wayland"
+tags = ["gui", "x11", "wayland", "notification", "guicomponent"]
+os = ["linux"]
+arch = []
+condition = ""

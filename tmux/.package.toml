@@ -1,0 +1,6 @@
+enabled = true
+description = "tmux configuration"
+tags = ["cli", "shell", "terminal"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

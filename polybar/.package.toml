@@ -1,0 +1,6 @@
+enabled = true
+description = "polybar: Status bar"
+tags = ["gui", "x11", "guicomponent"]
+os = ["linux"]
+arch = []
+condition = ""

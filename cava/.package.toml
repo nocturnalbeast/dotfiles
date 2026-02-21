@@ -1,0 +1,6 @@
+enabled = true
+description = "cava: Console audio visualizer"
+tags = ["cli", "media", "music"]
+os = ["linux"]
+arch = []
+condition = ""

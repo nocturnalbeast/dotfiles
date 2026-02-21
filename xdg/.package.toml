@@ -1,0 +1,6 @@
+enabled = true
+description = "XDG user directories configuration"
+tags = ["cli", "mime"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

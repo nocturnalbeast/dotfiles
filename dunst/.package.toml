@@ -1,0 +1,6 @@
+enabled = true
+description = "dunst: Notification daemon for X11"
+tags = ["gui", "x11", "notification", "guicomponent"]
+os = ["linux"]
+arch = []
+condition = ""

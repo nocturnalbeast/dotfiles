@@ -1,0 +1,6 @@
+enabled = true
+description = "tinty: Base16 theme manager"
+tags = ["cli", "shell", "theming"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

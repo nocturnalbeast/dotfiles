@@ -1,0 +1,6 @@
+enabled = true
+description = "mimeo: MIME type handler"
+tags = ["cli", "mime"]
+os = ["linux"]
+arch = []
+condition = ""

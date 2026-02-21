@@ -1,0 +1,6 @@
+enabled = true
+description = "spectrwm: Tiling window manager"
+tags = ["gui", "wm", "x11"]
+os = ["linux"]
+arch = []
+condition = ""

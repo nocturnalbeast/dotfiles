@@ -1,0 +1,6 @@
+enabled = true
+description = "Common shell configuration"
+tags = ["cli", "shell"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

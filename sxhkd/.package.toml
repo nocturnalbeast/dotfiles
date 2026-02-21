@@ -1,0 +1,6 @@
+enabled = true
+description = "sxhkd: Simple X hotkey daemon"
+tags = ["cli", "wm", "x11", "keybindings"]
+os = ["linux"]
+arch = []
+condition = ""

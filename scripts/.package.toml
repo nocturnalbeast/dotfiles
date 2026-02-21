@@ -1,0 +1,6 @@
+enabled = true
+description = "Helper scripts"
+tags = ["cli", "shell"]
+os = ["linux"]
+arch = []
+condition = ""

@@ -1,0 +1,6 @@
+enabled = true
+description = "Notification helper scripts"
+tags = ["gui", "notification", "guicomponent"]
+os = ["linux"]
+arch = []
+condition = ""

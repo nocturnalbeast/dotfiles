@@ -1,0 +1,6 @@
+enabled = true
+description = "GTK theme configuration"
+tags = ["gui", "theming", "x11", "wayland"]
+os = ["linux"]
+arch = []
+condition = ""

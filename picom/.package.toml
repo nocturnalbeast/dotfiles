@@ -1,0 +1,6 @@
+enabled = true
+description = "picom: Compositor for X11"
+tags = ["gui", "x11", "compositor", "guicomponent"]
+os = ["linux"]
+arch = []
+condition = ""

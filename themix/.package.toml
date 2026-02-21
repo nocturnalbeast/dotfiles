@@ -1,0 +1,6 @@
+enabled = true
+description = "Themix/Oomox theme generator"
+tags = ["gui", "theming", "x11", "wayland"]
+os = ["linux"]
+arch = []
+condition = ""

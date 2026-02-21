@@ -1,0 +1,6 @@
+enabled = true
+description = "tealdeer: tldr client"
+tags = ["cli", "shell"]
+os = ["linux", "macos"]
+arch = []
+condition = ""

@@ -1,0 +1,6 @@
+enabled = true
+description = "Environment variables and profile"
+tags = ["cli", "gui", "shell", "theming", "x11", "wayland"]
+os = ["linux", "macos"]
+arch = []
+condition = ""
