@@ -1061,6 +1061,11 @@
       "algorithm": "sha256"
     },
     {
+      "id": "github_release/github.com/tamasfe/taplo/0.10.0/taplo-linux-x86_64.gz",
+      "checksum": "8FE196B894CCF9072F98D4E1013A180306E17D244830B03986EE5E8EABEB6156",
+      "algorithm": "sha256"
+    },
+    {
       "id": "github_release/github.com/tealdeer-rs/tealdeer/v1.8.1/tealdeer-linux-aarch64-musl",
       "checksum": "09D4506B3BA2EFE7376E3A5CE1238AA5E6C33AE6F2532C190156540F6C4E7D69",
       "algorithm": "sha256"

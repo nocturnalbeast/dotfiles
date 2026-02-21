@@ -94,8 +94,8 @@ packages:
   - name: sxyazi/yazi@v26.1.22
   # another terminal file manager
   - name: yorukot/superfile@v1.5.0
-  # toml toolkit (full)
-  - name: tamasfe/taplo/full@0.10.0
+  # toml toolkit
+  - name: tamasfe/taplo@0.10.0
   # tldr pages client
   - name: tealdeer-rs/tealdeer@v1.8.1
   # code statistics
