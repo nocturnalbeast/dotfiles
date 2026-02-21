@@ -18,7 +18,7 @@ from .stow import (
 from .tags import TagManager
 
 
-IGNORE_DIRS = {"repo_resources", "bootstrap", "wallpapers", "installer"}
+IGNORE_DIRS = {"repo_resources", "bootstrap", "installer"}
 
 
 def print_success(msg: str):

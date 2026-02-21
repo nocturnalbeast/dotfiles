@@ -1,0 +1,6 @@
+enabled = true
+description = "Wallpaper collection"
+tags = ["gui", "theming", "x11", "wayland"]
+os = ["linux"]
+arch = []
+condition = ""
