@@ -6,7 +6,7 @@ FLOATING_WINDOWS=(pqiv nitrogen lxappearance)
 # arrays to store applications that are assigned to each workspace
 WKSP_1_WINDOWS=()
 WKSP_2_WINDOWS=(qutebrowser firefox chromium-browser librewolf)
-WKSP_3_WINDOWS=(neovim gnvim neovide vscodium cursor)
+WKSP_3_WINDOWS=(neovim gnvim neovide vscodium cursor sublime_merge)
 WKSP_4_WINDOWS=(thunar nemo gparted gnome-disks)
 WKSP_5_WINDOWS=(mpv)
 WKSP_6_WINDOWS=(libreoffice libreoffice-startcenter zathura)
