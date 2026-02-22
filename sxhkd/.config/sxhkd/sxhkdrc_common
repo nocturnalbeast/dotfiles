@@ -7,73 +7,73 @@
 ## commonly used applications
 
 # terminal
-hyper + Return 
+mod3 + Return 
     terminal
 
 # browser
-hyper + w
+mod3 + w
     $BROWSER
 
 # private browser
-hyper + shift + w
+mod3 + shift + w
     $BROWSER $BROWSER_PRIVATE_OPT
 
 # file manager
-hyper + e
+mod3 + e
     $FILES
 
 
 ## menus
 
 # super menu
-hyper + s
+mod3 + s
     menu-allmenus
 
 # launch an app / refresh app list
-hyper + {_,shift} + space
+mod3 + {_,shift} + space
     menu-apps {launch,refresh}
 
 # terminal app menu
-hyper + shift + Return
+mod3 + shift + Return
     menu-terminalapps
 
 # power menu
-hyper + p
+mod3 + p
     menu-power
 
 # copy clipboard entry / delete clipboard entry
-hyper + {_,shift} + x
+mod3 + {_,shift} + x
     menu-clip {paste,delete}
 
 # web video download / stream menu
-hyper + v
+mod3 + v
     menu-video
 
 # web search menu
-hyper + o
+mod3 + o
     menu-surfraw
 
 # window select menu
-hyper + bracketleft
+mod3 + bracketleft
     menu-window
 
 # window hide menu
-hyper + shift + bracketleft
+mod3 + shift + bracketleft
     menu-window-hide
 
 # workspace select menu
-hyper + bracketright
+mod3 + bracketright
     menu-workspace
 
 # calculator menu
-hyper + equal
+mod3 + equal
     menu-calc
 
 
 ## notifications
 
 # close / take action on notification
-hyper + {_,shift} + n
+mod3 + {_,shift} + n
     dunstctl {close,action}
 
 
@@ -84,11 +84,11 @@ Print
     screenshot full
 
 # take a screenshot of the focused window
-hyper + Print
+mod3 + Print
     screenshot window
 
 # take a screenshot of any selected window or region
-hyper + shift + Print
+mod3 + shift + Print
     screenshot select
 
 
@@ -136,11 +136,11 @@ XF86MonBrightnessDown
 
 ## bar control
 
-hyper + {_,shift} + backslash
+mod3 + {_,shift} + backslash
     polybarctl {switch,toggle_all}
 
 
 ## screenlock
 
-hyper + minus
+mod3 + minus
     lockctl lock
