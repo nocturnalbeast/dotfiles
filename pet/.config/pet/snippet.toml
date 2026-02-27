@@ -1,0 +1,383 @@
+[[Snippets]]
+Description = "Awk filter with header preservation"
+Output = ""
+Tag = ["text"]
+command = " | awk 'NR == 1 || /REGEX/'"
+
+
+[[Snippets]]
+Description = "Build and load Docker image"
+Output = ""
+Tag = ["container", "docker"]
+command = "docker build . --progress=plain --tag <tag=runtime> --load"
+
+
+[[Snippets]]
+Description = "Check DNS records"
+Output = "DNS records"
+Tag = ["network"]
+command = "nslookup -type=<record=ns> <subdomain=app.>cloudrumble.net; dig <record=ns> <subdomain=app.>cloudrumble.net"
+
+
+[[Snippets]]
+Description = "Check git status across repositories"
+Output = "If a directory is not a git repo, it will be ignored with a warning and command will continue."
+Tag = ["git"]
+command = "find . -maxdepth 1 -mindepth 1 -type d -exec sh -c '(echo {} && cd {} && git fetch origin && git status -s && echo)' \\;"
+
+
+[[Snippets]]
+Description = "Checkout file from another branch"
+Output = ""
+Tag = ["git"]
+command = "git checkout branch -- "
+
+
+[[Snippets]]
+Description = "Clean old systemd journal logs"
+Output = ""
+Tag = ["system"]
+command = "sudo journalctl --vacuum-size=10M"
+
+
+[[Snippets]]
+Description = "Compare directories recursively"
+Output = ""
+Tag = ["files"]
+command = "diff -rq folder1 folder2 | grep -E 'Only in|differ'"
+
+
+[[Snippets]]
+Description = "Concatenate files by extension"
+Output = ""
+Tag = ["files", "fd"]
+command = "fd --type=file --extension=<extension:mdx> --exec bat"
+
+
+[[Snippets]]
+Description = "Concatenate files with headers"
+Output = ""
+Tag = ["files"]
+command = "tail -n +1 file1 file2"
+
+
+[[Snippets]]
+Description = "Convert man page to markdown"
+Output = ""
+Tag = ["text", "man"]
+command = "man <tool> | col -b W"
+
+
+[[Snippets]]
+Description = "Copy SSH public key to server"
+Output = ""
+Tag = ["network", "ssh"]
+command = "ssh-copy-id remote_username@server_ip_address"
+
+
+[[Snippets]]
+Description = "Copy absolute path to clipboard"
+Output = ""
+Tag = ["files"]
+command = "realpath"
+
+
+[[Snippets]]
+Description = "Copy file from another branch"
+Output = ""
+Tag = ["git"]
+command = "git checkout ?SOURCE_BRANCH ?PATH_TO_FILE"
+
+
+[[Snippets]]
+Description = "Copy filename to clipboard"
+Output = ""
+Tag = ["files"]
+command = "xsel --clipboard --input < <(basename "
+
+
+[[Snippets]]
+Description = "Create file with parent directories"
+Output = ""
+Tag = ["files", "linux"]
+command = "install -D /dev/null path/to/file"
+
+
+[[Snippets]]
+Description = "Decrypt GPG encrypted archive"
+Output = ""
+Tag = ["security"]
+command = "gpg -d \\<file>.tar.gz.gpg > \\<file>.tar.gz"
+
+
+[[Snippets]]
+Description = "Debug Taskwarrior hooks"
+Output = ""
+Tag = ["taskwarrior"]
+command = "task rc.debug.hooks=2"
+
+
+[[Snippets]]
+Description = "Diff main branch against current branch"
+Output = ""
+Tag = ["git"]
+command = "git diff main...$(git branch | sed -n -e 's/^\\* \\(.*\\)/\\1/p')"
+
+
+[[Snippets]]
+Description = "Display live mouse coordinates"
+Output = ""
+Tag = ["system"]
+command = "watch -t -n 1 xdotool getmouselocation"
+
+
+[[Snippets]]
+Description = "Display NVIDIA driver version"
+Output = ""
+Tag = ["system"]
+command = "dkms status | grep -i nvidia"
+
+
+[[Snippets]]
+Description = "Display public IP address"
+Output = ""
+Tag = ["network", "curl"]
+command = "curl ifconfig.me"
+
+
+[[Snippets]]
+Description = "Display systemd service configuration"
+Output = ""
+Tag = ["system", "systemd"]
+command = "systemctl cat SVC"
+
+
+[[Snippets]]
+Description = "Find branch base commit"
+Output = ""
+Tag = ["git"]
+command = "git merge-base main HEAD"
+
+
+[[Snippets]]
+Description = "Find deleted files in commit history"
+Output = ""
+Tag = ["git"]
+command = "git log --diff-filter=D --summary | grep -E 'delete|^commit\\s+\\S+'"
+
+
+[[Snippets]]
+Description = "Find first commit on current branch"
+Output = ""
+Tag = ["git"]
+command = "git log --oneline $(git merge-base $(git rev-parse --abbrev-ref HEAD) $(git rev-parse --abbrev-ref HEAD@{u}))..HEAD | tail -n 1"
+
+
+[[Snippets]]
+Description = "Find port listeners"
+Output = ""
+Tag = ["network"]
+command = "sudo netstat -pnltu | grep PORT?"
+
+
+[[Snippets]]
+Description = "Find unpushed commits across repositories"
+Output = ""
+Tag = ["git"]
+command = "find . -maxdepth 1 -mindepth 1 -type d -exec sh -c '(echo {} && cd {} && git log --branches --not --remotes && echo)' \\;"
+
+
+[[Snippets]]
+Description = "Fix Python permissions error"
+Output = ""
+Tag = ["system"]
+command = "sudo chown -R $(whoami) /usr/local/bin/"
+
+
+[[Snippets]]
+Description = "Generate git changelog from commits"
+Output = ""
+Tag = ["git"]
+command = "git log --pretty=\"- %s\" | grep -v Merge"
+
+
+[[Snippets]]
+Description = "Interactively stage git hunks"
+Output = ""
+Tag = ["git"]
+command = "git add -p FILE"
+
+
+[[Snippets]]
+Description = "Kill process using selected port"
+Output = ""
+Tag = ["network"]
+command = "sudo netstat -tulnp | fzf --height 40% --layout=reverse --prompt=\"Select a port: \" | awk '{print $7}' | cut -d'/' -f1 | xargs -r sudo kill"
+
+
+[[Snippets]]
+Description = "List ZSH functions"
+Output = ""
+Tag = ["shell"]
+command = "print -l ${(ok)functions}"
+
+
+[[Snippets]]
+Description = "List branches merged with origin/main"
+Output = ""
+Tag = ["git"]
+command = "git branch --merged origin/main"
+
+
+[[Snippets]]
+Description = "List branches not merged with origin/main"
+Output = ""
+Tag = ["git"]
+command = "git branch --no-merged origin/main"
+
+
+[[Snippets]]
+Description = "List git commits on current branch"
+Output = ""
+Tag = ["git"]
+command = "git log --oneline --no-merges --cherry-mark $(git merge-base main HEAD)..HEAD\\n"
+
+
+[[Snippets]]
+Description = "List make targets"
+Output = ""
+Tag = ["build", "make"]
+command = "make -qp | awk -F':' '/^[a-zA-Z0-9][^$#\\/\\t=]*:([^=]|$)/ {split($1,A,/ /);for(i in A)print A[i]}' | sort -u"
+
+
+[[Snippets]]
+Description = "List manually installed apt packages"
+Output = ""
+Tag = ["system"]
+command = "apt-mark showmanual\\n"
+
+
+[[Snippets]]
+Description = "List network interfaces"
+Output = ""
+Tag = ["network"]
+command = "ip -br -c a"
+
+
+[[Snippets]]
+Description = "List open GitHub PRs in markdown"
+Output = ""
+Tag = ["git"]
+command = "gh search prs --author \"@me\" --state \"open\" --json url,title | jq -r '.[] | \"* [\" + .title + \"](\" + .url + \")\"'"
+
+
+[[Snippets]]
+Description = "List pending Taskwarrior project tasks"
+Output = ""
+Tag = ["productivity"]
+command = "task project.is:<project=perf> status:pending export | jq -r '.[] | \"- [ ] \" + .description'"
+
+
+[[Snippets]]
+Description = "List shell commands"
+Output = ""
+Tag = ["shell"]
+command = "whence -vm \"*\""
+
+
+[[Snippets]]
+Description = "List zle widgets"
+Output = ""
+Tag = ["shell"]
+command = "zle -al"
+
+
+[[Snippets]]
+Description = "Locate command or function source"
+Output = ""
+Tag = ["shell"]
+command = "type -a function"
+
+
+[[Snippets]]
+Description = "Merge upstream into local fork"
+Output = ""
+Tag = ["git"]
+command = "git merge upstream/master"
+
+
+[[Snippets]]
+Description = "Remove all Restic snapshots"
+Output = ""
+Tag = ["backup"]
+command = "restic forget --keep-tag=SomeUnusedTag -vv"
+
+
+[[Snippets]]
+Description = "Reset to first commit"
+Output = ""
+Tag = ["git"]
+command = "git reset --soft $(git rev-list --max-parents=0 HEAD)"
+
+
+[[Snippets]]
+Description = "Run CLI speed test"
+Output = ""
+Tag = ["cli", "network"]
+command = "speedtest-cli"
+
+
+[[Snippets]]
+Description = "Search git commit history for pattern"
+Output = ""
+Tag = ["git"]
+command = "git log -p --all -G '"
+
+
+[[Snippets]]
+Description = "Show file commit history"
+Output = ""
+Tag = ["git"]
+command = "git log --follow --stat -p -- "
+
+
+[[Snippets]]
+Description = "Show git branch history graph"
+Output = ""
+Tag = ["git"]
+command = "git log --graph --oneline --decorate --all --simplify-by-decoration --parents"
+
+
+[[Snippets]]
+Description = "Show key character codes"
+Output = ""
+Tag = ["system"]
+command = "xev | awk -F'[ )]+' '/^KeyPress/ { a[NR+2] } NR in a { printf \"%-3s %s\\n\", $5, $8 }'"
+
+
+[[Snippets]]
+Description = "Show staged git changes"
+Output = ""
+Tag = ["git"]
+command = "git diff --cached"
+
+
+[[Snippets]]
+Description = "Test branch merge without committing"
+Output = ""
+Tag = ["git"]
+command = "git merge --no-commit --no-ff <branch> && echo $? && git merge --abort"
+
+
+[[Snippets]]
+Description = "View today's completed Taskwarrior tasks"
+Output = ""
+Tag = ["productivity"]
+command = "task end.after:today completed"
+
+
+[[Snippets]]
+Description = "View yesterday's completed Taskwarrior tasks"
+Output = ""
+Tag = ["productivity"]
+command = "task end:yesterday completed"

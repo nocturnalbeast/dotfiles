@@ -1,0 +1,11 @@
+[General]
+Backend = "gist"
+Cmd = []
+Color = false
+Column = 40
+Editor = "nvim"
+Format = "[$description]: $command $tags"
+SelectCmd = "fzf --height=80%"
+SnippetDirs = []
+SnippetFile = "~/.config/pet/snippet.toml"
+SortBy = ""

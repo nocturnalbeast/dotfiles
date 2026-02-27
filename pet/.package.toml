@@ -1,0 +1,6 @@
+enabled = true
+description = "pet: CLI snippet manager"
+tags = ["cli", "shell", "snippets"]
+os = ["linux", "macos"]
+arch = []
+condition = ""
