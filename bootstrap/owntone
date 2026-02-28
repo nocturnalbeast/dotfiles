@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+
+DOTFILES_DIR=$(cd "$(dirname "$0")/.." && pwd)
+OWNTONECTL="owntonectl"
+
+if ! command -v owntonectl > /dev/null 2>&1; then
+    OWNTONECTL="$DOTFILES_DIR/scripts/.local/bin/owntonectl"
+fi
+
+case "$1" in
+    "install")
+        "$OWNTONECTL" build
+        ;;
+    "reinstall")
+        "$OWNTONECTL" clean
+        "$OWNTONECTL" build
+        ;;
+    "uninstall")
+        "$OWNTONECTL" clean
+        ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
+esac
