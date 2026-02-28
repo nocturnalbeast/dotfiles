@@ -1,5 +1,8 @@
 #!/usr/bin/env zsh
 
+# disable ctrl+s/ctrl+q flow control
+stty -ixon
+
 # use emacs keybindings
 bindkey -d
 bindkey -e
