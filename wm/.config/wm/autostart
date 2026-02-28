@@ -38,13 +38,6 @@ elif command -v pipewire > /dev/null 2>&1; then
     fi
 fi
 
-# launch music player server
-if command -v mopidy > /dev/null 2>&1; then
-    mopidy &
-elif command -v mpd > /dev/null 2>&1; then
-    mpd &
-fi
-
 # launch notification daemon
 if command -v notificationd > /dev/null 2>&1; then
     notificationd start
@@ -106,4 +99,20 @@ if ! is_wayland; then
     xsetroot -cursor_name left_ptr
     # hide cursor when inactive
     unclutter &
+fi
+
+# launch music player server
+music_started=false
+if command -v owntonectl > /dev/null 2>&1 && owntonectl start; then
+    music_started=true
+fi
+if [ "$music_started" = false ] && command -v mopidy > /dev/null 2>&1; then
+    mopidy &
+    sleep 2
+    if pgrep -x mopidy > /dev/null 2>&1; then
+        music_started=true
+    fi
+fi
+if [ "$music_started" = false ] && command -v mpd > /dev/null 2>&1; then
+    mpd &
 fi
