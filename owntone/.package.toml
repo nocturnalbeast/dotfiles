@@ -1,0 +1,6 @@
+enabled = true
+description = "OwnTone: AirPlay/AirPlay 2 receiver"
+tags = ["cli", "media", "music"]
+os = ["linux"]
+arch = []
+condition = ""
