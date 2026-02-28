@@ -1,0 +1,237 @@
+#!/usr/bin/env bash
+
+# A control script for managing OwnTone container deployment.
+
+# Global configuration
+DEPENDENCIES=(curl pactl)
+CONTAINER_NAME="OwnTone"
+BUILD_DIR="$HOME/.local/share/owntone/build"
+CONFIG_DIR="$HOME/.config/owntone"
+CACHE_DIR="$HOME/.cache/owntone"
+MEDIA_DIR="$HOME/music"
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") COMMAND
+
+A control script for managing OwnTone container deployment.
+
+Commands:
+    build     Build the OwnTone image with PulseAudio support
+    start     Create and start the container (first run) or start existing
+    stop      Stop the container
+    restart   Restart the container
+    logs      View container logs (follow mode)
+    status    Check container and API status
+    clean     Remove container and image
+    -h, --help    Show this help message
+EOF
+}
+
+detect_container_runtime() {
+    if command -v podman &> /dev/null; then
+        echo "podman"
+    elif command -v docker &> /dev/null; then
+        echo "docker"
+    else
+        return 1
+    fi
+}
+
+check_dependencies() {
+    for dependency in "${DEPENDENCIES[@]}"; do
+        if ! command -v "$dependency" &> /dev/null; then
+            echo "error: Could not find '${dependency}', is it installed?" >&2
+            return 1
+        fi
+    done
+
+    CONTAINER_RUNTIME=$(detect_container_runtime)
+    if [ -z "$CONTAINER_RUNTIME" ]; then
+        echo "error: Could not find podman or docker, is one installed?" >&2
+        return 1
+    fi
+
+    if [ "$CONTAINER_RUNTIME" = "podman" ]; then
+        IMAGE_NAME="localhost/owntone-pulse:29.0"
+        SELINUX_SUFFIX=":Z"
+    else
+        IMAGE_NAME="owntone-pulse:29.0"
+        SELINUX_SUFFIX=""
+    fi
+}
+
+setup_directories() {
+    mkdir -p "$CONFIG_DIR"
+    mkdir -p "$CACHE_DIR"
+    chmod 777 "$CACHE_DIR"
+}
+
+get_default_sink_description() {
+    local default_sink
+    default_sink=$(pactl get-default-sink 2> /dev/null)
+    [ -z "$default_sink" ] && return 1
+
+    pactl list sinks 2> /dev/null |
+        awk -v sink="$default_sink" '
+            $0 ~ "Name: " sink { found=1 }
+            found && /Description:/ {
+                sub(/^.*Description: /, "")
+                print
+                exit
+            }
+        '
+}
+
+enable_default_output() {
+    local sink_description output_id
+
+    sink_description=$(get_default_sink_description)
+    [ -z "$sink_description" ] && return 1
+
+    output_id=$(curl -s http://localhost:3689/api/outputs 2> /dev/null |
+        python3 -c "import sys,json; outputs=json.load(sys.stdin).get('outputs',[]); [print(o['id']) for o in outputs if o['name'] == '$sink_description']" 2> /dev/null)
+
+    [ -z "$output_id" ] && return 1
+
+    curl -s -X PUT "http://localhost:3689/api/outputs/$output_id" \
+        -H "Content-Type: application/json" \
+        -d '{"selected": true}' > /dev/null 2>&1
+
+    echo "Enabled default output: $sink_description"
+}
+
+build() {
+    echo "Building OwnTone image with PulseAudio support..."
+    cd "$BUILD_DIR"
+    "$CONTAINER_RUNTIME" build -t "$IMAGE_NAME" .
+    echo "Build complete: $IMAGE_NAME"
+}
+
+create_container() {
+    echo "Creating container..."
+    "$CONTAINER_RUNTIME" run -d \
+        --name="$CONTAINER_NAME" \
+        --network=host \
+        -e UID=$(id -u) \
+        -e GID=$(id -g) \
+        -v "$CONFIG_DIR":/etc/owntone"$SELINUX_SUFFIX" \
+        -v "$MEDIA_DIR":/srv/media"$SELINUX_SUFFIX" \
+        -v "$CACHE_DIR":/var/cache/owntone"$SELINUX_SUFFIX" \
+        --restart unless-stopped \
+        "$IMAGE_NAME"
+}
+
+start_services() {
+    echo "Waiting for container to initialize..."
+    sleep 5
+
+    echo "Starting services inside container..."
+    "$CONTAINER_RUNTIME" exec "$CONTAINER_NAME" sh -c "
+        rc-service avahi-daemon start
+        rc-service avahi-dnsconfd start
+        sleep 2
+        rc-service owntone start
+    "
+
+    echo "Checking OwnTone status..."
+    sleep 3
+    if curl -s http://localhost:3689/api/outputs > /dev/null 2>&1; then
+        echo "OwnTone is running!"
+        echo "Web interface: http://localhost:3689"
+        echo "MPD port: 6600"
+        enable_default_output
+        curl -s http://localhost:3689/api/outputs | python3 -c "import sys,json; outputs=json.load(sys.stdin)['outputs']; print('\nAvailable outputs:'); [print(f\"  - {o['name']} ({o['type']}) {'[selected]' if o['selected'] else ''}\") for o in outputs]" 2> /dev/null || true
+    else
+        echo "Warning: OwnTone may not be fully started yet. Check logs with: $(basename "$0") logs"
+    fi
+}
+
+start() {
+    if "$CONTAINER_RUNTIME" ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+        echo "Container exists, starting..."
+        "$CONTAINER_RUNTIME" start "$CONTAINER_NAME"
+        start_services
+    else
+        setup_directories
+        create_container
+        start_services
+    fi
+}
+
+stop() {
+    echo "Stopping container..."
+    "$CONTAINER_RUNTIME" stop "$CONTAINER_NAME" 2> /dev/null || true
+}
+
+restart() {
+    stop
+    sleep 2
+    start
+}
+
+logs() {
+    "$CONTAINER_RUNTIME" logs --tail 100 -f "$CONTAINER_NAME"
+}
+
+status() {
+    if "$CONTAINER_RUNTIME" ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+        echo "Container: Running"
+        echo ""
+        curl -s http://localhost:3689/api/outputs 2> /dev/null | python3 -m json.tool 2> /dev/null || echo "API not responding"
+    else
+        echo "Container: Not running"
+    fi
+}
+
+clean() {
+    echo "Removing container and image..."
+    "$CONTAINER_RUNTIME" stop "$CONTAINER_NAME" 2> /dev/null || true
+    "$CONTAINER_RUNTIME" rm "$CONTAINER_NAME" 2> /dev/null || true
+    "$CONTAINER_RUNTIME" rmi "$IMAGE_NAME" 2> /dev/null || true
+    echo "Clean complete"
+}
+
+main() {
+    local command="$1"
+    shift
+
+    case "$command" in
+        build)
+            check_dependencies && build
+            ;;
+        start)
+            check_dependencies && start
+            ;;
+        stop)
+            check_dependencies && stop
+            ;;
+        restart)
+            check_dependencies && restart
+            ;;
+        logs)
+            check_dependencies && logs
+            ;;
+        status)
+            check_dependencies && status
+            ;;
+        clean)
+            check_dependencies && clean
+            ;;
+        -h | --help)
+            usage
+            ;;
+        *)
+            if [ -z "$command" ]; then
+                usage
+                exit 1
+            else
+                echo "error: Unknown command '$command'" >&2
+                usage >&2
+                exit 1
+            fi
+            ;;
+    esac
+}
+
+main "$@"
