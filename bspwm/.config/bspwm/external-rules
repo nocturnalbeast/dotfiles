@@ -11,7 +11,7 @@ WKSP_4_WINDOWS=(thunar nemo gparted gnome-disks)
 WKSP_5_WINDOWS=(mpv)
 WKSP_6_WINDOWS=(libreoffice libreoffice-startcenter zathura)
 WKSP_7_WINDOWS=(gimp pinta inkscape)
-WKSP_8_WINDOWS=(telegramdesktop uget-gtk)
+WKSP_8_WINDOWS=(telegramdesktop uget-gtk deluge)
 WKSP_9_WINDOWS=(systemmonitor)
 WKSP_10_WINDOWS=(meld)
 
