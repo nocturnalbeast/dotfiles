@@ -1,0 +1,293 @@
+#!/usr/bin/env sh
+
+# A script for polybar volume display and control.
+# Provides formatted output with optional inline polybar color styling.
+
+# Color configuration (override via environment variables)
+HEADER_BG="${POLYBAR_VOLUME_HEADER_BG:-#C0000000}"
+HEADER_FG="${POLYBAR_VOLUME_HEADER_FG:-#CDFFFFFF}"
+CONTENT_BG="${POLYBAR_VOLUME_CONTENT_BG:-#9F000000}"
+CONTENT_FG="${POLYBAR_VOLUME_CONTENT_FG:-#BCFFFFFF}"
+
+# Icons
+ICON_MUTED="󰝟"
+ICON_LOW="󰕿"
+ICON_MEDIUM="󰖀"
+ICON_HIGH="󰕾"
+
+# Bar configuration
+BAR_WIDTH=10
+BAR_FILL="━"
+BAR_INDICATOR="╉"
+BAR_EMPTY="─"
+
+# Volume thresholds
+THRESHOLD_LOW=30
+THRESHOLD_HIGH=70
+
+# Follow mode PID directory
+PID_DIR="/tmp/polybar-volume-follow"
+
+style_header() {
+    printf '%%{B%s}%%{F%s}' "$HEADER_BG" "$HEADER_FG"
+}
+
+style_content() {
+    printf '%%{B%s}%%{F%s}' "$CONTENT_BG" "$CONTENT_FG"
+}
+
+register_pid() {
+    mkdir -p "$PID_DIR"
+    touch "$PID_DIR/$$"
+}
+
+unregister_pid() {
+    rm -f "$PID_DIR/$$"
+}
+
+signal_followers() {
+    for pid_file in "$PID_DIR"/*; do
+        [ -f "$pid_file" ] && kill -USR1 "$(basename "$pid_file")" 2> /dev/null
+    done
+}
+
+get_icon() {
+    if [ "$2" = "1" ]; then
+        printf '%s' "$ICON_MUTED"
+    elif [ "$1" -lt "$THRESHOLD_LOW" ]; then
+        printf '%s' "$ICON_LOW"
+    elif [ "$1" -lt "$THRESHOLD_HIGH" ]; then
+        printf '%s' "$ICON_MEDIUM"
+    else
+        printf '%s' "$ICON_HIGH"
+    fi
+}
+
+generate_bar() {
+    vol="$1"
+    filled=$((vol * (BAR_WIDTH - 1) / 100))
+    empty=$((BAR_WIDTH - 1 - filled))
+    bar=""
+    i=0
+    while [ "$i" -lt "$filled" ]; do
+        bar="${bar}${BAR_FILL}"
+        i=$((i + 1))
+    done
+    bar="${bar}${BAR_INDICATOR}"
+    i=0
+    while [ "$i" -lt "$empty" ]; do
+        bar="${bar}${BAR_EMPTY}"
+        i=$((i + 1))
+    done
+    printf '%s' "$bar"
+}
+
+parse_volume_info() {
+    info=$(volume get)
+    VOL="${info%% *}"
+    MUTED=""
+    case "$info" in
+        *muted*) MUTED="1" ;;
+    esac
+}
+
+display_percentage() {
+    align="$1"
+    styled="$2"
+
+    parse_volume_info
+    icon=$(get_icon "$VOL" "$MUTED")
+
+    if [ -n "$MUTED" ]; then
+        if [ "$styled" = "1" ]; then
+            style_header
+            printf '  %s  ' "$icon"
+        else
+            printf '%s' "$icon"
+        fi
+        return
+    fi
+
+    if [ "$styled" = "1" ]; then
+        if [ "$align" = "right" ]; then
+            style_content
+            printf '  %s%%  ' "$VOL"
+            style_header
+            printf '  %s  ' "$icon"
+        else
+            style_header
+            printf '  %s  ' "$icon"
+            style_content
+            printf '  %s%%  ' "$VOL"
+        fi
+    else
+        if [ "$align" = "right" ]; then
+            printf '%s%% %s' "$VOL" "$icon"
+        else
+            printf '%s %s%%' "$icon" "$VOL"
+        fi
+    fi
+}
+
+display_bar() {
+    align="$1"
+    styled="$2"
+
+    parse_volume_info
+    icon=$(get_icon "$VOL" "$MUTED")
+
+    if [ -n "$MUTED" ]; then
+        if [ "$styled" = "1" ]; then
+            style_header
+            printf '  %s  ' "$icon"
+        else
+            printf '%s' "$icon"
+        fi
+        return
+    fi
+
+    bar=$(generate_bar "$VOL")
+
+    if [ "$styled" = "1" ]; then
+        if [ "$align" = "right" ]; then
+            style_content
+            printf '  %s  ' "$bar"
+            style_header
+            printf '  %s  ' "$icon"
+        else
+            style_header
+            printf '  %s  ' "$icon"
+            style_content
+            printf '  %s  ' "$bar"
+        fi
+    else
+        if [ "$align" = "right" ]; then
+            printf '%s %s' "$bar" "$icon"
+        else
+            printf '%s %s' "$icon" "$bar"
+        fi
+    fi
+}
+
+display_icon() {
+    parse_volume_info
+    get_icon "$VOL" "$MUTED"
+}
+
+follow_display() {
+    display_func="$1"
+    shift
+    display_args="$*"
+    register_pid
+    trap unregister_pid EXIT
+    render() {
+        "$display_func" $display_args
+        echo
+    }
+    trap render USR1
+    render
+    while true; do
+        sleep 86400 &
+        wait $!
+    done
+}
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") OPERATION [ALIGNMENT] [OPTIONS]
+
+A script for polybar volume display and control.
+
+Operations:
+    percentage [ALIGNMENT]  Display icon + percentage text
+    bar [ALIGNMENT]         Display icon + text bar
+    icon                    Display volume icon only
+    mute                    Toggle mute
+    increase [STEP]         Increase volume by STEP% (default: 5)
+    decrease [STEP]         Decrease volume by STEP% (default: 5)
+
+Alignment (for display operations):
+    left                    Icon on left, value on right (default)
+    right                   Value on left, icon on right
+
+Options:
+    --styled                Enable inline polybar color formatting
+    --follow                Stay running and update on volume changes (for tail mode)
+
+Environment variables:
+    POLYBAR_VOLUME_HEADER_BG    Header background color (default: #C0000000)
+    POLYBAR_VOLUME_HEADER_FG    Header foreground color (default: #CDFFFFFF)
+    POLYBAR_VOLUME_CONTENT_BG   Content background color (default: #9F000000)
+    POLYBAR_VOLUME_CONTENT_FG   Content foreground color (default: #BCFFFFFF)
+EOF
+}
+
+main() {
+    if [ $# -eq 0 ]; then
+        usage >&2
+        exit 1
+    fi
+
+    operation="$1"
+    shift
+
+    align="left"
+    styled=0
+    follow=0
+    step=""
+
+    for arg in "$@"; do
+        case "$arg" in
+            left | right) align="$arg" ;;
+            --styled) styled=1 ;;
+            --follow) follow=1 ;;
+            [0-9]*) step="$arg" ;;
+        esac
+    done
+
+    case "$operation" in
+        percentage)
+            if [ "$follow" = "1" ]; then
+                follow_display display_percentage "$align" "$styled"
+            else
+                display_percentage "$align" "$styled"
+            fi
+            ;;
+        bar)
+            if [ "$follow" = "1" ]; then
+                follow_display display_bar "$align" "$styled"
+            else
+                display_bar "$align" "$styled"
+            fi
+            ;;
+        icon)
+            if [ "$follow" = "1" ]; then
+                follow_display display_icon
+            else
+                display_icon
+            fi
+            ;;
+        mute)
+            volume mute
+            signal_followers
+            ;;
+        increase)
+            volume increase "${step:-5}"
+            signal_followers
+            ;;
+        decrease)
+            volume decrease "${step:-5}"
+            signal_followers
+            ;;
+        -h | --help)
+            usage
+            ;;
+        *)
+            echo "Error: Invalid operation '$operation'" >&2
+            usage >&2
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
