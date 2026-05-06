@@ -38,10 +38,9 @@ Operations:
                     Format: [+-]TIME where TIME is in seconds
     info            Show current playback information
                     If ARGUMENT is provided, use it for metadata formatting
-    continuousinfo  Follow playback information with live updates
-                    If ARGUMENT is provided, use it for metadata formatting
+                    Use --follow for continuous live updates
     icon            Show current playback icon (if paused, shows play icon and vice versa)
-    continuousicon  Follow playback icon with live updates (if paused, shows play icon and vice versa)
+                    Use --follow for continuous live updates
 EOF
 }
 
@@ -377,13 +376,19 @@ Album: {{album}}'
 get_icon() {
     FOLLOW_MODE="$1"
 
+    PREFERRED_PLAYER=$(get_recency_cache)
+    [ -z "$PREFERRED_PLAYER" ] && PREFERRED_PLAYER=$(get_priority | head -n1)
+    [ -z "$PREFERRED_PLAYER" ] && {
+        printf "%s\n" "$ICON_PLAY"
+        return 1
+    }
+
     if [ "$FOLLOW_MODE" = "follow" ]; then
-        if [ "$(playerctl status 2> /dev/null)" = "" ]; then echo "$ICON_PLAY"; fi
         playerctl -p "$PREFERRED_PLAYER" -F metadata -f "{{status}}" 2> /dev/null | while read -r EVENT; do
-            [ "$EVENT" = "Playing" ] && echo "$ICON_PAUSE" || echo "$ICON_PLAY"
+            [ "$EVENT" = "Playing" ] && printf "%s\n" "$ICON_PAUSE" || printf "%s\n" "$ICON_PLAY"
         done
     else
-        [ "$(playerctl -p "$PREFERRED_PLAYER" metadata -f "{{status}}" 2> /dev/null)" = "Playing" ] && echo "$ICON_PAUSE" || echo "$ICON_PLAY"
+        [ "$(playerctl -p "$PREFERRED_PLAYER" metadata -f "{{status}}" 2> /dev/null)" = "Playing" ] && printf "%s\n" "$ICON_PAUSE" || printf "%s\n" "$ICON_PLAY"
     fi
 }
 
@@ -436,16 +441,18 @@ main() {
             seek_position "$2"
             ;;
         info)
-            get_info "$2"
-            ;;
-        continuousinfo)
-            get_info "$2" "follow"
+            if [ "$2" = "--follow" ]; then
+                get_info "$3" "follow"
+            else
+                get_info "$2"
+            fi
             ;;
         icon)
-            get_icon
-            ;;
-        continuousicon)
-            get_icon "follow"
+            if [ "$2" = "--follow" ]; then
+                get_icon "follow"
+            else
+                get_icon
+            fi
             ;;
         *)
             usage
