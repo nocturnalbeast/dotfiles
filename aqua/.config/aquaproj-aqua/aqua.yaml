@@ -3,7 +3,7 @@ checksum:
 
 registries:
   - type: standard
-    ref: v4.470.0
+    ref: v4.507.0
 
 packages:
   # json processing tool
@@ -11,87 +11,87 @@ packages:
   # file navigator
   - name: antonmedv/walk@v1.13.0
   # python linter and formatter
-  - name: astral-sh/ruff@0.15.1
+  - name: astral-sh/ruff@0.15.12
   # python package installer
-  - name: astral-sh/uv@0.10.2
+  - name: astral-sh/uv@0.11.10
   # xdg compliance checker
   - name: b3nj5m1n/xdg-ninja@v0.2.0.2
   # fast search tool
   - name: BurntSushi/ripgrep@15.1.0
   # disk usage analyzer
-  - name: Byron/dua-cli@v2.33.0
+  - name: Byron/dua-cli@v2.34.0
   # disk space analyzer
-  - name: Canop/dysk@v3.5.0
+  - name: Canop/dysk@v3.6.1
   # markdown viewer
-  - name: charmbracelet/glow@v2.1.1
+  - name: charmbracelet/glow@v2.1.2
   # github cli
-  - name: cli/cli@v2.86.0
+  - name: cli/cli@v2.92.0
   # system monitor
   - name: ClementTsang/bottom@0.12.3
   # conventional commits tool
-  - name: cocogitto/cocogitto@6.5.0
+  - name: cocogitto/cocogitto@7.0.0
   # better git diff
-  - name: dandavison/delta@0.18.2
+  - name: dandavison/delta@0.19.2
   # interactive cheatsheet
   - name: denisidoro/navi@v2.24.0
   # structural diff tool
-  - name: Wilfred/difftastic@0.67.0
+  - name: Wilfred/difftastic@0.69.0
   # disk usage analyzer
-  - name: dundee/gdu@v5.33.0
+  - name: dundee/gdu@v5.36.1
   # http client
   - name: ducaale/xh@v0.25.3
   # modern ls replacement
   - name: eza-community/eza@v0.23.4
   # system information tool
-  - name: fastfetch-cli/fastfetch@2.59.0
+  - name: fastfetch-cli/fastfetch@2.62.1
   # network utilization monitor
   - name: imsnif/bandwhich@v0.23.1
   # mass rename utility
   - name: itchyny/mmv@v0.1.6
   # development environment manager
-  - name: jdx/mise@v2026.2.11
+  - name: jdx/mise@v2026.5.1
   # terminal ui for git
-  - name: jesseduffield/lazygit@v0.59.0
+  - name: jesseduffield/lazygit@v0.61.1
   # lua formatter
-  - name: JohnnyMorganz/StyLua@v2.3.1
+  - name: JohnnyMorganz/StyLua@v2.4.1
   # systemd unit manager
   - name: joehillen/sysz@1.4.3
   # json processor
   - name: stedolan/jq@jq-1.8.1
   # fuzzy finder
-  - name: junegunn/fzf@v0.67.0
+  - name: junegunn/fzf@v0.72.0
   # command snippet manager
   - name: knqyf263/pet@v1.0.1
   # shell script analysis
   - name: koalaman/shellcheck@v0.11.0
   # yaml processor
-  - name: mikefarah/yq@v4.52.4
+  - name: mikefarah/yq@v4.53.2
   # github hub
   - name: mislav/hub@v2.14.2
   # disk usage viewer
   - name: muesli/duf@v0.9.1
   # shell formatter (shfmt)
-  - name: mvdan/sh@v3.12.0
+  - name: mvdan/sh@v3.13.1
   # git status in fetch style
-  - name: o2sh/onefetch@2.26.1
+  - name: o2sh/onefetch@2.27.1
   # trash cli utility
   - name: oberblastmeister/trashy@v2.0.0
   # compression tool
-  - name: ouch-org/ouch@0.6.1
+  - name: ouch-org/ouch@0.7.1
   # cat with syntax highlighting
   - name: sharkdp/bat@v0.26.1
   # simple find alternative
-  - name: sharkdp/fd@v10.3.0
+  - name: sharkdp/fd@v10.4.2
   # hex viewer
   - name: sharkdp/hexyl@v0.17.0
   # command benchmarking tool
   - name: sharkdp/hyperfine@v1.20.0
   # ls_colors generator
-  - name: sharkdp/vivid@v0.10.1
+  - name: sharkdp/vivid@v0.11.1
   # shell prompt
-  - name: starship/starship@v1.24.2
+  - name: starship/starship@v1.25.1
   # terminal file manager
-  - name: sxyazi/yazi@v26.1.22
+  - name: sxyazi/yazi@v26.5.6
   # another terminal file manager
   - name: yorukot/superfile@v1.5.0
   # toml toolkit
@@ -103,14 +103,14 @@ packages:
   # make json greppable
   - name: tomnomnom/gron@v0.7.1
   # jq for binary formats
-  - name: wader/fq@v0.16.0
+  - name: wader/fq@v0.17.0
   # csv viewer
   - name: wfxr/csview@v1.3.4
   # personal terminal dashboard
-  - name: wtfutil/wtf@v0.48.0
+  - name: wtfutil/wtf@v0.49.1
   # syncable and central terminal history
-  - name: atuinsh/atuin@v18.12.1
+  - name: atuinsh/atuin@v18.16.0
   # tui coding agent
-  - name: anomalyco/opencode@v1.2.4
+  - name: anomalyco/opencode@v1.14.39
   # tmux git status
   - name: arl/gitmux@v0.11.5
