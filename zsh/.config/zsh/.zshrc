@@ -129,7 +129,7 @@ ZCOMET_HOME="$XDG_DATA_HOME/zsh/zcomet"
 ZCOMET_SCRIPT="$ZCOMET_HOME/bin/zcomet.zsh"
 zstyle ':zcomet:*' home-dir "$ZCOMET_HOME"
 zstyle ':zcomet:compinit' dump-file "$XDG_CACHE_HOME/zcompdump"
-zstyle ':*:compinit' arguments $([[ $ZCOMPDUMP_PATH(#qNmh-24) ]] && echo -C || echo -i)
+zstyle ':*:compinit' arguments $([[ ${XDG_CACHE_HOME}/zcompdump(#qNmh-24) ]] && echo -C || echo -i)
 
 [[ ! -f "$ZCOMET_SCRIPT" ]] && {
     git clone --quiet --depth=1 https://github.com/agkozak/zcomet.git "$ZCOMET_HOME/bin" 2>/dev/null || {
