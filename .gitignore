@@ -49,3 +49,6 @@ __pycache__/
 
 # font-manager file
 fontconfig/.config/fontconfig/conf.d/09-Directories.conf
+
+# beets state file
+beets/.config/beets/state.pickle
