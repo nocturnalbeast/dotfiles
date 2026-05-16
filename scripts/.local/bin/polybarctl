@@ -40,7 +40,7 @@ EOF
 # Check for required dependencies
 check_dependencies() {
     for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-        type -p "$DEPENDENCY" &> /dev/null || {
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
             echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
             exit 1
         }
@@ -145,14 +145,14 @@ generate_temp_config() {
 
 # start the bars
 start_bars() {
-    if type pkill &> /dev/null; then
+    if type pkill > /dev/null 2>&1; then
         pkill polybar
     else
         while IFS=$'\n' read -r BAR_PID; do
             kill "$BAR_PID"
         done < <(ps -e -o pid,cmd | tail -n +2 | awk '{print $1":"substr($0, index($0,$2))}' | sed -n '/^[0-9]\+:polybar/p' | cut -f 1 -d :)
     fi
-    while pgrep -u $UID -x polybar > /dev/null 2>&1; do sleep 1; done
+    while pgrep -u "$UID" -x polybar > /dev/null 2>&1; do sleep 1; done
 
     rm -f "$STATE_FILE"
 
@@ -200,8 +200,8 @@ start_bars() {
 init_state() {
     local all_states=()
     rm -f "$STATE_FILE"
-    if [[ ! -d "$(dirname $STATE_FILE)" ]]; then
-        mkdir -p "$(dirname $STATE_FILE)"
+    if [[ ! -d "$(dirname "$STATE_FILE")" ]]; then
+        mkdir -p "$(dirname "$STATE_FILE")"
     fi
     get_bars > "$STATE_FILE"
     while IFS= read -r line; do
@@ -238,7 +238,13 @@ spectrwm_disable_padding() { spectrwm-region-helper disable_padding; }
 get_window_manager() { wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p"; }
 get_padding() { $(get_window_manager)_get_padding 2> /dev/null; }
 enable_padding() { $(get_window_manager)_enable_padding 2> /dev/null; }
-disable_padding() { $(get_window_manager)_disable_padding 2> /dev/null; }
+disable_padding() {
+    local wm
+    wm=$(get_window_manager)
+    if type -t "${wm}_disable_padding" > /dev/null 2>&1; then
+        "${wm}_disable_padding" 2> /dev/null
+    fi
+}
 toggle_padding() { if [[ "$(get_padding)" != "0" ]]; then disable_padding 2> /dev/null; else enable_padding 2> /dev/null; fi; }
 
 # Switch the states of the bars (i.e. make visible bar invisible, and vice-versa)
@@ -288,7 +294,12 @@ disable_bars() {
         for pid in "${pids_active[@]}"; do
             mapfile -t wids < <(xdotool search --pid "$pid")
             for wid in "${wids[@]}"; do
-                eval $(xdotool getwindowgeometry --shell "$wid")
+                local xdotool_out
+                xdotool_out=$(xdotool getwindowgeometry --shell "$wid")
+                X=$(echo "$xdotool_out" | sed -n 's/^X=\([0-9]*\)/\1/p')
+                Y=$(echo "$xdotool_out" | sed -n 's/^Y=\([0-9]*\)/\1/p')
+                WIDTH=$(echo "$xdotool_out" | sed -n 's/^WIDTH=\([0-9]*\)/\1/p')
+                HEIGHT=$(echo "$xdotool_out" | sed -n 's/^HEIGHT=\([0-9]*\)/\1/p')
                 while IFS= read -r entry; do
                     read -r mon_name mon_width mon_height mon_x_start mon_y_start < <(
                         echo "$entry" | awk -F'-' '{for(i=1;i<=NF-4;i++) printf $i (i<NF-4?"-":" "); printf "%s %s %s %s\n", $(NF-3), $(NF-2), $(NF-1), $NF;}'

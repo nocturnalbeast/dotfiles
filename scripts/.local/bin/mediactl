@@ -3,6 +3,7 @@
 # A MPRIS-based media playback contoller script with player prioritization.
 
 # Global configuration
+DEPENDENCIES=(playerctl)
 PRIORITY="mopidy DeaDBeeF mpv"
 TRACK_CHG_EXCLUDE="mpv"
 VOL_CHG_EXCLUDE=""
@@ -16,6 +17,16 @@ fi
 CACHE_FILE="$CACHE_DIR/media-control-recent"
 ICON_PLAY="󰐊"
 ICON_PAUSE="󰏤"
+
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in $DEPENDENCIES; do
+        command -v "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
 
 usage() {
     cat << EOF
@@ -192,7 +203,7 @@ control_playback() {
 
     # For play operation, try each player in priority order
     if [ "$OPERATION" = "play" ]; then
-        get_priority | while read -r instance; do
+        for instance in $(get_priority); do
             if playerctl -p "$instance" play 2> /dev/null; then
                 set_recency_cache "$instance"
                 return 0
@@ -207,7 +218,7 @@ control_playback() {
             return 0
         fi
     else
-        get_priority "playing" | while read -r instance; do
+        for instance in $(get_priority "playing"); do
             if playerctl -p "$instance" "$OPERATION" 2> /dev/null; then
                 set_recency_cache "$instance"
                 return 0
@@ -246,7 +257,7 @@ change_track() {
         fi
     }
 
-    get_priority "playing" | while read -r instance; do
+    for instance in $(get_priority "playing"); do
         case " $TRACK_CHG_EXCLUDE " in
             *" $instance "*) continue ;;
         esac
@@ -288,7 +299,7 @@ change_volume() {
         fi
     }
 
-    get_priority | while read -r instance; do
+    for instance in $(get_priority); do
         case " $VOL_CHG_EXCLUDE " in
             *" $instance "*) continue ;;
         esac
@@ -320,7 +331,7 @@ seek_position() {
         fi
     }
 
-    get_priority | while read -r instance; do
+    for instance in $(get_priority); do
         case " $POS_CHG_EXCLUDE " in
             *" $instance "*) continue ;;
         esac
@@ -398,6 +409,8 @@ get_icon() {
 #   $1 - Operation to perform
 #   $2 - Optional argument for operations that need it
 main() {
+    check_dependencies
+
     case $1 in
         list)
             get_priority

@@ -30,7 +30,7 @@ EOF
 # Check for required dependencies
 check_dependencies() {
     for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-        type -p "$DEPENDENCY" &> /dev/null || {
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
             echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
             exit 1
         }
@@ -51,7 +51,7 @@ get_apps() {
     done
     for PATH_EXCLUDE in "${PATHS_EXCLUDE[@]}"; do
         for ENTRY_IDX in "${!APPS_LIST[@]}"; do
-            if [[ ${APPS_LIST[$ENTRY_IDX]} == $PATHS_EXCLUDE* ]]; then
+            if [[ ${APPS_LIST[$ENTRY_IDX]} == "$PATHS_EXCLUDE"* ]]; then
                 unset 'APPS_LIST[ENTRY_IDX]'
             fi
         done
@@ -77,7 +77,7 @@ rebuild_cache() {
 # Refresh the application cache, keeping existing history
 refresh_cache() {
     local UPDATED_CACHE
-    UPDATED_CACHE="$(echo -e "$(get_new_apps)\n$(cat "$CACHE_PATH")" | sort -nr)"
+    UPDATED_CACHE="$(printf '%s\n%s' "$(get_new_apps)" "$(cat "$CACHE_PATH")" | sort -nr)"
     echo "$UPDATED_CACHE" > "$CACHE_PATH"
 }
 
@@ -118,8 +118,8 @@ launch_application() {
     SELECTED_APP_LAST_LAUNCH="$(date +%s)"
     gtk-launch "$SELECTED_APP"
     local UPDATED_CACHE_CONTENT
-    UPDATED_CACHE_CONTENT="$(echo -e "$(grep -v "^$SELECTED_APP_ENTRY$" "$CACHE_PATH")\n$SELECTED_APP_FREQ.$SELECTED_APP_LAST_LAUNCH $SELECTED_APP" | sort -nr | uniq | sort -nr)"
-    echo -e "$UPDATED_CACHE_CONTENT" > "$CACHE_PATH"
+    UPDATED_CACHE_CONTENT="$(printf '%s\n%s' "$(grep -v "^$SELECTED_APP_ENTRY$" "$CACHE_PATH")" "$SELECTED_APP_FREQ.$SELECTED_APP_LAST_LAUNCH $SELECTED_APP" | sort -nr | uniq | sort -nr)"
+    printf '%s' "$UPDATED_CACHE_CONTENT" > "$CACHE_PATH"
 }
 
 # Main entry point

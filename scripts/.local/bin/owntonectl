@@ -29,9 +29,9 @@ EOF
 }
 
 detect_container_runtime() {
-    if command -v podman &> /dev/null; then
+    if command -v podman > /dev/null 2>&1; then
         echo "podman"
-    elif command -v docker &> /dev/null; then
+    elif command -v docker > /dev/null 2>&1; then
         echo "docker"
     else
         return 1
@@ -40,7 +40,7 @@ detect_container_runtime() {
 
 check_dependencies() {
     for dependency in "${DEPENDENCIES[@]}"; do
-        if ! command -v "$dependency" &> /dev/null; then
+        if ! command -v "$dependency" > /dev/null 2>&1; then
             echo "error: Could not find '${dependency}', is it installed?" >&2
             return 1
         fi

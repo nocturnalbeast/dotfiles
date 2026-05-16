@@ -1,11 +1,64 @@
 #!/usr/bin/env bash
 
+# A Spectrwm keybindings menu.
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0")
+
+A menu to display and select Spectrwm window manager keybindings.
+EOF
+}
+
+# Global configuration
+DEPENDENCIES=(sed tr column menu notify-send)
 CONFIG_FILE="${XDG_CONFIG_HOME:="$HOME/.config"}/spectrwm/spectrwm.conf"
 ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/keyboard.svg"
 
-BINDINGS="$(sed -n "s/^[ ]*bind\[\(.*\)\][ ]*=[ ]*\(.*\)[ ]*$/\2 -> \1/p" "$CONFIG_FILE" | sed "s/MOD/$(sed -n "s/^[ ]*modkey[ ]*=[ ]*\(.*\)[ ]*$/\1/p" "$CONFIG_FILE")/g" | sed "s/Mod1/Alt/g" | sed "s/Mod4/Super/g" | tr '[:upper:]' '[:lower:]' | column -t)"
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
 
-SEL_KEYBIND="$(dmenu-helper custom_menu "-l 5" "   " "$BINDINGS")"
-[[ $SEL_KEYBIND == "" ]] && exit 0
+# Parse Spectrwm configuration and build keybindings list
+#
+# Outputs:
+#   A list of keybindings, one per line
+build_keybindings_list() {
+    if [[ ! -f $CONFIG_FILE ]]; then
+        echo "error: Spectrwm configuration file not found at '$CONFIG_FILE'" >&2
+        exit 1
+    fi
 
-notify-send -t 5000 "Selected keybind:" "$(echo "$SEL_KEYBIND" | tr -s "[:blank:]" " " | sed 's/\(.*\) -> \([^ ]*\)/<b>\1<\/b>\n\2/')" -i "$ICON"
+    sed -n "s/^[ ]*bind\[\(.*\)\][ ]*=[ ]*\(.*\)[ ]*$/\2 -> \1/p" "$CONFIG_FILE" |
+        sed "s/MOD/$(sed -n "s/^[ ]*modkey[ ]*=[ ]*\(.*\)[ ]*$/\1/p" "$CONFIG_FILE")/g" |
+        sed "s/Mod1/Alt/g" |
+        sed "s/Mod4/Super/g" |
+        tr '[:upper:]' '[:lower:]' |
+        column -t
+}
+
+# Show keybinding information
+#
+# Arguments:
+#   $1 - The keybinding to show
+show_keybinding_info() {
+    notify-send -t 5000 "Selected keybind:" "$(echo "$1" | tr -s "[:blank:]" " " | sed 's/\(.*\) -> \([^ ]*\)/<b>\1<\/b>\n\2/')" -i "$ICON"
+}
+
+# Main entry point
+main() {
+    check_dependencies
+
+    SELECTION=$(menu run -p "  󰎇 Keybinding: " <<< "$(build_keybindings_list)")
+    if [[ -n $SELECTION ]]; then
+        show_keybinding_info "$SELECTION"
+    fi
+}
+
+main "$@"

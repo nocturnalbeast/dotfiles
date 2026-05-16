@@ -186,7 +186,7 @@ if __name__ == "__main__":
     ctx = types.SimpleNamespace()
     ctx.background_image = os.getenv("XSECURELOCK_SAVER_IMAGE", None)
     ctx.clock_font_size = int(os.getenv("XSECURELOCK_SAVER_CLOCK_FONT_SIZE", 120))
-    ctx.status_font_size = int(os.getenv("XSECURELOCK_SAVER_CLOCK_FONT_SIZE", 40))
+    ctx.status_font_size = int(os.getenv("XSECURELOCK_SAVER_STATUS_FONT_SIZE", 40))
     ctx.status_file = os.getenv("XSECURELOCK_SAVER_STATUS", None)
     ctx.font_family = os.getenv("XSECURELOCK_FONT", "sans").split(":")[0]
     ctx.background = None

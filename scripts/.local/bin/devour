@@ -5,9 +5,9 @@
 ARGS=$*
 CMD="${ARGS%% -- *}"
 FILE="${ARGS##* -- }"
-[ "$CMD" != "$FILE" ] && SAFEFILE=$(echo "$FILE" | sed 's/ /\\ /g')
+[ "$CMD" != "$FILE" ] && SAFEFILE=$(printf '%q' "$FILE")
 WID=$(xdo id)
 
 xdo hide
-$SHELL -i -c "$CMD $SAFEFILE > /dev/null 2>&1; exit"
+"${SHELL:-/bin/sh}" -i -c "$CMD $SAFEFILE" > /dev/null 2>&1
 xdo show "$WID"

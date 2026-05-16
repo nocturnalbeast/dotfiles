@@ -3,6 +3,7 @@
 # A script to control screen brightness using various backends with notifications.
 
 # Global configuration
+DEPENDENCIES=()
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
 ICON_LOW="$CONFIG_DIR/dunst/icons/brightness_low.svg"
 ICON_MEDIUM="$CONFIG_DIR/dunst/icons/brightness_medium.svg"
@@ -40,6 +41,15 @@ detect_brightness_command() {
         return 0
     else
         echo "Error: No supported brightness control command found" >&2
+        echo "Please install one of: brightnessctl, xbacklight" >&2
+        return 1
+    fi
+}
+
+# Check for required dependencies
+check_dependencies() {
+    if ! command -v brightnessctl > /dev/null 2>&1 && ! command -v xbacklight > /dev/null 2>&1; then
+        echo "error: No supported brightness control command found" >&2
         echo "Please install one of: brightnessctl, xbacklight" >&2
         return 1
     fi
@@ -140,6 +150,8 @@ change_brightness() {
 #   $1 - Operation to perform
 #   $2 - Optional value (step size or target percentage)
 main() {
+    check_dependencies
+
     case "$1" in
         increase | decrease)
             BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1

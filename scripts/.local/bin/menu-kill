@@ -2,6 +2,9 @@
 
 # A process killer menu.
 
+# Global configuration
+DEPENDENCIES=(ps kill notify-send menu)
+
 usage() {
     cat << EOF
 Usage: $(basename "$0") [PID]
@@ -18,9 +21,8 @@ EOF
 
 # Check for required dependencies
 check_dependencies() {
-    DEPENDENCIES=(ps kill notify-send menu)
     for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-        type -p "$DEPENDENCY" &> /dev/null || {
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
             echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
             exit 1
         }

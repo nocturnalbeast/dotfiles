@@ -29,7 +29,7 @@ COVER="/tmp/mpd_albumart.jpg"
 # Check for required dependencies
 check_dependencies() {
     for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-        type -p "$DEPENDENCY" &> /dev/null || {
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
             echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
             exit 1
         }
@@ -357,8 +357,7 @@ show_lyrics() {
     if [[ ! -f $LYRICS_FILE ]]; then
         HOW=$(menu run -p "  󰎇 Create lyrics? " <<< $'auto\nmanual')
         if [[ $HOW == "auto" ]]; then
-            clyrics "$(mpc current --format "[%artist%]")" "$(mpc current --format "[%title%]")" >> "$LYRICS_FILE"
-            if [[ $? -ne 0 ]]; then
+            if ! clyrics "$(mpc current --format "[%artist%]")" "$(mpc current --format "[%title%]")" >> "$LYRICS_FILE" 2> /dev/null; then
                 notify-send "Lyrics not found for the song:" "$SONG"
             else
                 notify-send "Saved lyrics file for the song:" "$SONG at <u>$LYRICS_FILE</u>."

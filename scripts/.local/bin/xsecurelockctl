@@ -22,14 +22,16 @@ EOF
 # Check for required dependencies
 check_dependencies() {
     for dependency in "${DEPENDENCIES[@]}"; do
-        type -p "$dependency" &> /dev/null || {
+        type -p "$dependency" > /dev/null 2>&1 || {
             echo "error: Could not find '${dependency}', is it installed?" >&2
             return 1
         }
     done
 }
 
-# Configure screen saver and DPMS settings
+# Configure screen saver timeout and DPMS settings.
+#
+# Uses XSECURELOCK_SAVER_TIMEOUT env var (default: 300 seconds).
 configure() {
     local timeout="${XSECURELOCK_SAVER_TIMEOUT:-300}"
     local notify_time="$((timeout / 10))"
@@ -38,13 +40,18 @@ configure() {
     xset dpms "$((timeout * 3))" "$((timeout * 32 / 10))" "$((timeout * 34 / 10))"
 }
 
-# Get a random wallpaper path
+# Select a random wallpaper image from the wallpaper directory.
+#
+# Outputs:
+#   Writes the full path to a random wallpaper to stdout.
 get_random_wallpaper() {
     local wallpaper_root="$HOME/.local/share/wallpapers"
     find "$(readlink -f "$wallpaper_root")" -iregex '.*.\(jpg\|jpeg\|png\|gif\)' -type f | shuf -n 1
 }
 
-# Start the screen locker daemon
+# Start the xsecurelock daemon with the configured settings.
+#
+# Sets up the dimmer, saver, and wallpaper background.
 start_locker() {
     configure
 
@@ -61,7 +68,10 @@ start_locker() {
     xss-lock -n "$dimmer_path" -l "$SCRIPT_PATH" lock &
 }
 
-# Lock the screen immediately
+# Lock the screen immediately with wallpaper and media handling.
+#
+# Pauses notifications, pauses media if playing, locks with random wallpaper,
+# then restores notifications and media state.
 lock_screen() {
     configure
 
