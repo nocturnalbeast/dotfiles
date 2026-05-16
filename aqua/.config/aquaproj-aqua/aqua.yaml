@@ -3,7 +3,7 @@ checksum:
 
 registries:
   - type: standard
-    ref: v4.507.0
+    ref: v4.512.0
 
 packages:
   # json processing tool
@@ -11,9 +11,9 @@ packages:
   # file navigator
   - name: antonmedv/walk@v1.13.0
   # python linter and formatter
-  - name: astral-sh/ruff@0.15.12
+  - name: astral-sh/ruff@0.15.13
   # python package installer
-  - name: astral-sh/uv@0.11.10
+  - name: astral-sh/uv@0.11.14
   # xdg compliance checker
   - name: b3nj5m1n/xdg-ninja@v0.2.0.2
   # fast search tool
@@ -43,13 +43,13 @@ packages:
   # modern ls replacement
   - name: eza-community/eza@v0.23.4
   # system information tool
-  - name: fastfetch-cli/fastfetch@2.62.1
+  - name: fastfetch-cli/fastfetch@2.63.1
   # network utilization monitor
   - name: imsnif/bandwhich@v0.23.1
   # mass rename utility
   - name: itchyny/mmv@v0.1.6
   # development environment manager
-  - name: jdx/mise@v2026.5.1
+  - name: jdx/mise@v2026.5.9
   # terminal ui for git
   - name: jesseduffield/lazygit@v0.61.1
   # lua formatter
@@ -109,8 +109,8 @@ packages:
   # personal terminal dashboard
   - name: wtfutil/wtf@v0.49.1
   # syncable and central terminal history
-  - name: atuinsh/atuin@v18.16.0
+  - name: atuinsh/atuin@v18.16.1
   # tui coding agent
-  - name: anomalyco/opencode@v1.14.39
+  - name: anomalyco/opencode@v1.15.1
   # tmux git status
   - name: arl/gitmux@v0.11.5
