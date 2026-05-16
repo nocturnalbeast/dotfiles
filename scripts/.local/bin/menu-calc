@@ -29,7 +29,7 @@ check_dependencies() {
         DEPENDENCIES+=("${X11_DEPENDENCIES[@]}")
     fi
     for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-        type -p "$DEPENDENCY" &> /dev/null || {
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
             echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
             exit 1
         }

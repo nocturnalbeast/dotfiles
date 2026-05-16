@@ -3,6 +3,7 @@
 # A script to update Aqua and its managed binaries with proper error handling and notifications.
 
 # Global configuration
+DEPENDENCIES=(aqua git)
 AQUA_CONFIG_DIR="${AQUA_CONFIG_DIR:-$HOME/.config/aquaproj-aqua}"
 
 usage() {
@@ -26,6 +27,16 @@ Environment Variables:
     AQUA_CONFIG_DIR    Path to Aqua configuration directory (default: ~/.config/aquaproj-aqua)
     AQUA_GITHUB_TOKEN  GitHub token for API access (can also be set via -t/--token option)
 EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
 }
 
 # Detects if the aqua command is available.
@@ -176,6 +187,8 @@ send_notification() {
 
 # Main entry point.
 main() {
+    check_dependencies
+
     while [[ $# -gt 0 ]]; do
         case "$1" in
             -t | --token)

@@ -1,10 +1,53 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
+# A PQIV keybindings menu.
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0")
+
+A menu to display and select PQIV image viewer keybindings.
+EOF
+}
+
+# Global configuration
+DEPENDENCIES=(pqiv sed column menu notify-send)
 ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/keyboard.svg"
 
-ENTRIES=$(pqiv --show-bindings | sed 's/^\s*//g; s/{/::{/g; s/</\[/g; s/>/\]/g' | column -t -s "::")
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
 
-SEL_KEYBIND="$(dmenu-helper custom_menu "-l 5" "   " "$ENTRIES")"
-[[ "$SEL_KEYBIND" == "" ]] && exit 0
+# Parse PQIV bindings and build keybindings list
+#
+# Outputs:
+#   A list of keybindings, one per line
+build_keybindings_list() {
+    pqiv --show-bindings | sed 's/^\s*//g; s/{/::{/g; s/</\[/g; s/>/\]/g' | column -t -s "::"
+}
 
-notify-send -t 5000 "Selected keybind:" "$(echo "$SEL_KEYBIND" | sed 's/ }//g; s/\s*{ / :\n/g')" -i "$ICON"
+# Show keybinding information
+#
+# Arguments:
+#   $1 - The keybinding to show
+show_keybinding_info() {
+    notify-send -t 5000 "Selected keybind:" "$(echo "$1" | sed 's/ }//g; s/\s*{ / :\n/g')" -i "$ICON"
+}
+
+# Main entry point
+main() {
+    check_dependencies
+
+    SELECTION=$(menu run -p "  󰎇 Keybinding: " <<< "$(build_keybindings_list)")
+    if [[ -n $SELECTION ]]; then
+        show_keybinding_info "$SELECTION"
+    fi
+}
+
+main "$@"

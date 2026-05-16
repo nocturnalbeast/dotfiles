@@ -3,6 +3,7 @@
 # A script to manage notification daemons with automatic detection.
 
 # Global configuration
+DEPENDENCIES=(pgrep)
 WAYLAND_DAEMONS="mako"
 X11_DAEMONS="dunst notify-osd"
 
@@ -40,6 +41,16 @@ get_daemon_list() {
     else
         echo "$X11_DAEMONS"
     fi
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in $DEPENDENCIES; do
+        command -v "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
 }
 
 # Detects if a command exists and is executable.
@@ -135,9 +146,9 @@ pause_daemons() {
         echo "No notification daemon found!" >&2
         return 1
     fi
-    if [ "$SELECTED_DAEMON" == "dunst" ]; then
+    if [ "$SELECTED_DAEMON" = "dunst" ]; then
         dunstctl set-paused true > /dev/null 2>&1
-    elif [ "$SELECTED_DAEMON" == "mako" ]; then
+    elif [ "$SELECTED_DAEMON" = "mako" ]; then
         makoctl mode -s do-not-disturb > /dev/null 2>&1
     fi
 }
@@ -150,9 +161,9 @@ resume_daemons() {
         echo "No notification daemon found!" >&2
         return 1
     fi
-    if [ "$SELECTED_DAEMON" == "dunst" ]; then
+    if [ "$SELECTED_DAEMON" = "dunst" ]; then
         dunstctl set-paused false > /dev/null 2>&1
-    elif [ "$SELECTED_DAEMON" == "mako" ]; then
+    elif [ "$SELECTED_DAEMON" = "mako" ]; then
         makoctl mode -r do-not-disturb > /dev/null 2>&1
     fi
 }
@@ -163,6 +174,8 @@ resume_daemons() {
 #   $1 - Operation to perform (start/stop)
 #   $@ - Additional arguments for start operation
 main() {
+    check_dependencies
+
     case "$1" in
         start)
             shift

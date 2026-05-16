@@ -23,7 +23,7 @@ DEPENDENCIES=(xprop xrandr display)
 # Check for required dependencies
 check_dependencies() {
     for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-        type -p "$DEPENDENCY" &> /dev/null || {
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
             echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
             exit 1
         }

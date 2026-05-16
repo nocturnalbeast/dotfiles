@@ -2,6 +2,9 @@
 
 # A script to open files and URLs using various handlers.
 
+# Global configuration
+DEPENDENCIES=(handlr mimeo xdg-open)
+
 usage() {
     cat << EOF
 Usage: $(basename "$0") FILE/URL
@@ -11,6 +14,21 @@ A script to open files and URLs with appropriate handlers.
 Arguments:
     FILE/URL        Path to local file or URL to open
 EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    local found=0
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        if command -v "$DEPENDENCY" > /dev/null 2>&1; then
+            found=1
+            break
+        fi
+    done
+    if [ "$found" -eq 0 ]; then
+        echo "error: No supported file opener found. Install one of: handlr, mimeo, xdg-open" >&2
+        return 1
+    fi
 }
 
 # Detects which file opener command to use.
@@ -49,6 +67,7 @@ main() {
             usage
             ;;
         *)
+            check_dependencies || exit 1
             OPENER_CMD=$(detect_opener_command)
             if [ -n "$OPENER_CMD" ]; then
                 $OPENER_CMD "$@"

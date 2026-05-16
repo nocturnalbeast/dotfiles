@@ -3,6 +3,9 @@
 
 # A distribution-agnostic wrapper for common package management operations.
 
+# Global configuration
+DEPENDENCIES=()
+
 usage() {
     cat << EOF
 Usage: $(basename "$0") OPERATION [PACKAGE...]
@@ -45,6 +48,14 @@ detect_sudo_binary() {
         elif type sudo > /dev/null 2>&1; then
             echo "sudo"
         fi
+    fi
+}
+
+# Check for required dependencies
+check_dependencies() {
+    if [ ! -f /etc/os-release ]; then
+        echo "error: Cannot detect distribution (/etc/os-release not found)" >&2
+        return 1
     fi
 }
 
@@ -200,6 +211,8 @@ dnf --assumeyes autoremove"
 #   $1 - Operation to perform
 #   $@ - Additional arguments for the operation
 main() {
+    check_dependencies || exit 1
+
     if [ $# -eq 0 ]; then
         usage
         exit 1
@@ -212,43 +225,43 @@ main() {
         "install" | "i")
             CMD=$(get_package_manager_command "install")
             echo "$CMD" | while IFS= read -r command; do
-                $command $@
+                "$command" "$@"
             done
             ;;
         "update" | "u")
             CMD=$(get_package_manager_command "update")
             echo "$CMD" | while IFS= read -r command; do
-                $command
+                "$command"
             done
             ;;
         "search" | "s")
             CMD=$(get_package_manager_command "search")
             echo "$CMD" | while IFS= read -r command; do
-                $command $@
+                "$command" "$@"
             done
             ;;
         "remove" | "r")
             CMD=$(get_package_manager_command "remove")
             echo "$CMD" | while IFS= read -r command; do
-                $command $@
+                "$command" "$@"
             done
             ;;
         "clean" | "c")
             CMD=$(get_package_manager_command "clean")
             echo "$CMD" | while IFS= read -r command; do
-                $command
+                "$command"
             done
             ;;
         "desc" | "d")
             CMD=$(get_package_manager_command "desc")
             echo "$CMD" | while IFS= read -r command; do
-                $command $@
+                "$command" "$@"
             done
             ;;
         "list" | "l")
             CMD=$(get_package_manager_command "list")
             echo "$CMD" | while IFS= read -r command; do
-                $command
+                "$command"
             done
             ;;
         "-h" | "--help")

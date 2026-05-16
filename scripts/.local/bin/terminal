@@ -36,6 +36,8 @@ guake \
 tilda \
 hyper"
 
+DEPENDENCIES=()
+
 usage() {
     cat << EOF
 Usage: $(basename "$0") [ARGUMENTS]
@@ -49,6 +51,27 @@ Detection order:
     3. First available terminal from display server specific list
        (Falls back to X11 terminals under Wayland if needed)
 EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    local terminals
+    if is_wayland; then
+        terminals="$WAYLAND_TERMINALS"
+    else
+        terminals="$X11_TERMINALS"
+    fi
+    local found=0
+    for term in $terminals; do
+        if command -v "$term" > /dev/null 2>&1; then
+            found=1
+            break
+        fi
+    done
+    if [ "$found" -eq 0 ]; then
+        echo "error: No terminal emulator found" >&2
+        return 1
+    fi
 }
 
 # Detects if running under Wayland.
@@ -203,6 +226,8 @@ detect_terminal() {
 # Arguments:
 #   $@ - Arguments to pass to the terminal command
 main() {
+    check_dependencies || exit 1
+
     case "$1" in
         -h | --help)
             usage

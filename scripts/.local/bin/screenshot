@@ -44,7 +44,7 @@ check_dependencies() {
         DEPENDENCIES+=("${X11_DEPENDENCIES[@]}")
     fi
     for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-        type -p "$DEPENDENCY" &> /dev/null || {
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
             echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
             exit 1
         }
@@ -66,9 +66,9 @@ capture_full_screen() {
     local IMAGE_PATH
     IMAGE_PATH=$(generate_image_path)
 
-    if [ "$(detect_environment)" == "x11" ]; then
+    if [ "$(detect_environment)" = "x11" ]; then
         maim -u "$IMAGE_PATH"
-    elif [ "$(detect_environment)" == "wayland" ]; then
+    elif [ "$(detect_environment)" = "wayland" ]; then
         grim "$IMAGE_PATH"
     fi
 
@@ -80,9 +80,9 @@ capture_active_window() {
     local IMAGE_PATH
     IMAGE_PATH=$(generate_image_path)
 
-    if [ "$(detect_environment)" == "x11" ]; then
-        maim -u -B -i $(xdotool getactivewindow) "$IMAGE_PATH"
-    elif [ "$(detect_environment)" == "wayland" ]; then
+    if [ "$(detect_environment)" = "x11" ]; then
+        maim -u -B -i "$(xdotool getactivewindow)" "$IMAGE_PATH"
+    elif [ "$(detect_environment)" = "wayland" ]; then
         grim -g "$(yprop | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')" "$IMAGE_PATH"
     fi
     handle_screenshot_result $? "$IMAGE_PATH"
@@ -93,9 +93,9 @@ capture_selected_area() {
     local IMAGE_PATH
     IMAGE_PATH=$(generate_image_path)
 
-    if [ "$(detect_environment)" == "x11" ]; then
+    if [ "$(detect_environment)" = "x11" ]; then
         maim -u -b 2 -c 0,0,0,0.9 -q -s -B "$IMAGE_PATH"
-    elif [ "$(detect_environment)" == "wayland" ]; then
+    elif [ "$(detect_environment)" = "wayland" ]; then
         slurp | grim -g - "$IMAGE_PATH"
     fi
 
@@ -107,9 +107,9 @@ capture_selected_window() {
     local IMAGE_PATH
     IMAGE_PATH=$(generate_image_path)
 
-    if [ "$(detect_environment)" == "x11" ]; then
-        maim -u -b 2 -c 0,0,0,0.9 -q -s -B "$IMAGE_PATH"
-    elif [ "$(detect_environment)" == "wayland" ]; then
+    if [ "$(detect_environment)" = "x11" ]; then
+        maim -u -B -i "$(xdotool selectwindow)" "$IMAGE_PATH"
+    elif [ "$(detect_environment)" = "wayland" ]; then
         yprop | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | grim -g - "$IMAGE_PATH"
     fi
 

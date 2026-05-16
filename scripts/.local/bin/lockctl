@@ -37,7 +37,7 @@ check_dependencies() {
 
     if [ "$environment" = "wayland" ]; then
         for locker in "${WAYLAND_LOCKERS[@]}"; do
-            if command -v "$locker" &> /dev/null; then
+            if command -v "$locker" > /dev/null 2>&1; then
                 return 0
             fi
         done
@@ -45,7 +45,7 @@ check_dependencies() {
         return 1
     elif [ "$environment" = "x11" ]; then
         for locker in "${X11_LOCKERS[@]}"; do
-            if command -v "$locker" &> /dev/null; then
+            if command -v "$locker" > /dev/null 2>&1; then
                 return 0
             fi
         done
@@ -63,7 +63,7 @@ start_locker() {
     environment=$(detect_environment)
 
     if [ "$environment" = "x11" ]; then
-        if command -v xsecurelockctl &> /dev/null; then
+        if command -v xsecurelockctl > /dev/null 2>&1; then
             xsecurelockctl start
         fi
     fi
@@ -75,19 +75,19 @@ lock_screen() {
     environment=$(detect_environment)
 
     if [ "$environment" = "wayland" ]; then
-        if command -v swaylock &> /dev/null; then
+        if command -v swaylock > /dev/null 2>&1; then
             swaylock
-        elif command -v hyprlock &> /dev/null; then
+        elif command -v hyprlock > /dev/null 2>&1; then
             hyprlock
-        elif command -v gtklock &> /dev/null; then
+        elif command -v gtklock > /dev/null 2>&1; then
             gtklock
-        elif command -v waylock &> /dev/null; then
+        elif command -v waylock > /dev/null 2>&1; then
             waylock
         fi
     elif [ "$environment" = "x11" ]; then
-        if command -v xsecurelockctl &> /dev/null; then
+        if command -v xsecurelockctl > /dev/null 2>&1; then
             xsecurelockctl lock
-        elif command -v light-locker-command &> /dev/null; then
+        elif command -v light-locker-command > /dev/null 2>&1; then
             light-locker-command --lock
         fi
     fi

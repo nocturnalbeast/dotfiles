@@ -1,11 +1,65 @@
 #!/usr/bin/env bash
 
+# A BSPWM keybindings menu.
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0")
+
+A menu to display and select BSPWM keybindings from sxhkd configuration.
+EOF
+}
+
+# Global configuration
+DEPENDENCIES=(awk column sed menu notify-send)
 ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/keyboard.svg"
-SXHKDRC_PATH="${XDG_CONFIG_HOME:="$HOME/.config"}/sxhkd/sxhkdrc"
+SXHKD_DIR="${XDG_CONFIG_HOME:="$HOME/.config"}/sxhkd"
 
-ENTRIES="$(awk '/^[A-Za-z]/ && last {print $0,"::",last} {last=""} /^#/{last=$0}' "$SXHKDRC_PATH" | column -t -s '::' | sed 's/#/->/')"
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
 
-SEL_KEYBIND="$(dmenu-helper custom_menu "-l 5" "   " "$ENTRIES")"
-[[ $SEL_KEYBIND == "" ]] && exit 0
+# Parse sxhkd configuration and build keybindings list
+#
+# Outputs:
+#   A list of keybindings, one per line
+build_keybindings_list() {
+    if [[ ! -d $SXHKD_DIR ]]; then
+        echo "error: sxhkd configuration directory not found at '$SXHKD_DIR'" >&2
+        exit 1
+    fi
 
-notify-send -t 5000 "Selected keybind:" "$(echo "$SEL_KEYBIND" | tr -s "[:blank:]" " " | sed 's/\(.*\) -> \([^ ]*\)/<b>\1<\/b>\n\2/')" -i "$ICON"
+    for config_file in "$SXHKD_DIR"/*; do
+        if [[ -f $config_file ]]; then
+            awk '/^[A-Za-z]/ && last {print $0,"::",last} {last=""} /^#/{last=$0}' "$config_file" |
+                column -t -s '::' |
+                sed 's/#/->/'
+        fi
+    done
+}
+
+# Show keybinding information
+#
+# Arguments:
+#   $1 - The keybinding to show
+show_keybinding_info() {
+    notify-send -t 5000 "Selected keybind:" "$(echo "$1" | tr -s "[:blank:]" " " | sed 's/\(.*\) -> \([^ ]*\)/<b>\1<\/b>\n\2/')" -i "$ICON"
+}
+
+# Main entry point
+main() {
+    check_dependencies
+
+    SELECTION=$(menu run -p "  󰎇 Keybinding: " <<< "$(build_keybindings_list)")
+    if [[ -n $SELECTION ]]; then
+        show_keybinding_info "$SELECTION"
+    fi
+}
+
+main "$@"
