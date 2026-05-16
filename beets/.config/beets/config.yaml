@@ -16,6 +16,7 @@ paths:
   albumtype:remix: "$first_artist/Remixes/$year - $album %if{$nonstandardalbum,[%title{$albumdisambig}] }/%if{$multidisc,$disc0-}$track - $title"
   albumtype:ep: "$first_artist/EPs/$year - $album %if{$nonstandardalbum,[%title{$albumdisambig}] }/%if{$multidisc,$disc0-}$track - $title"
   albumtype:live: "$first_artist/Albums/$year - $album %if{$nonstandardalbum,[%title{$albumdisambig}] }/%if{$multidisc,$disc0-}$track - $title"
+  singleton: "$first_artist/Singles/$year - $title/01 - $title"
   comp: "Various Artists/%title{$albumtype}s/$year - $album %if{$nonstandardalbum,[%title{$albumdisambig}] }/%if{$multidisc,$disc0-}$track - $title"
 original_date: yes
 per_disc_numbering: yes
@@ -100,7 +101,6 @@ fetchart:
   enforce_ratio: no
   cautious: no
   sources:
-    - filesystem
     - itunes
     - amazon
     - coverart
