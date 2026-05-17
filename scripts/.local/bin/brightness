@@ -1,19 +1,22 @@
 #!/usr/bin/env sh
 
-# A script to control screen brightness using various backends with notifications.
+# A script to control screen brightness using various backends (brightnessctl,
+# ddcutil, xbacklight) with notifications. Supports both internal backlight
+# devices and external monitors via DDC/CI.
 
 # Global configuration
-DEPENDENCIES=()
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
-ICON_LOW="$CONFIG_DIR/dunst/icons/brightness_low.svg"
-ICON_MEDIUM="$CONFIG_DIR/dunst/icons/brightness_medium.svg"
-ICON_HIGH="$CONFIG_DIR/dunst/icons/brightness_high.svg"
+ICON_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/notification_icons"
+ICON_LOW="$ICON_DIR/brightness_low.svg"
+ICON_MEDIUM="$ICON_DIR/brightness_medium.svg"
+ICON_HIGH="$ICON_DIR/brightness_high.svg"
 
 usage() {
     cat << EOF
 Usage: $(basename "$0") OPERATION [VALUE]
 
 A script to control screen brightness with notifications.
+Supports brightnessctl (backlight devices), ddcutil (external monitors via
+DDC/CI), and xbacklight as backends.
 
 Operations:
     increase [step]  Increase brightness by step% (default: 5%)
@@ -29,28 +32,55 @@ EOF
 
 # Detects which brightness control command to use.
 #
+# Checks backends in order: brightnessctl (backlight class only), ddcutil
+# (external monitors), xbacklight. brightnessctl is tested with -c backlight
+# to filter out LED devices which are not display brightness controls.
+#
 # Outputs:
 #   Writes the detected command name to stdout.
 #   Returns 0 if a command is found, 1 if no command is found.
 detect_brightness_command() {
-    if command -v brightnessctl > /dev/null 2>&1; then
+    if brightnessctl -c backlight info > /dev/null 2>&1; then
         echo "brightnessctl"
+        return 0
+    elif command -v ddcutil > /dev/null 2>&1 &&
+        ddcutil detect --brief 2> /dev/null | grep -q '^Display [0-9]'; then
+        echo "ddcutil"
         return 0
     elif command -v xbacklight > /dev/null 2>&1; then
         echo "xbacklight"
         return 0
     else
         echo "Error: No supported brightness control command found" >&2
-        echo "Please install one of: brightnessctl, xbacklight" >&2
+        echo "Please install one of: brightnessctl, ddcutil, xbacklight" >&2
         return 1
     fi
 }
 
-# Check for required dependencies
+# Check for required dependencies — at least one backend must be available.
 check_dependencies() {
-    if ! command -v brightnessctl > /dev/null 2>&1 && ! command -v xbacklight > /dev/null 2>&1; then
-        echo "error: No supported brightness control command found" >&2
-        echo "Please install one of: brightnessctl, xbacklight" >&2
+    if brightnessctl -c backlight info > /dev/null 2>&1; then
+        return 0
+    fi
+    if command -v ddcutil > /dev/null 2>&1 &&
+        ddcutil detect --brief 2> /dev/null | grep -q '^Display [0-9]'; then
+        return 0
+    fi
+    if command -v xbacklight > /dev/null 2>&1; then
+        return 0
+    fi
+    echo "Error: No supported brightness control command found" >&2
+    echo "Please install one of: brightnessctl, ddcutil, xbacklight" >&2
+    return 1
+}
+
+# Checks if another ddcutil instance is already running.
+#
+# Returns:
+#   0 if no other instance is running, 1 if locked.
+check_ddcutil_lock() {
+    if pgrep -x ddcutil > /dev/null 2>&1; then
+        echo "Error: Another ddcutil instance is running" >&2
         return 1
     fi
 }
@@ -65,7 +95,14 @@ check_dependencies() {
 get_brightness() {
     case "$1" in
         brightnessctl)
-            echo $(($(brightnessctl get) * 100 / $(brightnessctl max)))
+            echo $(($(brightnessctl -c backlight get) * 100 / $(brightnessctl -c backlight max)))
+            ;;
+        ddcutil)
+            output=$(ddcutil getvcp --brief 10 2> /dev/null)
+            cur=$(echo "$output" | awk '{print $4}')
+            max=$(echo "$output" | awk '{print $5}')
+            [ -z "$cur" ] || [ -z "$max" ] && return 1
+            echo $((cur * 100 / max))
             ;;
         xbacklight)
             xbacklight -get | cut -d '.' -f 1
@@ -116,13 +153,33 @@ change_brightness() {
         brightnessctl)
             case "$OPERATION" in
                 increase)
-                    brightnessctl set "+${VALUE}%"
+                    brightnessctl -c backlight set "+${VALUE}%"
                     ;;
                 decrease)
-                    brightnessctl set "${VALUE}%-"
+                    brightnessctl -c backlight set "${VALUE}%-"
                     ;;
                 set)
-                    brightnessctl set "${VALUE}%"
+                    brightnessctl -c backlight set "${VALUE}%"
+                    ;;
+            esac
+            ;;
+        ddcutil)
+            check_ddcutil_lock || return 1
+            case "$OPERATION" in
+                increase)
+                    max=$(ddcutil getvcp --brief 10 2> /dev/null | awk '{print $5}')
+                    raw_step=$((max * VALUE / 100))
+                    ddcutil --noverify --sleep-multiplier 0.2 setvcp 10 + "$raw_step" > /dev/null 2>&1
+                    ;;
+                decrease)
+                    max=$(ddcutil getvcp --brief 10 2> /dev/null | awk '{print $5}')
+                    raw_step=$((max * VALUE / 100))
+                    ddcutil --noverify --sleep-multiplier 0.2 setvcp 10 - "$raw_step" > /dev/null 2>&1
+                    ;;
+                set)
+                    max=$(ddcutil getvcp --brief 10 2> /dev/null | awk '{print $5}')
+                    raw=$((max * VALUE / 100))
+                    ddcutil --noverify --sleep-multiplier 0.2 setvcp 10 "$raw" > /dev/null 2>&1
                     ;;
             esac
             ;;
