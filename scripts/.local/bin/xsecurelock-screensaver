@@ -2,13 +2,11 @@
 
 """Saver module for xsecurelock.
 
-It displays a background image, clock and custom status.
+It displays a background image, clock and status bar.
 Configuration is done through environment variables:
 
  - XSECURELOCK_SAVER_IMAGE: path to the background image to use
- - XSECURELOCK_SAVER_STATUS: path to the file containing the custom status
  - XSECURELOCK_SAVER_CLOCK_FONT_SIZE: font size to use to display clock
- - XSECURELOCK_SAVER_STATUS_FONT_SIZE: font size to use to display status (hostname and uptime)
 
 """
 
@@ -16,7 +14,7 @@ import datetime
 import os
 import re
 import socket
-import time
+import sys
 import types
 
 import cairo
@@ -25,6 +23,89 @@ import gi
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 from gi.repository import Gdk, GdkPixbuf, GdkX11, Gio, GLib, Gtk
+
+
+def _env_int(name, default):
+    """Parse an integer environment variable with a fallback default."""
+    try:
+        return int(os.getenv(name, str(default)))
+    except ValueError:
+        return default
+
+
+def _log_warning(msg):
+    """Log a warning to stderr without crashing the lock screen."""
+    print(f"warning: {msg}", file=sys.stderr)
+
+
+def _format_uptime():
+    """Return a human-readable uptime string."""
+    try:
+        with open("/proc/uptime") as f:
+            uptime_secs = float(f.read().split()[0])
+        days, remainder = divmod(int(uptime_secs), 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, _ = divmod(remainder, 60)
+        parts = []
+        if days > 0:
+            parts.append(f"{days}d")
+        if hours > 0:
+            parts.append(f"{hours}h")
+        parts.append(f"{minutes}m")
+        return " ".join(parts)
+    except Exception:
+        return ""
+
+
+def _read_mem_info():
+    """Return used/total memory in GiB."""
+    try:
+        info = {}
+        with open("/proc/meminfo") as f:
+            for line in f:
+                key, val = line.split(":")
+                info[key.strip()] = int(val.strip().split()[0])
+        total = info.get("MemTotal", 0) / 1024 / 1024
+        available = info.get("MemAvailable", 0) / 1024 / 1024
+        used = total - available
+        return f"{used:.1f}/{total:.1f}GiB"
+    except Exception:
+        return ""
+
+
+def _read_loadavg():
+    """Return the 1-minute load average."""
+    try:
+        with open("/proc/loadavg") as f:
+            return f.read().split()[0]
+    except Exception:
+        return ""
+
+
+def _generate_status():
+    """Generate a status string with Nerd Font icons."""
+    # Nerd Font icons
+    icon_host = "󰇄"
+    icon_up = "󰥔"
+    icon_mem = ""
+    icon_cpu = "󰘚"
+    sep = "    "
+
+    parts = []
+    try:
+        parts.append(f"{icon_host}  {socket.gethostname()}")
+    except Exception:
+        pass
+    uptime = _format_uptime()
+    if uptime:
+        parts.append(f"{icon_up}  up {uptime}")
+    mem = _read_mem_info()
+    if mem:
+        parts.append(f"{icon_mem}  {mem}")
+    load = _read_loadavg()
+    if load:
+        parts.append(f"{icon_cpu}  {load}")
+    return sep.join(parts) if parts else ""
 
 
 def on_win_realize(widget, ctx):
@@ -40,28 +121,37 @@ def on_win_realize(widget, ctx):
     window.reparent(parent, 0, 0)
 
 
+def _ensure_scaled_background(ctx, display_w, display_h):
+    """Return cached scaled background, regenerating only if image or dimensions changed."""
+    if not ctx.background:
+        return None
+
+    key = (id(ctx.background), display_w, display_h)
+    if ctx._scaled_bg_key == key and ctx._scaled_bg is not None:
+        return ctx._scaled_bg
+
+    img = ctx.background
+    img_w, img_h = img.get_width(), img.get_height()
+    cover_scale = max(display_w / img_w, display_h / img_h)
+    scaled_w = round(img_w * cover_scale)
+    scaled_h = round(img_h * cover_scale)
+    scaled = img.scale_simple(scaled_w, scaled_h, GdkPixbuf.InterpType.BILINEAR)
+
+    crop_x = round((scaled_w - display_w) / 2)
+    crop_y = round((scaled_h - display_h) / 2)
+    result = scaled.new_subpixbuf(crop_x, crop_y, display_w, display_h)
+
+    ctx._scaled_bg = result
+    ctx._scaled_bg_key = key
+    return result
+
+
 def on_win_draw(widget, cctx, ctx):
-    """Draw background image scaled to cover the display (object-fit: cover)."""
-    x, y = ctx.position
+    """Draw background image with vignette and gradient overlays."""
     wwidth, wheight = widget.get_size()
     scale = widget.get_scale_factor()
-    bg = None
 
-    if ctx.background:
-        img = ctx.background
-        display_w = wwidth * scale
-        display_h = wheight * scale
-        img_w = img.get_width()
-        img_h = img.get_height()
-
-        cover_scale = max(display_w / img_w, display_h / img_h)
-        scaled_w = round(img_w * cover_scale)
-        scaled_h = round(img_h * cover_scale)
-        scaled = img.scale_simple(scaled_w, scaled_h, GdkPixbuf.InterpType.BILINEAR)
-
-        crop_x = round((scaled_w - display_w) / 2)
-        crop_y = round((scaled_h - display_h) / 2)
-        bg = scaled.new_subpixbuf(crop_x, crop_y, display_w, display_h)
+    bg = _ensure_scaled_background(ctx, wwidth * scale, wheight * scale)
 
     cctx.set_operator(cairo.OPERATOR_SOURCE)
     if not bg:
@@ -69,70 +159,102 @@ def on_win_draw(widget, cctx, ctx):
         cctx.paint()
         return
 
+    # Draw cover-scaled background
     cctx.save()
     cctx.scale(1 / scale, 1 / scale)
     Gdk.cairo_set_source_pixbuf(cctx, bg, 0, 0)
     cctx.paint()
     cctx.restore()
 
+    # Radial vignette: darkens edges to focus attention on the center.
+    # Painted with OVER to layer on top of the background.
+    cctx.set_operator(cairo.OPERATOR_OVER)
+    max_radius = max(wwidth, wheight) * 0.7
+    vignette = cairo.RadialGradient(
+        wwidth / 2,
+        wheight / 2,
+        0,
+        wwidth / 2,
+        wheight / 2,
+        max_radius,
+    )
+    vignette.add_color_stop_rgba(0, 0, 0, 0, 0)
+    vignette.add_color_stop_rgba(0.5, 0, 0, 0, 0)
+    vignette.add_color_stop_rgba(0.8, 0, 0, 0, 0.25)
+    vignette.add_color_stop_rgba(1.0, 0, 0, 0, 0.6)
+    cctx.set_source(vignette)
+    cctx.paint()
+
+    # Bottom gradient: darkens lower portion for status bar readability.
+    bottom_grad = cairo.LinearGradient(0, wheight * 0.7, 0, wheight)
+    bottom_grad.add_color_stop_rgba(0, 0, 0, 0, 0)
+    bottom_grad.add_color_stop_rgba(1, 0, 0, 0, 0.5)
+    cctx.set_source(bottom_grad)
+    cctx.paint()
+
 
 def on_overlay_draw(widget, cctx, ctx):
     """Draw overlay (clock and status)."""
-    if not ctx.leader:
-        return
     wwidth, wheight = widget.get_parent().get_size()
     cctx.set_operator(cairo.OPERATOR_OVER)
 
-    def draw(what):
-        x, y = cctx.get_current_point()
-        cctx.set_source_rgba(0, 0, 0, 0.3)
-        cctx.move_to(x + 2, y + 2)
-        cctx.show_text(what)
+    # Enable subpixel antialiasing for sharper text
+    font_options = cairo.FontOptions()
+    font_options.set_antialias(cairo.Antialias.SUBPIXEL)
+    cctx.set_font_options(font_options)
+
+    # Offsets for the 8-pass soft shadow (KDE Plasma style)
+    shadow_offsets = [
+        (-1, -1),
+        (0, -1),
+        (1, -1),
+        (-1, 0),
+        (1, 0),
+        (-1, 1),
+        (0, 1),
+        (1, 1),
+    ]
+
+    def draw(text, x, y):
+        """Draw text with a soft multi-pass shadow."""
+        for dx, dy in shadow_offsets:
+            cctx.set_source_rgba(0, 0, 0, 0.12)
+            cctx.move_to(x + dx, y + dy)
+            cctx.show_text(text)
         cctx.set_source_rgb(1, 1, 1)
         cctx.move_to(x, y)
-        cctx.show_text(what)
+        cctx.show_text(text)
 
-    if ctx.clock:
-        time, date = ctx.clock
+    # Only the leader instance draws the clock (one per multi-monitor setup)
+    if ctx.leader and ctx.clock:
+        time_str, date_str = ctx.clock
 
         cctx.select_font_face(
             ctx.font_family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD
         )
         cctx.set_font_size(ctx.clock_font_size)
-        _, _, twidth, theight, _, _ = cctx.text_extents(re.sub(r"\d", "8", time))
-        cctx.move_to(wwidth // 2 - twidth // 2, wheight // 3)
-        draw(time)
+        _, _, twidth, theight, _, _ = cctx.text_extents(re.sub(r"\d", "8", time_str))
+        draw(time_str, wwidth // 2 - twidth // 2, wheight // 3)
 
         cctx.select_font_face(
             ctx.font_family, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL
         )
-        cctx.set_font_size(ctx.clock_font_size // 3)
-        _, _, twidth, theight, _, _ = cctx.text_extents(date)
-        cctx.move_to(wwidth // 2 - twidth // 2, wheight // 3 + theight * 1.5)
-        draw(date)
+        cctx.set_font_size(ctx.clock_font_size // 2.5)
+        _, _, twidth, theight, _, _ = cctx.text_extents(date_str)
+        draw(
+            date_str,
+            wwidth // 2 - twidth // 2,
+            wheight // 3 + theight * 1.6,
+        )
 
-    # We can have polybar markups in it. We assume %{Tx} means to use
-    # Font Awesome 6 and we ignore font color change. The parsing is
-    # quite basic.
+    # Draw self-generated status bar (hostname, uptime) using monospace for
+    # Nerd Font icon coverage — sans fonts typically lack these glyphs.
     if ctx.status:
-        data = re.sub(r"%{F[#\d+-]+?}", "", ctx.status)
-        data = re.split(r"(%{T[1-9-]})", data)
-        font = ctx.font_family
-        cctx.move_to(20, wheight - 20)
-        for chunk in data:
-            if chunk == "%{T-}":
-                font = ctx.font_family
-                continue
-            elif chunk.startswith("%{T"):
-                font = "Font Awesome 6 Pro"
-                continue
-            elif not chunk:
-                continue
-            cctx.select_font_face(
-                font, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL
-            )
-            cctx.set_font_size(ctx.status_font_size)
-            draw(chunk)
+        cctx.select_font_face(
+            "monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL
+        )
+        cctx.set_font_size(ctx.status_font_size)
+        draw(ctx.status, 20, wheight - 20)
 
 
 def on_background_change(monitor, f1, f2, event, ctx):
@@ -144,10 +266,27 @@ def on_background_change(monitor, f1, f2, event, ctx):
         return
     try:
         new_background = GdkPixbuf.Pixbuf.new_from_file(ctx.background_image)
-    except Exception:
+    except Exception as e:
+        _log_warning(f"failed to load background image: {e}")
         return
     ctx.background = new_background
+    ctx._scaled_bg = None
+    ctx._scaled_bg_key = None
     ctx.window.queue_draw()
+
+
+def _try_become_leader(ctx):
+    """Attempt to become the leader instance via an abstract socket."""
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        s.bind("\0xsecurelock-saver")
+        s.listen(1)
+    except OSError:
+        s.close()
+        ctx.leader = False
+    else:
+        ctx.leader = s
+    ctx.overlay.queue_draw()
 
 
 def on_clock_change(ctx):
@@ -159,52 +298,43 @@ def on_clock_change(ctx):
     this is more complex.
 
     """
-    now = datetime.datetime.now()
-    new_clock = now.strftime("%H:%M")
-    if new_clock != ctx.clock:
-        ctx.clock = (new_clock, now.strftime("%A %-d %B"))
-        ctx.overlay.queue_draw()
-    if ctx.leader is None:
-        if ctx.position != (0, 0):
-            time.sleep(0.2)
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        try:
-            s.bind("\0xsecurelock-saver")
-        except OSError:
-            ctx.leader = False
-        else:
-            ctx.leader = s
-    if ctx.leader:
-        GLib.timeout_add(min(60 - now.second, 3) * 1000, on_clock_change, ctx)
-
-
-def on_status_change(monitor, f1, f2, event, ctx):
-    """Status file has changed."""
-    if event not in (
-        Gio.FileMonitorEvent.CHANGES_DONE_HINT,
-        Gio.FileMonitorEvent.RENAMED,
-    ):
-        return
     try:
-        with open(ctx.status_file) as wfile:
-            ctx.status = wfile.read()
-        ctx.overlay.queue_draw()
-    except Exception:
-        pass
+        now = datetime.datetime.now()
+        new_clock = now.strftime("%H:%M")
+        if new_clock != ctx.clock:
+            ctx.clock = (new_clock, now.strftime("%A %-d %B"))
+            ctx.overlay.queue_draw()
+
+        # Regenerate status (uptime changes every minute)
+        new_status = _generate_status()
+        if new_status != ctx.status:
+            ctx.status = new_status
+            ctx.overlay.queue_draw()
+
+        if ctx.leader is None:
+            _try_become_leader(ctx)
+        if ctx.leader:
+            GLib.timeout_add(min(60 - now.second, 3) * 1000, on_clock_change, ctx)
+    except Exception as e:
+        _log_warning(f"clock update failed: {e}")
+        # Reschedule even on failure to keep the timer chain alive
+        GLib.timeout_add(3000, on_clock_change, ctx)
 
 
 if __name__ == "__main__":
     ctx = types.SimpleNamespace()
     ctx.background_image = os.getenv("XSECURELOCK_SAVER_IMAGE", None)
-    ctx.clock_font_size = int(os.getenv("XSECURELOCK_SAVER_CLOCK_FONT_SIZE", 120))
-    ctx.status_font_size = int(os.getenv("XSECURELOCK_SAVER_STATUS_FONT_SIZE", 40))
-    ctx.status_file = os.getenv("XSECURELOCK_SAVER_STATUS", None)
+    ctx.clock_font_size = _env_int("XSECURELOCK_SAVER_CLOCK_FONT_SIZE", 120)
+    ctx.status_font_size = 16
     ctx.font_family = os.getenv("XSECURELOCK_FONT", "sans").split(":")[0]
     ctx.background = None
     ctx.status = None
     ctx.clock = None
     ctx.position = (0, 0)
     ctx.leader = None
+    ctx._scaled_bg = None
+    ctx._scaled_bg_key = None
+    ctx.monitors = []
 
     ctx.window = Gtk.Window()
     ctx.window.set_app_paintable(True)
@@ -222,12 +352,8 @@ if __name__ == "__main__":
         gfile = Gio.File.new_for_path(ctx.background_image)
         monitor1 = gfile.monitor_file(Gio.FileMonitorFlags.WATCH_MOVES, None)
         monitor1.connect("changed", on_background_change, ctx)
+        ctx.monitors.append(monitor1)
         on_background_change(*gio_event_args, ctx)
-    if ctx.status_file:
-        gfile = Gio.File.new_for_path(ctx.status_file)
-        monitor2 = gfile.monitor_file(Gio.FileMonitorFlags.WATCH_MOVES, None)
-        monitor2.connect("changed", on_status_change, ctx)
-        GLib.timeout_add(1000, on_status_change, *gio_event_args, ctx)
     GLib.timeout_add(1000, on_clock_change, ctx)
 
     ctx.window.show_all()
