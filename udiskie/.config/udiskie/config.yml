@@ -6,10 +6,6 @@ program_options:
   password_cache: 30
   file_manager: xdg-open
   terminal: terminal
-  password_prompt:
-    - gnome-keyring-query
-    - get
-    - "{id_uuid}"
 
 notifications:
   timeout: -1
