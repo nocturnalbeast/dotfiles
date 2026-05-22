@@ -18,12 +18,11 @@ if command -v xsecurelock > /dev/null 2>&1; then
     export XSECURELOCK_DIM_COLOR="rgb:00/00/00"
     export XSECURELOCK_DIM_TIME_MS=500
     export XSECURELOCK_DISCARD_FIRST_KEYPRESS=1
-    export XSECURELOCK_FONT="monospace:style=Bold:antialias=true"
+    export XSECURELOCK_FONT="sans:style=Bold:antialias=true"
     export XSECURELOCK_NO_XRANDR=0
     export XSECURELOCK_PASSWORD_PROMPT="cursor"
     export XSECURELOCK_SAVER_CLOCK_FONT_SIZE=120
     export XSECURELOCK_SAVER_IMAGE="$(readlink -f "$XDG_CONFIG_HOME/wm/current_wallpaper")"
-    export XSECURELOCK_SAVER_STATUS_FONT_SIZE=40
     export XSECURELOCK_SAVER_TIMEOUT=300
     export XSECURELOCK_SAVER="$(which xsecurelock-screensaver)"
     export XSECURELOCK_SHOW_DATETIME=0
