@@ -41,16 +41,27 @@ def on_win_realize(widget, ctx):
 
 
 def on_win_draw(widget, cctx, ctx):
-    """Draw background image."""
+    """Draw background image scaled to cover the display (object-fit: cover)."""
     x, y = ctx.position
     wwidth, wheight = widget.get_size()
     scale = widget.get_scale_factor()
     bg = None
 
     if ctx.background:
-        bg = ctx.background.new_subpixbuf(
-            x * scale, y * scale, wwidth * scale, wheight * scale
-        )
+        img = ctx.background
+        display_w = wwidth * scale
+        display_h = wheight * scale
+        img_w = img.get_width()
+        img_h = img.get_height()
+
+        cover_scale = max(display_w / img_w, display_h / img_h)
+        scaled_w = round(img_w * cover_scale)
+        scaled_h = round(img_h * cover_scale)
+        scaled = img.scale_simple(scaled_w, scaled_h, GdkPixbuf.InterpType.BILINEAR)
+
+        crop_x = round((scaled_w - display_w) / 2)
+        crop_y = round((scaled_h - display_h) / 2)
+        bg = scaled.new_subpixbuf(crop_x, crop_y, display_w, display_h)
 
     cctx.set_operator(cairo.OPERATOR_SOURCE)
     if not bg:
