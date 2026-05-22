@@ -1,10 +1,21 @@
 #!/usr/bin/env bash
 
 # A control script for managing screen locking across different environments.
+#
+# Architecture:
+#   lock       → dispatches by LOCKER (swaylock, hyprlock, xsecurelock, etc.)
+#   start/stop/status → dispatches by IDLE DAEMON (swayidle, hypridle, xss-lock)
+#
+#   On Wayland, lockers and idle daemons are separate programs:
+#     swaylock + swayidle, hyprlock + hypridle, gtklock/waylock + swayidle
+#   On X11, xss-lock is the idle daemon and xsecurelock is the locker.
 
 # Global configuration
 WAYLAND_LOCKERS=(swaylock hyprlock gtklock waylock)
 X11_LOCKERS=(xsecurelock light-locker-command)
+XSECURELOCK_DEPS=(xset xss-lock xsecurelock notificationd)
+IDLE_TIMEOUT="${LOCKCTL_IDLE_TIMEOUT:-300}"
+SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 
 usage() {
     cat << EOF
@@ -13,11 +24,15 @@ Usage: $(basename "$0") COMMAND
 A control script for managing screen locking across different environments.
 
 Commands:
-    start         Start the screen locker daemon.
+    start         Start the idle daemon (autolock).
+    stop          Stop the idle daemon (autolock).
+    status        Show the status of the idle daemon.
     lock          Lock the screen using the best available locker.
     -h, --help    Show this help message.
 EOF
 }
+
+# --- Detection ---
 
 # Detect environment (Wayland or X11)
 detect_environment() {
@@ -30,77 +45,346 @@ detect_environment() {
     fi
 }
 
-# Check for required dependencies
-check_dependencies() {
+# Detect the Wayland compositor.
+#
+# Outputs:
+#   Writes the compositor name to stdout (sway, hyprland, or unknown).
+detect_compositor() {
+    if [ -n "$SWAYSOCK" ]; then
+        echo "sway"
+    elif [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
+        echo "hyprland"
+    else
+        echo "unknown"
+    fi
+}
+
+# Detect the idle daemon for the current environment.
+#
+# Outputs:
+#   Writes the idle daemon name to stdout (xss-lock, swayidle, hypridle).
+detect_idle_daemon() {
+    local environment
+    environment=$(detect_environment)
+
+    if [ "$environment" = "x11" ]; then
+        echo "xss-lock"
+    elif [ "$environment" = "wayland" ]; then
+        local compositor
+        compositor=$(detect_compositor)
+        case "$compositor" in
+            hyprland) echo "hypridle" ;;
+            *) echo "swayidle" ;;
+        esac
+    else
+        return 1
+    fi
+}
+
+# Find the first available locker for the detected environment.
+#
+# Outputs:
+#   Writes the name of the available locker to stdout.
+find_available_locker() {
+    local environment lockers
+    environment=$(detect_environment)
+
+    if [ "$environment" = "wayland" ]; then
+        lockers=("${WAYLAND_LOCKERS[@]}")
+    elif [ "$environment" = "x11" ]; then
+        lockers=("${X11_LOCKERS[@]}")
+    else
+        return 1
+    fi
+
+    for locker in "${lockers[@]}"; do
+        if command -v "$locker" > /dev/null 2>&1; then
+            echo "$locker"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# --- Dependency checks ---
+
+# Check that a locker is available for the detected environment.
+check_locker_deps() {
     local environment
     environment=$(detect_environment)
 
     if [ "$environment" = "wayland" ]; then
-        for locker in "${WAYLAND_LOCKERS[@]}"; do
-            if command -v "$locker" > /dev/null 2>&1; then
-                return 0
-            fi
-        done
-        echo "error: No Wayland screen locker found. Install one of: ${WAYLAND_LOCKERS[*]}" >&2
-        return 1
+        if ! find_available_locker > /dev/null; then
+            echo "error: No Wayland screen locker found. Install one of: ${WAYLAND_LOCKERS[*]}" >&2
+            return 1
+        fi
     elif [ "$environment" = "x11" ]; then
-        for locker in "${X11_LOCKERS[@]}"; do
-            if command -v "$locker" > /dev/null 2>&1; then
-                return 0
-            fi
-        done
-        echo "error: No X11 screen locker found. Install one of: ${X11_LOCKERS[*]}" >&2
-        return 1
+        if ! find_available_locker > /dev/null; then
+            echo "error: No X11 screen locker found. Install one of: ${X11_LOCKERS[*]}" >&2
+            return 1
+        fi
     else
         echo "error: No display server detected" >&2
         return 1
     fi
 }
 
-# Start the screen locker daemon
-start_locker() {
-    local environment
-    environment=$(detect_environment)
+# Check that the idle daemon for the current environment is installed.
+check_idle_daemon_deps() {
+    local daemon
+    daemon=$(detect_idle_daemon) || {
+        echo "error: No display server detected" >&2
+        return 1
+    }
 
-    if [ "$environment" = "x11" ]; then
-        if command -v xsecurelockctl > /dev/null 2>&1; then
-            xsecurelockctl start
-        fi
+    if ! command -v "$daemon" > /dev/null 2>&1; then
+        echo "error: Idle daemon '${daemon}' not found. Is it installed?" >&2
+        return 1
     fi
+}
+
+# --- xss-lock (X11) helpers ---
+
+# Check for xsecurelock-specific dependencies.
+check_xsecurelock_deps() {
+    for dependency in "${XSECURELOCK_DEPS[@]}"; do
+        type -p "$dependency" > /dev/null 2>&1 || {
+            echo "error: Could not find '${dependency}', is it installed?" >&2
+            return 1
+        }
+    done
+}
+
+# Configure screen saver timeout and DPMS settings for xsecurelock.
+#
+# Uses XSECURELOCK_SAVER_TIMEOUT env var (default: 300 seconds).
+xsecurelock_configure() {
+    local timeout="${XSECURELOCK_SAVER_TIMEOUT:-300}"
+    local notify_time="$((timeout / 10))"
+
+    xset s "$((timeout - notify_time))" "$notify_time"
+    xset dpms "$((timeout * 3))" "$((timeout * 32 / 10))" "$((timeout * 34 / 10))"
+}
+
+# Select a random wallpaper image from the wallpaper directory.
+#
+# Outputs:
+#   Writes the full path to a random wallpaper to stdout.
+get_random_wallpaper() {
+    local wallpaper_root="$HOME/.local/share/wallpapers"
+    find "$(readlink -f "$wallpaper_root")" -iregex '.*.\(jpg\|jpeg\|png\|gif\)' -type f | shuf -n 1
+}
+
+# Start the xss-lock daemon with xsecurelock and the configured settings.
+xsslock_start() {
+    check_xsecurelock_deps || return 1
+    xsecurelock_configure
+
+    local dimmer_path
+    if [ -f /usr/libexec/xsecurelock/dimmer ]; then
+        dimmer_path=/usr/libexec/xsecurelock/dimmer
+    elif [ -f /usr/local/libexec/xsecurelock/dimmer ]; then
+        dimmer_path=/usr/local/libexec/xsecurelock/dimmer
+    else
+        echo "error: Could not find 'dimmer', is it installed?" >&2
+        return 1
+    fi
+
+    xss-lock -n "$dimmer_path" -l "$SCRIPT_PATH" lock &
+}
+
+# Stop the xss-lock daemon and reset screensaver/DPMS settings.
+xsslock_stop() {
+    if ! pgrep -x xss-lock > /dev/null 2>&1; then
+        echo "xss-lock daemon is not running" >&2
+        return 1
+    fi
+
+    pkill -x xss-lock
+    xset s off
+    xset -dpms
+}
+
+# Print the status of the xss-lock daemon.
+xsslock_status() {
+    if pgrep -x xss-lock > /dev/null 2>&1; then
+        echo "xss-lock daemon is running (pid: $(pgrep -x xss-lock))"
+        return 0
+    else
+        echo "xss-lock daemon is not running"
+        return 1
+    fi
+}
+
+# --- swayidle (Wayland) helpers ---
+
+# Start the swayidle daemon with the detected locker.
+swayidle_start() {
+    local locker
+    locker=$(find_available_locker) || {
+        echo "error: No locker available for swayidle to invoke" >&2
+        return 1
+    }
+
+    # Build the locker command (some lockers need -f to fork after locking)
+    local lock_cmd
+    case "$locker" in
+        swaylock) lock_cmd="swaylock -f" ;;
+        gtklock) lock_cmd="gtklock -d" ;;
+        waylock) lock_cmd="waylock --fork-on-lock" ;;
+        *) lock_cmd="$locker" ;;
+    esac
+
+    swayidle -w \
+        timeout "$IDLE_TIMEOUT" "$lock_cmd" \
+        before-sleep "$lock_cmd" &
+}
+
+# Stop the swayidle daemon.
+swayidle_stop() {
+    if ! pgrep -x swayidle > /dev/null 2>&1; then
+        echo "swayidle daemon is not running" >&2
+        return 1
+    fi
+
+    pkill -x swayidle
+}
+
+# Print the status of the swayidle daemon.
+swayidle_status() {
+    if pgrep -x swayidle > /dev/null 2>&1; then
+        echo "swayidle daemon is running (pid: $(pgrep -x swayidle))"
+        return 0
+    else
+        echo "swayidle daemon is not running"
+        return 1
+    fi
+}
+
+# --- hypridle (Wayland) helpers ---
+
+# Start the hypridle daemon (reads its own config).
+hypridle_start() {
+    hypridle &
+}
+
+# Stop the hypridle daemon.
+hypridle_stop() {
+    if ! pgrep -x hypridle > /dev/null 2>&1; then
+        echo "hypridle daemon is not running" >&2
+        return 1
+    fi
+
+    pkill -x hypridle
+}
+
+# Print the status of the hypridle daemon.
+hypridle_status() {
+    if pgrep -x hypridle > /dev/null 2>&1; then
+        echo "hypridle daemon is running (pid: $(pgrep -x hypridle))"
+        return 0
+    else
+        echo "hypridle daemon is not running"
+        return 1
+    fi
+}
+
+# --- xsecurelock lock helper (used by lock command) ---
+
+# Lock the screen with xsecurelock (wallpaper, media/notification handling).
+xsecurelock_lock() {
+    check_xsecurelock_deps || return 1
+    xsecurelock_configure
+
+    local current_player_state
+    current_player_state="$(mediactl info '{{status}}')"
+    if [ "$current_player_state" = "Playing" ]; then
+        mediactl toggle
+    fi
+
+    notificationd pause
+
+    env XSECURELOCK_SAVER_IMAGE="$(get_random_wallpaper)" xsecurelock
+
+    if [ "$current_player_state" = "Playing" ]; then
+        mediactl toggle
+    fi
+
+    notificationd resume
+}
+
+# --- Dispatchers ---
+
+# Start the idle daemon
+start_locker() {
+    local daemon
+    daemon=$(detect_idle_daemon) || return 1
+
+    case "$daemon" in
+        xss-lock) xsslock_start ;;
+        swayidle) swayidle_start ;;
+        hypridle) hypridle_start ;;
+    esac
+}
+
+# Stop the idle daemon
+stop_locker() {
+    local daemon
+    daemon=$(detect_idle_daemon) || return 1
+
+    case "$daemon" in
+        xss-lock) xsslock_stop ;;
+        swayidle) swayidle_stop ;;
+        hypridle) hypridle_stop ;;
+    esac
+}
+
+# Print the status of the idle daemon
+status_locker() {
+    local daemon
+    daemon=$(detect_idle_daemon) || return 1
+
+    case "$daemon" in
+        xss-lock) xsslock_status ;;
+        swayidle) swayidle_status ;;
+        hypridle) hypridle_status ;;
+    esac
 }
 
 # Lock the screen using the best available locker
 lock_screen() {
-    local environment
-    environment=$(detect_environment)
+    local locker
+    locker=$(find_available_locker) || return 1
 
-    if [ "$environment" = "wayland" ]; then
-        if command -v swaylock > /dev/null 2>&1; then
-            swaylock
-        elif command -v hyprlock > /dev/null 2>&1; then
-            hyprlock
-        elif command -v gtklock > /dev/null 2>&1; then
-            gtklock
-        elif command -v waylock > /dev/null 2>&1; then
-            waylock
-        fi
-    elif [ "$environment" = "x11" ]; then
-        if command -v xsecurelockctl > /dev/null 2>&1; then
-            xsecurelockctl lock
-        elif command -v light-locker-command > /dev/null 2>&1; then
+    case "$locker" in
+        swaylock) swaylock ;;
+        hyprlock) hyprlock ;;
+        gtklock) gtklock ;;
+        waylock) waylock ;;
+        xsecurelock)
+            xsecurelock_lock
+            ;;
+        light-locker-command)
             light-locker-command --lock
-        fi
-    fi
+            ;;
+    esac
 }
 
 # Main entry point
 main() {
     case "$1" in
         start)
-            check_dependencies && start_locker
+            check_idle_daemon_deps && start_locker
+            ;;
+        stop)
+            check_idle_daemon_deps && stop_locker
+            ;;
+        status)
+            check_idle_daemon_deps && status_locker
             ;;
         lock)
-            check_dependencies && lock_screen
+            check_locker_deps && lock_screen
             ;;
         -h | --help)
             usage
