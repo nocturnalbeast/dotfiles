@@ -8,23 +8,23 @@
 
 # focus a numbered workspace / send the focused window on the current workspace to the selected workspace
 mod3 + {_,shift} + {1-9,0}
-    bspwm-workspace {focus,move} {1-9,10}
+    bspwmctl workspace {focus,move} {1-9,10}
 
 # switch focus between the last focused window(s) [either forward / backward]
 mod3 + {_,shift} + Tab
-    bspwm-history-focus window {older,newer}
+    bspwmctl history_focus window {older,newer}
 
 # switch focus between the last focused workspace(s) [either forward / backward]
 mod3 + {_,shift} + grave
-    bspwm-history-focus workspace {older,newer}
+    bspwmctl history_focus workspace {older,newer}
 
 # focus window in the specified direction
 mod3 + {Left,Down,Up,Right,h,j,k,l}
-    bspwm-focus {west,south,north,east,west,south,north,east}
+    bspwmctl focus {west,south,north,east,west,south,north,east}
 
 # swap with window in the specified direction [if floating move the window in the given direction]
 mod3 + shift + {Left,Down,Up,Right,h,j,k,l}
-    bspwm-move {west,south,north,east,west,south,north,east}
+    bspwmctl move {west,south,north,east,west,south,north,east}
 
 # switch focus between all the windows in the currently focused workspace [either forward / backward]
 mod3 + {_,shift} + c
@@ -39,26 +39,26 @@ mod3 + {_,shift} + b
 
 # make the focused window fullscreen / floating
 mod3 + {_,shift} + f
-    bspwm-mode {fullscreen,floating}
+    bspwmctl mode {fullscreen,floating}
 
 # make the focused window tiled / pseudo-tiled
 mod3 + {_,shift} + t
-    bspwm-mode {tiled,pseudo_tiled}
+    bspwmctl mode {tiled,pseudo_tiled}
 
 
 ## window size manipulation
 
 # resize the focused window in the given direction
 mod3 + ctrl + {Left,Down,Up,Right,h,j,k,l}
-    bspwm-resize {west,south,north,east,west,south,north,east} 20
+    bspwmctl resize {west,south,north,east,west,south,north,east} 20
 
 # decrease / increase the gaps between windows
 mod3 + {comma,period}
-    bspwm-gaps {decrease,increase} 2
+    bspwmctl gaps {decrease,increase} 2
 
 # reset gaps between windows to the default value defined in the configuration
 mod3 + shift + comma
-    bspwm-gaps reset
+    bspwmctl gaps reset
 
 
 ### window layout manipulation
