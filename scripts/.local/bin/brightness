@@ -1,14 +1,40 @@
 #!/usr/bin/env sh
 
-# A script to control screen brightness using various backends (brightnessctl,
-# ddcutil, xbacklight) with notifications. Supports both internal backlight
-# devices and external monitors via DDC/CI.
+# A script to control screen brightness using various backends with notifications.
+# Supports brightnessctl (backlight devices), ddcutil (external monitors via
+# DDC/CI), and xbacklight as backends.
+
+# Note about DDC/I2C reliability strategies:
+# DDC / I2C can be flaky at times, so this script integrates some strategies to mitigate / workaround these problems:
+#  - Cache max VCP value, compute brightness locally (4 I2C calls -> 1)
+#  - Cache backend choice + I2C bus number (skip re-detection)
+#  - Pass --bus N to ddcutil (skip /dev/i2c scan phase)
+#  - --noverify via ~/.config/ddcutil/ddcutilrc (not on command line)
+#  - 100ms debounce on rapid keypresses (ddcutil path only)
+#  - Cache current brightness with periodic hardware resync
+#  - No --sleep-multiplier (let Dynamic Sleep Adjustment handle timing)
+#  - No pgrep lock (ddcutil 2.0+ has native flock on /dev/i2c-*)
 
 # Global configuration
 ICON_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/notification_icons"
 ICON_LOW="$ICON_DIR/brightness_low.svg"
 ICON_MEDIUM="$ICON_DIR/brightness_medium.svg"
 ICON_HIGH="$ICON_DIR/brightness_high.svg"
+
+# Cache directory for backend, bus, and brightness data
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/brightness"
+CACHE_BACKEND="$CACHE_DIR/backend"
+CACHE_BUS="$CACHE_DIR/bus"
+CACHE_MAX="$CACHE_DIR/max_brightness"
+CACHE_CURRENT_PCT="$CACHE_DIR/current_pct"
+CACHE_GETS_SINCE_SYNC="$CACHE_DIR/gets_since_sync"
+
+# Debounce settings (ddcutil path only)
+DEBOUNCE_FILE="/tmp/brightness_ddc.lock"
+DEBOUNCE_MS=100
+
+# Force hardware resync every N cached-get operations
+RESYNC_INTERVAL=10
 
 usage() {
     cat << EOF
@@ -30,40 +56,18 @@ Arguments:
 EOF
 }
 
-# Detects which brightness control command to use.
-#
-# Checks backends in order: brightnessctl (backlight class only), ddcutil
-# (external monitors), xbacklight. brightnessctl is tested with -c backlight
-# to filter out LED devices which are not display brightness controls.
-#
-# Outputs:
-#   Writes the detected command name to stdout.
-#   Returns 0 if a command is found, 1 if no command is found.
-detect_brightness_command() {
-    if brightnessctl -c backlight info > /dev/null 2>&1; then
-        echo "brightnessctl"
-        return 0
-    elif command -v ddcutil > /dev/null 2>&1 &&
-        ddcutil detect --brief 2> /dev/null | grep -q '^Display [0-9]'; then
-        echo "ddcutil"
-        return 0
-    elif command -v xbacklight > /dev/null 2>&1; then
-        echo "xbacklight"
-        return 0
-    else
-        echo "Error: No supported brightness control command found" >&2
-        echo "Please install one of: brightnessctl, ddcutil, xbacklight" >&2
-        return 1
-    fi
-}
-
 # Check for required dependencies — at least one backend must be available.
 check_dependencies() {
+    _cache_init
+    # Fast path — trust cache if fresh
+    if _cache_fresh "$CACHE_BACKEND" 60; then
+        return 0
+    fi
+    # Slow path — probe for any available backend
     if brightnessctl -c backlight info > /dev/null 2>&1; then
         return 0
     fi
-    if command -v ddcutil > /dev/null 2>&1 &&
-        ddcutil detect --brief 2> /dev/null | grep -q '^Display [0-9]'; then
+    if command -v ddcutil > /dev/null 2>&1; then
         return 0
     fi
     if command -v xbacklight > /dev/null 2>&1; then
@@ -74,15 +78,207 @@ check_dependencies() {
     return 1
 }
 
-# Checks if another ddcutil instance is already running.
+# --- Cache helpers ---
+
+# Ensure the cache directory exists.
+_cache_init() {
+    [ -d "$CACHE_DIR" ] || mkdir -p "$CACHE_DIR"
+}
+
+# Read a value from a cache file.
+#
+# Arguments:
+#   $1 - Path to the cache file
+#
+# Outputs:
+#   Writes the cached value to stdout, or nothing if the file is missing.
+_cache_read() {
+    _cr_path="$1"
+    if [ -f "$_cr_path" ]; then
+        cat "$_cr_path" 2> /dev/null
+    fi
+}
+
+# Write a value to a cache file.
+#
+# Arguments:
+#   $1 - Path to the cache file
+#   $2 - Value to write
+_cache_write() {
+    printf '%s\n' "$2" > "$1"
+}
+
+# Check if a cache file was modified within the last N seconds.
+#
+# Arguments:
+#   $1 - Path to the cache file
+#   $2 - Maximum age in seconds
 #
 # Returns:
-#   0 if no other instance is running, 1 if locked.
-check_ddcutil_lock() {
-    if pgrep -x ddcutil > /dev/null 2>&1; then
-        echo "Error: Another ddcutil instance is running" >&2
-        return 1
+#   0 if the file is fresh, 1 if stale or missing.
+_cache_fresh() {
+    [ -f "$1" ] || return 1
+    _cf_now=$(date +%s)
+    _cf_mtime=$(stat -c %Y "$1" 2> /dev/null)
+    [ -n "$_cf_mtime" ] || return 1
+    [ $((_cf_now - _cf_mtime)) -lt "$2" ]
+}
+
+# --- Debounce ---
+
+# Suppress rapid ddcutil invocations from held brightness keys.
+# Writes a nanosecond timestamp to a lock file; exits 0 if invoked
+# again within DEBOUNCE_MS milliseconds, silently dropping the duplicate.
+_ddc_debounce() {
+    _dd_now_ns=$(date +%s%N)
+    if [ -f "$DEBOUNCE_FILE" ]; then
+        _dd_last_ns=$(_cache_read "$DEBOUNCE_FILE")
+        if [ -n "$_dd_last_ns" ]; then
+            _dd_diff_ms=$(((_dd_now_ns - _dd_last_ns) / 1000000))
+            if [ "$_dd_diff_ms" -lt "$DEBOUNCE_MS" ]; then
+                exit 0
+            fi
+        fi
     fi
+    printf '%s\n' "$_dd_now_ns" > "$DEBOUNCE_FILE"
+}
+
+# --- ddcutil wrapper ---
+
+# Wrap ddcutil with --bus N (when cached) and a timeout guard.
+# --bus skips the /dev/i2c scan phase — the single biggest ddcutil
+# performance win per the documentation.  timeout prevents ddcutil
+# from hanging on unresponsive I2C buses.
+_ddc() {
+    _ddc_bus=$(_cache_read "$CACHE_BUS")
+    if [ -n "$_ddc_bus" ] && [ -c "/dev/i2c-${_ddc_bus}" ]; then
+        timeout 5 ddcutil --bus "$_ddc_bus" "$@"
+    else
+        timeout 5 ddcutil "$@"
+    fi
+}
+
+# --- VCP query helpers ---
+
+# Query VCP 10 (brightness) and cache both current and max values.
+# Retries once with a 0.5s delay — DDC communication is inherently
+# unreliable and often succeeds on the second attempt.
+_ddc_query_vcp10() {
+    _dqv_attempt=0
+    while [ "$_dqv_attempt" -lt 2 ]; do
+        _dqv_out=$(_ddc getvcp --brief 10 2> /dev/null)
+        _dqv_cur=$(echo "$_dqv_out" | awk '{print $4}')
+        _dqv_max=$(echo "$_dqv_out" | awk '{print $5}')
+        if [ -n "$_dqv_max" ] && [ "$_dqv_max" -gt 0 ] 2> /dev/null; then
+            _cache_write "$CACHE_MAX" "$_dqv_max"
+            if [ -n "$_dqv_cur" ]; then
+                _cache_write "$CACHE_CURRENT_PCT" "$((_dqv_cur * 100 / _dqv_max))"
+                _cache_write "$CACHE_GETS_SINCE_SYNC" "0"
+            fi
+            return 0
+        fi
+        _dqv_attempt=$((_dqv_attempt + 1))
+        [ "$_dqv_attempt" -lt 2 ] && sleep 0.5
+    done
+    return 1
+}
+
+# Return the cached max VCP 10 value, querying hardware on cache miss.
+# The max value is static per monitor model.
+_ddc_get_max() {
+    _dgm_cached=$(_cache_read "$CACHE_MAX")
+    if [ -n "$_dgm_cached" ] && [ "$_dgm_cached" -gt 0 ] 2> /dev/null; then
+        echo "$_dgm_cached"
+        return 0
+    fi
+    _ddc_query_vcp10 || return 1
+    _cache_read "$CACHE_MAX"
+}
+
+# Return brightness percentage from cache, forcing a real getvcp every
+# RESYNC_INTERVAL reads or when no cache exists yet.
+_ddc_get_brightness() {
+    _dgb_pct=$(_cache_read "$CACHE_CURRENT_PCT")
+    if [ -z "$_dgb_pct" ]; then
+        _ddc_query_vcp10 || return 1
+        _cache_read "$CACHE_CURRENT_PCT"
+        return 0
+    fi
+    _dgb_count=$(_cache_read "$CACHE_GETS_SINCE_SYNC")
+    _dgb_count=${_dgb_count:-0}
+    if [ "$_dgb_count" -ge "$RESYNC_INTERVAL" ] 2> /dev/null; then
+        _ddc_query_vcp10 2> /dev/null || {
+            echo "$_dgb_pct"
+            return 0
+        }
+        _cache_read "$CACHE_CURRENT_PCT"
+        return 0
+    fi
+    _cache_write "$CACHE_GETS_SINCE_SYNC" "$((_dgb_count + 1))"
+    echo "$_dgb_pct"
+}
+
+# --- Backend detection ---
+
+# Detects which brightness control command to use.
+# Checks backends in order: brightnessctl (backlight class only),
+# ddcutil (external monitors), xbacklight.  Caches the result for
+# 60 seconds; for ddcutil, verifies the cached bus device still exists.
+#
+# Outputs:
+#   Writes the detected command name to stdout.
+#   Returns 0 if a command is found, 1 if no command is found.
+detect_brightness_command() {
+    _cache_init
+
+    # Trust cached backend if fresh (< 60s)
+    if _cache_fresh "$CACHE_BACKEND" 60; then
+        _dbc_name=$(_cache_read "$CACHE_BACKEND")
+        if [ -n "$_dbc_name" ]; then
+            if [ "$_dbc_name" = "ddcutil" ]; then
+                _dbc_bus=$(_cache_read "$CACHE_BUS")
+                if [ -n "$_dbc_bus" ] && [ -c "/dev/i2c-${_dbc_bus}" ]; then
+                    echo "ddcutil"
+                    return 0
+                fi
+                # Bus device gone — fall through to re-detect
+            else
+                echo "$_dbc_name"
+                return 0
+            fi
+        fi
+    fi
+
+    # Fresh detection
+    if brightnessctl -c backlight info > /dev/null 2>&1; then
+        _cache_write "$CACHE_BACKEND" "brightnessctl"
+        echo "brightnessctl"
+        return 0
+    fi
+
+    if command -v ddcutil > /dev/null 2>&1; then
+        _dbc_detect=$(ddcutil detect --brief 2> /dev/null)
+        # Accept both valid ("Display 1") and marginal ("Invalid display")
+        # entries — DDC can fail during detect yet succeed for VCP operations.
+        _dbc_bus=$(echo "$_dbc_detect" | grep 'I2C bus:' | head -1 | sed 's/.*\/dev\/i2c-//')
+        if [ -n "$_dbc_bus" ] && [ -c "/dev/i2c-${_dbc_bus}" ]; then
+            _cache_write "$CACHE_BACKEND" "ddcutil"
+            _cache_write "$CACHE_BUS" "$_dbc_bus"
+            rm -f "$CACHE_MAX"
+            echo "ddcutil"
+            return 0
+        fi
+    fi
+
+    if command -v xbacklight > /dev/null 2>&1; then
+        _cache_write "$CACHE_BACKEND" "xbacklight"
+        echo "xbacklight"
+        return 0
+    fi
+
+    echo "Error: No supported brightness control command found" >&2
+    echo "Please install one of: brightnessctl, ddcutil, xbacklight" >&2
+    return 1
 }
 
 # Gets the current brightness level.
@@ -95,14 +291,18 @@ check_ddcutil_lock() {
 get_brightness() {
     case "$1" in
         brightnessctl)
-            echo $(($(brightnessctl -c backlight get) * 100 / $(brightnessctl -c backlight max)))
+            _gb_cur=$(brightnessctl -c backlight get)
+            _gb_max=$(brightnessctl -c backlight max)
+            echo $((_gb_cur * 100 / _gb_max))
             ;;
         ddcutil)
-            output=$(ddcutil getvcp --brief 10 2> /dev/null)
-            cur=$(echo "$output" | awk '{print $4}')
-            max=$(echo "$output" | awk '{print $5}')
-            [ -z "$cur" ] || [ -z "$max" ] && return 1
-            echo $((cur * 100 / max))
+            _gb_result=$(_ddc_get_brightness)
+            if [ -n "$_gb_result" ]; then
+                echo "$_gb_result"
+            else
+                echo "Error: ddcutil failed to read brightness" >&2
+                return 1
+            fi
             ;;
         xbacklight)
             xbacklight -get | cut -d '.' -f 1
@@ -118,10 +318,14 @@ get_brightness() {
 # Outputs:
 #   Writes path to appropriate icon to stdout.
 get_icon() {
-    BRIGHTNESS="$1"
-    if [ "$BRIGHTNESS" -lt 40 ]; then
+    _gi_brt="$1"
+    [ -z "$_gi_brt" ] && {
+        echo "$ICON_MEDIUM"
+        return
+    }
+    if [ "$_gi_brt" -lt 40 ]; then
         echo "$ICON_LOW"
-    elif [ "$BRIGHTNESS" -lt 70 ]; then
+    elif [ "$_gi_brt" -lt 70 ]; then
         echo "$ICON_MEDIUM"
     else
         echo "$ICON_HIGH"
@@ -133,9 +337,15 @@ get_icon() {
 # Arguments:
 #   $1 - Current brightness level (0-100)
 send_notification() {
-    BRIGHTNESS="$1"
-    ICON=$(get_icon "$BRIGHTNESS")
-    notify-send -i "$ICON" -h int:value:"$BRIGHTNESS" -u low "Brightness [$BRIGHTNESS%]" --hint=string:x-dunst-stack-tag:brightness --hint=string:synchronous:brightness
+    _sn_brt="$1"
+    [ -z "$_sn_brt" ] && return 1
+    _sn_icon=$(get_icon "$_sn_brt")
+    notify-send -i "$_sn_icon" \
+        -h int:value:"$_sn_brt" \
+        -u low \
+        "Brightness [$_sn_brt%]" \
+        --hint=string:x-dunst-stack-tag:brightness \
+        --hint=string:synchronous:brightness
 }
 
 # Changes brightness level.
@@ -145,60 +355,71 @@ send_notification() {
 #   $2 - Operation to perform ("increase", "decrease", or "set")
 #   $3 - Value (step size for increase/decrease, target percentage for set)
 change_brightness() {
-    BRIGHTNESS_CMD="$1"
-    OPERATION="$2"
-    VALUE="$3"
+    _cb_cmd="$1"
+    _cb_op="$2"
+    _cb_val="$3"
 
-    case "$BRIGHTNESS_CMD" in
+    case "$_cb_cmd" in
         brightnessctl)
-            case "$OPERATION" in
-                increase)
-                    brightnessctl -c backlight set "+${VALUE}%"
-                    ;;
-                decrease)
-                    brightnessctl -c backlight set "${VALUE}%-"
-                    ;;
-                set)
-                    brightnessctl -c backlight set "${VALUE}%"
-                    ;;
+            case "$_cb_op" in
+                increase) brightnessctl -c backlight set "+${_cb_val}%" ;;
+                decrease) brightnessctl -c backlight set "${_cb_val}%-" ;;
+                set) brightnessctl -c backlight set "${_cb_val}%" ;;
             esac
+            send_notification "$(get_brightness brightnessctl)"
             ;;
         ddcutil)
-            check_ddcutil_lock || return 1
-            case "$OPERATION" in
+            # Debounce rapid keypresses
+            _ddc_debounce
+
+            # Retrieve cached max (queries hardware only on cache miss)
+            _cb_max=$(_ddc_get_max) || return 1
+
+            case "$_cb_op" in
                 increase)
-                    max=$(ddcutil getvcp --brief 10 2> /dev/null | awk '{print $5}')
-                    raw_step=$((max * VALUE / 100))
-                    ddcutil --noverify --sleep-multiplier 0.2 setvcp 10 + "$raw_step" > /dev/null 2>&1
+                    # Compute new value from cache
+                    _cb_cur=$(_cache_read "$CACHE_CURRENT_PCT")
+                    if [ -z "$_cb_cur" ]; then
+                        _ddc_query_vcp10 || return 1
+                        _cb_cur=$(_cache_read "$CACHE_CURRENT_PCT")
+                    fi
+                    _cb_new=$((_cb_cur + _cb_val))
+                    [ "$_cb_new" -gt 100 ] && _cb_new=100
                     ;;
                 decrease)
-                    max=$(ddcutil getvcp --brief 10 2> /dev/null | awk '{print $5}')
-                    raw_step=$((max * VALUE / 100))
-                    ddcutil --noverify --sleep-multiplier 0.2 setvcp 10 - "$raw_step" > /dev/null 2>&1
+                    _cb_cur=$(_cache_read "$CACHE_CURRENT_PCT")
+                    if [ -z "$_cb_cur" ]; then
+                        _ddc_query_vcp10 || return 1
+                        _cb_cur=$(_cache_read "$CACHE_CURRENT_PCT")
+                    fi
+                    _cb_new=$((_cb_cur - _cb_val))
+                    [ "$_cb_new" -lt 0 ] && _cb_new=0
                     ;;
                 set)
-                    max=$(ddcutil getvcp --brief 10 2> /dev/null | awk '{print $5}')
-                    raw=$((max * VALUE / 100))
-                    ddcutil --noverify --sleep-multiplier 0.2 setvcp 10 "$raw" > /dev/null 2>&1
+                    _cb_new="$_cb_val"
                     ;;
             esac
+
+            # Only setvcp hits I2C on subsequent calls
+            _cb_raw=$((_cb_max * _cb_new / 100))
+            _ddc setvcp 10 "$_cb_raw" > /dev/null 2>&1 || return 1
+
+            # Update cached brightness locally
+            _cache_write "$CACHE_CURRENT_PCT" "$_cb_new"
+            _cache_write "$CACHE_GETS_SINCE_SYNC" "0"
+
+            # Notification uses locally computed value
+            send_notification "$_cb_new"
             ;;
         xbacklight)
-            case "$OPERATION" in
-                increase)
-                    xbacklight -inc "$VALUE"
-                    ;;
-                decrease)
-                    xbacklight -dec "$VALUE"
-                    ;;
-                set)
-                    xbacklight -set "$VALUE"
-                    ;;
+            case "$_cb_op" in
+                increase) xbacklight -inc "$_cb_val" ;;
+                decrease) xbacklight -dec "$_cb_val" ;;
+                set) xbacklight -set "$_cb_val" ;;
             esac
+            send_notification "$(get_brightness xbacklight)"
             ;;
     esac
-
-    send_notification "$(get_brightness "$BRIGHTNESS_CMD")"
 }
 
 # Main entry point that processes command-line arguments.
@@ -211,21 +432,21 @@ main() {
 
     case "$1" in
         increase | decrease)
-            BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
-            VALUE="${2:-5}"
-            if [ "$VALUE" -gt 0 ] && [ "$VALUE" -le 100 ]; then
-                change_brightness "$BRIGHTNESS_CMD" "$1" "$VALUE"
+            _m_cmd=$(detect_brightness_command) || exit 1
+            _m_val="${2:-5}"
+            if [ "$_m_val" -gt 0 ] && [ "$_m_val" -le 100 ]; then
+                change_brightness "$_m_cmd" "$1" "$_m_val"
             else
                 echo "Error: Step size must be between 1 and 100" >&2
                 exit 1
             fi
             ;;
         set)
-            BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
+            _m_cmd=$(detect_brightness_command) || exit 1
             if [ $# -eq 2 ]; then
-                VALUE="$2"
-                if [ "$VALUE" -ge 0 ] && [ "$VALUE" -le 100 ]; then
-                    change_brightness "$BRIGHTNESS_CMD" "$1" "$VALUE"
+                _m_val="$2"
+                if [ "$_m_val" -ge 0 ] && [ "$_m_val" -le 100 ]; then
+                    change_brightness "$_m_cmd" "$1" "$_m_val"
                 else
                     echo "Error: Percentage must be between 0 and 100" >&2
                     exit 1
@@ -236,8 +457,8 @@ main() {
             fi
             ;;
         get)
-            BRIGHTNESS_CMD=$(detect_brightness_command) || exit 1
-            get_brightness "$BRIGHTNESS_CMD"
+            _m_cmd=$(detect_brightness_command) || exit 1
+            get_brightness "$_m_cmd"
             ;;
         -h | --help)
             usage
