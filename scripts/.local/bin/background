@@ -27,17 +27,17 @@ Modes:
 EOF
 }
 
+# Check for required dependencies
+check_dependencies() {
+    return 0
+}
+
 # Detect if running under Wayland
 #
 # Returns:
 #   0 if running under Wayland, 1 otherwise
 is_wayland() {
     [ -n "$WAYLAND_DISPLAY" ]
-}
-
-# Check for required dependencies
-check_dependencies() {
-    return 0
 }
 
 # Get the appropriate wallpaper setter command based on display server

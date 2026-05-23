@@ -23,6 +23,16 @@ Operations:
 EOF
 }
 
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in $DEPENDENCIES; do
+        command -v "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
 # Detects if running under Wayland.
 #
 # Returns:
@@ -41,16 +51,6 @@ get_daemon_list() {
     else
         echo "$X11_DAEMONS"
     fi
-}
-
-# Check for required dependencies
-check_dependencies() {
-    for DEPENDENCY in $DEPENDENCIES; do
-        command -v "$DEPENDENCY" > /dev/null 2>&1 || {
-            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
-            exit 1
-        }
-    done
 }
 
 # Detects if a command exists and is executable.

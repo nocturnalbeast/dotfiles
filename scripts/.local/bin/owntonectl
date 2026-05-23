@@ -28,16 +28,6 @@ Commands:
 EOF
 }
 
-detect_container_runtime() {
-    if command -v podman > /dev/null 2>&1; then
-        echo "podman"
-    elif command -v docker > /dev/null 2>&1; then
-        echo "docker"
-    else
-        return 1
-    fi
-}
-
 check_dependencies() {
     for dependency in "${DEPENDENCIES[@]}"; do
         if ! command -v "$dependency" > /dev/null 2>&1; then
@@ -58,6 +48,16 @@ check_dependencies() {
     else
         IMAGE_NAME="owntone-pulse:29.0"
         SELINUX_SUFFIX=""
+    fi
+}
+
+detect_container_runtime() {
+    if command -v podman > /dev/null 2>&1; then
+        echo "podman"
+    elif command -v docker > /dev/null 2>&1; then
+        echo "docker"
+    else
+        return 1
     fi
 }
 
