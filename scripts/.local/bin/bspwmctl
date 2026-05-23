@@ -1,0 +1,302 @@
+#!/usr/bin/env bash
+
+# A script for controlling bspwm.
+
+# Global configuration
+DEPENDENCIES=(bspc)
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") COMMAND [ARGS]
+
+A script for controlling bspwm.
+
+Commands:
+    focus DIRECTION                  Focus a window in the given direction (north, east, south, west).
+    history_focus MODE DIRECTION     Cycle through the history of windows or workspaces.
+                                       MODE can be any of the following: window, desktop.
+                                       DIRECTION can be any of the following: older, newer.
+    move DIRECTION                   Move a window in the given direction (north, east, south, west).
+    resize DIRECTION                 Resize a window in the given direction (north, east, south, west).
+    mode MODE                        Set the mode for the current window.
+                                       MODE can be any of the following: tiled, pseudo_tiled, floating, fullscreen.
+    workspace OPERATION WORKSPACE    Focus or move to a workspace.
+                                       OPERATION can be any of the following: focus, move.
+                                       WORKSPACE is the workspace number or 'next'/'prev' for relative navigation.
+    gaps MODE SIZE                   Set the gap size for the current monitor.
+                                       MODE can be any of the following: increase, decrease, reset.
+                                       SIZE is the gap size in pixels.
+    active_no_borders                Make active window have no borders.
+    autofocus_pow                    Auto-focus previous occupied workspace.
+    -h, --help                       Show this help message.
+EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Focus a node in the given direction
+#
+# Arguments:
+#   $1 - The direction to focus (north, east, south, west)
+focus() {
+    case "$1" in
+        north | east | south | west) ;;
+        *) usage ;;
+    esac
+    if ! bspc query -T -n | grep -q '"state":"floating"'; then
+        bspc node -f "$1" || bspc monitor -f "$1"
+    fi
+}
+
+# Focus a previously focused window or workspace
+#
+# Arguments:
+#   $1 - The mode to cycle through (window, desktop/workspace)
+#   $2 - The direction to cycle through (older, newer)
+history_focus() {
+    case "$1" in
+        window | desktop) MODE="$1" ;;
+        workspace) MODE="desktop" ;;
+        *) usage && exit 1 ;;
+    esac
+
+    case "$2" in
+        older | newer) DIRECTION="$2" ;;
+        *) usage && exit 1 ;;
+    esac
+
+    bspc wm -h off
+    bspc "$MODE" "$DIRECTION" -f
+    bspc wm -h on
+}
+
+# Move a node in the given direction
+#
+# Arguments:
+#   $1 - The direction to move (north, east, south, west)
+move() {
+    case "$1" in
+        north | east | south | west) ;;
+        *) usage ;;
+    esac
+
+    RECEPTACLE="$(bspc query -N -n 'any.leaf.!window')"
+    SIZE=20
+
+    if [ -n "$(bspc query -N -n focused.floating)" ]; then
+        case "$1" in
+            west) COORD="-$SIZE 0" ;;
+            east) COORD="$SIZE 0" ;;
+            north) COORD="0 -$SIZE" ;;
+            south) COORD="0 $SIZE" ;;
+        esac
+        bspc node focused -v $COORD
+    else
+        if [ -n "$(bspc query -N -n "${1}.!floating")" ]; then
+            if [ -z "$(bspc query -N -n "focused#${1}.local")" ]; then
+                bspc node -m "$1" --follow
+            else
+                bspc node -s "$1"
+            fi
+        elif [ -n "$RECEPTACLE" ]; then
+            bspc node focused -n "$RECEPTACLE" --follow
+        else
+            bspc node @/ -p "$1" -i && bspc node -n "$RECEPTACLE" --follow
+        fi
+    fi
+}
+
+# Resize a node in the given direction
+#
+# Arguments:
+#   $1 - The direction to resize (west, east, north, south)
+#   $2 - The size to resize by (default: 10)
+resize() {
+    SIZE=${2:-'10'}
+    DIRECTION=$1
+
+    bspc query -N -n focused.floating
+    FLOATING=$?
+
+    case "$DIRECTION" in
+        west) [ $FLOATING = 0 ] && bspc node -z right -"$SIZE" 0 || bspc node @west -r -"$SIZE" || bspc node @east -r -"$SIZE" ;;
+        east) [ $FLOATING = 0 ] && bspc node -z right +"$SIZE" 0 || bspc node @west -r +"$SIZE" || bspc node @east -r +"$SIZE" ;;
+        north) [ $FLOATING = 0 ] && bspc node -z bottom 0 -"$SIZE" || bspc node @south -r -"$SIZE" || bspc node @north -r -"$SIZE" ;;
+        south) [ $FLOATING = 0 ] && bspc node -z bottom 0 +"$SIZE" || bspc node @south -r +"$SIZE" || bspc node @north -r +"$SIZE" ;;
+    esac
+}
+
+# Set the mode for the current window
+#
+# Arguments:
+#   $1 - The mode to set (tiled, pseudo_tiled, floating, fullscreen)
+mode() {
+    WIN_MODE="tiled"
+    if bspc query -T -n | grep -q '"state":"tiled"'; then WIN_MODE="$1"; fi
+    bspc node -t $WIN_MODE
+}
+
+# Focus or move to a workspace
+#
+# Arguments:
+#   $1 - The operation to perform (focus, move)
+#   $2 - The workspace to focus or move to (number or 'next'/'prev' for relative navigation)
+workspace() {
+    # Get monitor information
+    mapfile -t ALL_MONITORS < <(bspc query -M --names)
+    FOCUSED_MONITOR="$(bspc query -M -m focused --names)"
+    WKSP_COUNT="$(bspc query -D --names | wc -l)"
+    WKSP_PER_MONITOR="$((WKSP_COUNT / ${#ALL_MONITORS[@]}))"
+
+    # Find focused monitor index
+    FOCUSED_MONITOR_NUM=""
+    for IDX in "${!ALL_MONITORS[@]}"; do
+        if [[ ${ALL_MONITORS[$IDX]} == "${FOCUSED_MONITOR}" ]]; then
+            FOCUSED_MONITOR_NUM="$IDX"
+            break # Exit loop once found
+        fi
+    done
+
+    # Get current workspace and workspaces on focused monitor
+    mapfile -t FOCUSED_MONITOR_WORKSPACES < <(bspc query -D -m focused | xargs -n 1 printf "%d\n")
+    CURRENT_WORKSPACE="$(bspc query -D -d)"
+
+    # Determine target workspace
+    DEST_WORKSPACE=""
+    case "$2" in
+        next)
+            # If on last workspace, cycle to first
+            if [[ ${FOCUSED_MONITOR_WORKSPACES[-1]} == "$CURRENT_WORKSPACE" ]]; then
+                DEST_WORKSPACE="${FOCUSED_MONITOR_WORKSPACES[0]}"
+            else
+                local current_dec=$(printf "%d" "$CURRENT_WORKSPACE")
+                DEST_WORKSPACE="0x$(printf "%x" $((current_dec + 1)))"
+            fi
+            ;;
+        prev)
+            # If on first workspace, cycle to last
+            if [[ ${FOCUSED_MONITOR_WORKSPACES[0]} == "$CURRENT_WORKSPACE" ]]; then
+                DEST_WORKSPACE="${FOCUSED_MONITOR_WORKSPACES[-1]}"
+            else
+                local current_dec=$(printf "%d" "$CURRENT_WORKSPACE")
+                DEST_WORKSPACE="0x$(printf "%x" $((current_dec - 1)))"
+            fi
+            ;;
+        10 | [1-9])
+            # Calculate absolute workspace based on monitor (1-based)
+            DEST_WORKSPACE="^$((FOCUSED_MONITOR_NUM * WKSP_PER_MONITOR + $2))"
+            ;;
+        *)
+            echo "Invalid workspace: $2" >&2
+            usage
+            exit 1
+            ;;
+    esac
+
+    # Perform operation based on first argument
+    case "$1" in
+        focus) bspc desktop -f "$DEST_WORKSPACE" ;;
+        move) bspc node -d "$DEST_WORKSPACE" ;;
+        *) usage && exit 1 ;;
+    esac
+}
+
+# Set / reset the gap size
+#
+# Arguments:
+#   $1 - The mode to set (increase, decrease, reset)
+#   $2 - The gap size in pixels (default: 0)
+gaps() {
+    GAP_CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/bspwm-gaps-ogm"
+
+    case "$1" in
+        increase | decrease | reset) MODE="$1" ;;
+        *) usage ;;
+    esac
+    case "$2" in
+        *[!0-9]*) usage && exit 1 ;;
+        *) SIZE="$2" ;;
+    esac
+
+    [ "$SIZE" = "" ] && SIZE="0"
+
+    case "$MODE" in
+        increase)
+            CURRENT_GAP="$(bspc config window_gap)"
+            [ ! -f "$GAP_CACHE_FILE" ] && echo "$CURRENT_GAP" > "$GAP_CACHE_FILE"
+            bspc config window_gap "$((CURRENT_GAP + SIZE))"
+            ;;
+        decrease)
+            CURRENT_GAP="$(bspc config window_gap)"
+            [ ! -f "$GAP_CACHE_FILE" ] && echo "$CURRENT_GAP" > "$GAP_CACHE_FILE"
+            bspc config window_gap "$((CURRENT_GAP - SIZE))"
+            ;;
+        reset)
+            [ -f "$GAP_CACHE_FILE" ] && bspc config window_gap "$(cat "$GAP_CACHE_FILE")"
+            rm -f "$GAP_CACHE_FILE"
+            ;;
+    esac
+}
+
+# Make active window have no borders
+active_no_borders() {
+    BASE_BORDER_WIDTH="$(bspc config border_width)"
+    while bspc subscribe -c 1 node_focus; do
+        bspc config border_width "$BASE_BORDER_WIDTH"
+        bspc config -n focused border_width 0
+    done
+}
+
+# Auto-focus previous occupied workspace
+autofocus_pow() {
+    bspc subscribe node_remove | while read -r _; do
+        # if there isn't another window in the focused workspace, then
+        if [ -z "$(bspc query -N -n .local.focused)" ]; then
+            # clear all receptacles/reserved spaces
+            for win in $(bspc query -N -n .leaf.local.!window); do
+                bspc node $win -k
+            done
+            if [ $(bspc query -N -n .window | wc -l) -eq 0 ]; then
+                bspc desktop -f 'primary:^1'
+            else
+                bspc desktop -f last.occupied
+            fi
+        fi
+    done
+}
+
+# Main entry point
+main() {
+    check_dependencies
+
+    local COMMAND="$1"
+    shift
+
+    case "$COMMAND" in
+        focus) focus "$1" ;;
+        history_focus) history_focus "$1" "$2" ;;
+        move) move "$1" ;;
+        resize) resize "$1" "$2" ;;
+        mode) mode "$1" ;;
+        workspace) workspace "$1" "$2" ;;
+        gaps) gaps "$1" "$2" ;;
+        active_no_borders) active_no_borders ;;
+        autofocus_pow) autofocus_pow ;;
+        -h | --help) usage ;;
+        *)
+            echo "error: Unknown command '$COMMAND'" >&2
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
