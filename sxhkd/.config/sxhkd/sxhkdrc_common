@@ -96,11 +96,11 @@ mod3 + shift + Print
 
 # decrease volume
 XF86AudioLowerVolume
-    volume down 10
+    volume decrease 10
 
 # increase volume
 XF86AudioRaiseVolume
-    volume up 10
+    volume increase 10
 
 # toggle mute
 XF86AudioMute
@@ -127,11 +127,11 @@ XF86AudioPrev
 
 # increase brightness of the display
 XF86MonBrightnessUp
-    change-brightness increase
+    brightness increase
 
 # decrease brightness of the display
 XF86MonBrightnessDown
-    change-brightness decrease
+    brightness decrease
 
 
 ## bar control
