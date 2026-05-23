@@ -18,16 +18,6 @@ CACHE_FILE="$CACHE_DIR/media-control-recent"
 ICON_PLAY="󰐊"
 ICON_PAUSE="󰏤"
 
-# Check for required dependencies
-check_dependencies() {
-    for DEPENDENCY in $DEPENDENCIES; do
-        command -v "$DEPENDENCY" > /dev/null 2>&1 || {
-            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
-            exit 1
-        }
-    done
-}
-
 usage() {
     cat << EOF
 Usage: $(basename "$0") OPERATION [ARGUMENT]
@@ -53,6 +43,16 @@ Operations:
     icon            Show current playback icon (if paused, shows play icon and vice versa)
                     Use --follow for continuous live updates
 EOF
+}
+
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in $DEPENDENCIES; do
+        command -v "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
 }
 
 # Returns list of currently playing instances.

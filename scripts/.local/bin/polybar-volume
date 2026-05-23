@@ -31,6 +31,36 @@ THRESHOLD_HIGH=70
 # Follow mode PID directory
 PID_DIR="/tmp/polybar-volume-follow"
 
+usage() {
+    cat << EOF
+Usage: $(basename "$0") OPERATION [ALIGNMENT] [OPTIONS]
+
+A script for polybar volume display and control.
+
+Operations:
+    percentage [ALIGNMENT]  Display icon + percentage text
+    bar [ALIGNMENT]         Display icon + text bar
+    icon                    Display volume icon only
+    mute                    Toggle mute
+    increase [STEP]         Increase volume by STEP% (default: 5)
+    decrease [STEP]         Decrease volume by STEP% (default: 5)
+
+Alignment (for display operations):
+    left                    Icon on left, value on right (default)
+    right                   Value on left, icon on right
+
+Options:
+    --styled                Enable inline polybar color formatting
+    --follow                Stay running and update on volume changes (for tail mode)
+
+Environment variables:
+    POLYBAR_VOLUME_HEADER_BG    Header background color (default: #C0000000)
+    POLYBAR_VOLUME_HEADER_FG    Header foreground color (default: #CDFFFFFF)
+    POLYBAR_VOLUME_CONTENT_BG   Content background color (default: #9F000000)
+    POLYBAR_VOLUME_CONTENT_FG   Content foreground color (default: #BCFFFFFF)
+EOF
+}
+
 # Check for required dependencies
 check_dependencies() {
     for DEPENDENCY in $DEPENDENCIES; do
@@ -203,36 +233,6 @@ follow_display() {
         sleep 86400 &
         wait $!
     done
-}
-
-usage() {
-    cat << EOF
-Usage: $(basename "$0") OPERATION [ALIGNMENT] [OPTIONS]
-
-A script for polybar volume display and control.
-
-Operations:
-    percentage [ALIGNMENT]  Display icon + percentage text
-    bar [ALIGNMENT]         Display icon + text bar
-    icon                    Display volume icon only
-    mute                    Toggle mute
-    increase [STEP]         Increase volume by STEP% (default: 5)
-    decrease [STEP]         Decrease volume by STEP% (default: 5)
-
-Alignment (for display operations):
-    left                    Icon on left, value on right (default)
-    right                   Value on left, icon on right
-
-Options:
-    --styled                Enable inline polybar color formatting
-    --follow                Stay running and update on volume changes (for tail mode)
-
-Environment variables:
-    POLYBAR_VOLUME_HEADER_BG    Header background color (default: #C0000000)
-    POLYBAR_VOLUME_HEADER_FG    Header foreground color (default: #CDFFFFFF)
-    POLYBAR_VOLUME_CONTENT_BG   Content background color (default: #9F000000)
-    POLYBAR_VOLUME_CONTENT_FG   Content foreground color (default: #BCFFFFFF)
-EOF
 }
 
 main() {

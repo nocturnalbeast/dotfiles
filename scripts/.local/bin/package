@@ -23,6 +23,14 @@ Operations:
 EOF
 }
 
+# Check for required dependencies
+check_dependencies() {
+    if [ ! -f /etc/os-release ]; then
+        echo "error: Cannot detect distribution (/etc/os-release not found)" >&2
+        return 1
+    fi
+}
+
 # Returns the appropriate privilege escalation command (sudo/doas) if needed.
 #
 # Arguments:
@@ -48,14 +56,6 @@ detect_sudo_binary() {
         elif type sudo > /dev/null 2>&1; then
             echo "sudo"
         fi
-    fi
-}
-
-# Check for required dependencies
-check_dependencies() {
-    if [ ! -f /etc/os-release ]; then
-        echo "error: Cannot detect distribution (/etc/os-release not found)" >&2
-        return 1
     fi
 }
 

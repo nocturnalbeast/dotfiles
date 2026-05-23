@@ -24,17 +24,6 @@ DEPENDENCIES=(clipcatctl menu notify-send)
 X11_DEPENDENCIES=(xclip xdotool)
 WAYLAND_DEPENDENCIES=(wl-copy wl-paste)
 
-# Detect environment (Wayland or X11 or text-only)
-detect_environment() {
-    if [ -n "$WAYLAND_DISPLAY" ]; then
-        echo "wayland"
-    elif [ -n "$DISPLAY" ]; then
-        echo "x11"
-    else
-        echo "tty"
-    fi
-}
-
 # Check for required dependencies
 check_dependencies() {
     local CURRENT_ENVIRONMENT
@@ -50,6 +39,17 @@ check_dependencies() {
             exit 1
         }
     done
+}
+
+# Detect environment (Wayland or X11 or text-only)
+detect_environment() {
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        echo "wayland"
+    elif [ -n "$DISPLAY" ]; then
+        echo "x11"
+    else
+        echo "tty"
+    fi
 }
 
 # Show clipboard history for pasting
