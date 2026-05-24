@@ -32,6 +32,16 @@ MONOSPACE_FONT_SIZE="50%"
 # for dynamic wm-restack option
 WINDOW_MANAGER="$( wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p" )"
 
+# override-redirect: bspwm needs true (manual padding), awesome needs false (EWMH struts)
+# wm-restack: only needed when override-redirect=true (bspwm), skip for awesome
+if [ "$WINDOW_MANAGER" = "awesome" ]; then
+    OVERRIDE_REDIRECT="false"
+    WM_RESTACK="generic"
+else
+    OVERRIDE_REDIRECT="true"
+    WM_RESTACK="$WINDOW_MANAGER"
+fi
+
 # for temperature module
 TEMP_THERMAL_ZONE=2
 
