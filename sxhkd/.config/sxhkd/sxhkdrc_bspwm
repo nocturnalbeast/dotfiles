@@ -53,11 +53,11 @@ mod3 + ctrl + {Left,Down,Up,Right,h,j,k,l}
     bspwmctl resize {west,south,north,east,west,south,north,east} 20
 
 # decrease / increase the gaps between windows
-mod3 + {comma,period}
+mod3 + {semicolon,apostrophe}
     bspwmctl gaps {decrease,increase} 2
 
 # reset gaps between windows to the default value defined in the configuration
-mod3 + shift + comma
+mod3 + shift + semicolon
     bspwmctl gaps reset
 
 
