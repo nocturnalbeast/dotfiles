@@ -3,11 +3,11 @@
 # A script to control audio volume using various backends with notifications.
 
 # Global configuration
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}"
-ICON_MUTED="$CONFIG_DIR/dunst/icons/volume_muted.svg"
-ICON_LOW="$CONFIG_DIR/dunst/icons/volume_low.svg"
-ICON_MEDIUM="$CONFIG_DIR/dunst/icons/volume_medium.svg"
-ICON_HIGH="$CONFIG_DIR/dunst/icons/volume_high.svg"
+DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}"
+ICON_MUTED="$DATA_DIR/notification_icons/volume_mute.svg"
+ICON_LOW="$DATA_DIR/notification_icons/volume_low.svg"
+ICON_MEDIUM="$DATA_DIR/notification_icons/volume_medium.svg"
+ICON_HIGH="$DATA_DIR/notification_icons/volume_high.svg"
 
 usage() {
     cat << EOF
