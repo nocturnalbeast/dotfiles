@@ -12,7 +12,7 @@ EOF
 
 # Global configuration
 DEPENDENCIES=(awk column sed menu notify-send)
-ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/keyboard.svg"
+ICON="${XDG_DATA_HOME:="$HOME/.local/share"}/notification_icons/keyboard.svg"
 SXHKD_DIR="${XDG_CONFIG_HOME:="$HOME/.config"}/sxhkd"
 
 # Check for required dependencies

@@ -27,7 +27,7 @@ DEPENDENCIES=(yt-dlp clipmenu mpc)
 ED_ARGS="-c -j 3 -x 3 -s 3 -k 1M"
 SEARCH_RESULT_NUM="5"
 DEST_DIR="$XDG_VIDEOS_DIR/downloaded"
-ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/video.svg"
+ICON="${XDG_DATA_HOME:="$HOME/.local/share"}/notification_icons/video.svg"
 URL_REGEX="(((http|magnet|https|ftp|gopher)|mailto):(//|\?)?[^ <>\"\t]*|(www|ftp)[0-9]?\\.[-a-z0-9.]+)[^ .,;\\n\r<\">\\):]?[^, <>\"\]*[^ .,;\\n\r<\">\\):]"
 
 # Check for required dependencies

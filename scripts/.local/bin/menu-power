@@ -24,7 +24,7 @@ DEPENDENCIES=(menu notify-send systemctl)
 X11_DEPENDENCIES=(wmctrl)
 WAYLAND_DEPENDENCIES=()
 
-ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/power.svg"
+ICON="${XDG_DATA_HOME:="$HOME/.local/share"}/notification_icons/power.svg"
 
 # Check for required dependencies
 check_dependencies() {

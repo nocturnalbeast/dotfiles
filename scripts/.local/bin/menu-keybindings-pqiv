@@ -12,7 +12,7 @@ EOF
 
 # Global configuration
 DEPENDENCIES=(pqiv sed column menu notify-send)
-ICON="${XDG_CONFIG_HOME:="$HOME/.config"}/dunst/icons/keyboard.svg"
+ICON="${XDG_DATA_HOME:="$HOME/.local/share"}/notification_icons/keyboard.svg"
 
 # Check for required dependencies
 check_dependencies() {
