@@ -125,6 +125,14 @@ main() {
     mapfile -t workspace_names < <(xprop -root -notype -f _NET_DESKTOP_NAMES 8u '=$0+\n' _NET_DESKTOP_NAMES | tr -s "=, " "\n" | tail -n+2)
     num_monitors=$(xrandr --current | grep -c ' connected ')
 
+    local filtered_ids=()
+    for wid in "${window_ids[@]}"; do
+        local wtype
+        wtype=$(xprop -id "$wid" -notype _NET_WM_WINDOW_TYPE 2> /dev/null | grep -o '_NET_WM_WINDOW_TYPE_DOCK')
+        [[ -z $wtype ]] && filtered_ids+=("$wid")
+    done
+    window_ids=("${filtered_ids[@]}")
+
     if [[ $num_monitors != "1" ]]; then
         # Multi-display setup
         mapfile -t window_entries < <(build_multi_display_entries window_ids workspace_names)
