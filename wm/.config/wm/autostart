@@ -9,6 +9,25 @@ is_wayland() {
     [ -n "$WAYLAND_DISPLAY" ]
 }
 
+# Kill any existing instance, then launch in the background.
+# Usage: ensure_daemon <process_name> <command...>
+ensure_daemon() {
+    _name="$1"
+    shift
+    pkill -x "$_name" 2> /dev/null
+    sleep 0.3
+    "$@" &
+}
+
+# Only start if not already running. Does NOT restart.
+# Usage: start_once <process_name> <command...>
+start_once() {
+    _name="$1"
+    shift
+    pgrep -x "$_name" > /dev/null 2>&1 && return 0
+    "$@" &
+}
+
 if ! is_wayland; then
     # configure monitor layout and set dpi (for X11)
     layout_file="${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout"
@@ -21,7 +40,7 @@ if ! is_wayland; then
     fi
 else
     # run xsettingsd with the source path
-    xsettingsd --config "${XDG_CONFIG_HOME:-$HOME/.config}/wm/xsettingsd.conf" &
+    ensure_daemon xsettingsd xsettingsd --config "${XDG_CONFIG_HOME:-$HOME/.config}/wm/xsettingsd.conf"
 fi
 
 # restore the wallpaper
@@ -34,27 +53,29 @@ if systemctl --user list-unit-files pipewire.service > /dev/null 2>&1; then
     fi
 elif command -v pipewire > /dev/null 2>&1; then
     if ! pgrep -x "pipewire" > /dev/null; then
-        pipewire &
+        start_once pipewire pipewire
     fi
 fi
 
 # launch notification daemon
 if command -v notificationd > /dev/null 2>&1; then
-    notificationd start
+    start_once notificationd notificationd start
 fi
 
 # launch compositor for X11 WMs
 if ! is_wayland; then
-    picom -b
+    ensure_daemon picom picom -b
 fi
 
 # launch clipboard manager
 if command -v clipcatd > /dev/null 2>&1; then
-    clipcatd &
+    ensure_daemon clipcatd clipcatd
 fi
 
 # launch screen autolocker
-lockctl start
+if ! lockctl status > /dev/null 2>&1; then
+    lockctl start
+fi
 
 # launch system bars
 if ! is_wayland; then
@@ -63,23 +84,23 @@ if ! is_wayland; then
     fi
 else
     if command -v waybar > /dev/null 2>&1; then
-        waybar &
+        ensure_daemon waybar waybar
     fi
 fi
 
 # networkmanager tray applet
 if command -v nm-applet > /dev/null 2>&1; then
-    nm-applet &
+    ensure_daemon nm-applet nm-applet
 fi
 
 # bluetooth tray applet
 if command -v blueman-applet > /dev/null 2>&1; then
-    blueman-applet &
+    ensure_daemon blueman-applet blueman-applet
 fi
 
 # disk mounting tray applet
 if command -v udiskie > /dev/null 2>&1; then
-    udiskie -Avnt &
+    ensure_daemon udiskie udiskie -Avnt
 fi
 
 # keyboard configuration for x11
@@ -87,7 +108,7 @@ if ! is_wayland; then
     # map caps lock to hyper (hold) and escape (tap)
     setxkbmap -option caps:hyper
     if command -v xcape > /dev/null 2>&1; then
-        xcape -e 'Hyper_L=Escape' -t 200
+        ensure_daemon xcape xcape -e 'Hyper_L=Escape' -t 200
     fi
     # set numlock key to off
     numlockx off &
@@ -98,7 +119,7 @@ if ! is_wayland; then
     # make sure the default root window uses the correct pointer
     xsetroot -cursor_name left_ptr
     # hide cursor when inactive
-    unclutter &
+    ensure_daemon unclutter unclutter
 fi
 
 # launch music player server
@@ -107,12 +128,12 @@ if command -v owntonectl > /dev/null 2>&1 && owntonectl start; then
     music_started=true
 fi
 if [ "$music_started" = false ] && command -v mopidy > /dev/null 2>&1; then
-    mopidy &
+    start_once mopidy mopidy
     sleep 2
     if pgrep -x mopidy > /dev/null 2>&1; then
         music_started=true
     fi
 fi
 if [ "$music_started" = false ] && command -v mpd > /dev/null 2>&1; then
-    mpd &
+    start_once mpd mpd
 fi
