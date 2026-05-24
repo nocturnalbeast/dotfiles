@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+
+# WM-agnostic workspace controller using wmctrl/EWMH
+# Drop-in replacement for bspwmctl workspace commands
+
+DEPENDENCIES=(wmctrl)
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") workspace OPERATION TARGET
+
+WM-agnostic workspace controller.
+
+Operations:
+  workspace focus TARGET   Switch to workspace (number, next, prev)
+  workspace move TARGET    Move active window to workspace (number, next, prev)
+
+Targets:
+  next                     Next workspace (wraps around)
+  prev                     Previous workspace (wraps around)
+  1-N                      Workspace number (0-indexed via wmctrl)
+EOF
+    exit 0
+}
+
+check_dependencies() {
+    for dep in "${DEPENDENCIES[@]}"; do
+        command -v "$dep" > /dev/null 2>&1 || {
+            echo "error: Could not find '${dep}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+workspace() {
+    local operation="$1"
+    local target="$2"
+
+    local current total dest
+    current=$(wmctrl -d | awk '/\*/ {print $1}')
+    total=$(wmctrl -d | wc -l)
+
+    case "$target" in
+        next)
+            dest=$(((current + 1) % total))
+            ;;
+        prev)
+            dest=$(((current - 1 + total) % total))
+            ;;
+        [0-9]*)
+            dest="$target"
+            ;;
+        *)
+            echo "error: Invalid workspace target: $target" >&2
+            usage
+            exit 1
+            ;;
+    esac
+
+    case "$operation" in
+        focus) wmctrl -s "$dest" ;;
+        move) wmctrl -r :ACTIVE: -t "$dest" ;;
+        *)
+            echo "error: Invalid workspace operation: $operation" >&2
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main() {
+    check_dependencies
+
+    case "$1" in
+        workspace) workspace "$2" "$3" ;;
+        help | --help | -h) usage ;;
+        "")
+            usage
+            ;;
+        *)
+            echo "error: Unknown command: $1" >&2
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
