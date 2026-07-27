@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+# An awesome WM keybindings menu.
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0")
+
+A menu to display and select awesome WM keybindings from Lua configuration.
+EOF
+}
+
+# Global configuration
+DEPENDENCIES=(perl sed sort menu notify-send)
+ICON="${XDG_DATA_HOME:="$HOME/.local/share"}/notification_icons/keyboard.svg"
+AWESOME_DIR="${XDG_CONFIG_HOME:="$HOME/.config"}/awesome"
+
+# Check for required dependencies
+check_dependencies() {
+    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
+            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
+            exit 1
+        }
+    done
+}
+
+# Parse awesome Lua keybindings and build keybindings list
+#
+# Outputs:
+#   A list of keybindings grouped by category, one per line
+build_keybindings_list() {
+    if [[ ! -d $AWESOME_DIR ]]; then
+        echo "error: awesome configuration directory not found at '$AWESOME_DIR'" >&2
+        exit 1
+    fi
+
+    perl -0777 -ne '
+        while (/awful\.key\(\{([^}]*)\}\s*,\s*"([^"]*)"[^}]*description\s*=\s*"([^"]*)"\s*,\s*group\s*=\s*"([^"]*)"/sg) {
+            my ($mod, $key, $desc, $grp) = ($1, $2, $3, $4);
+            $mod =~ s/^\s+|\s+$//g;
+            $mod =~ s/vars\.modkey/Mod4/g;
+            $mod =~ s/,\s*/ + /g;
+            my $binding = $mod ? "$mod + $key" : $key;
+            $binding =~ s/\bgrave\b/`/g;
+            $binding =~ s/\bbracketleft\b/[/g;
+            $binding =~ s/\bbracketright\b/]/g;
+            $binding =~ s/\bbackslash\b/\\/g;
+            $binding =~ s/\bequal\b/=/g;
+            $binding =~ s/\bminus\b/-/g;
+            $binding =~ s/\bcomma\b/,/g;
+            $binding =~ s/\bperiod\b/./g;
+            $binding =~ s/\bspace\b/Space/g;
+            $binding =~ s/\bReturn\b/Enter/g;
+            $binding =~ s/\bEscape\b/Esc/g;
+            $binding =~ s/\bPrint\b/PrtSc/g;
+            $binding =~ s/\bBackSpace\b/Bksp/g;
+            $binding =~ s/\bDelete\b/Del/g;
+            $binding =~ s/\bXF86AudioLowerVolume\b/VolDown/g;
+            $binding =~ s/\bXF86AudioRaiseVolume\b/VolUp/g;
+            $binding =~ s/\bXF86AudioMute\b/VolMute/g;
+            $binding =~ s/\bXF86AudioPlay\b/PlayPause/g;
+            $binding =~ s/\bXF86AudioStop\b/Stop/g;
+            $binding =~ s/\bXF86AudioNext\b/Next/g;
+            $binding =~ s/\bXF86AudioPrev\b/Prev/g;
+            $binding =~ s/\bXF86MonBrightnessUp\b/BrightUp/g;
+            $binding =~ s/\bXF86MonBrightnessDown\b/BrightDown/g;
+            print "$grp\t$binding\t$desc\n";
+        }
+    ' "$AWESOME_DIR/bindings/global.lua" "$AWESOME_DIR/bindings/client.lua" 2> /dev/null |
+        sort -t'	' -k1,1 -k2,2 |
+        sed 's/^[^\t]*\t//' |
+        sed 's/\t/ -> /'
+}
+
+# Show keybinding information
+#
+# Arguments:
+#   $1 - The keybinding to show
+show_keybinding_info() {
+    notify-send -t 5000 "Selected keybind:" "$(echo "$1" | sed 's/\(.*\) -> \(.*\)/<b>\1<\/b>\n\2/')" -i "$ICON"
+}
+
+# Main entry point
+main() {
+    check_dependencies
+
+    SELECTION=$(menu run -p "  󰎇 Keybinding: " <<< "$(build_keybindings_list)")
+    if [[ -n $SELECTION ]]; then
+        show_keybinding_info "$SELECTION"
+    fi
+}
+
+main "$@"
