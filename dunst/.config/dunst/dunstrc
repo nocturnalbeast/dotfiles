@@ -11,9 +11,9 @@ follow = keyboard
 
 # geometry
 width = 300
-height = 100
+height = (0, 100)
 origin = top-right
-offset = 18x18
+offset = (18, 18)
 scale = 0
 notification_limit = 5
 
@@ -41,7 +41,7 @@ idle_threshold = 120
 indicate_hidden = yes
 
 # text
-font = sans 11
+font = "sans 11"
 markup = full
 format = "<b>%s</b>\n%b"
 alignment = left
