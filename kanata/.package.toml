@@ -1,0 +1,6 @@
+enabled = true
+description = "kanata: Keyboard remapping daemon"
+tags = ["gui", "x11", "wayland", "keyboard", "guicomponent"]
+os = ["linux"]
+arch = []
+condition = ""

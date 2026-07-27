@@ -1,0 +1,22 @@
+(defcfg
+  process-unmapped-keys yes
+  concurrent-tap-hold yes
+  rapid-event-delay 0
+  log-layer-changes no
+)
+
+(defsrc
+  caps
+)
+
+(deflayer base
+  @cap
+)
+
+(defalias
+  ;; tap-hold-press: activates Super immediately when any other key is
+  ;; pressed while Caps is held. The 200ms timeout only applies when Caps
+  ;; is pressed alone without chording.
+  ;; tap = Escape, hold = Left Super (Mod4)
+  cap (tap-hold-press 200 200 esc lmet)
+)
