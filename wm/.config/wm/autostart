@@ -103,14 +103,15 @@ if command -v udiskie > /dev/null 2>&1; then
     ensure_daemon udiskie udiskie -Avnt
 fi
 
-# keyboard configuration for x11
-if ! is_wayland; then
-    # map caps lock to hyper (hold) and escape (tap)
-    setxkbmap -option caps:hyper
-    if command -v xcape > /dev/null 2>&1; then
-        ensure_daemon xcape xcape -e 'Hyper_L=Escape' -t 200
-    fi
-    # set numlock key to off
+# keyboard remapping
+if command -v kanata-tray > /dev/null 2>&1; then
+    export KANATA_TRAY_LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/kanata-tray"
+    mkdir -p "$KANATA_TRAY_LOG_DIR"
+    ensure_daemon kanata-tray kanata-tray
+fi
+
+# set numlock key to off (X11 only)
+if ! is_wayland && command -v numlockx > /dev/null 2>&1; then
     numlockx off &
 fi
 
