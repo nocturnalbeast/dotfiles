@@ -161,7 +161,7 @@ check_xsecurelock_deps() {
 # Uses XSECURELOCK_SAVER_TIMEOUT env var (default: 300 seconds).
 xsecurelock_configure() {
     local timeout="${XSECURELOCK_SAVER_TIMEOUT:-300}"
-    local notify_time="$((timeout / 10))"
+    local notify_time="${LOCKCTL_NOTIFY_TIME:-2}"
 
     xset s "$((timeout - notify_time))" "$notify_time"
     xset dpms "$((timeout * 3))" "$((timeout * 32 / 10))" "$((timeout * 34 / 10))"
