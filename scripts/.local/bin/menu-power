@@ -112,8 +112,8 @@ do_logout() {
         WM="$(wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p")"
         if [ "$WM" = "bspwm" ]; then
             bspc quit
-        elif [ "$WM" = "spectrwm" ]; then
-            kill -INT $(pidof spectrwm)
+        elif [ "$WM" = "awesome" ]; then
+            echo 'awesome.quit()' | awesome-client
         else
             notify-send -u critical "Unknown environment, could not log out." -i "$ICON"
         fi

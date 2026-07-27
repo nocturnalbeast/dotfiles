@@ -232,9 +232,27 @@ init_state() {
 bspwm_get_padding() { bspc config top_padding; }
 bspwm_enable_padding() { "${XDG_CONFIG_HOME:-$HOME/.config}/bspwm/set-monitors"; }
 bspwm_disable_padding() { bspc config top_padding 0; }
-spectrwm_get_padding() { sed -n "s/^[ ]*region[ ]*=[ ]*screen\[[0-9]*\]:\(.*\)/\1/p" "${XDG_CONFIG_HOME:="$HOME/.config"}/spectrwm/spectrwm.conf" | rev | cut -f 1 -d '+' | rev; }
-spectrwm_enable_padding() { spectrwm-region-helper; }
-spectrwm_disable_padding() { spectrwm-region-helper disable_padding; }
+awesome_get_padding() {
+    if [[ -f "${XDG_CACHE_HOME:-$HOME/.cache}/polybar/awesome_padding" ]]; then
+        cat "${XDG_CACHE_HOME:-$HOME/.cache}/polybar/awesome_padding"
+    else
+        echo "0"
+    fi
+}
+awesome_enable_padding() {
+    local pid
+    pid=$(pgrep -x polybar | head -1)
+    if [[ -n $pid ]]; then
+        local wid
+        wid=$(xdotool search --pid "$pid" | head -1)
+        if [[ -n $wid ]]; then
+            xdotool getwindowgeometry --shell "$wid" | sed -n 's/^HEIGHT=\([0-9]*\)/\1/p' > "${XDG_CACHE_HOME:-$HOME/.cache}/polybar/awesome_padding"
+        fi
+    fi
+}
+awesome_disable_padding() {
+    rm -f "${XDG_CACHE_HOME:-$HOME/.cache}/polybar/awesome_padding"
+}
 get_window_manager() { wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p"; }
 get_padding() { $(get_window_manager)_get_padding 2> /dev/null; }
 enable_padding() { $(get_window_manager)_enable_padding 2> /dev/null; }
