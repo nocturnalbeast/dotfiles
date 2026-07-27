@@ -1,0 +1,6 @@
+enabled = true
+description = "kanata-tray: System tray icon for kanata"
+tags = ["gui", "x11", "wayland", "keyboard", "guicomponent"]
+os = ["linux"]
+arch = []
+condition = ""
