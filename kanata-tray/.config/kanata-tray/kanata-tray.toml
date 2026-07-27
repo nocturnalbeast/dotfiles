@@ -1,0 +1,13 @@
+"$schema" = "https://raw.githubusercontent.com/rszyma/kanata-tray/main/doc/config_schema.json"
+
+[general]
+allow_concurrent_presets = false
+
+[defaults]
+kanata_executable = ''
+kanata_config = '~/.config/kanata/config.kbd'
+tcp_port = 5829
+autorestart_on_crash = true
+
+[presets.'Default']
+autorun = true
