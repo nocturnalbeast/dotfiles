@@ -7,91 +7,91 @@
 ## window / workspace focus & swap
 
 # focus a numbered workspace / send the focused window on the current workspace to the selected workspace
-mod3 + {_,shift} + {1-9,0}
+super + {_,shift} + {1-9,0}
     bspwmctl workspace {focus,move} {1-9,10}
 
 # switch focus between the last focused window(s) [either forward / backward]
-mod3 + {_,shift} + Tab
+super + {_,shift} + Tab
     bspwmctl history_focus window {older,newer}
 
 # switch focus between the last focused workspace(s) [either forward / backward]
-mod3 + {_,shift} + grave
+super + {_,shift} + grave
     bspwmctl history_focus workspace {older,newer}
 
 # focus window in the specified direction
-mod3 + {Left,Down,Up,Right,h,j,k,l}
+super + {Left,Down,Up,Right,h,j,k,l}
     bspwmctl focus {west,south,north,east,west,south,north,east}
 
 # swap with window in the specified direction [if floating move the window in the given direction]
-mod3 + shift + {Left,Down,Up,Right,h,j,k,l}
+super + shift + {Left,Down,Up,Right,h,j,k,l}
     bspwmctl move {west,south,north,east,west,south,north,east}
 
 # switch focus between all the windows in the currently focused workspace [either forward / backward]
-mod3 + {_,shift} + c
+super + {_,shift} + c
     bspc node -f {next,prev}.local
 
 # focus on / swap with the biggest window in the currently focused workspace 
-mod3 + {_,shift} + b
+super + {_,shift} + b
     bspc node -{f,s} biggest.local
 
 
 ## window mode manipulation
 
 # make the focused window fullscreen / floating
-mod3 + {_,shift} + f
+super + {_,shift} + f
     bspwmctl mode {fullscreen,floating}
 
 # make the focused window tiled / pseudo-tiled
-mod3 + {_,shift} + t
+super + {_,shift} + t
     bspwmctl mode {tiled,pseudo_tiled}
 
 
 ## window size manipulation
 
 # resize the focused window in the given direction
-mod3 + ctrl + {Left,Down,Up,Right,h,j,k,l}
+super + ctrl + {Left,Down,Up,Right,h,j,k,l}
     bspwmctl resize {west,south,north,east,west,south,north,east} 20
 
 # decrease / increase the gaps between windows
-mod3 + {semicolon,apostrophe}
+super + {semicolon,apostrophe}
     bspwmctl gaps {decrease,increase} 2
 
 # reset gaps between windows to the default value defined in the configuration
-mod3 + shift + semicolon
+super + shift + semicolon
     bspwmctl gaps reset
 
 
 ### window layout manipulation
 
 # switch between available layouts on the focused workspace
-mod3 + m
+super + m
     bsp-layout cycle
 
 # rotate the layout of the windows in the focused workspace clockwise / counterclockwise
-mod3 + {_,shift} + r
+super + {_,shift} + r
     bspc node @/ -R {+,-}90
 
 
 ## window close
 
 # close / kill the focused window
-mod3 + {_,shift} + q
+super + {_,shift} + q
     bspc node -{c,k}
 
 
 ## reload
 
 # reload hotkey daemon
-mod3 + Escape
+super + Escape
     pkill -USR1 -x sxhkd
 
 # reload window manager
-mod3 + shift + Escape
+super + shift + Escape
     bspc wm --restart
 
 
 ## other
 
 # show help menu for keybindings defined by the hotkey daemon
-mod3 + slash
+super + slash
     menu-keybindings-bspwm
