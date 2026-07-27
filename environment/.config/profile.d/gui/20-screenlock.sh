@@ -8,7 +8,7 @@ if command -v xsecurelock > /dev/null 2>&1; then
     export XSECURELOCK_AUTH_CURSOR_BLINK=1
     export XSECURELOCK_AUTH_FOREGROUND_COLOR="rgb:F2/F2/F2"
     export XSECURELOCK_AUTH_TIMEOUT=10
-    export XSECURELOCK_AUTH_WARNING_COLOR="rgb:FF/8D/8D"
+    export XSECURELOCK_AUTH_WARNING_COLOR="rgb:ff/99/99"
     export XSECURELOCK_AUTH="auth_x11"
     export XSECURELOCK_AUTHPROTO="authproto_pam"
     export XSECURELOCK_BLANK_TIMEOUT=60
@@ -16,7 +16,8 @@ if command -v xsecurelock > /dev/null 2>&1; then
     export XSECURELOCK_DATETIME_FORMAT="%A, %-d %B - %I:%M %p"
     export XSECURELOCK_DIM_ALPHA=1
     export XSECURELOCK_DIM_COLOR="rgb:00/00/00"
-    export XSECURELOCK_DIM_TIME_MS=500
+    export XSECURELOCK_DIM_TIME_MS=2500
+    export LOCKCTL_NOTIFY_TIME=3
     export XSECURELOCK_DISCARD_FIRST_KEYPRESS=1
     export XSECURELOCK_FONT="sans:style=Bold:antialias=true"
     export XSECURELOCK_NO_XRANDR=0
