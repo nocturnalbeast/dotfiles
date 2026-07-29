@@ -107,6 +107,11 @@ ShellRoot {
             return Visibility.manualHidden ? "yes" : "no";
         }
 
+        // Returns the bar font family name.
+        function getBarFont(): string {
+            return Typography.barFontFamily;
+        }
+
         // Returns bar dimensions per monitor, newline-delimited.
         // Format: <screen_name>:<horz_margin>:<vert_margin>:<bar_height>:<usable_width>
         // Example: DP-1:10:10:27:1880
