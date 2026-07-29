@@ -78,7 +78,9 @@ if ! lockctl status > /dev/null 2>&1; then
 fi
 
 # launch system bars
-if ! is_wayland; then
+if command -v quickshell > /dev/null 2>&1; then
+    ensure_daemon quickshell quickshell
+elif ! is_wayland; then
     if command -v polybar polybarctl > /dev/null 2>&1; then
         polybarctl start
     fi
