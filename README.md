@@ -81,8 +81,9 @@ condition = "<shell command>"
   * [dunst](https://github.com/dunst-project/dunst): Lightweight notification daemon for X11
   * [mako](https://github.com/emersion/mako): Lightweight notification daemon for Wayland
   * [picom](https://github.com/yshui/picom): A lightweight compositor for X11
-  * [polybar](https://github.com/polybar/polybar): A fast and easy-to-use status bar
   * [sxhkd](https://github.com/baskerville/sxhkd): Simple X hotkey daemon
+  * [kanata](https://github.com/jtroo/kanata): Cross-platform keyboard remapping daemon
+  * [kanata-tray](https://github.com/rszyma/kanata-tray): System tray icon for kanata
   * [swww](https://github.com/Horus645/swww): Efficient animated wallpaper daemon for wayland
   * [swaybg](https://github.com/swaywm/swaybg): Wallpaper tool for Wayland compositors
   * [xwallpaper](https://github.com/stoeckmann/xwallpaper): Wallpaper setting utility for X11
