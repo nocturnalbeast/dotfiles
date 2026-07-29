@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # A menu for workspace selection and management.
+# Uses wmctl for compositor-agnostic workspace data.
 
-# Global configuration
-DEPENDENCIES=(wmctrl xrandr xprop)
+DEPENDENCIES=(menu wmctl)
 
 usage() {
     cat << EOF
@@ -15,95 +15,55 @@ This script displays a menu of available workspaces and allows you to switch to 
 EOF
 }
 
-# Check for required dependencies
 check_dependencies() {
     for dependency in "${DEPENDENCIES[@]}"; do
-        if ! command -v "$dependency" > /dev/null 2>&1; then
+        command -v "$dependency" > /dev/null 2>&1 || {
             echo "error: Could not find '${dependency}', is it installed?" >&2
             return 1
-        fi
+        }
     done
 }
 
-# Build workspace entries for multi-display setup
-#
-# Arguments:
-#   $1 - Array of workspace names
-#   $2 - Array of workspace monitor offsets
-#   $3 - Associative array of monitor offsets
-#
-# Outputs:
-#   Writes workspace entries to stdout
-build_multi_display_entries() {
-    local -n ws_names="$1"
-    local -n ws_monitor_offsets="$2"
-    local -n mon_offsets="$3"
-
-    for workspace_idx in "${!ws_names[@]}"; do
-        local monitor_name="${mon_offsets["${ws_monitor_offsets["$workspace_idx"]}"]}"
-        local workspace_name="${ws_names["$workspace_idx"]:1:-1}"
-        echo "$workspace_idx: [$monitor_name] $workspace_name"
-    done
-}
-
-# Build workspace entries for single display setup
-#
-# Arguments:
-#   $1 - Array of workspace names
-#
-# Outputs:
-#   Writes workspace entries to stdout
-build_single_display_entries() {
-    local -n ws_names="$1"
-
-    for workspace_idx in "${!ws_names[@]}"; do
-        local workspace_name="${ws_names["$workspace_idx"]:1:-1}"
-        echo "$workspace_idx: $workspace_name"
-    done
-}
-
-# Main entry point
 main() {
     check_dependencies || return 1
 
-    local num_monitors
-    local workspace_names
-    local workspace_entries=()
-    local selected_workspace
-    local workspace_id
+    local monitor_count entries selected ws_id
+    monitor_count=$(wmctl monitor count)
 
-    num_monitors=$(xrandr --current | grep -c ' connected ')
-    mapfile -t workspace_names < <(xprop -root -notype -f _NET_DESKTOP_NAMES 8u '=$0+\n' _NET_DESKTOP_NAMES | tr -s "=, " "\n" | tail -n+2)
-
-    if [[ $num_monitors != "1" ]]; then
-        # Multi-display setup
-        local monitor_offsets
-        local workspace_monitor_offsets
-
-        mapfile -t monitor_offsets < <(xrandr --current | sed -n 's/\(.*\) connected.* [0-9]*x[0-9]*+\([0-9]*\)+\([0-9]*\).*/[\2,\3]=\1/p')
-        mapfile -t workspace_monitor_offsets < <(xprop -root -notype -f _NET_DESKTOP_VIEWPORT 0c '=$0+\n' _NET_DESKTOP_VIEWPORT | cut -f 2 -d = | awk 'BEGIN{FS=", "} {for(i=1;i<=NF-1;i++) printf $i","$++i"\n";}')
-
-        # Build associative array for monitor offsets
-        declare -A monitor_offsets_map
-        for entry in "${monitor_offsets[@]}"; do
-            monitor_offsets_map+=(["${entry%%=*}"]="${entry#*=}")
-        done
-
-        mapfile -t workspace_entries < <(build_multi_display_entries workspace_names workspace_monitor_offsets monitor_offsets_map)
+    # Build menu entries from wmctl workspace list
+    if [ "$monitor_count" -gt 1 ]; then
+        entries=$(wmctl workspace list 2> /dev/null | jq -r \
+            '.[] | "\(.id)\t\(.monitor // "?")\t\(.name)"')
     else
-        # Single display setup
-        mapfile -t workspace_entries < <(build_single_display_entries workspace_names)
+        entries=$(wmctl workspace list 2> /dev/null | jq -r \
+            '.[] | "\(.id)\t\(.name)"')
     fi
 
-    # Create associative array for workspace selection
-    declare -A workspace_map
-    for entry in "${workspace_entries[@]}"; do
-        workspace_id=$(echo "$entry" | cut -d: -f1)
-        workspace_map["$entry"]="$workspace_id"
-    done
+    [ -z "$entries" ] && {
+        echo "No workspaces found." >&2
+        return 1
+    }
 
-    selected_workspace=$(printf '%s\n' "${!workspace_map[@]}" | sort -n | menu run -p "  ")
-    [ -n "$selected_workspace" ] && wmctrl -s "${workspace_map["$selected_workspace"]}"
+    # Format for display
+    if [ "$monitor_count" -gt 1 ]; then
+        display=$(echo "$entries" | while IFS=$'\t' read -r _ mon name; do
+            echo "[$mon] $name"
+        done)
+    else
+        display=$(echo "$entries" | while IFS=$'\t' read -r _ name; do
+            echo "$name"
+        done)
+    fi
+
+    selected=$(echo "$display" | menu run -p "  ")
+    [ -z "$selected" ] && exit 0
+
+    # Map selection back to workspace ID
+    local idx
+    idx=$(echo "$display" | grep -nF "$selected" | head -1 | cut -d: -f1)
+    ws_id=$(echo "$entries" | sed -n "${idx}p" | cut -f1)
+
+    [ -n "$ws_id" ] && wmctl workspace focus "$ws_id"
 }
 
 main "$@"

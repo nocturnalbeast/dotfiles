@@ -99,15 +99,41 @@ do_lock() {
     fi
 }
 
+# Detect the running Wayland compositor.
+# Echoes the compositor name, or nothing if unrecognized.
+detect_compositor() {
+    if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
+        echo "hyprland"
+    elif [ -n "$SWAYSOCK" ]; then
+        echo "sway"
+    elif [ "$XDG_CURRENT_DESKTOP" = "river" ]; then
+        echo "river"
+    elif [ "$XDG_CURRENT_DESKTOP" = "niri" ]; then
+        echo "niri"
+    elif [ "$XDG_CURRENT_DESKTOP" = "somewm" ]; then
+        echo "somewm"
+    fi
+}
+
 # Log out from the current session
 do_logout() {
-    if [ "$(detect_environment)" = "wayland" ]; then
-        if [ "$XDG_SESSION_DESKTOP" = "hyprland" ]; then
-            hyprctl dispatch exit
-        else
-            notify-send -u critical "Unknown environment, could not log out." -i "$ICON"
-        fi
-    elif [ "$(detect_environment)" = "x11" ]; then
+    local CURRENT_ENVIRONMENT
+    CURRENT_ENVIRONMENT=$(detect_environment)
+
+    if [ "$CURRENT_ENVIRONMENT" = "wayland" ]; then
+        local COMPOSITOR
+        COMPOSITOR=$(detect_compositor)
+        case "$COMPOSITOR" in
+            hyprland) hyprctl dispatch exit ;;
+            sway) swaymsg exit ;;
+            river) riverctl exit ;;
+            niri) niri msg action quit ;;
+            somewm) somewm-client quit ;;
+            *)
+                notify-send -u critical "Unknown compositor, could not log out." -i "$ICON"
+                ;;
+        esac
+    elif [ "$CURRENT_ENVIRONMENT" = "x11" ]; then
         local WM
         WM="$(wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p")"
         if [ "$WM" = "bspwm" ]; then
@@ -115,7 +141,7 @@ do_logout() {
         elif [ "$WM" = "awesome" ]; then
             echo 'awesome.quit()' | awesome-client
         else
-            notify-send -u critical "Unknown environment, could not log out." -i "$ICON"
+            notify-send -u critical "Unknown WM, could not log out." -i "$ICON"
         fi
     else
         notify-send -u critical "Unknown environment, could not log out." -i "$ICON"
