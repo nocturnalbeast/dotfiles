@@ -262,12 +262,12 @@ class BemenuBackend(MenuBackend):
 
         if is_wayland:
             screen_w, screen_h = get_screen_dimensions_wayland()
-            polybar_horz, polybar_vert = 0, 0
+            bar_horz, bar_vert = 0, 0
         else:
             screen_w, screen_h = get_screen_dimensions_x11()
-            polybar_horz, polybar_vert, _, _ = get_polybar_dimensions()
+            bar_horz, bar_vert, _, _ = get_bar_dimensions()
 
-        margin = polybar_horz + config.padding_x
+        margin = bar_horz + config.padding_x
 
         if config.font:
             for f in config.font.split("\n"):
@@ -413,10 +413,10 @@ class DmenuBackend(MenuBackend):
     ) -> list[str]:
         opts: list[str] = []
         screen_w, screen_h = get_screen_dimensions_x11()
-        polybar_horz, polybar_vert, polybar_height, _ = get_polybar_dimensions()
+        bar_horz, bar_vert, bar_height, _ = get_bar_dimensions()
 
-        base_x = polybar_horz
-        base_y = polybar_vert
+        base_x = bar_horz
+        base_y = bar_vert
         padding_x = base_x + config.padding_x
         padding_y = base_y + config.padding_y
 
@@ -563,22 +563,19 @@ def get_screen_dimensions_x11() -> tuple[int, int]:
     return 1920, 1080
 
 
-def get_polybar_dimensions() -> tuple[int, int, int, int]:
+def get_bar_dimensions() -> tuple[int, int, int, int]:
     try:
         result = subprocess.run(
-            ["polybarctl", "get_dimensions"],
+            ["qs", "ipc", "call", "bar", "getBarDimensions"],
             capture_output=True,
             text=True,
             timeout=5,
         )
-        lines = result.stdout.strip().splitlines()
-        if len(lines) >= 4:
-            horz_margin = int(lines[0])
-            vert_margin = int(lines[1])
-            bar_height = int(lines[2])
-            bar_width = int(lines[3])
-            return horz_margin, vert_margin, bar_height, bar_width
-    except (subprocess.TimeoutExpired, OSError, ValueError):
+        line = result.stdout.strip().splitlines()[0] if result.stdout.strip() else ""
+        parts = line.split(":")
+        if len(parts) >= 5:
+            return int(parts[1]), int(parts[2]), int(parts[3]), int(parts[4])
+    except (subprocess.TimeoutExpired, OSError, ValueError, IndexError):
         pass
     return 0, 0, 0, 0
 
@@ -740,9 +737,9 @@ def set_menu_backend(backend_name: str) -> bool:
     return True
 
 
-def toggle_polybar():
-    if shutil.which("polybarctl"):
-        subprocess.run(["polybarctl", "toggle"], timeout=5)
+def toggle_bar():
+    if shutil.which("qs"):
+        subprocess.run(["qs", "ipc", "call", "bar", "toggleBar"], timeout=5)
 
 
 def run_menu(config: MenuConfig, prompt: str):
@@ -761,7 +758,7 @@ def run_menu(config: MenuConfig, prompt: str):
     options = backend.get_options(prompt, config, max_line_length, input_line_count)
 
     if config.overlay:
-        toggle_polybar()
+        toggle_bar()
 
     try:
         cmd = [backend.name] + options
@@ -774,7 +771,7 @@ def run_menu(config: MenuConfig, prompt: str):
         sys.exit(result.returncode)
     finally:
         if config.overlay:
-            toggle_polybar()
+            toggle_bar()
 
 
 def main():
