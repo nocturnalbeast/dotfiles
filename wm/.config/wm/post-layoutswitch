@@ -11,5 +11,7 @@ if [ "$WINDOW_MANAGER" = "bspwm" ]; then
 fi
 # restore wallpaper using background script
 background restore
-# restart all polybar instances
-polybarctl start
+# restart quickshell (reload bar on new layout)
+pkill -x quickshell 2> /dev/null
+sleep 0.3
+quickshell &
