@@ -137,7 +137,7 @@ XF86MonBrightnessDown
 ## bar control
 
 super + {_,shift} + backslash
-    polybarctl {switch,toggle_all}
+    qs ipc call bar {switchBar,toggleBar}
 
 
 ## screenlock
