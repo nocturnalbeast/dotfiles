@@ -718,7 +718,7 @@ function _M.get()
             modifiers = { vars.modkey },
             key = "backslash",
             on_press = function()
-                awful.spawn("polybarctl switch")
+                awful.spawn("qs ipc call bar switchBar")
             end,
             description = "switch bar",
             group = "bar",
@@ -727,7 +727,7 @@ function _M.get()
             modifiers = { vars.modkey, "Shift" },
             key = "backslash",
             on_press = function()
-                awful.spawn("polybarctl toggle_all")
+                awful.spawn("qs ipc call bar toggleBar")
             end,
             description = "toggle all bars",
             group = "bar",

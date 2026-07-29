@@ -9,7 +9,6 @@ local critical = {
     "brightness",
     "lockctl",
     "dunstctl",
-    "polybarctl",
 }
 
 local function check()
