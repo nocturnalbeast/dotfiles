@@ -1,84 +1,981 @@
 #!/usr/bin/env bash
 
-# WM-agnostic workspace controller using wmctrl/EWMH
-# Drop-in replacement for bspwmctl workspace commands
-
-DEPENDENCIES=(wmctrl)
+# wmctl: compositor abstraction layer.
+#
+# Single entry point for window, workspace, and monitor operations across
+# X11 (EWMH), Hyprland, Sway, Niri, River, and Somewm.
+#
+# Usage:
+#   wmctl compositor name                 Print compositor name
+#   wmctl compositor detect               Print JSON: {environment, compositor, wm_name}
+#
+#   wmctl workspace list                  List workspaces as JSON array
+#   wmctl workspace current               Print current workspace number
+#   wmctl workspace focus <N|next|prev>   Switch workspace
+#   wmctl workspace move <N|next|prev>    Move active window to workspace
+#
+#   wmctl window list                     List windows as JSON array
+#   wmctl window focused                  Get focused window as JSON
+#   wmctl window focus <ID>               Activate window by ID
+#   wmctl window cycle <next|prev>        Cycle windows on current workspace
+#
+#   wmctl monitor list                    List monitors as JSON array
+#   wmctl monitor count                   Print monitor count
+#   wmctl monitor current                 Print current monitor name
 
 usage() {
-    cat << EOF
-Usage: $(basename "$0") workspace OPERATION TARGET
+    cat << 'EOF'
+Usage: wmctl COMMAND [SUBCOMMAND] [ARGS]
 
-WM-agnostic workspace controller.
+Compositor abstraction layer for window, workspace, and monitor operations.
 
-Operations:
-  workspace focus TARGET   Switch to workspace (number, next, prev)
-  workspace move TARGET    Move active window to workspace (number, next, prev)
-
-Targets:
-  next                     Next workspace (wraps around)
-  prev                     Previous workspace (wraps around)
-  1-N                      Workspace number (0-indexed via wmctrl)
+Commands:
+  compositor {name|detect}
+  workspace {list|current|focus|move}
+  window {list|focused|focus|cycle}
+  monitor {list|count|current}
 EOF
     exit 0
 }
 
-check_dependencies() {
-    for dep in "${DEPENDENCIES[@]}"; do
-        command -v "$dep" > /dev/null 2>&1 || {
-            echo "error: Could not find '${dep}', is it installed?" >&2
+# ============================================================
+# Detection
+# ============================================================
+
+detect_environment() {
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        echo "wayland"
+    elif [ -n "$DISPLAY" ]; then
+        echo "x11"
+    else echo "tty"; fi
+}
+
+detect_compositor() {
+    if [ -z "$WAYLAND_DISPLAY" ] && [ -n "$DISPLAY" ]; then
+        echo "x11"
+        return
+    fi
+    if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
+        echo "hyprland"
+        return
+    fi
+    if [ -n "$SWAYSOCK" ]; then
+        echo "sway"
+        return
+    fi
+    local desktop=":${XDG_CURRENT_DESKTOP}:"
+    case "$desktop" in
+        *:river:*) echo "river" ;;
+        *:niri:*) echo "niri" ;;
+        *:somewm:*) echo "somewm" ;;
+        *) echo "" ;;
+    esac
+}
+
+# ============================================================
+# Compositor commands
+# ============================================================
+
+cmd_compositor_name() {
+    detect_compositor
+}
+
+cmd_compositor_detect() {
+    local env comp wm_name=""
+    env=$(detect_environment)
+    comp=$(detect_compositor)
+    if [ "$comp" = "x11" ]; then
+        wm_name=$(wmctrl -m 2> /dev/null | sed -n 's/^Name: \(.*\)/\1/p')
+    fi
+    jq -n \
+        --arg env "$env" \
+        --arg comp "$comp" \
+        --arg wm "$wm_name" \
+        '{environment: $env, compositor: $comp, wm_name: $wm}'
+}
+
+# ============================================================
+# Workspace commands
+# ============================================================
+
+cmd_workspace_list() {
+    local comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            # Parse wmctrl -d for desktop info, _NET_DESKTOP_NAMES for names,
+            # _NET_DESKTOP_VIEWPORT for monitor mapping
+            local desktops names viewports
+            desktops=$(wmctrl -d 2> /dev/null)
+            names=$(xprop -root _NET_DESKTOP_NAMES 2> /dev/null |
+                sed 's/^.*= //; s/"//g' | tr ',' '\n' | sed 's/^ //')
+            viewports=$(xprop -root _NET_DESKTOP_VIEWPORT 2> /dev/null |
+                sed 's/^.*= //' | tr -d ',')
+            # Build monitor lookup: viewport offset → monitor name via xrandr
+            local xrandr_connected
+            xrandr_connected=$(xrandr --current 2> /dev/null |
+                grep ' connected' |
+                sed -n 's/\([^ ]*\) connected.*\([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\4 \5 \1/p' |
+                sort -n)
+
+            local result="[" first=true idx=0
+            while IFS= read -r line; do
+                [ -z "$line" ] && continue
+                local is_current="false"
+                echo "$line" | grep -q '\*' && is_current="true"
+                local name
+                name=$(echo "$names" | sed -n "$((idx + 1))p")
+                [ -z "$name" ] && name="$idx"
+
+                # Find monitor for this desktop's viewport
+                local vp_x vp_y mon=""
+                vp_x=$(echo "$viewports" | awk -v i=$((idx * 2 + 1)) '{print $i}')
+                vp_y=$(echo "$viewports" | awk -v i=$((idx * 2 + 2)) '{print $i}')
+                if [ -n "$vp_x" ] && [ -n "$vp_y" ]; then
+                    mon=$(echo "$xrandr_connected" | while read -r mx my mname; do
+                        [ "$mx" = "$vp_x" ] && [ "$my" = "$vp_y" ] && echo "$mname" && break
+                    done)
+                fi
+
+                local obj
+                obj=$(jq -c -n \
+                    --argjson id "$((idx + 1))" \
+                    --arg name "$name" \
+                    --arg monitor "$mon" \
+                    --argjson current "$is_current" \
+                    --argjson wcount 0 \
+                    '{id: $id, name: $name, monitor: ($monitor | select(. != "") // null),
+                      is_current: $current, window_count: $wcount}')
+                if $first; then
+                    result="${result}${obj}"
+                    first=false
+                else result="${result},${obj}"; fi
+                idx=$((idx + 1))
+            done <<< "$desktops"
+            echo "${result}]"
+            ;;
+        hyprland)
+            local monitors
+            monitors=$(hyprctl monitors -j 2> /dev/null)
+            hyprctl workspaces -j 2> /dev/null | jq -c --argjson mons "$monitors" \
+                '[.[] | {
+                    id: .id,
+                    name: .name,
+                    monitor: ($mons | map(select(.activeWorkspace.id == .id) | .name) | .[0] // null),
+                    is_current: (($mons | map(select(.focused == true) | .activeWorkspace.id) | .[0]) == .id),
+                    window_count: (.windows // 0)
+                }]'
+            ;;
+        sway)
+            swaymsg -t get_workspaces 2> /dev/null | jq -c '[.[] | {
+                id: .num, name: .name, monitor: .output,
+                is_current: .focused, window_count: (.windows // 0)
+            }]'
+            ;;
+        niri)
+            niri msg --json workspaces 2> /dev/null | jq -c '[.[] | {
+                id: .id, name: (.name // (.idx | tostring)),
+                monitor: null, is_current: (.is_active // false),
+                window_count: 0
+            }]'
+            ;;
+        river)
+            # River tags 1-9 by convention, no list IPC
+            local result="[" first=true
+            for i in $(seq 1 9); do
+                local obj
+                obj=$(jq -c -n --argjson id "$i" --arg name "tag$i" \
+                    '{id: $id, name: $name, monitor: null, is_current: false, window_count: 0}')
+                if $first; then
+                    result="${result}${obj}"
+                    first=false
+                else result="${result},${obj}"; fi
+            done
+            echo "${result}]"
+            ;;
+        somewm)
+            local result="[" first=true
+            while IFS= read -r line; do
+                [ -z "$line" ] && continue
+                local idx name
+                idx=$(echo "$line" | sed -n 's/^\([0-9]*\):.*/\1/p')
+                name=$(echo "$line" | sed -n 's/^[0-9]*: *//p')
+                [ -z "$name" ] && name="tag$idx"
+                local obj
+                obj=$(jq -c -n --argjson id "${idx:-0}" --arg name "$name" \
+                    '{id: $id, name: $name, monitor: null, is_current: false, window_count: 0}')
+                if $first; then
+                    result="${result}${obj}"
+                    first=false
+                else result="${result},${obj}"; fi
+            done < <(somewm-client tag list 2> /dev/null)
+            echo "${result}]"
+            ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
             exit 1
-        }
+            ;;
+    esac
+}
+
+cmd_workspace_current() {
+    local comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            local idx
+            idx=$(wmctrl -d 2> /dev/null | awk '/\*/ {print $1}')
+            [ -n "$idx" ] && echo "$((idx + 1))" # 0-indexed → 1-indexed
+            ;;
+        hyprland) hyprctl activeworkspace -j 2> /dev/null | jq -r '.id' ;;
+        sway) swaymsg -t get_workspaces 2> /dev/null | jq -r '.[] | select(.focused) | .num' ;;
+        niri) niri msg --json workspaces 2> /dev/null | jq -r '.[] | select(.is_active) | .id' ;;
+        river)
+            echo "error: river has no CLI for focused tags" >&2
+            exit 1
+            ;;
+        somewm) somewm-client tag current 2> /dev/null | head -1 | cut -d, -f1 ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+cmd_workspace_focus() {
+    local target="$1" comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            local current total dest
+            current=$(wmctrl -d | awk '/\*/ {print $1}')
+            total=$(wmctrl -d | wc -l)
+            case "$target" in
+                next) dest=$(((current + 1) % total)) ;;
+                prev) dest=$(((current - 1 + total) % total)) ;;
+                [0-9]*) dest=$((target - 1)) ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            wmctrl -s "$dest"
+            ;;
+        hyprland)
+            case "$target" in
+                next) hyprctl dispatch workspace r+1 ;;
+                prev) hyprctl dispatch workspace r-1 ;;
+                [0-9]*) hyprctl dispatch workspace "$target" ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        sway)
+            case "$target" in
+                next) swaymsg workspace next ;;
+                prev) swaymsg workspace prev ;;
+                [0-9]*) swaymsg workspace "$target" ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        niri)
+            case "$target" in
+                next) niri msg action focus-column-right ;;
+                prev) niri msg action focus-column-left ;;
+                [0-9]*)
+                    # Resolve stable id → volatile idx
+                    local idx
+                    idx=$(niri msg --json workspaces 2> /dev/null |
+                        jq -r --argjson id "$target" '.[] | select(.id == $id) | .idx')
+                    if [ -n "$idx" ]; then
+                        niri msg action focus-workspace "$idx"
+                    else
+                        echo "error: workspace $target not found" >&2
+                        exit 1
+                    fi
+                    ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        river)
+            case "$target" in
+                next | prev)
+                    echo "error: river workspace next/prev requires focused-tags CLI (does not exist)" >&2
+                    exit 1
+                    ;;
+                [0-9]*)
+                    riverctl set-focused-tags "$((1 << (target - 1)))"
+                    ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        somewm)
+            case "$target" in
+                next)
+                    local cur
+                    cur=$(somewm-client tag current 2> /dev/null | head -1 | cut -d, -f1)
+                    [ -z "$cur" ] && cur=1
+                    somewm-client tag view "$(((cur % 9) + 1))"
+                    ;;
+                prev)
+                    local cur
+                    cur=$(somewm-client tag current 2> /dev/null | head -1 | cut -d, -f1)
+                    [ -z "$cur" ] && cur=1
+                    local prev=$((cur - 1))
+                    [ "$prev" -lt 1 ] && prev=9
+                    somewm-client tag view "$prev"
+                    ;;
+                [0-9]*) somewm-client tag view "$target" ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+cmd_workspace_move() {
+    local target="$1" comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            local current total dest
+            current=$(wmctrl -d | awk '/\*/ {print $1}')
+            total=$(wmctrl -d | wc -l)
+            case "$target" in
+                next) dest=$(((current + 1) % total)) ;;
+                prev) dest=$(((current - 1 + total) % total)) ;;
+                [0-9]*) dest=$((target - 1)) ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            wmctrl -r :ACTIVE: -t "$dest"
+            ;;
+        hyprland)
+            local dest=""
+            case "$target" in
+                next)
+                    dest=$({
+                        hyprctl workspaces -j
+                        hyprctl activeworkspace -j
+                    } | jq -s -r '
+                        .[0] as $ws | .[1].id as $cur |
+                        ($ws | sort_by(.id) | map(.id)) as $ids |
+                        ($ids | index($cur)) as $idx |
+                        if $idx == null then $ids[0]
+                        else $ids[(($idx + 1) % length)] end')
+                    ;;
+                prev)
+                    dest=$({
+                        hyprctl workspaces -j
+                        hyprctl activeworkspace -j
+                    } | jq -s -r '
+                        .[0] as $ws | .[1].id as $cur |
+                        ($ws | sort_by(.id) | map(.id)) as $ids |
+                        ($ids | index($cur)) as $idx |
+                        if $idx == null then $ids[-1]
+                        else $ids[(($idx - 1 + length) % length)] end')
+                    ;;
+                [0-9]*) dest="$target" ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            [ -n "$dest" ] && hyprctl dispatch movetoworkspace "$dest"
+            ;;
+        sway)
+            case "$target" in
+                next) swaymsg move container to workspace next ;;
+                prev) swaymsg move container to workspace prev ;;
+                [0-9]*) swaymsg move container to workspace "$target" ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        niri)
+            case "$target" in
+                next) niri msg action move-column-right ;;
+                prev) niri msg action move-column-left ;;
+                [0-9]*)
+                    local idx
+                    idx=$(niri msg --json workspaces 2> /dev/null |
+                        jq -r --argjson id "$target" '.[] | select(.id == $id) | .idx')
+                    if [ -n "$idx" ]; then
+                        niri msg action move-window-to-workspace "$idx"
+                    else
+                        echo "error: workspace $target not found" >&2
+                        exit 1
+                    fi
+                    ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        river)
+            case "$target" in
+                next | prev)
+                    echo "error: river workspace next/prev requires focused-tags CLI (does not exist)" >&2
+                    exit 1
+                    ;;
+                [0-9]*)
+                    riverctl set-view-tags "$((1 << (target - 1)))"
+                    ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        somewm)
+            case "$target" in
+                next)
+                    local cur
+                    cur=$(somewm-client tag current 2> /dev/null | head -1 | cut -d, -f1)
+                    [ -z "$cur" ] && cur=1
+                    somewm-client client movetotag "$(((cur % 9) + 1))"
+                    ;;
+                prev)
+                    local cur
+                    cur=$(somewm-client tag current 2> /dev/null | head -1 | cut -d, -f1)
+                    [ -z "$cur" ] && cur=1
+                    local prev=$((cur - 1))
+                    [ "$prev" -lt 1 ] && prev=9
+                    somewm-client client movetotag "$prev"
+                    ;;
+                [0-9]*) somewm-client client movetotag "$target" ;;
+                *)
+                    echo "error: invalid target '$target'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# ============================================================
+# Window commands
+# ============================================================
+
+cmd_window_list() {
+    local comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            # Get workspace→monitor mapping once for all windows
+            local ws_mon_map
+            ws_mon_map=$(_x11_ws_monitor_map)
+
+            local wids result="[" first=true
+            wids=$(xprop -root _NET_CLIENT_LIST 2> /dev/null | sed 's/^.*# //' | tr -d ',')
+            [ -z "$wids" ] && {
+                echo "[]"
+                return
+            }
+
+            for wid in $wids; do
+                local title class ws_id ws_name mon is_dock
+                title=$(timeout 3 xprop -id "$wid" _NET_WM_NAME 2> /dev/null | sed 's/^.*= "//; s/"$//')
+                [ -z "$title" ] && title=$(timeout 3 xprop -id "$wid" WM_NAME 2> /dev/null | sed 's/^.*= "//; s/"$//')
+                class=$(timeout 3 xprop -id "$wid" WM_CLASS 2> /dev/null | sed 's/^.*"\([^"]*\)", "\([^"]*\)".*/\2/')
+                echo "$class" | grep -q 'not found' && class=""
+                ws_id=$(timeout 3 xprop -id "$wid" _NET_WM_DESKTOP 2> /dev/null | sed 's/^.*= //')
+
+                # Skip dock windows
+                is_dock=$(timeout 3 xprop -id "$wid" _NET_WM_WINDOW_TYPE 2> /dev/null | grep -c '_NET_WM_WINDOW_TYPE_DOCK')
+                [ "$is_dock" -gt 0 ] && continue
+
+                # Handle sticky windows
+                local ws_json="null"
+                if [ -n "$ws_id" ] && [ "$ws_id" != "not found" ] && [ "$ws_id" != "4294967295" ]; then
+                    ws_name=$(xprop -root _NET_DESKTOP_NAMES 2> /dev/null |
+                        sed 's/^.*= //' | awk -F', ' -v idx=$((ws_id + 1)) '{gsub(/"/, "", $idx); print $idx}')
+                    mon=$(echo "$ws_mon_map" | jq -r --arg idx "$ws_id" '.[$idx] // empty' 2> /dev/null)
+                    ws_json=$(jq -c -n --argjson id "$((ws_id + 1))" --arg name "${ws_name:-}" \
+                        '{id: $id, name: ($name | select(. != "") // null)}')
+                fi
+
+                local obj
+                obj=$(jq -c -n \
+                    --arg addr "$wid" \
+                    --arg title "$title" \
+                    --arg class "$class" \
+                    --argjson ws "$ws_json" \
+                    --arg monitor "${mon:-}" \
+                    '{address: $addr, title: $title, class: $class,
+                      workspace: $ws, monitor: ($monitor | select(. != "") // null),
+                      focused: false}')
+
+                if $first; then
+                    result="${result}${obj}"
+                    first=false
+                else result="${result},${obj}"; fi
+            done
+            echo "${result}]"
+            ;;
+        hyprland)
+            local monitors
+            monitors=$(hyprctl monitors -j 2> /dev/null)
+            hyprctl clients -j 2> /dev/null | jq -c --argjson mons "$monitors" \
+                '[.[] | select(.mapped and (.hidden | not)) | {
+                    address: .address, title: .title, class: .class,
+                    workspace: {id: .workspace.id, name: .workspace.name},
+                    monitor: (.monitor // null),
+                    focused: (.focusHistoryID == 0)
+                }]'
+            ;;
+        sway)
+            swaymsg -t get_tree 2> /dev/null | jq -c \
+                '[.. | objects | select(.type == "output") | .name as $mon |
+                  .. | objects | select(.type == "workspace") |
+                  .num as $ws_id | .name as $ws_name |
+                  .. | objects
+                  | select(has("pid") and (.pid | type == "number")
+                           and (.visible // false)
+                           and (.type == "con" or .type == "floating_con")) |
+                  {
+                      address: (.id | tostring), title: .name,
+                      class: (.app_id // .window_properties.class // null),
+                      workspace: {id: $ws_id, name: $ws_name},
+                      monitor: $mon,
+                      focused: (.focused // false)
+                  }]'
+            ;;
+        niri)
+            niri msg --json windows 2> /dev/null | jq -c '[.[] | {
+                address: (.id | tostring), title: (.title // ""),
+                class: (.app_id // null),
+                workspace: (if .workspace_id then {id: .workspace_id, name: (.workspace_id | tostring)} else null end),
+                monitor: null,
+                focused: (.is_focused // false)
+            }]'
+            ;;
+        river)
+            # No window enumeration IPC
+            echo "[]"
+            ;;
+        somewm)
+            local result="[" first=true
+            while IFS= read -r line; do
+                [ -z "$line" ] && continue
+                local id title class tags
+                id=$(echo "$line" | sed -n 's/^id=\([0-9]*\).*/\1/p')
+                title=$(echo "$line" | sed -n 's/.*title="\([^"]*\)".*/\1/p')
+                class=$(echo "$line" | sed -n 's/.*class="\([^"]*\)".*/\1/p')
+                tags=$(echo "$line" | sed -n 's/.*tags=\([0-9,]*\).*/\1/p')
+                local obj
+                obj=$(jq -c -n \
+                    --arg addr "$id" --arg title "$title" --arg class "$class" \
+                    --arg tags "${tags:-}" \
+                    '{address: $addr, title: $title, class: $class,
+                      workspace: (if $tags != "" then {id: ($tags | tonumber? // 0), name: $tags} else null end),
+                      monitor: null, focused: false}')
+                if $first; then
+                    result="${result}${obj}"
+                    first=false
+                else result="${result},${obj}"; fi
+            done < <(somewm-client client list 2> /dev/null)
+            echo "${result}]"
+            ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+cmd_window_focused() {
+    local comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            local wid
+            wid=$(xprop -root _NET_ACTIVE_WINDOW 2> /dev/null | sed 's/^.*# //' | awk '{print $1}')
+            [ -z "$wid" ] || [ "$wid" = "0x0" ] && {
+                echo "null"
+                return
+            }
+            local title class ws_id ws_name
+            title=$(timeout 3 xprop -id "$wid" _NET_WM_NAME 2> /dev/null | sed 's/^.*= "//; s/"$//')
+            class=$(timeout 3 xprop -id "$wid" WM_CLASS 2> /dev/null | sed 's/^.*"\([^"]*\)", "\([^"]*\)".*/\2/')
+            echo "$class" | grep -q 'not found' && class=""
+            ws_id=$(timeout 3 xprop -id "$wid" _NET_WM_DESKTOP 2> /dev/null | sed 's/^.*= //')
+            local ws_json="null"
+            if [ -n "$ws_id" ] && [ "$ws_id" != "not found" ] && [ "$ws_id" != "4294967295" ]; then
+                ws_name=$(xprop -root _NET_DESKTOP_NAMES 2> /dev/null |
+                    sed 's/^.*= //' | awk -F', ' -v idx=$((ws_id + 1)) '{gsub(/"/, "", $idx); print $idx}')
+                ws_json=$(jq -c -n --argjson id "$((ws_id + 1))" --arg name "${ws_name:-}" \
+                    '{id: $id, name: ($name | select(. != "") // null)}')
+            fi
+            jq -c -n \
+                --arg addr "$wid" --arg title "$title" --arg class "$class" \
+                --argjson ws "$ws_json" \
+                '{address: $addr, title: $title, class: $class,
+                  workspace: $ws, monitor: null, focused: true}'
+            ;;
+        hyprland) hyprctl activewindow -j 2> /dev/null | jq -c '{address: .address, title: .title, class: .class, workspace: {id: (.workspace.id // null), name: (.workspace.name // null)}, monitor: (.monitor // null), focused: true}' ;;
+        sway)
+            swaymsg -t get_tree 2> /dev/null | jq -c \
+                '[.. | objects | select(.focused and has("pid") and (.pid | type == "number"))][0] |
+                 {address: (.id | tostring), title: .name,
+                  class: (.app_id // .window_properties.class // null),
+                  workspace: null, monitor: null, focused: true}'
+            ;;
+        niri)
+            niri msg --json focused-window 2> /dev/null | jq -c \
+                '{address: (.id | tostring), title: (.title // ""),
+                  class: (.app_id // null),
+                  workspace: (if .workspace_id then {id: .workspace_id, name: (.workspace_id | tostring)} else null end),
+                  monitor: null, focused: true}'
+            ;;
+        river)
+            echo "error: river does not support focused window enumeration" >&2
+            exit 1
+            ;;
+        somewm)
+            local geo title class
+            geo=$(somewm-client client geometry focused 2> /dev/null)
+            # Best-effort: get first client's info
+            local line
+            line=$(somewm-client client list 2> /dev/null | head -1)
+            title=$(echo "$line" | sed -n 's/.*title="\([^"]*\)".*/\1/p')
+            class=$(echo "$line" | sed -n 's/.*class="\([^"]*\)".*/\1/p')
+            jq -c -n --arg title "$title" --arg class "$class" \
+                '{address: null, title: $title, class: $class,
+                  workspace: null, monitor: null, focused: true}'
+            ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+cmd_window_focus() {
+    local id="$1" comp
+    comp=$(detect_compositor)
+    [ -z "$id" ] && {
+        echo "error: window ID required" >&2
+        exit 1
+    }
+    case "$comp" in
+        x11) wmctrl -ia "$id" ;;
+        hyprland) hyprctl dispatch focuswindow "address:$id" ;;
+        sway) swaymsg "[con_id=$id]" focus ;;
+        niri) niri msg action focus-window --id "$id" ;;
+        river)
+            echo "error: river does not support ID-based window focus" >&2
+            exit 1
+            ;;
+        somewm) somewm-client client focus "$id" ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+cmd_window_cycle() {
+    local direction="${1:-next}" comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            local desk wins count active idx next_idx tgt
+            desk=$(xprop -root _NET_CURRENT_DESKTOP 2> /dev/null | sed 's/.*= //')
+            wins=$(wmctrl -l 2> /dev/null | awk -v d="$desk" '$2 == d {print $1}')
+            count=$(echo "$wins" | wc -w)
+            [ "$count" -lt 2 ] && return 0
+            active=$(xprop -root _NET_ACTIVE_WINDOW 2> /dev/null | grep -o '0x[0-9a-f]*')
+            idx=0
+            for w in $wins; do
+                if [ "$((w))" = "$((active))" ]; then break; fi
+                idx=$((idx + 1))
+            done
+            if [ "$direction" = "prev" ]; then
+                next_idx=$(((idx - 1 + count) % count))
+            else
+                next_idx=$(((idx + 1) % count))
+            fi
+            tgt=$(echo "$wins" | sed -n "$((next_idx + 1))p")
+            [ -n "$tgt" ] && wmctrl -ia "$tgt"
+            ;;
+        hyprland)
+            if [ "$direction" = "prev" ]; then
+                hyprctl dispatch cyclenext prev
+            else
+                hyprctl dispatch cyclenext
+            fi
+            ;;
+        sway)
+            swaymsg focus "$direction"
+            ;;
+        niri)
+            if [ "$direction" = "prev" ]; then
+                niri msg action focus-window-up
+            else
+                niri msg action focus-window-down
+            fi
+            ;;
+        river)
+            riverctl focus-view "$direction"
+            ;;
+        somewm)
+            # Manual cycle: list → find focused → next/prev
+            local wins count idx next_idx tgt
+            wins=$(somewm-client client list 2> /dev/null | sed -n 's/^id=\([0-9]*\).*/\1/p')
+            count=$(echo "$wins" | wc -w)
+            [ "$count" -lt 2 ] && return 0
+            # Somewm doesn't expose focused window ID easily; cycle by position
+            if [ "$direction" = "prev" ]; then
+                tgt=$(echo "$wins" | tail -1)
+            else
+                tgt=$(echo "$wins" | head -1)
+            fi
+            [ -n "$tgt" ] && somewm-client client focus "$tgt"
+            ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# ============================================================
+# Monitor commands
+# ============================================================
+
+cmd_monitor_list() {
+    local comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            local objs
+            objs=$(xrandr --current 2> /dev/null | grep ' connected' | while IFS= read -r line; do
+                local name w h x y
+                name=$(echo "$line" | awk '{print $1}')
+                local geo
+                geo=$(echo "$line" | grep -oE '[0-9]+x[0-9]+\+[0-9]+\+[0-9]+' | head -1)
+                if [ -n "$geo" ]; then
+                    w=${geo%x*}
+                    local rest=${geo#*x}
+                    h=${rest%%+*}
+                    x=$(echo "$geo" | grep -oE '\+[0-9]+' | head -1 | tr -d '+')
+                    y=$(echo "$geo" | grep -oE '\+[0-9]+' | tail -1 | tr -d '+')
+                else
+                    w=0
+                    h=0
+                    x=0
+                    y=0
+                fi
+                local is_primary="false"
+                echo "$line" | grep -q 'primary' && is_primary="true"
+                jq -c -n --arg name "$name" --argjson w "${w:-0}" --argjson h "${h:-0}" \
+                    --argjson x "${x:-0}" --argjson y "${y:-0}" --argjson current "$is_primary" \
+                    '{name: $name, description: $name, width: $w, height: $h,
+                      x: $x, y: $y, scale: 1.0, is_current: $current}'
+            done | paste -sd, -)
+            [ -z "$objs" ] && objs="null"
+            echo "[$objs]"
+            ;;
+        hyprland)
+            hyprctl monitors -j 2> /dev/null | jq -c '[.[] | {
+                name: .name, description: .description,
+                width: (.width / .scale | floor), height: (.height / .scale | floor),
+                x: .x, y: .y, scale: .scale, is_current: .focused
+            }]'
+            ;;
+        sway)
+            swaymsg -t get_outputs 2> /dev/null | jq -c '[.[] | {
+                name: .name, description: .make,
+                width: (.rect.width // .current_mode.width), height: (.rect.height // .current_mode.height),
+                x: .rect.x, y: .rect.y, scale: .scale, is_current: .focused
+            }]'
+            ;;
+        niri)
+            niri msg --json outputs 2> /dev/null | jq -c '[.[] | {
+                name: .name, description: (.make // .name),
+                width: .width, height: .height, x: .x, y: .y,
+                scale: .scale, is_current: (.is_focused // false)
+            }]'
+            ;;
+        river)
+            wlr-randr --json 2> /dev/null | jq -c '[.[] | select(.enabled) | {
+                name: .name, description: .description,
+                width: (.modes[] | select(.current) | .width),
+                height: (.modes[] | select(.current) | .height),
+                x: .position.x, y: .position.y, scale: .scale, is_current: .focused
+            }]'
+            ;;
+        somewm)
+            somewm-client screen list 2> /dev/null | jq -R -s '[split("\n")[] | select(. != "") | {name: ., description: ., width: 0, height: 0, x: 0, y: 0, scale: 1.0, is_current: false}]'
+            ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+cmd_monitor_count() {
+    local comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11) xrandr --current 2> /dev/null | grep -c ' connected' ;;
+        hyprland) hyprctl monitors -j 2> /dev/null | jq 'length' ;;
+        sway) swaymsg -t get_outputs 2> /dev/null | jq 'length' ;;
+        niri) niri msg --json outputs 2> /dev/null | jq 'length' ;;
+        river) wlr-randr --json 2> /dev/null | jq '[.[] | select(.enabled)] | length' ;;
+        somewm) somewm-client screen count 2> /dev/null ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+cmd_monitor_current() {
+    local comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            # Primary monitor is current on single-display; for multi-display
+            # use viewport offset matching
+            local primary
+            primary=$(xrandr --current 2> /dev/null | grep 'connected primary' | awk '{print $1}')
+            if [ -n "$primary" ]; then
+                echo "$primary"
+            else
+                # Fallback: first connected output
+                xrandr --current 2> /dev/null | grep ' connected' | head -1 | awk '{print $1}'
+            fi
+            ;;
+        hyprland) hyprctl monitors -j 2> /dev/null | jq -r '.[] | select(.focused) | .name' ;;
+        sway) swaymsg -t get_outputs 2> /dev/null | jq -r '.[] | select(.focused) | .name' ;;
+        niri) niri msg --json focused-output 2> /dev/null | jq -r '.name' ;;
+        river) wlr-randr --json 2> /dev/null | jq -r '.[] | select(.focused) | .name' ;;
+        somewm) somewm-client screen focused 2> /dev/null ;;
+        *)
+            echo "error: unsupported compositor '$comp'" >&2
+            exit 1
+            ;;
+    esac
+}
+
+# ============================================================
+# X11 helpers
+# ============================================================
+
+# Build a JSON array mapping 0-indexed workspace → monitor name.
+_x11_ws_monitor_map() {
+    local viewports xrandr_connected result="{}"
+    viewports=$(xprop -root _NET_DESKTOP_VIEWPORT 2> /dev/null | sed 's/^.*= //' | tr -d ',')
+    xrandr_connected=$(xrandr --current 2> /dev/null |
+        grep ' connected' |
+        sed -n 's/\([^ ]*\) connected.*\([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\4 \5 \1/p')
+
+    local idx=0
+    while true; do
+        local vp_x vp_y
+        vp_x=$(echo "$viewports" | awk -v i=$((idx * 2 + 1)) '{print $i}')
+        vp_y=$(echo "$viewports" | awk -v i=$((idx * 2 + 2)) '{print $i}')
+        [ -z "$vp_x" ] && break
+        local mon="null"
+        while read -r mx my mname; do
+            if [ "$mx" = "$vp_x" ] && [ "$my" = "$vp_y" ]; then
+                mon="\"$mname\""
+                break
+            fi
+        done <<< "$xrandr_connected"
+        # Use string keys (--arg) to avoid "cannot index object with number"
+        result=$(echo "$result" | jq -c --arg idx "$idx" --argjson mon "$mon" '.[$idx] = $mon')
+        idx=$((idx + 1))
     done
+    echo "$result"
 }
 
-workspace() {
-    local operation="$1"
-    local target="$2"
-
-    local current total dest
-    current=$(wmctrl -d | awk '/\*/ {print $1}')
-    total=$(wmctrl -d | wc -l)
-
-    case "$target" in
-        next)
-            dest=$(((current + 1) % total))
-            ;;
-        prev)
-            dest=$(((current - 1 + total) % total))
-            ;;
-        [0-9]*)
-            dest="$target"
-            ;;
-        *)
-            echo "error: Invalid workspace target: $target" >&2
-            usage
-            exit 1
-            ;;
-    esac
-
-    case "$operation" in
-        focus) wmctrl -s "$dest" ;;
-        move) wmctrl -r :ACTIVE: -t "$dest" ;;
-        *)
-            echo "error: Invalid workspace operation: $operation" >&2
-            usage
-            exit 1
-            ;;
-    esac
-}
+# ============================================================
+# Main dispatch
+# ============================================================
 
 main() {
-    check_dependencies
+    local command="$1"
+    [ -z "$command" ] && usage
 
-    case "$1" in
-        workspace) workspace "$2" "$3" ;;
-        help | --help | -h) usage ;;
-        "")
-            usage
+    case "$command" in
+        compositor)
+            case "$2" in
+                name) cmd_compositor_name ;;
+                detect) cmd_compositor_detect ;;
+                *)
+                    echo "error: unknown subcommand '$2'" >&2
+                    exit 1
+                    ;;
+            esac
             ;;
+        workspace)
+            case "$2" in
+                list) cmd_workspace_list ;;
+                current) cmd_workspace_current ;;
+                focus) cmd_workspace_focus "$3" ;;
+                move) cmd_workspace_move "$3" ;;
+                *)
+                    echo "error: unknown subcommand '$2'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        window)
+            case "$2" in
+                list) cmd_window_list ;;
+                focused) cmd_window_focused ;;
+                focus) cmd_window_focus "$3" ;;
+                cycle) cmd_window_cycle "$3" ;;
+                *)
+                    echo "error: unknown subcommand '$2'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        monitor)
+            case "$2" in
+                list) cmd_monitor_list ;;
+                count) cmd_monitor_count ;;
+                current) cmd_monitor_current ;;
+                *)
+                    echo "error: unknown subcommand '$2'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        help | --help | -h) usage ;;
         *)
-            echo "error: Unknown command: $1" >&2
+            echo "error: unknown command '$command'" >&2
             usage
             exit 1
             ;;
