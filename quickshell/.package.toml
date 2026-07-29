@@ -1,0 +1,6 @@
+enabled = true
+description = "quickshell: Desktop shell and status bar for Wayland"
+tags = ["gui", "x11", "wayland", "guicomponent"]
+os = ["linux"]
+arch = []
+condition = ""
