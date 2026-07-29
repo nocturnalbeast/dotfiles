@@ -12,30 +12,53 @@ else
 fi
 
 # menu layout
-MENU_OVERLAY="false"       # hide system bar while menu is active
-MENU_POSITION="top"        # menu position: top, bottom, left, right, center
-MENU_LAYOUT_COLUMNS="auto" # number of columns in the menu (integer or 'auto' for dynamic)
-MENU_LAYOUT_ROWS="auto"    # number of rows (integer or 'auto' for dynamic)
+# hide system bar while menu is active
+MENU_OVERLAY="false"
+# menu position: top, bottom, left, right, center
+MENU_POSITION="top"
+# number of columns in the menu (integer or 'auto' for dynamic)
+MENU_LAYOUT_COLUMNS="auto"
+# number of rows (integer or 'auto' for dynamic)
+MENU_LAYOUT_ROWS="auto"
 
 # menu geometry
-MENU_WIDTH="100"                                             # menu width as percent of screen
-MENU_HEIGHT="25"                                             # menu height as percent of screen
-MENU_LINE_HEIGHT="$(polybarctl get_dimensions | sed '3q;d')" # menu line height in pixels
-MENU_FONT="$(polybarctl get_font | cut -d '=' -f 2-)"        # menu font(s)
+# menu width as percent of screen
+MENU_WIDTH="100"
+# menu height as percent of screen
+MENU_HEIGHT="25"
+# menu line height in pixels
+MENU_LINE_HEIGHT="$(qs ipc call bar getBarDimensions 2> /dev/null | head -1 | cut -d: -f4)"
+[ -z "$MENU_LINE_HEIGHT" ] && MENU_LINE_HEIGHT="27"
+# menu font
+MENU_FONT="$(qs ipc call bar getBarFont 2> /dev/null)"
+[ -z "$MENU_FONT" ] && MENU_FONT="sans"
 
 # menu padding and borders
-MENU_PADDING_X="0"    # horizontal padding (pixels)
-MENU_PADDING_Y="0"    # vertical padding (pixels)
-MENU_BORDER_WIDTH="0" # border width (pixels)
+# horizontal padding (pixels)
+MENU_PADDING_X="0"
+# vertical padding (pixels)
+MENU_PADDING_Y="0"
+# border width (pixels)
+MENU_BORDER_WIDTH="2"
 
-# menu colors (blended from polybar/colors.ini)
-MENU_COLOR_BG="#121212"                 # menu background color (normal-content-background)
-MENU_COLOR_FG="#EAEAEA"                 # menu text color (normal-content-foreground)
-MENU_COLOR_HEADER_BG="#3F3F3F"          # header background color (header-background)
-MENU_COLOR_HEADER_FG="#CDCDCD"          # header foreground color (header-foreground)
-MENU_COLOR_SELECTED_BG="#EAEAEA"        # selected item background (focused-content-background)
-MENU_COLOR_SELECTED_FG="#121212"        # selected item foreground (focused-content-foreground)
-MENU_COLOR_SELECTED_FG_ACTIVE="#CDCDCD" # selected item fg (active)
-MENU_COLOR_SELECTED_FG_URGENT="#CDCDCD" # selected item fg (urgent)
-MENU_COLOR_BORDER="#3F3F3F"             # menu border color (same as header)
-MENU_COLOR_SEPARATOR="#606060"          # menu separator color (same as bg)
+# menu colors
+# menu background color
+MENU_COLOR_BG="#0a0a0a"
+# menu text color
+MENU_COLOR_FG="#fafafa"
+# header background color
+MENU_COLOR_HEADER_BG="#171717"
+# header foreground color
+MENU_COLOR_HEADER_FG="#fafafa"
+# selected item background
+MENU_COLOR_SELECTED_BG="#262626"
+# selected item foreground
+MENU_COLOR_SELECTED_FG="#fafafa"
+# selected item fg (active)
+MENU_COLOR_SELECTED_FG_ACTIVE="#a1a1a1"
+# selected item fg (urgent)
+MENU_COLOR_SELECTED_FG_URGENT="#ff6467"
+# menu border color
+MENU_COLOR_BORDER="#737373"
+# menu separator color
+MENU_COLOR_SEPARATOR="#262626"
