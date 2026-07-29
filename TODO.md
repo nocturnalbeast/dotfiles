@@ -28,8 +28,7 @@
   * provide option to set the window title in terminal that was launched
   * provide missing scripts referenced by sxhkd mappings
   * add autoscaling/rendering script for wallpapers picked for xsecurelock
-  * fix bspwm-move not moving focused window to empty monitor
-  * add scroll action script for monitor/workspace icon module in Polybar
+  * fix bspwmctl move not moving focused window to empty monitor
   * add ability to specify a monitor in `bspwm-workspace` script
   * rework keybind help menu scripts
 
