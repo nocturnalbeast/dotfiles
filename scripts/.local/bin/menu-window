@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 # A menu for window selection and management.
+# Uses wmctl for compositor-agnostic window data.
 
-# Global configuration
-DEPENDENCIES=(wmctrl xprop xrandr display)
+DEPENDENCIES=(menu wmctl)
 
 usage() {
     cat << EOF
@@ -15,141 +15,55 @@ This script displays a menu of available windows and allows you to focus on them
 EOF
 }
 
-# Check for required dependencies
 check_dependencies() {
     for dependency in "${DEPENDENCIES[@]}"; do
-        if ! command -v "$dependency" > /dev/null 2>&1; then
+        command -v "$dependency" > /dev/null 2>&1 || {
             echo "error: Could not find '${dependency}', is it installed?" >&2
             return 1
-        fi
+        }
     done
 }
 
-# Get window name
-#
-# Arguments:
-#   $1 - Window ID
-#
-# Outputs:
-#   Writes window name to stdout
-get_window_name() {
-    local window_id="$1"
-    local window_name
-
-    window_name=$(xprop -id "$window_id" -notype -f _NET_WM_NAME 8u '=$0\n' _NET_WM_NAME | cut -f 2 -d =)
-    if [[ $window_name == '_NET_WM_NAME=""' ]]; then
-        window_name=$(xprop -id "$window_id" -notype -f WM_NAME 8u '=$0\n' WM_NAME | cut -f 2 -d =)
-    fi
-    echo "${window_name:1:-1}"
-}
-
-# Get window workspace
-#
-# Arguments:
-#   $1 - Window ID
-#   $2 - Array of workspace names
-#
-# Outputs:
-#   Writes workspace name to stdout
-get_window_workspace() {
-    local window_id="$1"
-    local -n names="$2"
-    local workspace_index
-
-    workspace_index=$(xprop -id "$window_id" -notype -f _NET_WM_DESKTOP 0c '=$0\n' _NET_WM_DESKTOP | cut -f 2 -d =)
-    echo "${names[$workspace_index]:1:-1}"
-}
-
-# Build window entries for multi-display setup
-#
-# Arguments:
-#   $1 - Array of window IDs
-#   $2 - Array of workspace names
-#
-# Outputs:
-#   Writes window entries to stdout
-build_multi_display_entries() {
-    local -n w_ids="$1"
-    local -n ws_names="$2"
-
-    for idx in "${!w_ids[@]}"; do
-        local window_id="${w_ids[$idx]}"
-        local window_name
-        local window_workspace
-        local window_display
-
-        window_name=$(get_window_name "$window_id")
-        window_workspace=$(get_window_workspace "$window_id" workspace_names)
-        window_display=$(display window-display "$window_id")
-
-        echo "$idx: [$window_display - $window_workspace] $window_name"
-    done
-}
-
-# Build window entries for single display setup
-#
-# Arguments:
-#   $1 - Array of window IDs
-#   $2 - Array of workspace names
-#
-# Outputs:
-#   Writes window entries to stdout
-build_single_display_entries() {
-    local -n w_ids="$1"
-    local -n ws_names="$2"
-
-    for idx in "${!w_ids[@]}"; do
-        local window_id="${w_ids[$idx]}"
-        local window_name
-        local window_workspace
-
-        window_name=$(get_window_name "$window_id")
-        window_workspace=$(get_window_workspace "$window_id" workspace_names)
-
-        echo "$idx: [$window_workspace] $window_name"
-    done
-}
-
-# Main entry point
 main() {
     check_dependencies || return 1
 
-    local window_ids
-    local workspace_names
-    local num_monitors
-    local window_entries=()
-    local selected_window
-    local window_id
+    local monitor_count entries selected addr
+    monitor_count=$(wmctl monitor count)
 
-    mapfile -t window_ids < <(xprop -root -notype -f _NET_CLIENT_LIST 0c '=$0+\n' _NET_CLIENT_LIST | tr -s "=, " "\n" | tail -n+2)
-    mapfile -t workspace_names < <(xprop -root -notype -f _NET_DESKTOP_NAMES 8u '=$0+\n' _NET_DESKTOP_NAMES | tr -s "=, " "\n" | tail -n+2)
-    num_monitors=$(xrandr --current | grep -c ' connected ')
-
-    local filtered_ids=()
-    for wid in "${window_ids[@]}"; do
-        local wtype
-        wtype=$(xprop -id "$wid" -notype _NET_WM_WINDOW_TYPE 2> /dev/null | grep -o '_NET_WM_WINDOW_TYPE_DOCK')
-        [[ -z $wtype ]] && filtered_ids+=("$wid")
-    done
-    window_ids=("${filtered_ids[@]}")
-
-    if [[ $num_monitors != "1" ]]; then
-        # Multi-display setup
-        mapfile -t window_entries < <(build_multi_display_entries window_ids workspace_names)
+    # Build menu entries from wmctl window list
+    if [ "$monitor_count" -gt 1 ]; then
+        entries=$(wmctl window list 2> /dev/null | jq -r \
+            '.[] | "\(.address)\t\(.monitor // "?")\t\(.workspace.name // "—")\t\(.title)"')
     else
-        # Single display setup
-        mapfile -t window_entries < <(build_single_display_entries window_ids workspace_names)
+        entries=$(wmctl window list 2> /dev/null | jq -r \
+            '.[] | "\(.address)\t\(.workspace.name // "—")\t\(.title)"')
     fi
 
-    # Create associative array for window selection
-    declare -A window_map
-    for entry in "${window_entries[@]}"; do
-        local idx=$(echo "$entry" | cut -d: -f1)
-        window_map["$entry"]="${window_ids[$idx]}"
-    done
+    [ -z "$entries" ] && {
+        echo "No windows found." >&2
+        return 1
+    }
 
-    selected_window=$(printf '%s\n' "${!window_map[@]}" | sort -n | menu run -p "  ")
-    [ -n "$selected_window" ] && wmctrl -ia "${window_map["$selected_window"]}"
+    # Format for display: strip the address tab, show the rest
+    if [ "$monitor_count" -gt 1 ]; then
+        display=$(echo "$entries" | while IFS=$'\t' read -r _ mon ws title; do
+            echo "[$mon - $ws] $title"
+        done)
+    else
+        display=$(echo "$entries" | while IFS=$'\t' read -r _ ws title; do
+            echo "[$ws] $title"
+        done)
+    fi
+
+    selected=$(echo "$display" | menu run -p "  ")
+    [ -z "$selected" ] && exit 0
+
+    # Map selection back to window address
+    local idx
+    idx=$(echo "$display" | grep -nF "$selected" | head -1 | cut -d: -f1)
+    addr=$(echo "$entries" | sed -n "${idx}p" | cut -f1)
+
+    [ -n "$addr" ] && wmctl window focus "$addr"
 }
 
 main "$@"

@@ -83,8 +83,18 @@ capture_active_window() {
     if [ "$(detect_environment)" = "x11" ]; then
         maim -u -B -i "$(xdotool getactivewindow)" "$IMAGE_PATH"
     elif [ "$(detect_environment)" = "wayland" ]; then
-        grim -g "$(yprop | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"')" "$IMAGE_PATH"
+        local geo
+        geo=$(yprop --focused 2> /dev/null | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"') || {
+            notify-send -u critical "Error" "Could not get active window geometry."
+            return 1
+        }
+        [ -z "$geo" ] || [ "$geo" = "null" ] && {
+            notify-send -u critical "Error" "No active window found."
+            return 1
+        }
+        grim -g "$geo" "$IMAGE_PATH"
     fi
+
     handle_screenshot_result $? "$IMAGE_PATH"
 }
 
@@ -110,7 +120,10 @@ capture_selected_window() {
     if [ "$(detect_environment)" = "x11" ]; then
         maim -u -B -i "$(xdotool selectwindow)" "$IMAGE_PATH"
     elif [ "$(detect_environment)" = "wayland" ]; then
-        yprop | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' | grim -g - "$IMAGE_PATH"
+        local geo
+        geo=$(yprop 2> /dev/null | jq -r '"\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"') || return 0
+        [ -z "$geo" ] || [ "$geo" = "null" ] && return 0
+        grim -g "$geo" "$IMAGE_PATH"
     fi
 
     handle_screenshot_result $? "$IMAGE_PATH"
