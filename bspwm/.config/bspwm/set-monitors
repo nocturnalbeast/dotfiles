@@ -4,12 +4,18 @@
 # this is based from the values calculated from the resolution of the primary
 # monitor
 
+# get bar dimensions for a specific monitor from quickshell
+# qs ipc call bar getBarDimensions returns: <screen>:<gap>:<gap>:<bar_height>:<usable_width>
+get_bar_dims() {
+    qs ipc call bar getBarDimensions 2> /dev/null | grep "^${1}:" | cut -d: -f2-
+}
+
 # get the name of the primary monitor first
 PRIMARY_MONITOR="$(xrandr --current | grep "connected primary" | cut -f 1 -d " ")"
-# next, find the dimensions from polybar's helper script
-FB_DIMENSIONS="$(polybarctl get_dimensions "$PRIMARY_MONITOR" | tr "\n" ":")"
-FB_WINDOW_GAP="$(echo "$FB_DIMENSIONS" | cut -f 1 -d :)"
-FB_TOP_PADDING="$(($(echo "$FB_DIMENSIONS" | cut -f 2 -d :) + $(echo "$FB_DIMENSIONS" | cut -f 3 -d :)))"
+# find the dimensions from quickshell
+FB_DIMENSIONS="$(get_bar_dims "$PRIMARY_MONITOR")"
+FB_WINDOW_GAP="$(echo "$FB_DIMENSIONS" | cut -d: -f1)"
+FB_TOP_PADDING="$(($(echo "$FB_DIMENSIONS" | cut -d: -f2) + $(echo "$FB_DIMENSIONS" | cut -d: -f3)))"
 # and set the fallback values obtained above to global config
 bspc config window_gap "$FB_WINDOW_GAP"
 bspc config top_padding "$FB_TOP_PADDING"
@@ -21,10 +27,10 @@ bspc config top_padding "$FB_TOP_PADDING"
 for MONITOR in $(bspc query --names -M); do
     # setup 10 workspaces for the monitor
     bspc monitor "$MONITOR" -d main inet code data play docs draw txns info misc
-    # get the dimensions of the spacing from polybar's helper script
-    DIMENSIONS="$(polybarctl get_dimensions "$MONITOR" | tr "\n" ":")"
-    WINDOW_GAP="$(echo "$DIMENSIONS" | cut -f 1 -d :)"
-    TOP_PADDING="$(($(echo "$DIMENSIONS" | cut -f 2 -d :) + $(echo "$DIMENSIONS" | cut -f 3 -d :)))"
+    # get the dimensions of the spacing from quickshell
+    DIMENSIONS="$(get_bar_dims "$MONITOR")"
+    WINDOW_GAP="$(echo "$DIMENSIONS" | cut -d: -f1)"
+    TOP_PADDING="$(($(echo "$DIMENSIONS" | cut -d: -f2) + $(echo "$DIMENSIONS" | cut -d: -f3)))"
     # assign the respective values in the config only for the specific monitor
     bspc config -m "$MONITOR" window_gap "$WINDOW_GAP"
     bspc config -m "$MONITOR" top_padding "$TOP_PADDING"
