@@ -1,0 +1,693 @@
+#!/usr/bin/env bash
+
+# yprop: cross-compositor window property inspector.
+#
+# Returns normalized JSON for the selected window, with a consistent schema
+# across X11, Hyprland, Sway, River, Niri, and Somewm.
+#
+# Usage:
+#   yprop                 Interactive window selection
+#   yprop --focused       Get the currently focused window
+#   yprop --list          List all windows as a JSON array
+#   yprop --help          Show help
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") [OPTIONS]
+
+A cross-compositor window property inspector.
+Returns normalized JSON for the selected window.
+
+Modes:
+    (no args)      Interactive: pick a window visually
+    --focused      Return the currently focused window
+    --list         List all windows as a JSON array
+
+Options:
+    -h, --help     Show this help message
+EOF
+}
+
+# ============================================================
+# Detection
+# ============================================================
+
+detect_environment() {
+    if [ -n "$WAYLAND_DISPLAY" ]; then
+        echo "wayland"
+    elif [ -n "$DISPLAY" ]; then
+        echo "x11"
+    else echo "tty"; fi
+}
+
+detect_compositor() {
+    if [ -z "$WAYLAND_DISPLAY" ] && [ -n "$DISPLAY" ]; then
+        echo "x11"
+        return
+    fi
+    if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
+        echo "hyprland"
+        return
+    fi
+    if [ -n "$SWAYSOCK" ]; then
+        echo "sway"
+        return
+    fi
+    local desktop=":${XDG_CURRENT_DESKTOP}:"
+    case "$desktop" in
+        *:river:*) echo "river" ;;
+        *:niri:*) echo "niri" ;;
+        *:somewm:*) echo "somewm" ;;
+        *) echo "" ;;
+    esac
+}
+
+check_dependencies() {
+    local compositor
+    compositor=$(detect_compositor)
+    local deps=(jq)
+    case "$compositor" in
+        hyprland) deps+=(hyprctl slurp) ;;
+        sway) deps+=(swaymsg slurp) ;;
+        niri) deps+=(niri) ;;
+        river) deps+=(slurp wlr-randr) ;;
+        somewm) deps+=(somewm-client slurp) ;;
+        x11) deps+=(xprop xwininfo) ;;
+    esac
+    for dep in "${deps[@]}"; do
+        type -p "$dep" > /dev/null 2>&1 || {
+            echo "error: '$dep' is required but not installed" >&2
+            exit 1
+        }
+    done
+}
+
+# ============================================================
+# Hyprland
+# ============================================================
+
+yprop_hyprland_focused() {
+    hyprctl activewindow -j 2> /dev/null | jq '{
+        address: .address, title: .title, class: .class,
+        workspace: { id: (.workspace.id // null), name: (.workspace.name // null) },
+        monitor: (.monitor // null),
+        at: .at, size: .size,
+        focused: true,
+        floating: (.floating // false),
+        fullscreen: (.fullscreen == 1 or .fullscreen == true),
+        compositor: "hyprland"
+    }'
+}
+
+yprop_hyprland_list() {
+    hyprctl clients -j 2> /dev/null | jq '[.[] | {
+        address: .address, title: .title, class: .class,
+        workspace: { id: (.workspace.id // null), name: (.workspace.name // null) },
+        monitor: (.monitor // null),
+        at: .at, size: .size,
+        focused: (.focusHistoryID == 0),
+        floating: (.floating // false),
+        fullscreen: (.fullscreen == 1 or .fullscreen == true),
+        compositor: "hyprland"
+    }]'
+}
+
+yprop_hyprland_interactive() {
+    local visible_workspaces clients selection
+    visible_workspaces=$(hyprctl monitors -j 2> /dev/null | jq -r \
+        '[.[].activeWorkspace.id, (.[].specialWorkspace.id // empty) | select(. != null and . != 0)] | flatten | unique')
+    clients=$(hyprctl clients -j 2> /dev/null)
+
+    # Format geometries for slurp; let user pick
+    selection=$(echo "$clients" | jq -r --argjson vws "$visible_workspaces" \
+        '.[] | select(.workspace.id | IN($vws[])) | select(.mapped and (.hidden|not)) |
+         "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"' |
+        slurp -r 2> /dev/null) || true
+
+    # User cancelled
+    [ -z "$selection" ] && exit 0
+
+    # Parse coordinates
+    local x y w h
+    x=$(echo "$selection" | awk -F'[, x]' '{print $1}')
+    y=$(echo "$selection" | awk -F'[, x]' '{print $2}')
+    w=$(echo "$selection" | awk -F'[, x]' '{print $3}')
+    h=$(echo "$selection" | awk -F'[, x]' '{print $4}')
+
+    # Match: find client with exact geometry, prefer focused
+    local result
+    result=$(echo "$clients" | jq -c --argjson vws "$visible_workspaces" \
+        --argjson x "$x" --argjson y "$y" --argjson w "$w" --argjson h "$h" \
+        '[.[] | select(.workspace.id | IN($vws[]))
+               | select(.at[0] == $x and .at[1] == $y
+                        and .size[0] == $w and .size[1] == $h)]
+         | (if any(.focusHistoryID == 0)
+            then .[] | select(.focusHistoryID == 0)
+            else .[0] end)')
+
+    if [ -z "$result" ] || [ "$result" = "null" ]; then
+        echo "error: no window matched the selection" >&2
+        exit 1
+    fi
+
+    echo "$result" | jq '{
+        address: .address, title: .title, class: .class,
+        workspace: { id: (.workspace.id // null), name: (.workspace.name // null) },
+        monitor: (.monitor // null),
+        at: .at, size: .size,
+        focused: (.focusHistoryID == 0),
+        floating: (.floating // false),
+        fullscreen: (.fullscreen == 1 or .fullscreen == true),
+        compositor: "hyprland"
+    }'
+}
+
+# ============================================================
+# Sway
+# ============================================================
+
+yprop_sway_focused() {
+    swaymsg -t get_tree 2> /dev/null | jq '[
+        .. | objects
+        | select(.focused and has("pid") and (.pid | type == "number"))
+    ][0] | {
+        address: (.id | tostring), title: .name,
+        class: (.app_id // .window_properties.class // null),
+        workspace: null, monitor: null,
+        at: [.rect.x, .rect.y], size: [.rect.width, .rect.height],
+        focused: true,
+        floating: (.type == "floating_con"),
+        fullscreen: (.fullscreen_mode == 1),
+        compositor: "sway"
+    }'
+}
+
+yprop_sway_list() {
+    swaymsg -t get_tree 2> /dev/null | jq '[
+        .. | objects | select(.type == "output") |
+        .name as $mon |
+        .. | objects | select(.type == "workspace") |
+        .num as $ws_id | .name as $ws_name |
+        .. | objects
+        | select(has("pid") and (.pid | type == "number")
+                 and (.visible // false)
+                 and (.type == "con" or .type == "floating_con")) |
+        {
+            address: (.id | tostring), title: .name,
+            class: (.app_id // .window_properties.class // null),
+            workspace: { id: $ws_id, name: $ws_name },
+            monitor: $mon,
+            at: [.rect.x, .rect.y], size: [.rect.width, .rect.height],
+            focused: (.focused // false),
+            floating: (.type == "floating_con"),
+            fullscreen: (.fullscreen_mode == 1),
+            compositor: "sway"
+        }
+    ]'
+}
+
+yprop_sway_interactive() {
+    local tree selection
+    tree=$(swaymsg -t get_tree 2> /dev/null)
+
+    # Extract visible windows for slurp
+    selection=$(echo "$tree" | jq -r \
+        '.. | objects | select(has("pid") and (.pid | type == "number") and (.visible // false))
+         | "\(.rect.x),\(.rect.y) \(.rect.width)x\(.rect.height)"' |
+        slurp -r 2> /dev/null) || true
+
+    [ -z "$selection" ] && exit 0
+
+    local x y w h
+    x=$(echo "$selection" | awk -F'[, x]' '{print $1}')
+    y=$(echo "$selection" | awk -F'[, x]' '{print $2}')
+    w=$(echo "$selection" | awk -F'[, x]' '{print $3}')
+    h=$(echo "$selection" | awk -F'[, x]' '{print $4}')
+
+    # Match: find window with exact geometry, prefer focused
+    local result
+    result=$(echo "$tree" | jq -c \
+        --argjson x "$x" --argjson y "$y" --argjson w "$w" --argjson h "$h" \
+        '[.. | objects
+          | select(has("pid") and (.pid | type == "number") and (.visible // false))
+          | select(.rect.x == $x and .rect.y == $y
+                   and .rect.width == $w and .rect.height == $h)
+         ]
+         | (if any(.focused) then .[] | select(.focused) else .[0] end)')
+
+    if [ -z "$result" ] || [ "$result" = "null" ]; then
+        echo "error: no window matched the selection" >&2
+        exit 1
+    fi
+
+    echo "$result" | jq '{
+        address: (.id | tostring), title: .name,
+        class: (.app_id // .window_properties.class // null),
+        workspace: null, monitor: null,
+        at: [.rect.x, .rect.y], size: [.rect.width, .rect.height],
+        focused: (.focused // false),
+        floating: (.type == "floating_con"),
+        fullscreen: (.fullscreen_mode == 1),
+        compositor: "sway"
+    }'
+}
+
+# ============================================================
+# Niri (uses native pick-window, not slurp)
+# ============================================================
+
+yprop_niri_focused() {
+    niri msg --json focused-window 2> /dev/null | jq '{
+        address: (.id | tostring),
+        title: (.title // ""),
+        class: (.app_id // null),
+        workspace: (if .workspace_id then { id: .workspace_id, name: (.workspace_id | tostring) } else null end),
+        monitor: null,
+        at: (if .geometry then [.geometry.x, .geometry.y] else null end),
+        size: (if .geometry then [.geometry.width, .geometry.height] else null end),
+        focused: true,
+        floating: null,
+        fullscreen: null,
+        compositor: "niri"
+    }'
+}
+
+yprop_niri_list() {
+    niri msg --json windows 2> /dev/null | jq '[.[] | {
+        address: (.id | tostring),
+        title: (.title // ""),
+        class: (.app_id // null),
+        workspace: (if .workspace_id then { id: .workspace_id, name: (.workspace_id | tostring) } else null end),
+        monitor: null,
+        at: (if .geometry then [.geometry.x, .geometry.y] else null end),
+        size: (if .geometry then [.geometry.width, .geometry.height] else null end),
+        focused: (.is_focused // false),
+        floating: null,
+        fullscreen: null,
+        compositor: "niri"
+    }]'
+}
+
+yprop_niri_interactive() {
+    local result
+    result=$(niri msg --json pick-window 2> /dev/null)
+
+    if [ -z "$result" ] || [ "$result" = "null" ]; then
+        exit 0
+    fi
+
+    echo "$result" | jq '{
+        address: (.id | tostring),
+        title: (.title // ""),
+        class: (.app_id // null),
+        workspace: (if .workspace_id then { id: .workspace_id, name: (.workspace_id | tostring) } else null end),
+        monitor: null,
+        at: (if .geometry then [.geometry.x, .geometry.y] else null end),
+        size: (if .geometry then [.geometry.width, .geometry.height] else null end),
+        focused: true,
+        floating: null,
+        fullscreen: null,
+        compositor: "niri"
+    }'
+}
+
+# ============================================================
+# River (degraded: geometry-only, no window metadata)
+# ============================================================
+
+yprop_river_focused() {
+    echo "error: river does not support focused window enumeration" >&2
+    exit 1
+}
+
+yprop_river_list() {
+    echo "[]"
+}
+
+yprop_river_interactive() {
+    local selection x y w h
+
+    # Get output geometries for slurp
+    selection=$(wlr-randr --json 2> /dev/null | jq -r \
+        '.[] | select(.enabled) | "\(.position.x),\(.position.y) \(.modes[] | select(.current) | .width)x\(.modes[] | select(.current) | .height)"' |
+        slurp -r 2> /dev/null) || true
+
+    [ -z "$selection" ] && exit 0
+
+    x=$(echo "$selection" | awk -F'[, x]' '{print $1}')
+    y=$(echo "$selection" | awk -F'[, x]' '{print $2}')
+    w=$(echo "$selection" | awk -F'[, x]' '{print $3}')
+    h=$(echo "$selection" | awk -F'[, x]' '{print $4}')
+
+    # Return geometry-only result
+    jq -n \
+        --argjson x "${x:-0}" --argjson y "${y:-0}" \
+        --argjson w "${w:-0}" --argjson h "${h:-0}" \
+        '{
+            address: null, title: null, class: null,
+            workspace: null, monitor: null,
+            at: [$x, $y], size: [$w, $h],
+            focused: false, floating: null, fullscreen: null,
+            compositor: "river"
+        }'
+}
+
+# ============================================================
+# Somewm
+# ============================================================
+
+# Parse a somewm-client client list line.
+# Echoes: "id|title|class|tags|floating"
+_somewm_parse_client() {
+    local line="$1"
+    local id title class tags floating
+    id=$(echo "$line" | sed -n 's/^id=\([0-9]*\).*/\1/p')
+    title=$(echo "$line" | sed -n 's/.*title="\([^"]*\)".*/\1/p')
+    class=$(echo "$line" | sed -n 's/.*class="\([^"]*\)".*/\1/p')
+    tags=$(echo "$line" | sed -n 's/.*tags=\([0-9,]*\).*/\1/p')
+    floating=$(echo "$line" | sed -n 's/.*floating=\([a-z]*\).*/\1/p')
+    echo "${id}|${title}|${class}|${tags}|${floating}"
+}
+
+# Parse somewm-client geometry output (key=value lines).
+# Echoes: "x y w h"
+_somewm_parse_geo() {
+    local output="$1"
+    local x y w h
+    x=$(echo "$output" | sed -n 's/^x=\([0-9]*\)/\1/p')
+    y=$(echo "$output" | sed -n 's/^y=\([0-9]*\)/\1/p')
+    w=$(echo "$output" | sed -n 's/^width=\([0-9]*\)/\1/p')
+    h=$(echo "$output" | sed -n 's/^height=\([0-9]*\)/\1/p')
+    echo "${x:-0} ${y:-0} ${w:-0} ${h:-0}"
+}
+
+yprop_somewm_focused() {
+    local geo x y w h client_line id title class tags floating
+    geo=$(somewm-client client geometry focused 2> /dev/null)
+    read -r x y w h <<< "$(_somewm_parse_geo "$geo")"
+
+    # Best-effort: get the first client on the current tag
+    client_line=$(somewm-client client list 2> /dev/null | head -1) || client_line=""
+    IFS='|' read -r id title class tags floating <<< "$(_somewm_parse_client "$client_line")"
+
+    jq -n \
+        --arg address "${id:-}" \
+        --arg title "${title:-}" \
+        --arg class "${class:-}" \
+        --argjson x "${x:-0}" --argjson y "${y:-0}" \
+        --argjson w "${w:-0}" --argjson h "${h:-0}" \
+        --arg floating "${floating:-false}" \
+        '{
+            address: ($address | tonumber? // null),
+            title: $title, class: $class,
+            workspace: null, monitor: null,
+            at: [$x, $y], size: [$w, $h],
+            focused: true,
+            floating: ($floating == "true"),
+            fullscreen: null,
+            compositor: "somewm"
+        }'
+}
+
+yprop_somewm_list() {
+    local result="["
+    local first=true
+
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        local id title class tags floating
+        IFS='|' read -r id title class tags floating <<< "$(_somewm_parse_client "$line")"
+
+        local geo x y w h
+        geo=$(somewm-client client geometry "$id" 2> /dev/null)
+        read -r x y w h <<< "$(_somewm_parse_geo "$geo")"
+
+        local obj
+        obj=$(jq -c -n \
+            --arg address "$id" \
+            --arg title "$title" --arg class "$class" \
+            --argjson x "${x:-0}" --argjson y "${y:-0}" \
+            --argjson w "${w:-0}" --argjson h "${h:-0}" \
+            --arg floating "${floating:-false}" \
+            '{
+                address: ($address | tonumber? // null),
+                title: $title, class: $class,
+                workspace: null, monitor: null,
+                at: [$x, $y], size: [$w, $h],
+                focused: false,
+                floating: ($floating == "true"),
+                fullscreen: null,
+                compositor: "somewm"
+            }')
+
+        if $first; then
+            result="${result}${obj}"
+            first=false
+        else result="${result},${obj}"; fi
+    done < <(somewm-client client list 2> /dev/null)
+
+    echo "${result}]"
+}
+
+yprop_somewm_interactive() {
+    local geo_lines="" client_lines=""
+
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        local id title class tags floating
+        IFS='|' read -r id title class tags floating <<< "$(_somewm_parse_client "$line")"
+
+        local geo x y w h
+        geo=$(somewm-client client geometry "$id" 2> /dev/null)
+        read -r x y w h <<< "$(_somewm_parse_geo "$geo")"
+
+        geo_lines+="${x},${y} ${w}x${h}"$'\n'
+        client_lines+="${id}|${title}|${class}|${tags}|${floating}|${x}|${y}|${w}|${h}"$'\n'
+    done < <(somewm-client client list 2> /dev/null)
+
+    local selection
+    selection=$(echo "$geo_lines" | slurp -r 2> /dev/null) || true
+    [ -z "$selection" ] && exit 0
+
+    local sx sy sw sh
+    sx=$(echo "$selection" | awk -F'[, x]' '{print $1}')
+    sy=$(echo "$selection" | awk -F'[, x]' '{print $2}')
+    sw=$(echo "$selection" | awk -F'[, x]' '{print $3}')
+    sh=$(echo "$selection" | awk -F'[, x]' '{print $4}')
+
+    # Match by geometry
+    local matched=""
+    while IFS='|' read -r id title class tags floating x y w h; do
+        [ -z "$id" ] && continue
+        if [ "$x" = "$sx" ] && [ "$y" = "$sy" ] && [ "$w" = "$sw" ] && [ "$h" = "$sh" ]; then
+            matched="$id|$title|$class|$tags|$floating|$x|$y|$w|$h"
+            break
+        fi
+    done <<< "$client_lines"
+
+    if [ -z "$matched" ]; then
+        echo "error: no window matched the selection" >&2
+        exit 1
+    fi
+
+    IFS='|' read -r id title class tags floating x y w h <<< "$matched"
+
+    jq -n \
+        --arg address "$id" \
+        --arg title "$title" --arg class "$class" \
+        --argjson x "${x:-0}" --argjson y "${y:-0}" \
+        --argjson w "${w:-0}" --argjson h "${h:-0}" \
+        --arg floating "${floating:-false}" \
+        '{
+            address: ($address | tonumber? // null),
+            title: $title, class: $class,
+            workspace: null, monitor: null,
+            at: [$x, $y], size: [$w, $h],
+            focused: false,
+            floating: ($floating == "true"),
+            fullscreen: null,
+            compositor: "somewm"
+        }'
+}
+
+# ============================================================
+# X11
+# ============================================================
+
+# Read an xprop string property cleanly (strips type annotation and quotes).
+_xprop_get() {
+    local wid="$1" prop="$2"
+    timeout 3 xprop -id "$wid" "$prop" 2> /dev/null | sed 's/^.*= //' | tr -d '"'
+}
+
+# Read WM_CLASS — returns the class (second field), not the instance.
+_xprop_class() {
+    local wid="$1"
+    local result
+    result=$(timeout 3 xprop -id "$wid" WM_CLASS 2> /dev/null)
+    echo "$result" | grep -q 'not found' && {
+        echo ""
+        return
+    }
+    echo "$result" | sed 's/^.*"\([^"]*\)", "\([^"]*\)".*/\2/'
+}
+
+# Get workspace name from root _NET_DESKTOP_NAMES.
+_xprop_ws_name() {
+    local ws_id="$1"
+    [ -z "$ws_id" ] || [ "$ws_id" = "not found" ] && {
+        echo ""
+        return
+    }
+    timeout 3 xprop -root _NET_DESKTOP_NAMES 2> /dev/null |
+        sed 's/^.*= //' |
+        awk -F', ' -v idx=$((ws_id + 1)) '{gsub(/"/, "", $idx); print $idx}'
+}
+
+# Build normalized JSON for an X11 window.
+_x11_emit() {
+    local wid="$1" focused="$2"
+    local title class ws_id ws_name x y w h fullscreen
+
+    title=$(_xprop_get "$wid" _NET_WM_NAME)
+    [ -z "$title" ] && title=$(_xprop_get "$wid" WM_NAME)
+    class=$(_xprop_class "$wid")
+    ws_id=$(timeout 3 xprop -id "$wid" _NET_WM_DESKTOP 2> /dev/null | sed 's/^.*= //')
+    # 4294967295 (0xFFFFFFFF) is the EWMH "all desktops" sentinel for sticky windows
+    [ "$ws_id" = "4294967295" ] && ws_id=""
+    ws_name=$(_xprop_ws_name "${ws_id:-}")
+
+    # Geometry from xwininfo
+    local geo
+    geo=$(timeout 3 xwininfo -id "$wid" 2> /dev/null)
+    x=$(echo "$geo" | grep 'Absolute upper-left X:' | awk '{print $NF}')
+    y=$(echo "$geo" | grep 'Absolute upper-left Y:' | awk '{print $NF}')
+    w=$(echo "$geo" | grep 'Width:' | awk '{print $NF}')
+    h=$(echo "$geo" | grep 'Height:' | awk '{print $NF}')
+
+    # Skip windows with no geometry (docks, panels, withdrawn windows)
+    if [ -z "$x" ] || [ -z "$w" ]; then
+        return 1
+    fi
+
+    # Fullscreen state
+    timeout 3 xprop -id "$wid" _NET_WM_STATE 2> /dev/null | grep -q '_NET_WM_STATE_FULLSCREEN' &&
+        fullscreen="true" || fullscreen="false"
+
+    # Workspace object (may be null)
+    local ws_json="null"
+    if [ -n "$ws_id" ] && [ "$ws_id" != "not found" ]; then
+        ws_json=$(jq -n --argjson id "${ws_id:-0}" --arg name "${ws_name:-}" \
+            '{ id: $id, name: ($name | select(. != "") // null) }')
+    fi
+
+    jq -n \
+        --arg address "$wid" \
+        --arg title "${title:-}" \
+        --arg class "${class:-}" \
+        --argjson ws "$ws_json" \
+        --argjson x "${x:-0}" --argjson y "${y:-0}" \
+        --argjson w "${w:-0}" --argjson h "${h:-0}" \
+        --arg focused "$focused" \
+        --arg fullscreen "$fullscreen" \
+        '{
+            address: $address, title: $title, class: $class,
+            workspace: $ws, monitor: null,
+            at: [$x, $y], size: [$w, $h],
+            focused: ($focused == "true"),
+            floating: null,
+            fullscreen: ($fullscreen == "true"),
+            compositor: "x11"
+        }'
+}
+
+yprop_x11_focused() {
+    local wid
+    wid=$(xprop -root _NET_ACTIVE_WINDOW 2> /dev/null | sed 's/^.*# //' | awk '{print $1}')
+    [ -z "$wid" ] || [ "$wid" = "0x0" ] && {
+        echo "error: no focused window" >&2
+        exit 1
+    }
+    _x11_emit "$wid" true
+}
+
+yprop_x11_list() {
+    local wids result="[" first=true
+
+    wids=$(xprop -root _NET_CLIENT_LIST 2> /dev/null | sed 's/^.*# //' | tr -d ',')
+    [ -z "$wids" ] && {
+        echo "[]"
+        return
+    }
+
+    for wid in $wids; do
+        local obj
+        obj=$(_x11_emit "$wid" false 2> /dev/null) || continue
+        if $first; then
+            result="${result}${obj}"
+            first=false
+        else result="${result},${obj}"; fi
+    done
+    echo "${result}]"
+}
+
+yprop_x11_interactive() {
+    local wid
+    wid=$(xwininfo 2> /dev/null | grep 'Window id:' | head -1 |
+        sed 's/.*Window id: \([^ ]*\).*/\1/')
+    [ -z "$wid" ] && exit 0
+    _x11_emit "$wid" false
+}
+
+# ============================================================
+# Main dispatch
+# ============================================================
+
+main() {
+    local mode="interactive"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            -h | --help)
+                usage
+                exit 0
+                ;;
+            --focused)
+                mode="focused"
+                shift
+                ;;
+            --list)
+                mode="list"
+                shift
+                ;;
+            --*)
+                echo "error: unknown option $1" >&2
+                exit 1
+                ;;
+            *)
+                echo "error: unexpected argument $1" >&2
+                exit 1
+                ;;
+        esac
+    done
+
+    check_dependencies
+
+    local compositor
+    compositor=$(detect_compositor)
+
+    if [ -z "$compositor" ]; then
+        echo "error: could not detect compositor" >&2
+        exit 1
+    fi
+
+    local func="yprop_${compositor}_${mode}"
+    if ! type "$func" > /dev/null 2>&1; then
+        echo "error: $mode mode not supported on $compositor" >&2
+        exit 1
+    fi
+
+    "$func"
+}
+
+main "$@"
