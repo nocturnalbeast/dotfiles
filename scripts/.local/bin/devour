@@ -1,13 +1,125 @@
 #!/usr/bin/env bash
 
-# Source: devour.sh from https://github.com/salman-abedin/devour.sh
+# devour — cross-compositor window swallower.
+#
+# Hides the focused window, runs a command, then restores the window.
+# Typical use: run a GUI app from a terminal without the terminal visible.
+#
+# Usage: devour <command> [args...]
+#
+# Supports: X11 (xdo), Hyprland, Sway, Niri, River, Somewm.
 
-ARGS=$*
-CMD="${ARGS%% -- *}"
-FILE="${ARGS##* -- }"
-[ "$CMD" != "$FILE" ] && SAFEFILE=$(printf '%q' "$FILE")
-WID=$(xdo id)
+detect_compositor() {
+    if [ -z "$WAYLAND_DISPLAY" ] && [ -n "$DISPLAY" ]; then
+        echo "x11"
+        return
+    fi
+    if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
+        echo "hyprland"
+        return
+    fi
+    if [ -n "$SWAYSOCK" ]; then
+        echo "sway"
+        return
+    fi
+    local desktop=":${XDG_CURRENT_DESKTOP}:"
+    case "$desktop" in
+        *:river:*) echo "river" ;;
+        *:niri:*) echo "niri" ;;
+        *:somewm:*) echo "somewm" ;;
+    esac
+}
 
-xdo hide
-"${SHELL:-/bin/sh}" -i -c "$CMD $SAFEFILE" > /dev/null 2>&1
-xdo show "$WID"
+devour_x11() {
+    local wid
+    wid=$(xdo id)
+    xdo hide
+    "$@"
+    xdo show "$wid"
+}
+
+devour_hyprland() {
+    local addr ws
+    addr=$(hyprctl activewindow -j 2> /dev/null | jq -r '.address')
+    ws=$(hyprctl activeworkspace -j 2> /dev/null | jq -r '.id')
+    [ -z "$addr" ] || [ "$addr" = "null" ] && {
+        echo "error: could not get active window" >&2
+        exit 1
+    }
+    hyprctl dispatch movetoworkspacesilent "special:devour,address:$addr" > /dev/null 2>&1
+    "$@"
+    hyprctl dispatch movetoworkspacesilent "${ws},address:$addr" > /dev/null 2>&1
+}
+
+devour_sway() {
+    local id mark
+    id=$(swaymsg -t get_tree 2> /dev/null | jq -r '..|select(.type?)|select(.focused==true)|.id')
+    [ -z "$id" ] || [ "$id" = "null" ] && {
+        echo "error: could not get active window" >&2
+        exit 1
+    }
+    mark="_devour_${id}_$$"
+    swaymsg "[con_id=$id] mark $mark, move scratchpad" > /dev/null 2>&1
+    "$@"
+    swaymsg "[con_mark=$mark] scratchpad show, unmark $mark" > /dev/null 2>&1
+}
+
+devour_niri() {
+    local winid ws_idx
+    winid=$(niri msg --json focused-window 2> /dev/null | jq -r '.id')
+    ws_idx=$(niri msg --json workspaces 2> /dev/null | jq -r '.[]|select(.is_active)|.idx')
+    [ -z "$winid" ] || [ "$winid" = "null" ] && {
+        echo "error: could not get active window" >&2
+        exit 1
+    }
+    niri msg action move-window-to-workspace --window-id "$winid" 99 --focus false > /dev/null 2>&1
+    "$@"
+    [ -n "$ws_idx" ] && niri msg action focus-workspace "$ws_idx" > /dev/null 2>&1
+    niri msg action move-window-to-workspace --window-id "$winid" "${ws_idx:-1}" --focus false > /dev/null 2>&1
+}
+
+devour_river() {
+    local hidden=$((1 << 20))
+    riverctl set-view-tags "$hidden" > /dev/null 2>&1
+    "$@"
+    # Best-effort restore: no getter for original tags
+    riverctl set-view-tags 1 > /dev/null 2>&1
+}
+
+devour_somewm() {
+    local id
+    id=$(somewm-client client list 2> /dev/null | grep 'focused' | head -1 | sed -n 's/^id=\([0-9]*\).*/\1/p')
+    [ -z "$id" ] && id=$(somewm-client client list 2> /dev/null | head -1 | sed -n 's/^id=\([0-9]*\).*/\1/p')
+    [ -z "$id" ] && {
+        echo "error: could not get active window" >&2
+        exit 1
+    }
+    somewm-client client minimized "$id" true > /dev/null 2>&1
+    "$@"
+    somewm-client client minimized "$id" false > /dev/null 2>&1
+}
+
+main() {
+    [ $# -eq 0 ] && {
+        echo "Usage: $(basename "$0") <command> [args...]" >&2
+        exit 1
+    }
+
+    local comp
+    comp=$(detect_compositor)
+
+    case "$comp" in
+        x11) devour_x11 "$@" ;;
+        hyprland) devour_hyprland "$@" ;;
+        sway) devour_sway "$@" ;;
+        niri) devour_niri "$@" ;;
+        river) devour_river "$@" ;;
+        somewm) devour_somewm "$@" ;;
+        *)
+            echo "error: unsupported compositor" >&2
+            exit 1
+            ;;
+    esac
+}
+
+main "$@"
