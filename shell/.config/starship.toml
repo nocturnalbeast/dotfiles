@@ -17,9 +17,15 @@ $git_commit\
 $git_state\
 $git_metrics\
 $git_status\
+${env_var.gsd_branch}\
+${env_var.gsd_state}\
+${env_var.gsd_added}\
+${env_var.gsd_deleted}\
+${env_var.gsd_status}\
 $fossil_branch\
 $fossil_metrics\
 $hg_branch\
+$hg_state\
 $pijul_channel\
 $direnv\
 $kubernetes\
@@ -33,6 +39,7 @@ $package\
 $buf\
 $bun\
 $c\
+$cpp\
 $cmake\
 $cobol\
 $conda\
@@ -45,6 +52,7 @@ $elixir\
 $elm\
 $erlang\
 $fennel\
+$fortran\
 $gleam\
 $golang\
 $gradle\
@@ -86,18 +94,19 @@ $zig\
 $guix_shell\
 $nix_shell\
 $fill\
-($status 󰧞 )\
-($cmd_duration 󰧞 )\
-($jobs 󰧞 )\
-($sudo 󰧞 )\
-($shlvl 󰧞 )\
-($battery 󰧞 )\
-($memory_usage 󰧞 )\
-($time 󰧞 )\
-($shell 󰧞 )\
+($status  )\
+($cmd_duration  )\
+($jobs  )\
+($sudo  )\
+($shlvl  )\
+($battery  )\
+($memory_usage  )\
+($time  )\
+($shell  )\
 ($os)\
 $line_break\
 $container\
+$netns\
 $character"""
 right_format = ""
 continuation_prompt = "[󰅂](bold yellow) "
@@ -106,19 +115,29 @@ command_timeout = 500
 add_newline = true
 follow_symlinks = true
 
+[palettes]
+
+[profiles]
+
 [aws]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $profile($region)]($style)"
+symbol = ""
+format = "  [$symbol $profile($region)]($style)"
 style = "bold yellow"
 expiration_symbol = "X"
 force_display = false
 
+[aws.region_aliases]
+
+[aws.profile_aliases]
+
 [azure]
 disabled = false
-symbol = "󰠅 "
-format = " 󰧞 [$symbol $subscription]($style)"
+symbol = "󰠅"
+format = "  [$symbol $subscription]($style)"
 style = "bold blue"
+
+[azure.subscription_aliases]
 
 [battery]
 disabled = false
@@ -139,22 +158,22 @@ style = "bold yellow"
 
 [buf]
 disabled = false
-symbol = "󰘦 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰘦"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [bun]
 disabled = false
-symbol = "󰌞 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰌞"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold yellow"
 
 [c]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version(-$name)]($style)"
+symbol = ""
+format = "  [$symbol $version(-$name)]($style)"
 version_format = "v${raw}"
 style = "bold green"
 
@@ -170,8 +189,8 @@ vimcmd_replace_one_symbol = "[❮](bold purple)"
 
 [cmake]
 disabled = false
-symbol = "󰯲 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰯲"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
@@ -187,130 +206,163 @@ min_time_to_notify = 45000
 [cobol]
 disabled = false
 symbol = ""
-format = " 󰧞 [$symbol $version]($style)"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [conda]
 disabled = false
-symbol = "󱔎 "
-format = " 󰧞 [$symbol $environment]($style)"
+symbol = "󱔎"
+format = "  [$symbol $environment]($style)"
 style = "bold green"
 ignore_base = true
 truncation_length = 1
 
 [container]
 disabled = false
-symbol = " "
+symbol = ""
 format = '[$symbol \[$name\]]($style) '
 style = "red bold dimmed"
+
+[cpp]
+disabled = false
+symbol = ""
+format = "  [$symbol $version(-$name)]($style)"
+version_format = "v${raw}"
+style = "bold blue"
 
 [crystal]
 disabled = false
 symbol = ""
-format = " 󰧞 [$symbol $version]($style)"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [daml]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold cyan"
 
 [dart]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [deno]
 disabled = false
-symbol = "󰎙 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰎙"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold white"
 
 [directory]
 disabled = false
-home_symbol = " "
-read_only = " "
+home_symbol = ""
+read_only = ""
 truncation_symbol = "󰇘/"
 format = "[$read_only]($read_only_style)[$path]($style)"
-repo_root_format = "[$read_only]($read_only_style)[$before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path]($style)"
 read_only_style = "red"
-repo_root_style = "bold green"
 style = "bold purple"
-truncate_to_repo = true
+truncate_to_repo = false
 truncation_length = 3
 use_logical_path = true
 use_os_path_sep = true
 
+[directory.substitutions]
+"/desktop" = "󰇄"
+"/Desktop" = "󰇄"
+"/downloads" = "󰇚"
+"/Downloads" = "󰇚"
+"/templates" = ""
+"/Templates" = ""
+"/public" = ""
+"/Public" = ""
+"/documents" = "󰈙"
+"/Documents" = "󰈙"
+"/music" = "󰎇"
+"/Music" = "󰎇"
+"/pictures" = "󰋩"
+"/Pictures" = "󰋩"
+"/videos" = "󰨜"
+"/Videos" = "󰨜"
+
 [direnv]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $loaded/$allowed]($style)"
+symbol = ""
+format = "  [$symbol $loaded/$allowed]($style)"
 style = "bold orange"
-allowed_msg = " "
-denied_msg = " "
-loaded_msg = " "
-unloaded_msg = " "
+allowed_msg = ""
+not_allowed_msg = ""
+denied_msg = ""
+loaded_msg = ""
+unloaded_msg = ""
 
 [docker_context]
 disabled = false
-symbol = "󰡨 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰡨"
+format = "  [$symbol $version]($style)"
 style = "bold blue"
 only_with_files = true
 
 [dotnet]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version( 󰓾 $tfm )]($style)"
+symbol = ""
+format = "  [$symbol $version( 󰓾 $tfm )]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 heuristic = true
 
 [elixir]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version(   $otp_version )]($style)"
+symbol = ""
+format = "  [$symbol $version(  $otp_version )]($style)"
 version_format = "v${raw}"
 style = "bold purple"
 
 [elm]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold cyan"
 
+[env_var]
+
 [erlang]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [fennel]
 disabled = false
-symbol = "󰹢 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰹢"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold green"
 
 [fill]
 disabled = false
-symbol = ' '
-style = ''
+symbol = " "
+style = ""
+
+[fortran]
+disabled = false
+symbol = "󱈚"
+format = "  [$symbol $version(-$name)]($style)"
+version_format = "${raw}"
+style = "bold purple"
 
 [fossil_branch]
 disabled = false
-symbol = "󰘬 "
+symbol = "󰘬"
 truncation_symbol = "󰇘"
-format = " 󰧞 [$symbol $branch]($style)"
+format = "  [$symbol $branch]($style)"
 style = "bold purple"
 
 [fossil_metrics]
@@ -322,21 +374,25 @@ only_nonzero_diffs = true
 
 [gcloud]
 disabled = false
-symbol = "󱇶 "
-format = " 󰧞 [$symbol $account( 󰍍 $region )]($style)"
+symbol = "󱇶"
+format = "  [$symbol $account( 󰍍 $region )]($style)"
 style = "bold blue"
 
+[gcloud.region_aliases]
+
+[gcloud.project_aliases]
+
 [git_branch]
-disabled = false
+disabled = true
 symbol = ""
 truncation_symbol = "󰇘"
-format = " 󰧞 [$symbol $remote_name/$branch]($style)"
+format = "  [$symbol $remote_name/$branch]($style)"
 style = "bold green"
 only_attached = false
 always_show_remote = true
 
 [git_commit]
-disabled = false
+disabled = true
 tag_symbol = "  "
 format = '( [\[$hash\]]($style))'
 style = "bold green"
@@ -345,15 +401,35 @@ only_detached = true
 tag_disabled = true
 
 [git_metrics]
-disabled = false
-format = "( ([ $added]($added_style)) ([ $deleted]($deleted_style)))"
+disabled = true
+format = "( ([ $added]($added_style)) ([ $deleted]($deleted_style)))"
 added_style = "bold green"
 deleted_style = "bold red"
 only_nonzero_diffs = true
 ignore_submodules = true
 
+[env_var.gsd_branch]
+variable = "GSD_BRANCH"
+format = '( [ $env_value](bold green))'
+
+[env_var.gsd_state]
+variable = "GSD_STATE"
+format = '( [$env_value](bold yellow))'
+
+[env_var.gsd_added]
+variable = "GSD_ADDED"
+format = "([ \uf067$env_value](bold green))"
+
+[env_var.gsd_deleted]
+variable = "GSD_DELETED"
+format = "([ \uf068$env_value](bold red))"
+
+[env_var.gsd_status]
+variable = "GSD_STATUS"
+format = '( [\[$env_value\]](bold yellow))'
+
 [git_state]
-disabled = false
+disabled = true
 rebase = "RBS"
 merge = "MRG"
 revert = "RVT"
@@ -365,98 +441,113 @@ style = "bold yellow"
 format = "( [$state( $progress_current/$progress_total)]($style))"
 
 [git_status]
-disabled = false
-stashed = "󰘓 "
-ahead = " "
-behind = " "
-up_to_date = " "
-diverged = " "
-conflicted = "󰭥 "
-deleted = " "
-renamed = " "
+disabled = true
+stashed = "󰘓"
+ahead = ""
+behind = ""
+up_to_date = ""
+diverged = ""
+conflicted = "󰭥"
+deleted = ""
+renamed = ""
 modified = "󱈸"
-staged = " "
+staged = ""
 untracked = ""
-typechanged = "󰾴 "
+typechanged = "󰾴"
 format = '( [\[$all_status$ahead_behind\]]($style))'
 style = "bold yellow"
 ignore_submodules = false
 
 [gleam]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [golang]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold cyan"
 not_capable_style = "bold red"
 
 [gradle]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold cyan"
 recursive = false
 
 [guix_shell]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol]($style)"
+symbol = ""
+format = "  [$symbol]($style)"
 style = "bold yellow"
 
 [haskell]
 disabled = false
-symbol = "󰲒 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰲒"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold purple"
 
 [haxe]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [helm]
 disabled = false
-symbol = "󰠳 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰠳"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [hg_branch]
 disabled = false
-symbol = " "
+symbol = ""
 truncation_symbol = "󰇘"
-format = " 󰧞 [$symbol $version]($style)"
+format = "  [$symbol $version]($style)"
 style = "bold green"
+
+[hg_state]
+disabled = false
+merge = "MRG"
+rebase = "RBS"
+update = "UPD"
+bisect = "BIS"
+shelve = "SLV"
+graft = "GRF"
+transplant = "TNP"
+histedit = "HED"
+style = "bold yellow"
+format = '\([$state]($style)\) '
 
 [hostname]
 disabled = false
 ssh_symbol = " "
-format = "[$hostname]($style) 󰇙 "
+format = "[$hostname]($style)  "
 style = "bold green"
 ssh_only = true
 trim_at = "."
 
+[hostname.aliases]
+
 [java]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [jobs]
 disabled = false
-symbol = " "
+symbol = ""
 format = "[$symbol( $number)]($style)"
 style = "bold blue"
 threshold = 1
@@ -465,93 +556,102 @@ number_threshold = 2
 
 [julia]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold purple"
 
 [kotlin]
 disabled = false
-symbol = "󱈙 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󱈙"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [kubernetes]
 disabled = false
-symbol = "󱃾 "
-format = ' 󰧞 [$symbol $context \[$namespace\]]($style)'
+symbol = "󱃾"
+format = '  [$symbol $context \[$namespace\]]($style)'
 style = "bold cyan"
+
+[line_break]
+disabled = false
 
 [localip]
 ssh_only = true
-format = "[$localipv4]($style) 󰅂 "
+format = "[$localipv4]($style)  "
 style = "bold green"
 disabled = false
 
 [lua]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [memory_usage]
 disabled = false
-symbol = "󰘚 "
+symbol = "󰘚"
 format = "[$symbol ${ram_pct}( | ${swap_pct})]($style)"
 style = "bold yellow"
 threshold = 80
 
 [meson]
 disabled = false
-symbol = " "
+symbol = ""
 truncation_symbol = "󰇘"
-format = " 󰧞 [$symbol $version]($style)"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [mojo]
 disabled = false
-format = " 󰧞 [$symbol $version]($style)"
-symbol = "󰈸 "
+format = "  [$symbol $version]($style)"
+symbol = "󰈸"
 style = "bold red"
 
 [nats]
 disabled = false
-format = " 󰧞 [$symbol $version]($style)"
-symbol = "󱅲 "
+format = "  [$symbol $version]($style)"
+symbol = "󱅲"
 style = "bold purple"
+
+[netns]
+disabled = false
+format = '[$symbol \[$name\]]($style) '
+symbol = "󰀂"
+style = "blue bold dimmed"
 
 [nim]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold yellow"
 
 [nix_shell]
 disabled = false
-symbol = " "
+symbol = ""
 impure_msg = ""
 pure_msg = ""
 unknown_msg = ""
-format = ' 󰧞 [$symbol\[ $name\] $state]($style)'
+format = '  [$symbol\[ $name\] $state]($style)'
 style = "bold blue"
 heuristic = false
 
 [nodejs]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold green"
 not_capable_style = "bold red"
 
 [ocaml]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold yellow"
 global_switch_indicator = ""
@@ -559,22 +659,22 @@ local_switch_indicator = "*"
 
 [odin]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 style = "bold cyan"
 show_commit = false
 
 [opa]
 disabled = false
-symbol = "󱄻 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󱄻"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [openstack]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $cloud/$project]($style)"
+symbol = ""
+format = "  [$symbol $cloud/$project]($style)"
 style = "bold red"
 
 [os]
@@ -585,74 +685,75 @@ style = "bold"
 [os.symbols]
 AIX = "[󰾡](white)"
 Alpaquita = "[](white)"
-AlmaLinux = "[ ](green)"
-Alpine = "[ ](blue)"
-Amazon = "[ ](yellow)"
-Android = "[ ](green)"
-Arch = "[ ](cyan)"
-Artix = "[ ](cyan)"
-CachyOS = "[ ](red)"
-CentOS = "[ ](white)"
-Debian = "[ ](red)"
+AlmaLinux = "[](green)"
+Alpine = "[](blue)"
+ALTLinux = "Ⓐ "
+Amazon = "[](yellow)"
+Android = "[](green)"
+Arch = "[](cyan)"
+Artix = "[](cyan)"
+CachyOS = "[](red)"
+CentOS = "[](white)"
+Debian = "[](red)"
 DragonFly = "[](yellow)"
 Emscripten = "[](white)"
-EndeavourOS = "[ ](purple)"
-Fedora = "[ ](blue)"
-FreeBSD = "[ ](red)"
-Garuda = "[ ](red)"
-Gentoo = "[ ](purple)"
+EndeavourOS = "[](purple)"
+Fedora = "[](blue)"
+FreeBSD = "[](red)"
+Garuda = "[](red)"
+Gentoo = "[](purple)"
 HardenedBSD = "[](blue)"
-Illumos = "[ ](white)"
-Kali = "[ ](red)"
-Linux = "[󰌽 ](yellow)"
+Illumos = "[](white)"
+Kali = "[](red)"
+Linux = "[󰌽](yellow)"
 Mabox = "[](white)"
-Macos = "[ ](white)"
-Manjaro = "[ ](green)"
+Macos = "[](white)"
+Manjaro = "[](green)"
 Mariner = "[](blue)"
 MidnightBSD = "[](white)"
-Mint = "[󰣭 ](green)"
+Mint = "[󰣭](green)"
 NetBSD = "[󰈿](yellow)"
-NixOS = "[ ](blue)"
-Nobara = "[ ](blue)"
-OpenBSD = "[ ](yellow)"
+NixOS = "[](blue)"
+Nobara = "[](blue)"
+OpenBSD = "[](yellow)"
 OpenCloudOS = "[](white)"
 openEuler = "[](white)"
-openSUSE = "[ ](green)"
-OracleLinux = "[󰎡 ](red)"
-Pop = "[ ](white)"
-Raspbian = "[ ](red)"
-Redhat = "[ ](red)"
-RedHatEnterprise = "[ ](red)"
-RockyLinux = "[ ](green)"
+openSUSE = "[](green)"
+OracleLinux = "[󰎡](red)"
+Pop = "[](white)"
+Raspbian = "[](red)"
+Redhat = "[](red)"
+RedHatEnterprise = "[](red)"
+RockyLinux = "[](green)"
 Redox = "[](red)"
-Solus = "[ ](blue)"
-SUSE = "[ ](green)"
-Ubuntu = "[ ](red)"
+Solus = "[](blue)"
+SUSE = "[](green)"
+Ubuntu = "[](red)"
 Ultramarine = "[](blue)"
-Unknown = "[ ](red)"
-Uos = "[ ](green)"
-Void = "[ ](green)"
-Windows = "[󰖳 ](blue)"
+Unknown = "[](red)"
+Uos = "[](green)"
+Void = "[](green)"
+Windows = "[󰖳](blue)"
 
 [package]
 disabled = false
-symbol = "󰏖 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰏖"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold white"
 display_private = false
 
 [perl]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [php]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold purple"
 
@@ -660,102 +761,102 @@ style = "bold purple"
 disabled = false
 symbol = ""
 truncation_symbol = "󰇘"
-format = " 󰧞 [$symbol $channel]($style)"
+format = "  [$symbol $channel]($style)"
 style = "bold purple"
 
 [pulumi]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $username@$stack $version]($style)"
+symbol = ""
+format = "  [$symbol $username@$stack $version]($style)"
 version_format = "v${raw}"
 style = "bold purple"
 search_upwards = true
 
 [purescript]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold yellow"
 
 [python]
 disabled = false
-symbol = " "
-pyenv_prefix = "󰗄 "
-format = ' 󰧞 [$symbol ($pyenv_prefix)$version( \($virtualenv\))]($style)'
+symbol = ""
+pyenv_prefix = "󰗄"
+format = '  [$symbol ($pyenv_prefix)$version( \($virtualenv\))]($style)'
 version_format = "v${raw}"
 style = "bold cyan"
 pyenv_version_name = false
 
 [quarto]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [raku]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version(-$vm_version)]($style)"
+symbol = ""
+format = "  [$symbol $version(-$vm_version)]($style)"
 version_format = "v${raw}"
 style = "bold purple"
 
 [red]
 disabled = false
-symbol = "󱥒 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󱥒"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [rlang]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [ruby]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [rust]
 disabled = false
-symbol = "󱘗 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󱘗"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [scala]
 disabled = false
 symbol = ""
-format = " 󰧞 [$symbol $version]($style)"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold red"
 
 [shell]
 disabled = false
-bash_indicator = "[ ](green)"
-fish_indicator = "[󰈺 ](blue)"
-zsh_indicator = "[󱗁 ](purple)"
-powershell_indicator = "[󰨊 ](blue)"
-ion_indicator = "[󰹻 ](red)"
+bash_indicator = "[](green)"
+fish_indicator = "[󰈺](blue)"
+zsh_indicator = "[󱗁](purple)"
+powershell_indicator = "[󰨊](blue)"
+ion_indicator = "[󰹻](red)"
 elvish_indicator = "[](green)"
 tcsh_indicator = "[󰙱](yellow)"
-nu_indicator = "[󰓫 ](white)"
-xonsh_indicator = "[ ](cyan)"
-cmd_indicator = "[ ](white)"
+nu_indicator = "[󰓫](white)"
+xonsh_indicator = "[](cyan)"
+cmd_indicator = "[](white)"
 unknown_indicator = "[](red)"
 format = "[$indicator]($style)"
 style = "bold"
 
 [shlvl]
 disabled = false
-symbol = "󱞩 "
-format = "[$symbol$shlvl]($style)"
+symbol = "󱞩"
+format = "[$symbol $shlvl]($style)"
 style = "bold yellow"
 threshold = 2
 repeat = false
@@ -763,22 +864,22 @@ repeat_offset = 0
 
 [singularity]
 disabled = false
-symbol = "󰰢 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰰢"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [solidity]
 disabled = false
 symbol = "󰡪"
-format = " 󰧞 [$symbol $version]($style)"
+format = "  [$symbol $version]($style)"
 version_format = "v${major}.${minor}.${patch}"
 style = "bold blue"
 
 [spack]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $environment]($style)"
+symbol = ""
+format = "  [$symbol $environment]($style)"
 style = "bold blue"
 truncation_length = 1
 
@@ -786,45 +887,45 @@ truncation_length = 1
 disabled = false
 format = "[$symbol( $status)( | $common_meaning)( | $signal_name)]($style)"
 map_symbol = true
-not_executable_symbol = "[ ](yellow)"
-not_found_symbol = "[󰍊 ](yellow)"
+not_executable_symbol = "[](yellow)"
+not_found_symbol = "[󰍊](yellow)"
 pipestatus = true
 pipestatus_format = "[$pipestatus 󰄾 $symbol( $status)( | $common_meaning)( | $signal_name)]($style)"
 pipestatus_segment_format = "[$status( | $common_meaning)( | $signal_name)]($style)"
 pipestatus_separator = " 󰅂 "
 recognize_signal_code = true
-sigint_symbol = "[󰜺 ](red)"
+sigint_symbol = "[󰜺](red)"
 signal_symbol = "[󱐋](yellow)"
 style = "bold"
 success_symbol = "󰸞"
 success_style = "bold green"
 failure_style = "bold red"
-symbol = "[󱎘 ](red)"
+symbol = "[󱎘](red)"
 
 [sudo]
-disabled = false
-symbol = "󰚌 "
+disabled = true
+symbol = "󰚌"
 format = "[$symbol]($style)"
 style = "bold white"
 allow_windows = true
 
 [swift]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold yellow"
 
 [terraform]
 disabled = false
-symbol = "󱁢 "
-format = " 󰧞 [$symbol $workspace\\[$version\\]($style)"
+symbol = "󱁢"
+format = "  [$symbol $workspace\\[$version\\]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [time]
 disabled = true
-format = "[󰥔  $time]($style)"
+format = "[󰥔 $time]($style)"
 style = "bold yellow"
 time_range = "-"
 use_12hr = true
@@ -832,14 +933,14 @@ utc_time_offset = "local"
 
 [typst]
 disabled = false
-symbol = "󰰥 "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = "󰰥"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold cyan"
 
 [username]
 disabled = false
-format = "[$user]($style) 󰁥  "
+format = "[$user]($style) 󰁥 "
 style_root = "bold red"
 style_user = "bold cyan"
 show_always = false
@@ -847,26 +948,26 @@ show_always = false
 [vagrant]
 disabled = false
 symbol = "󱂌"
-format = " 󰧞 [$symbol $version]($style)"
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold cyan"
 
 [vcsh]
 disabled = false
 symbol = ""
-format = " 󰧞 [$symbol $repo]($style)"
+format = "  [$symbol $repo]($style)"
 style = "bold yellow"
 
 [vlang]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold blue"
 
 [zig]
 disabled = false
-symbol = " "
-format = " 󰧞 [$symbol $version]($style)"
+symbol = ""
+format = "  [$symbol $version]($style)"
 version_format = "v${raw}"
 style = "bold yellow"
