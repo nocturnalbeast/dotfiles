@@ -20,7 +20,7 @@ fi
 
 ## 2: make sure options are reset
 
-emulate -L zsh
+emulate zsh
 
 
 ## 3: load shell options
@@ -84,37 +84,32 @@ source "$ZDOTDIR/include/functions.zsh"
 source "$ZDOTDIR/include/keybindings.zsh"
 
 
-## 9: load site functions
+## 9: early initialization - load site functions, profile, and aliases
 
 function load_site_functions() {
     local site_funcs=(/usr/share/zsh/site-functions/^_*(.N:A))
     (( $#site_funcs )) && source $^site_funcs
     unset site_funcs
 }
-zsh-defer -a load_site_functions
 
-
-## 10: setup environment variables
-
-# source profile if it exists
 function load_profile() {
     [[ -f "$HOME/.profile" ]] && source "$HOME/.profile"
 }
-zsh-defer -a load_profile
 
-# source user aliases if it exists
 function load_user_aliases() {
     [[ -f "${XDG_CONFIG_HOME}/shell/aliases" ]] && source "${XDG_CONFIG_HOME}/shell/aliases"
 }
-zsh-defer -a load_user_aliases
+
+function _early_init() {
+    load_site_functions
+    load_profile
+    load_user_aliases
+    source "$ZDOTDIR/include/completion.zsh"
+}
+zsh-defer -a _early_init
 
 
-## 11: define completion behavior
-
-zsh-defer -a source "$ZDOTDIR/include/completion.zsh"
-
-
-## 12: miscellaneous settings
+## 10: miscellaneous settings
 
 # deduplicate PATH
 typeset -gU PATH path
@@ -123,7 +118,7 @@ typeset -gU PATH path
 typeset -g WORDCHARS='*?[]~=&;!#$%^(){}'
 
 
-## 13: setup plugin manager
+## 11: setup plugin manager
 
 ZCOMET_HOME="$XDG_DATA_HOME/zsh/zcomet"
 ZCOMET_SCRIPT="$ZCOMET_HOME/bin/zcomet.zsh"
@@ -152,56 +147,49 @@ if [[ -z ${ZCOMET[REPOS_DIR]} ]]; then
     : ${ZCOMET[GITSERVER]:=${zcomet_git_server:-github.com}}
 fi
 
-function _load_plugin_with_hooks() {
-    local plugin=$1 hook_script=$2 mode=$3
-    shift 3
-
-    if [[ -f $hook_script ]]; then
-        source $hook_script
-        (( $+functions[atinit] )) && atinit
-        zcomet load $plugin $@
-        (( $+functions[atload] )) && atload
-        unfunction atclone atinit atload 2>/dev/null
-    else
-        zcomet load $plugin $@
-    fi
-}
-
-function load_plugin() {
+function load_plugins() {
     setopt extendedglob
-
     local mode=${1:?"Mode (lazy/eager) required"}
-    local plugin=${2:?"Plugin name required"}
-    local plugin_name=${${plugin##*/}%@*}
-    local hook_script="$ZDOTDIR/plughook/${plugin_name}.zsh"
-    shift 2
+    shift
+    local plugin plugin_name hook_script
+    local -a plugins=("$@")
 
-
-    if [[ ! -d $ZCOMET_HOME/repos/${plugin%%@*} ]]; then
-        _zcomet_clone_repo $plugin
-        if [[ -f $hook_script ]]; then
-            source $hook_script
-            (( $+functions[atclone] )) && atclone
-            unfunction atclone atinit atload 2>/dev/null
+    for plugin in "${plugins[@]}"; do
+        plugin_name=${${plugin##*/}%@*}
+        hook_script="$ZDOTDIR/plughook/${plugin_name}.zsh"
+        if [[ ! -d $ZCOMET_HOME/repos/${plugin%%@*} ]]; then
+            _zcomet_clone_repo $plugin
+            if [[ -f $hook_script ]]; then
+                source $hook_script
+                (( $+functions[atclone] )) && atclone
+                unfunction atclone 2>/dev/null
+            fi
         fi
-    fi
+    done
 
     if [[ $mode == lazy ]]; then
-        zsh-defer -a _load_plugin_with_hooks "$plugin" "$hook_script" "$mode" "$@"
+        zsh-defer -a _deferred_plugin_load "$mode" "${plugins[@]}"
     else
-        _load_plugin_with_hooks "$plugin" "$hook_script" "$mode" "$@"
+        _deferred_plugin_load "$mode" "${plugins[@]}"
     fi
 }
 
-function load_snippet() {
-    local mode=${1:?"Mode (lazy/eager) required"}
-    local url=${2:?"URL required"}
-
-    if [[ $mode == "lazy" ]]; then
-        zsh-defer -a zcomet snippet "$url"
-    else
-        zcomet snippet "$url"
-    fi
+function _deferred_plugin_load() {
+    local mode=$1; shift
+    local plugin plugin_name hook_script
+    for plugin in "$@"; do
+        plugin_name=${${plugin##*/}%@*}
+        hook_script="$ZDOTDIR/plughook/${plugin_name}.zsh"
+        if [[ -f $hook_script ]]; then
+            source $hook_script
+            (( $+functions[atinit] )) && atinit
+            zcomet load $plugin
+            (( $+functions[atload] )) && atload
+            unfunction atclone atinit atload 2>/dev/null
+        else
+            zcomet load $plugin
+        fi
+    done
 }
 
 function update_plugins() {
@@ -212,94 +200,83 @@ function update_plugins() {
 }
 
 
-## 14: load plugins
+## 12: load plugins via batching - pre-compinit stage
 
-# faster cache for binaries that generate initalization scripts which are normally passed into eval()
-load_plugin lazy QuarticCat/zsh-smartcache
-
-# shell colors
-load_plugin lazy tinted-theming/tinted-shell
-
-# smarter cd
-# TODO: setup ranked completion for zsh-z
-load_plugin lazy agkozak/zsh-z
-load_plugin lazy mollifier/cd-gitroot
-load_plugin lazy jocelynmallon/zshmarks
-zsh-defer -a zcomet trigger bd Tarrasch/zsh-bd
-
-# enhance git
-load_plugin lazy wfxr/forgit
-load_plugin lazy viko16/gitcd.plugin.zsh
-load_plugin lazy unixorn/git-extra-commands
-load_plugin lazy tj/git-extras
-load_plugin lazy k4rthik/git-cal
-load_plugin lazy paulirish/git-open
-load_plugin lazy paulirish/git-recent
-load_plugin lazy davidosomething/git-my
-
-# fzf integration
-load_plugin lazy junegunn/fzf
-load_plugin lazy Aloxaf/fzf-tab
-load_plugin lazy Freed-Wu/fzf-tab-source
-
-# ctrl+z to resume
-load_plugin lazy mdumitru/fancy-ctrl-z
-
-# colorize command output
-load_plugin lazy garabik/grc
-load_plugin lazy Freed-Wu/zsh-help
-
-# pair brackets and quotations
-load_plugin lazy hlissner/zsh-autopair
-
-# vim easymotion-like movements in command line
-load_plugin lazy hchbaw/zce.zsh
-
-# remind you of your aliases
-load_plugin lazy MichaelAquilina/zsh-you-should-use
-
-# alias expansion
-load_plugin lazy momo-lab/zsh-abbrev-alias
-
-# let the shell set the terminal window name
-load_plugin lazy trystan2k/zsh-tab-title
-
-# have notifications for long-running commands
-load_plugin lazy kevinywlui/zlong_alert.zsh
-
-# syntax highlighting
-load_plugin lazy zdharma-continuum/fast-syntax-highlighting
-
-# history-substring search
-load_plugin lazy zsh-users/zsh-history-substring-search
-
-# autosuggestions
-load_plugin lazy zsh-users/zsh-autosuggestions
-
-# completions
-load_plugin lazy zsh-users/zsh-completions
-load_plugin lazy MenkeTechnologies/zsh-more-completions
-load_plugin lazy RobSis/zsh-completion-generator
-
-# sudo helper
-load_snippet lazy https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/sudo/sudo.plugin.zsh
+load_plugins lazy \
+    QuarticCat/zsh-smartcache \
+    tinted-theming/tinted-shell \
+    agkozak/zsh-z \
+    mollifier/cd-gitroot \
+    jocelynmallon/zshmarks \
+    wfxr/forgit \
+    viko16/gitcd.plugin.zsh \
+    unixorn/git-extra-commands \
+    tj/git-extras \
+    k4rthik/git-cal \
+    paulirish/git-open \
+    paulirish/git-recent \
+    davidosomething/git-my \
+    mdumitru/fancy-ctrl-z \
+    garabik/grc \
+    Freed-Wu/zsh-help \
+    hlissner/zsh-autopair \
+    hchbaw/zce.zsh \
+    MichaelAquilina/zsh-you-should-use \
+    momo-lab/zsh-abbrev-alias \
+    trystan2k/zsh-tab-title \
+    kevinywlui/zlong_alert.zsh \
+    zsh-users/zsh-completions \
+    MenkeTechnologies/zsh-more-completions \
+    RobSis/zsh-completion-generator
 
 
-## 15: configure command history
+## 13: configure shell history
 
+# set history file eagerly to prevent commands being written to the wrong
+# location before the deferred chain runs. overridden by history.zsh if atuin
+# is present.
+export HISTFILE="$XDG_CACHE_HOME/shell_history"
+export HISTSIZE=50000
+export SAVEHIST=50000
 zsh-defer -a source "$ZDOTDIR/include/history.zsh"
 
 
-## 16: helpers and completions for certain commands using zcomet
+## 14: trigger-based loading for commands (load only on first command invocation) + compinit
 
-zsh-defer -a zcomet trigger pip ohmyzsh plugins/pip
-zsh-defer -a zcomet trigger git ohmyzsh plugins/gitfast
+function _post_plugin_setup() {
+    zcomet snippet "https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/sudo/sudo.plugin.zsh"
+    zcomet trigger bd Tarrasch/zsh-bd
+    zcomet trigger pip ohmyzsh plugins/pip
+    zcomet trigger git ohmyzsh plugins/gitfast
+    source "$ZDOTDIR/include/widgets.zsh"
+    zcomet compinit
+    # enable command hashing after first prompt so runtime command lookup is fast
+    # without paying the ~17ms PATH-scan cost during synchronous startup
+    setopt HASH_CMDS
+}
+zsh-defer -a _post_plugin_setup
 
 
-## 17: post-setup tasks
+## 15: load plugins via batching - post-compinit stage
 
-zsh-defer -a source "$ZDOTDIR/include/widgets.zsh"
-zsh-defer -a zcomet compinit
+# these plugins require compinit to have run and/or depend on each other's
+# load order. they are queued after _post_plugin_setup via zsh-defer -a and
+# execute in FIFO order: fzf -> fzf-tab -> fzf-tab-source -> autosuggestions -> fsyth -> hss
+load_plugins lazy \
+    junegunn/fzf \
+    Aloxaf/fzf-tab \
+    Freed-Wu/fzf-tab-source \
+    zsh-users/zsh-autosuggestions \
+    zdharma-continuum/fast-syntax-highlighting \
+    zsh-users/zsh-history-substring-search
+
+
+## 16: cleanup internal functions (after deferred tasks complete)
+
+zsh-defer -ac 'unfunction _deferred_plugin_load _early_init _post_plugin_setup load_site_functions load_profile load_user_aliases 2>/dev/null'
+
+
+## 17: show profiling report (if profiling variable is set)
 
 if [ -n "${ZSH_PROFILE_STARTUP:+x}" ]; then
     zprof

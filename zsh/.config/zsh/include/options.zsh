@@ -53,10 +53,11 @@ unsetopt BEEP                   # don't beep on errors
 unsetopt CLOBBER                # don't allow > to overwrite existing files
 
 # command and process behavior
-unsetopt HASH_CMDS              # disable caching of command locations for slight performance gain
-unsetopt HASH_DIRS              # disable caching of directory locations
-unsetopt HASH_EXECUTABLES_ONLY  # disable executable-only command hashing
+# hashing is enabled deferred (see .zshrc section 17) to avoid the ~17ms
+# PATH-scan cost at startup when the first external command triggers hashing
+unsetopt HASH_CMDS              # don't cache command locations at startup
+unsetopt HASH_DIRS              # don't bulk-scan PATH directories at startup
+unsetopt HASH_EXECUTABLES_ONLY  # only relevant with HASH_DIRS enabled
 
 # spelling correction
 setopt CORRECT                  # try to correct command spelling
-setopt CORRECT_ALL              # try to correct all arguments
