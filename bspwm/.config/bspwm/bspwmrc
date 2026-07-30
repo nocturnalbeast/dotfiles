@@ -6,9 +6,6 @@
 # |___|___|  _|_____|_|_|_|
 #         |_|
 
-# use the set-monitors script to setup all available monitors
-"${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-monitors
-
 # use the set-colors script to define all colors for windows and borders
 "${XDG_CONFIG_HOME:-$HOME/.config}"/bspwm/set-colors
 
