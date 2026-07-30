@@ -113,8 +113,8 @@ done
 alias pdate="date '+%a, %b %d %Y %T %Z'"
 
 # quick way to reload / resource profile
-# this is required since profile reload gets skipped due to condition on ENV_DONE variable.
-alias profilereload="ENV_DONE=0 source ~/.profile"
+# resets the guard variables so .profile re-runs unconditionally
+alias profilereload="__PROFILE_SOURCED= __GUIPROFILE_SOURCED= source ~/.profile"
 
 # in mac systems, use homebrew python as default
 if [ "$(uname)" = "Darwin" ] && command -v "brew" > /dev/null 2>&1; then
