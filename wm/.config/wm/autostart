@@ -5,130 +5,112 @@
 # | .'| | |  _| . |_ -|  _| .'|  _|  _|
 # |__,|___|_| |___|___|_| |__,|_| |_|
 
-is_wayland() {
-    [ -n "$WAYLAND_DISPLAY" ]
+# Declarative autostart for the desktop session.
+# Each entry is 8 ` :: `-delimited fields:
+#   name :: restart :: backend :: type :: check_binaries :: check_processes :: condition :: command
+#
+# restart:   hot = kill+restart every call; cold = skip if running
+# backend:   x11 / wayland / both
+# type:      oneshot = foreground (blocking); daemon = background
+# check_binaries:   space-separated; at least one must exist. Empty = use name.
+# check_processes:  space-separated; cold: skip if ANY running; hot: kill ALL. Empty = use name.
+# condition: shell expr; must return 0 for entry to run. Empty = always pass.
+# command:   shell command to execute.
+
+WM_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/wm"
+BSPWM_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/bspwm"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}"
+ENTRIES="
+layout :: hot :: x11 :: oneshot :: xrandr ::  :: [ -f \"${WM_CONFIG}/current_layout\" ] :: ${WM_CONFIG}/layouts/\"\$(cat \"${WM_CONFIG}/current_layout\" 2>/dev/null)\"
+set-dpi :: hot :: x11 :: oneshot :: display ::  ::  :: display set-dpi
+wallpaper :: hot :: both :: oneshot :: background ::  ::  :: background restore
+pipewire :: cold :: both :: daemon :: systemctl pipewire :: pipewire ::  :: systemctl --user is-active --quiet pipewire.service 2>/dev/null || systemctl --user start pipewire.service 2>/dev/null || pipewire
+notificationd :: cold :: both :: daemon :: notificationd :: dunst mako ::  :: notificationd start
+picom :: hot :: x11 :: daemon ::  ::  ::  :: picom -b
+clipcatd :: cold :: both :: daemon ::  ::  ::  :: clipcatd
+lockctl :: cold :: both :: daemon :: lockctl :: xss-lock swayidle hypridle ::  :: lockctl start
+quickshell :: hot :: both :: daemon ::  ::  ::  :: quickshell
+nm-applet :: cold :: both :: daemon ::  ::  ::  :: nm-applet
+blueman-applet :: cold :: both :: daemon ::  ::  ::  :: blueman-applet
+udiskie :: cold :: both :: daemon ::  ::  ::  :: udiskie -Avnt
+kanata-tray :: cold :: both :: daemon :: kanata-tray ::  ::  :: mkdir -p \"${STATE_DIR}/kanata-tray\"; KANATA_TRAY_LOG_DIR=\"${STATE_DIR}/kanata-tray\" kanata-tray
+numlockx :: hot :: x11 :: oneshot ::  ::  ::  :: numlockx off
+xsetroot :: hot :: x11 :: oneshot ::  ::  ::  :: xsetroot -cursor_name left_ptr
+unclutter :: cold :: x11 :: daemon ::  ::  ::  :: unclutter
+set-monitors :: hot :: x11 :: oneshot :: bspc ::  :: bspc query -M > /dev/null 2>&1 && [ -x \"${BSPWM_CONFIG}/set-monitors\" ] :: ${BSPWM_CONFIG}/set-monitors
+owntone :: hot :: both :: oneshot :: owntonectl ::  :: ! owntonectl status > /dev/null 2>&1 :: owntonectl start
+mopidy :: cold :: both :: daemon :: mopidy :: mopidy :: ! owntonectl status > /dev/null 2>&1 :: mopidy
+mpd :: cold :: both :: daemon :: mpd :: mpd :: ! owntonectl status > /dev/null 2>&1 && ! pgrep -x mopidy > /dev/null 2>&1 :: mpd
+"
+
+is_wayland() { [ -n "$WAYLAND_DISPLAY" ]; }
+
+backend_matches() {
+    case "$1" in
+        both) return 0 ;;
+        wayland) is_wayland && return 0 ;;
+        x11) ! is_wayland && return 0 ;;
+    esac
+    return 1
 }
 
-# Kill any existing instance, then launch in the background.
-# Usage: ensure_daemon <process_name> <command...>
-ensure_daemon() {
-    _name="$1"
-    shift
-    pkill -x "$_name" 2> /dev/null
-    sleep 0.3
-    "$@" &
+check_any_binary() {
+    for bin in $1; do
+        command -v "$bin" > /dev/null 2>&1 && return 0
+    done
+    return 1
 }
 
-# Only start if not already running. Does NOT restart.
-# Usage: start_once <process_name> <command...>
-start_once() {
-    _name="$1"
-    shift
-    pgrep -x "$_name" > /dev/null 2>&1 && return 0
-    "$@" &
+any_process_running() {
+    for proc in $1; do
+        pgrep -x "$proc" > /dev/null 2>&1 && return 0
+    done
+    return 1
 }
 
-if ! is_wayland; then
-    # configure monitor layout and set dpi (for X11)
-    layout_file="${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_layout"
-    if [ -f "$layout_file" ]; then
-        "${XDG_CONFIG_HOME:-$HOME/.config}"/wm/layouts/"$(cat "$layout_file")" &
+kill_all_processes() {
+    _killed=1
+    for proc in $1; do
+        pkill -x "$proc" 2> /dev/null && _killed=0
+    done
+    return $_killed
+}
+
+echo "$ENTRIES" | while IFS= read -r entry; do
+    [ -z "$entry" ] && continue
+
+    name=$(echo "$entry" | awk -F' :: ' '{print $1}')
+    restart=$(echo "$entry" | awk -F' :: ' '{print $2}')
+    backend=$(echo "$entry" | awk -F' :: ' '{print $3}')
+    type=$(echo "$entry" | awk -F' :: ' '{print $4}')
+    check_binaries=$(echo "$entry" | awk -F' :: ' '{print $5}')
+    check_processes=$(echo "$entry" | awk -F' :: ' '{print $6}')
+    condition=$(echo "$entry" | awk -F' :: ' '{print $7}')
+    command=$(echo "$entry" | awk -F' :: ' '{print $8}')
+
+    # 1. Condition check
+    if [ -n "$condition" ]; then
+        eval "$condition" > /dev/null 2>&1 || continue
     fi
-    dpi_script="${XDG_CONFIG_HOME:-$HOME/.config}/wm/set-dpi"
-    if [ -f "$dpi_script" ]; then
-        "$dpi_script"
+
+    # 2. Binary existence check
+    bins="${check_binaries:-$name}"
+    check_any_binary "$bins" || continue
+
+    # 3. Backend check
+    backend_matches "$backend" || continue
+
+    # 4. Restart policy
+    procs="${check_processes:-$name}"
+    if [ "$restart" = "cold" ]; then
+        any_process_running "$procs" && continue
+    else
+        kill_all_processes "$procs" && sleep 0.3
     fi
-else
-    # run xsettingsd with the source path
-    ensure_daemon xsettingsd xsettingsd --config "${XDG_CONFIG_HOME:-$HOME/.config}/wm/xsettingsd.conf"
-fi
 
-# restore the wallpaper
-background restore
-
-# start audio
-if systemctl --user list-unit-files pipewire.service > /dev/null 2>&1; then
-    if [ "$(systemctl --user is-active pipewire.service)" != "active" ]; then
-        systemctl --user restart pipewire.service
-    fi
-elif command -v pipewire > /dev/null 2>&1; then
-    if ! pgrep -x "pipewire" > /dev/null; then
-        start_once pipewire pipewire
-    fi
-fi
-
-# launch notification daemon
-if command -v notificationd > /dev/null 2>&1; then
-    start_once notificationd notificationd start
-fi
-
-# launch compositor for X11 WMs
-if ! is_wayland; then
-    ensure_daemon picom picom -b
-fi
-
-# launch clipboard manager
-if command -v clipcatd > /dev/null 2>&1; then
-    ensure_daemon clipcatd clipcatd
-fi
-
-# launch screen autolocker
-if ! lockctl status > /dev/null 2>&1; then
-    lockctl start
-fi
-
-# launch system bar
-if command -v quickshell > /dev/null 2>&1; then
-    ensure_daemon quickshell quickshell
-fi
-
-# networkmanager tray applet
-if command -v nm-applet > /dev/null 2>&1; then
-    ensure_daemon nm-applet nm-applet
-fi
-
-# bluetooth tray applet
-if command -v blueman-applet > /dev/null 2>&1; then
-    ensure_daemon blueman-applet blueman-applet
-fi
-
-# disk mounting tray applet
-if command -v udiskie > /dev/null 2>&1; then
-    ensure_daemon udiskie udiskie -Avnt
-fi
-
-# keyboard remapping
-if command -v kanata-tray > /dev/null 2>&1; then
-    export KANATA_TRAY_LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/kanata-tray"
-    mkdir -p "$KANATA_TRAY_LOG_DIR"
-    ensure_daemon kanata-tray kanata-tray
-fi
-
-# set numlock key to off (X11 only)
-if ! is_wayland && command -v numlockx > /dev/null 2>&1; then
-    numlockx off &
-fi
-
-# mouse configuration for x11
-if ! is_wayland; then
-    # make sure the default root window uses the correct pointer
-    xsetroot -cursor_name left_ptr
-    # hide cursor when inactive
-    ensure_daemon unclutter unclutter
-fi
-
-# launch music player server
-music_started=false
-if command -v owntonectl > /dev/null 2>&1 && owntonectl start; then
-    music_started=true
-fi
-if [ "$music_started" = false ] && command -v mopidy > /dev/null 2>&1; then
-    start_once mopidy mopidy
-    sleep 2
-    if pgrep -x mopidy > /dev/null 2>&1; then
-        music_started=true
-    fi
-fi
-if [ "$music_started" = false ] && command -v mpd > /dev/null 2>&1; then
-    start_once mpd mpd
-fi
+    # 5. Execute
+    case "$type" in
+        oneshot) eval "$command" ;;
+        daemon) eval "$command" & ;;
+    esac
+done
