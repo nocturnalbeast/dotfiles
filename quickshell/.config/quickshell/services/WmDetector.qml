@@ -13,6 +13,18 @@ Singleton {
     readonly property bool isX11: Quickshell.env("XDG_SESSION_TYPE") === "x11" || (Quickshell.env("DISPLAY") !== null && Quickshell.env("WAYLAND_DISPLAY") === null)
     readonly property bool isWayland: Quickshell.env("XDG_SESSION_TYPE") === "wayland" || Quickshell.env("WAYLAND_DISPLAY") !== null
 
+    // Detect the specific compositor
+    readonly property string compositor: {
+        if (isX11) return "x11";
+        if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") !== null) return "hyprland";
+        if (Quickshell.env("SWAYSOCK") !== null) return "sway";
+        var desktop = Quickshell.env("XDG_CURRENT_DESKTOP") || "";
+        if (desktop.indexOf("river") !== -1) return "river";
+        if (desktop.indexOf("niri") !== -1) return "niri";
+        if (desktop.indexOf("somewm") !== -1) return "somewm";
+        return "";
+    }
+
     // Detect specific WM name on X11 via EWMH _NET_SUPPORTING_WM_CHECK
     property string _wmName: ""
     readonly property string wmName: _wmName
