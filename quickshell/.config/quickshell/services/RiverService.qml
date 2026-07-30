@@ -11,13 +11,12 @@ Singleton {
     property var workspaces: []
     property string activeWorkspace: "1"
     property string activeWindowTitle: ""
-    property int workspaceCount: 10
-    property int focusedTags: 0
-    property bool connected: false
+    property bool hasFullscreen: false
     property var occupancyMap: ({})
     property bool isWorkspaceEmpty: false
 
     Component.onCompleted: {
+        if (WmDetector.compositor !== "river") return;
         initializeWorkspaces();
     }
 
@@ -33,9 +32,7 @@ Singleton {
             });
         }
         root.workspaces = ws;
-        root.workspaceCount = 10;
         root.activeWorkspace = "1";
-        root.connected = true;
     }
 
     // Polling control for occupancy (desktop clock)
@@ -49,32 +46,17 @@ Singleton {
         _occupancyConsumers = Math.max(0, _occupancyConsumers - 1);
     }
 
-    // Poll river state periodically
+    // Poll occupancy only — focus tracking is impossible because
+    // riverctl get-focused-tags does not exist (see river.md §4e).
+    // Workspace focus state stays at the initial assumption (tag 1).
     Timer {
-        running: WmDetector.isWayland
+        running: WmDetector.compositor === "river"
         interval: 2000
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            focusCheck.running = true;
             if (root.trackOccupancy)
                 occupancyCheck.running = true;
-        }
-    }
-
-    Process {
-        id: focusCheck
-        running: false
-        command: ["riverctl", "get-focused-tags"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                let output = data.toString().trim();
-                let focusedValue = parseInt(output);
-                if (!isNaN(focusedValue) && focusedValue !== root.focusedTags) {
-                    root.focusedTags = focusedValue;
-                    updateWorkspaces();
-                }
-            }
         }
     }
 
@@ -102,57 +84,25 @@ Singleton {
                     }
                 }
                 root.occupancyMap = map;
-                root.updateWorkspaces();
+                root.updateOccupancy();
             }
         }
     }
 
-    function updateWorkspaces() {
+    // Update occupancy on existing workspace array, preserving focus state.
+    function updateOccupancy() {
         let ws = [];
-        let foundActive = false;
         for (let i = 0; i < 10; i++) {
-            let tagBit = Math.pow(2, i);
-            let focused = (root.focusedTags & tagBit) !== 0;
             ws.push({
                 name: (i + 1).toString(),
                 index: i,
                 occupied: !!root.occupancyMap[i],
-                focused: focused,
+                focused: i === 0,  // tag 1 assumed focused
                 urgent: false
             });
-            if (focused && !foundActive) {
-                root.activeWorkspace = (i + 1).toString();
-                foundActive = true;
-            }
         }
         root.workspaces = ws;
-        // Update isWorkspaceEmpty
-        let activeWs = ws.find(w => w.focused);
+        let activeWs = ws[0];
         root.isWorkspaceEmpty = activeWs ? !activeWs.occupied : true;
-    }
-
-    Process {
-        id: riverFocusProc
-        running: false
-        property int targetTag: 0
-        command: ["riverctl", "set-focused-tags", "" + Math.pow(2, targetTag)]
-    }
-
-    function focusWorkspace(index) {
-        riverFocusProc.targetTag = index;
-        riverFocusProc.running = true;
-    }
-
-    // === Window cycling ===
-    Process {
-        id: riverCycleProc
-        running: false
-        property string cycleDir: "next"
-        command: ["riverctl", "focus-view", cycleDir]
-    }
-
-    function cycleWindow(direction) {
-        riverCycleProc.cycleDir = direction > 0 ? "next" : "previous";
-        riverCycleProc.running = true;
     }
 }
