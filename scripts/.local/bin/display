@@ -1,40 +1,41 @@
 #!/usr/bin/env bash
 
-# A multi-display management utility.
+# A multi-display management utility for X11.
+# Consolidates display queries, DPI management, and layout CRUD.
 
-# Global configuration
-DEPENDENCIES=("xrandr" "wmctrl" "xdotool" "xwininfo")
+WM_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/wm"
+LAYOUTS_DIR="${WM_CONFIG}/layouts"
+CURRENT_LAYOUT="${WM_CONFIG}/current_layout"
+XSETTINGSD_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/xsettingsd"
+XSETTINGSD_CONF="${XSETTINGSD_DIR}/xsettingsd.conf"
+XSETTINGSD_TEMPLATE="${WM_CONFIG}/xsettingsd.conf"
+TEMP_LAYOUT="/tmp/edit_layout.sh"
 
 usage() {
     cat << EOF
-Usage: $(basename "$0") [COMMAND]
+Usage: $(basename "$0") COMMAND [ARGS]
 
-A multi-display management utility.
+Display management utility (X11).
 
-Operations:
-    menu                 Run the display layout menu
-    focused              Get the currently focused display
-    window-display ID    Get the display a window is on, given its window ID
-    mirrored             Check if monitors are in mirrored configuration
-    help                 Show this help message
+Commands:
+  focused              Print the currently focused display name
+  window-display ID    Print the display a window is on
+  mirrored             Print "yes" or "no" — are monitors mirrored?
+  set-dpi              Calculate and apply DPI settings
+  layout current       Print the currently active layout name
+  layout list          List available layouts
+  layout select [NAME] Select and apply a layout (interactive if no name)
+  layout create        Create a new layout (graphical or command-line)
+  layout edit          Edit an existing layout (graphical or command-line)
+  layout menu          Interactive layout management menu
 EOF
     exit 0
 }
 
-# Check for required dependencies
-check_dependencies() {
-    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
-        type -p "$DEPENDENCY" > /dev/null 2>&1 || {
-            echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
-            exit 1
-        }
-    done
-}
+# ============================================================
+# Display queries (unchanged from original)
+# ============================================================
 
-# Get the currently focused display
-#
-# Outputs:
-#   The name of the currently focused display
 get_focused_display() {
     local focus_mon=""
     local aw_offset
@@ -74,13 +75,6 @@ get_focused_display() {
     echo "$focus_mon"
 }
 
-# Get the display a window is on
-#
-# Arguments:
-#   $1 - The window ID
-#
-# Outputs:
-#   The name of the display the window is on
 get_display_for_window() {
     local focus_mon=""
     local x y w h
@@ -94,7 +88,6 @@ get_display_for_window() {
     y=$(echo "$xwin_out" | sed -n 's/^  *Absolute upper-left Y:  *\([0-9]\+\).*/\1/p')
     w=$(echo "$xwin_out" | sed -n 's/^  *Width:  *\([0-9]\+\).*/\1/p')
     h=$(echo "$xwin_out" | sed -n 's/^  *Height:  *\([0-9]\+\).*/\1/p')
-    local found=0
     while IFS= read -r entry; do
         read -r mon_name mon_width mon_height mon_x_start mon_y_start < <(
             echo "$entry" | awk -F'-' '{for(i=1;i<=NF-4;i++) printf $i (i<NF-4?"-":" "); printf "%s %s %s %s\n", $(NF-3), $(NF-2), $(NF-1), $NF;}'
@@ -103,17 +96,12 @@ get_display_for_window() {
         mon_y_end=$((10#$mon_y_start + 10#$mon_height))
         if [[ $x -ge $mon_x_start ]] && [[ $x -lt $mon_x_end ]] && [[ $y -ge $mon_y_start ]] && [[ $y -lt $mon_y_end ]]; then
             focus_mon="$mon_name"
-            found=1
             break
         fi
     done < <(xrandr --current | sed -n 's/\([^ ]*\) connected.* \([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\1-\2-\3-\4-\5/p')
     echo "$focus_mon"
 }
 
-# Check if monitors are in mirrored configuration
-#
-# Outputs:
-#   "yes" if monitors are in mirrored configuration, "no" otherwise
 are_monitors_mirrored() {
     local monitor_count unique_positions
     monitor_count=$(xrandr --current --listmonitors | awk 'NR>1 {count++} END {print count+0}')
@@ -129,28 +117,271 @@ are_monitors_mirrored() {
     fi
 }
 
-# Run the display layout menu
-run_menu() {
-    if ! command -v menu-displaylayout > /dev/null 2>&1; then
-        echo "Error: menu-displaylayout not found" >&2
-        return 1
+# ============================================================
+# DPI management (absorbed from wm/set-dpi)
+# ============================================================
+
+set_dpi() {
+    local DPIS=()
+
+    # Calculate DPI per monitor from physical dimensions
+    for ENTRY in $(xrandr --current | sed -n 's/^\([^ ]\{1,\}\)* connected.* \([0-9]\{1,\}\)x.* \([0-9]\{1,\}\)mm x .*/\1,\2,\3/p'); do
+        local OUTPUT PIXELS MM DPI ROUNDED_DPI
+        OUTPUT="${ENTRY%%,*}"
+        PIXELS="${ENTRY#*,}"
+        PIXELS="${PIXELS%%,*}"
+        MM="${ENTRY##*,}"
+        # Integer math: pixels × 25.4 / mm → pixels × 254 / 10 / mm
+        DPI="$((PIXELS * 254 / 10 / MM))"
+        # Correction factor for laptop screens
+        if [[ ${OUTPUT::3} == "eDP" ]]; then
+            DPI="$((DPI * 96 / 144))"
+        fi
+        # Round to nearest 48
+        ROUNDED_DPI=$(((DPI + 24) / 48 * 48))
+        # Round to nearest 96 for high DPI
+        if [[ $ROUNDED_DPI -gt 192 ]]; then
+            ROUNDED_DPI=$(((DPI + 48) / 96 * 96))
+        # Clamp to minimum 96
+        elif [[ $ROUNDED_DPI -lt 96 ]]; then
+            ROUNDED_DPI=96
+        fi
+        DPIS+=("$ROUNDED_DPI")
+    done
+
+    # Sort descending, use highest
+    DPIS=($(printf "%s\n" "${DPIS[@]}" | sort -r -n))
+    local SELECTED_DPI=${DPIS[0]:-96}
+
+    # Derive RGBA subpixel order
+    local RGBA="rgb"
+    if [ "$SELECTED_DPI" -gt 144 ]; then
+        RGBA="none"
     fi
-    menu-displaylayout &
+
+    # Apply DPI to X server
+    xrandr --dpi "$SELECTED_DPI"
+
+    # Set X resources (for apps reading Xrm directly)
+    echo "Xft.dpi: $SELECTED_DPI" | xrdb -merge
+
+    # Generate xsettingsd config from template + DPI values
+    mkdir -p "$XSETTINGSD_DIR"
+    {
+        cat "$XSETTINGSD_TEMPLATE" 2> /dev/null
+        echo "Xft/DPI $((SELECTED_DPI * 1024))"
+        echo "Xft/RGBA \"$RGBA\""
+        echo "Gdk/WindowScalingFactor $((SELECTED_DPI / 96))"
+        echo "Gdk/UnscaledDPI $((SELECTED_DPI * 1024 / (SELECTED_DPI / 96)))"
+    } > "$XSETTINGSD_CONF"
+
+    # Restart xsettingsd
+    pkill xsettingsd 2> /dev/null
+    xsettingsd &
 }
 
-# Main entry point
-main() {
-    check_dependencies
+# ============================================================
+# Layout management (absorbed from menu-displaylayout)
+# ============================================================
 
+get_layout_list() {
+    find "$LAYOUTS_DIR" -maxdepth 1 -type f 2> /dev/null |
+        xargs -n 1 basename 2> /dev/null |
+        grep "^$(hostname)_" |
+        cut -f 2- -d "_" || echo ""
+}
+
+layout_list() {
+    local layouts
+    layouts="$(get_layout_list)"
+    if [[ -z $layouts ]]; then
+        echo "No layouts found." >&2
+        return 1
+    fi
+    echo "$layouts"
+}
+
+layout_current() {
+    if [[ -f $CURRENT_LAYOUT ]]; then
+        local layout
+        layout=$(cat "$CURRENT_LAYOUT")
+        echo "${layout#$(hostname)_}"
+    fi
+    return 0
+}
+
+layout_select() {
+    local lselected
+    local lselected_full
+
+    if [[ -n $1 ]]; then
+        lselected="$1"
+    else
+        local layouts
+        layouts="$(get_layout_list)"
+        if [[ -z $layouts ]]; then
+            notify-send -u normal "No layouts found. Create one first."
+            return 1
+        fi
+        lselected="$(printf "%s" "$layouts" | menu run -p " 󰨇  Select a layout to switch to: ")"
+    fi
+
+    [[ -z $lselected ]] && return 0
+
+    lselected_full="$LAYOUTS_DIR/$(hostname)_$lselected"
+
+    if [[ ! -f $lselected_full ]]; then
+        notify-send -u critical "Layout file not found: $lselected_full"
+        return 1
+    fi
+
+    # Update current layout file
+    echo "$(hostname)_$lselected" > "$CURRENT_LAYOUT"
+
+    # Trigger autostart (runs layout entry + set-monitors + wallpaper + quickshell restart)
+    "${XDG_CONFIG_HOME:-$HOME/.config}"/wm/autostart
+
+    notify-send -u low "Screen layout changed to $lselected"
+}
+
+layout_create() {
+    local sl_name=""
+    local cl_action
+
+    cl_action="$(printf "󰇀 Graphical\n Command-line" | menu run -p " 󰨇  How do you want to create the new layout? " | cut -d' ' -f2 | tr '[:upper:]' '[:lower:]')"
+    [[ -z $cl_action ]] && return 0
+
+    case "$cl_action" in
+        'graphical')
+            local marker_file lfile
+
+            marker_file="$(mktemp)"
+            arandr
+            lfile="$(find "$HOME/.screenlayout" -type f -newer "$marker_file" -printf "%T+ %p %f\n" 2> /dev/null | sort -r | head -1 | cut -f 3 -d " ")"
+            rm "$marker_file"
+
+            if [[ -z $lfile ]]; then
+                notify-send -u normal "No layout files found in ~/.screenlayout! Make sure to save to default save location."
+                return 1
+            else
+                sl_name="$LAYOUTS_DIR/$(hostname)_$(basename "$lfile" | rev | cut -f 2- -d "." | rev)"
+                mv "$HOME/.screenlayout/$lfile" "$sl_name"
+                chmod +x "$sl_name"
+                rmdir "$HOME/.screenlayout" 2> /dev/null || true
+            fi
+            ;;
+        'command-line')
+            local lname
+
+            lname="$(menu run -p "  Name the new layout: ")"
+            [[ -z $lname ]] && return 0
+
+            sl_name="$LAYOUTS_DIR/$(hostname)_$lname"
+            $TERMINAL -c "$EDITOR $sl_name"
+            chmod +x "$sl_name" 2> /dev/null || true
+            ;;
+    esac
+
+    if [[ -n $sl_name ]]; then
+        local switch_action
+        switch_action="$(printf "Yes\nNo" | menu run -p " 󰨇  Do you want to switch to the newly created layout? ")"
+        if [[ $switch_action == "Yes" ]]; then
+            layout_select "$(basename "$sl_name" | cut -f 2- -d "_")"
+        fi
+    else
+        notify-send -u normal "Error in creating layout!"
+    fi
+}
+
+layout_edit() {
+    local layouts
+    layouts="$(get_layout_list)"
+    if [[ -z $layouts ]]; then
+        notify-send -u normal "No layouts found. Create one first."
+        return 1
+    fi
+
+    local lselected lselected_full el_action
+
+    lselected="$(printf "%s" "$layouts" | menu run -p " 󰨇  Select a layout to edit: ")"
+    [[ -z $lselected ]] && return 0
+
+    lselected_full="$LAYOUTS_DIR/$(hostname)_$lselected"
+
+    if [[ ! -f $lselected_full ]]; then
+        notify-send -u critical "Layout file not found: $lselected_full"
+        return 1
+    fi
+
+    el_action="$(printf "󰇀 Graphical\n Command-line" | menu run -p " 󰨇  How do you want to edit the selected layout? " | cut -d' ' -f2 | tr '[:upper:]' '[:lower:]')"
+    [[ -z $el_action ]] && return 0
+
+    case "$el_action" in
+        'graphical')
+            # arandr requires #!/bin/sh shebang and only supports a subset
+            # of xrandr flags (--output, --primary, --mode, --pos, --rotate).
+            # Strip unsupported flags (--rate, etc.) and normalize shebang.
+            sed -e '1s|^#!.*|#!/bin/sh|' -e 's/ --rate [0-9.]*//g' "$lselected_full" > "$TEMP_LAYOUT"
+            arandr "$TEMP_LAYOUT"
+            # Only copy back if arandr exited successfully (user saved)
+            if [[ $? -eq 0 && -f $TEMP_LAYOUT ]]; then
+                cp "$TEMP_LAYOUT" "$lselected_full"
+                chmod +x "$lselected_full" 2> /dev/null
+            else
+                notify-send -u critical "Failed to edit layout: temporary file not created"
+                return 1
+            fi
+            ;;
+        'command-line')
+            $TERMINAL -c "$EDITOR $lselected_full"
+            ;;
+    esac
+
+    local switch_action
+    switch_action="$(printf "Yes\nNo" | menu run -p " 󰨇  Do you want to reload the edited layout? ")"
+    if [[ $switch_action == "Yes" ]]; then
+        layout_select "$lselected"
+    fi
+}
+
+layout_menu() {
+    local operation
+    operation="$(menu run -p " 󰨇  " <<< $'󱇬 Create new layout\n󰒅 Select existing layout\n󰏫 Edit existing layout' | cut -d' ' -f2 | tr '[:upper:]' '[:lower:]')"
+
+    case "$operation" in
+        create) layout_create ;;
+        select) layout_select ;;
+        edit) layout_edit ;;
+    esac
+}
+
+# ============================================================
+# Main dispatch
+# ============================================================
+
+main() {
     case "$1" in
-        menu) run_menu ;;
         focused) get_focused_display ;;
         window-display) get_display_for_window "$2" ;;
         mirrored) are_monitors_mirrored ;;
-        --help | -h) usage ;;
-        "") usage ;;
+        set-dpi) set_dpi ;;
+        layout)
+            case "$2" in
+                current) layout_current ;;
+                list) layout_list ;;
+                select) layout_select "$3" ;;
+                create) layout_create ;;
+                edit) layout_edit ;;
+                menu) layout_menu ;;
+                *)
+                    echo "error: unknown layout subcommand '$2'" >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        -h | --help | "") usage ;;
         *)
-            echo "Error: Unknown command '$1'" >&2
+            echo "error: unknown command '$1'" >&2
             usage
             ;;
     esac
