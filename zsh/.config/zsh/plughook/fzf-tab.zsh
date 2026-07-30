@@ -7,7 +7,6 @@ function atload() {
         zstyle ':fzf-tab:*' popup-min-size 80 12
     fi
 
-    zstyle -d ':completion:*' format
     zstyle ':fzf-tab:*' query-string ''
 
     # let fzf-tab take over

@@ -12,9 +12,9 @@ function atinit() {
     export FZF_DEFAULT_HEIGHT='80%'
     export FZF_TMUX_HEIGHT='80%'
     # layout options only; colors are sourced from tinty cache
-    export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS' --height ~80% --cycle --highlight-line --wrap --style="full:thinblock" --scrollbar="│" --layout="reverse" --prompt="󰉁 " --marker="󰄬 " --pointer="󰋇 "'
+    export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS' --cycle --highlight-line --wrap --style="full:thinblock" --scrollbar="│" --layout="reverse" --prompt="󰉁 " --marker="󰄬 " --pointer="󰋇 "'
     # source cached fzf theme from tinty
-    [[ -f ~/.cache/tinted-fzf/theme.sh ]] && source ~/.cache/tinted-fzf/theme.sh
+    [[ -f "${XDG_CACHE_HOME:-$HOME/.cache}/tinted-fzf/theme.sh" ]] && source "${XDG_CACHE_HOME:-$HOME/.cache}/tinted-fzf/theme.sh"
     # make sure that directory completion and file completion uses fd instead
     export FZF_DEFAULT_COMMAND='fd --hidden --follow --type=f'
     _fzf_compgen_path() {

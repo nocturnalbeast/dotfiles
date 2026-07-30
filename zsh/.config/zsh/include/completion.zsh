@@ -4,7 +4,6 @@
 # Basic Completion Options
 #
 
-zstyle ':completion:*:*:*:*:*' menu select
 zstyle ':completion:*:default' list-prompt '%S%M matches%s'
 zstyle ':completion:*' select-prompt '%SScrolling active: current selection at %p%s'
 
@@ -99,7 +98,6 @@ zstyle ':completion:*' path-completion true
 #
 
 # Process completion command
-zstyle ':completion:*:*:*:*:processes' command 'ps -au$USER'
 zstyle ':completion:*:*:*:*:processes' command "ps -u $USER -o pid,user,comm -w -w"
 
 # Kill completion
@@ -258,8 +256,7 @@ zstyle ':completion:*:*:cd:*' recent-dirs-insert both
 # Expand and Prefix
 #
 
-zstyle ':completion:*' recent-dirs-insert both
-zstyle ':completion:correct:' prompt 'correct to: %e'
+
 
 #
 # Alias Completion

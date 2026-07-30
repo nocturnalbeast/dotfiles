@@ -88,8 +88,6 @@ export STARSHIP_SESSION_KEY=${STARSHIP_SESSION_KEY:0:16}
 
 VIRTUAL_ENV_DISABLE_PROMPT=1
 
-setopt promptsubst
-
 if [[ "$OSTYPE" == darwin* ]] && (( $+commands[brew] )); then
     STARSHIP_BIN="/opt/homebrew/bin/starship"
 else
@@ -113,3 +111,9 @@ if [[ -f "$ZSH_TRANSIENT_PROMPT_DIR/transient-prompt.zsh-theme" ]]; then
 else
     print -P "%F{yellow}zsh-transient-prompt not available, transient prompt disabled%f" >&2
 fi
+
+# async git prompt: replaces starship's native git_branch, git_status,
+# git_metrics, git_state modules (~110ms sync → <1ms async env_var lookup)
+source "$ZDOTDIR/include/git-prompt.sh"
+precmd_functions+=(__gsd_hook)
+chpwd_functions+=(__gsd_hook)

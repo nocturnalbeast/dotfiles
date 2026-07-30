@@ -69,7 +69,6 @@ bindkey '^[[1;3C' 'forward-word'  # alt+right
 bindkey '^[[1;5C' 'forward-word'  # ctrl+right
 
 # menu completion
-bindkey '^I' menu-complete           # tab
 bindkey '^[[Z' reverse-menu-complete # shift+tab
 
 # undo/redo

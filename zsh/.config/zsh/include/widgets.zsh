@@ -125,9 +125,19 @@ zle -N fzf-kill-proc-by-list
 
 # interactive process killing by port with fzf
 fzf-kill-proc-by-port() {
-    local output ret
+    local output ret cmd parse_pid
 
-    output=$(sudo ss -natup | fzf --expect=$ZSH_FZF_EXEC_KEY,$ZSH_FZF_PASTE_KEY,$ZSH_FZF_EXTRA_PASTE_KEYS \
+    if [[ "$OSTYPE" == darwin* ]]; then
+        # macOS: use lsof (PID is whitespace-separated column 2)
+        cmd=(lsof -iTCP -sTCP:LISTEN -P -n)
+        parse_pid='selected_parts=(${=selected}); pid=$selected_parts[2]'
+    else
+        # linux: use ss (PID is embedded as pid=NNN in users: field)
+        cmd=(sudo ss -natup)
+        parse_pid='[[ $selected =~ "pid=([0-9]+)" ]]; pid=$match[1]'
+    fi
+
+    output=$(${cmd[@]} | fzf --expect=$ZSH_FZF_EXEC_KEY,$ZSH_FZF_PASTE_KEY,$ZSH_FZF_EXTRA_PASTE_KEYS \
       --header="Select process by port - ${ZSH_FZF_PASTE_KEY}/${ZSH_FZF_EXTRA_PASTE_KEYS}:copy PID, ${ZSH_FZF_EXEC_KEY}:kill -9 PID")
     ret=$?
 
@@ -138,12 +148,16 @@ fzf-kill-proc-by-port() {
         output_lines=(${(f)output})
         local action=$output_lines[1]
         local selected=$output_lines[-1]
+        local -a selected_parts
         local pid
-        [[ $selected =~ 'pid=([0-9]+),' ]]
-        pid=$match[1]
+        eval "$parse_pid"
 
         if [[ "$action" == "$ZSH_FZF_EXEC_KEY" ]] && [[ -n "$WIDGET" ]]; then
-            BUFFER="sudo kill -9 $pid"
+            if [[ "$OSTYPE" == darwin* ]]; then
+                BUFFER="kill -9 $pid"
+            else
+                BUFFER="sudo kill -9 $pid"
+            fi
             zle redisplay
             zle accept-line
         elif [[ "$action" == "$ZSH_FZF_PASTE_KEY" || "$action" == "$ZSH_FZF_EXTRA_PASTE_KEYS" ]] && [[ -n "$WIDGET" ]]; then
