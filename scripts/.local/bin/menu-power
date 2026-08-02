@@ -20,38 +20,18 @@ EOF
 }
 
 # Global configuration
-DEPENDENCIES=(menu notify-send systemctl)
-X11_DEPENDENCIES=(wmctrl)
-WAYLAND_DEPENDENCIES=()
+DEPENDENCIES=(menu notify-send systemctl wmctl)
 
 ICON="${XDG_DATA_HOME:="$HOME/.local/share"}/notification_icons/power.svg"
 
 # Check for required dependencies
 check_dependencies() {
-    local CURRENT_ENVIRONMENT
-    CURRENT_ENVIRONMENT=$(detect_environment)
-    if [ "$CURRENT_ENVIRONMENT" = "wayland" ]; then
-        DEPENDENCIES+=("${WAYLAND_DEPENDENCIES[@]}")
-    elif [ "$CURRENT_ENVIRONMENT" = "x11" ]; then
-        DEPENDENCIES+=("${X11_DEPENDENCIES[@]}")
-    fi
     for DEPENDENCY in "${DEPENDENCIES[@]}"; do
         type -p "$DEPENDENCY" > /dev/null 2>&1 || {
             echo "error: Could not find '${DEPENDENCY}', is it installed?" >&2
             exit 1
         }
     done
-}
-
-# Detect environment (Wayland or X11 or text-only)
-detect_environment() {
-    if [ -n "$WAYLAND_DISPLAY" ]; then
-        echo "wayland"
-    elif [ -n "$DISPLAY" ]; then
-        echo "x11"
-    else
-        echo "tty"
-    fi
 }
 
 # Shutdown the system
@@ -99,53 +79,11 @@ do_lock() {
     fi
 }
 
-# Detect the running Wayland compositor.
-# Echoes the compositor name, or nothing if unrecognized.
-detect_compositor() {
-    if [ -n "$HYPRLAND_INSTANCE_SIGNATURE" ]; then
-        echo "hyprland"
-    elif [ -n "$SWAYSOCK" ]; then
-        echo "sway"
-    elif [ "$XDG_CURRENT_DESKTOP" = "river" ]; then
-        echo "river"
-    elif [ "$XDG_CURRENT_DESKTOP" = "niri" ]; then
-        echo "niri"
-    elif [ "$XDG_CURRENT_DESKTOP" = "somewm" ]; then
-        echo "somewm"
-    fi
-}
-
 # Log out from the current session
 do_logout() {
-    local CURRENT_ENVIRONMENT
-    CURRENT_ENVIRONMENT=$(detect_environment)
-
-    if [ "$CURRENT_ENVIRONMENT" = "wayland" ]; then
-        local COMPOSITOR
-        COMPOSITOR=$(detect_compositor)
-        case "$COMPOSITOR" in
-            hyprland) hyprctl dispatch exit ;;
-            sway) swaymsg exit ;;
-            river) riverctl exit ;;
-            niri) niri msg action quit ;;
-            somewm) somewm-client quit ;;
-            *)
-                notify-send -u critical "Unknown compositor, could not log out." -i "$ICON"
-                ;;
-        esac
-    elif [ "$CURRENT_ENVIRONMENT" = "x11" ]; then
-        local WM
-        WM="$(wmctrl -m | sed -n "s/^Name: \(.*\)/\1/p")"
-        if [ "$WM" = "bspwm" ]; then
-            bspc quit
-        elif [ "$WM" = "awesome" ]; then
-            echo 'awesome.quit()' | awesome-client
-        else
-            notify-send -u critical "Unknown WM, could not log out." -i "$ICON"
-        fi
-    else
-        notify-send -u critical "Unknown environment, could not log out." -i "$ICON"
-    fi
+    wmctl compositor logout || {
+        notify-send -u critical "Unknown compositor, could not log out." -i "$ICON"
+    }
 }
 
 # Clear any pending shutdown
