@@ -238,9 +238,6 @@ client.connect_signal("request::manage", function(c)
     if c.type == "dock" then
         c.border_width = 0
     end
-    if not c.icon and beautiful.awesome_icon then
-        c.icon = beautiful.awesome_icon
-    end
 
     if awesome.startup and not c.size_hints.user_position and not c.size_hints.program_position then
         awful.placement.no_offscreen(c)
