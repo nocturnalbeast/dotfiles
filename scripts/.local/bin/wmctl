@@ -94,6 +94,28 @@ cmd_compositor_detect() {
         '{environment: $env, compositor: $comp, wm_name: $wm}'
 }
 
+cmd_compositor_logout() {
+    local comp
+    comp=$(detect_compositor)
+    case "$comp" in
+        x11)
+            local wm_name
+            wm_name=$(wmctrl -m 2> /dev/null | sed -n 's/^Name: \(.*\)/\1/p')
+            case "$wm_name" in
+                bspwm) bspc quit ;;
+                awesome) echo 'awesome.quit()' | awesome-client ;;
+                *) return 1 ;;
+            esac
+            ;;
+        hyprland) hyprctl dispatch exit ;;
+        sway) swaymsg exit ;;
+        river) riverctl exit ;;
+        niri) niri msg action quit ;;
+        somewm) somewm-client quit ;;
+        *) return 1 ;;
+    esac
+}
+
 # ============================================================
 # Workspace commands
 # ============================================================
@@ -103,61 +125,59 @@ cmd_workspace_list() {
     comp=$(detect_compositor)
     case "$comp" in
         x11)
-            # Parse wmctrl -d for desktop info, _NET_DESKTOP_NAMES for names,
-            # _NET_DESKTOP_VIEWPORT for monitor mapping
-            local desktops names viewports
-            desktops=$(wmctrl -d 2> /dev/null)
-            names=$(xprop -root _NET_DESKTOP_NAMES 2> /dev/null |
-                sed 's/^.*= //; s/"//g' | tr ',' '\n' | sed 's/^ //')
-            viewports=$(xprop -root _NET_DESKTOP_VIEWPORT 2> /dev/null |
-                sed 's/^.*= //' | tr -d ',')
-            # Build monitor lookup: viewport offset → monitor name via xrandr
-            local xrandr_connected
-            xrandr_connected=$(xrandr --current 2> /dev/null |
-                grep ' connected' |
-                sed -n 's/\([^ ]*\) connected.*\([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\4 \5 \1/p' |
-                sort -n)
+            # Single-pass: gather raw data, build entire JSON with one jq call
+            local desktops_raw names_raw viewports_raw xrandr_raw
+            desktops_raw=$(wmctrl -d 2> /dev/null)
+            names_raw=$(xprop -root _NET_DESKTOP_NAMES 2> /dev/null | sed 's/^.*= //')
+            viewports_raw=$(xprop -root _NET_DESKTOP_VIEWPORT 2> /dev/null | sed 's/^.*= //' | tr -d ',')
+            xrandr_raw=$(xrandr --current 2> /dev/null | grep ' connected' | sed -n 's/\([^ ]*\) connected.*\([0-9]\+\)x\([0-9]\+\)+\([0-9]\+\)+\([0-9]\+\).*/\4 \5 \1/p')
 
-            local result="[" first=true idx=0
-            while IFS= read -r line; do
-                [ -z "$line" ] && continue
-                local is_current="false"
-                echo "$line" | grep -q '\*' && is_current="true"
-                local name
-                name=$(echo "$names" | sed -n "$((idx + 1))p")
-                [ -z "$name" ] && name="$idx"
-
-                # Find monitor for this desktop's viewport
-                local vp_x vp_y mon=""
-                vp_x=$(echo "$viewports" | awk -v i=$((idx * 2 + 1)) '{print $i}')
-                vp_y=$(echo "$viewports" | awk -v i=$((idx * 2 + 2)) '{print $i}')
-                if [ -n "$vp_x" ] && [ -n "$vp_y" ]; then
-                    mon=$(echo "$xrandr_connected" | while read -r mx my mname; do
-                        [ "$mx" = "$vp_x" ] && [ "$my" = "$vp_y" ] && echo "$mname" && break
-                    done)
-                fi
-
-                local obj
-                obj=$(jq -c -n \
-                    --argjson id "$((idx + 1))" \
-                    --arg name "$name" \
-                    --arg monitor "$mon" \
-                    --argjson current "$is_current" \
-                    --argjson wcount 0 \
-                    '{id: $id, name: $name, monitor: ($monitor | select(. != "") // null),
-                      is_current: $current, window_count: $wcount}')
-                if $first; then
-                    result="${result}${obj}"
-                    first=false
-                else result="${result},${obj}"; fi
-                idx=$((idx + 1))
-            done <<< "$desktops"
-            echo "${result}]"
+            # Feed all raw data to a single jq invocation
+            printf '%s\n---NAMES---\n%s\n---VIEWPORTS---\n%s\n---XRANDR---\n%s\n' \
+                "$desktops_raw" "$names_raw" "$viewports_raw" "$xrandr_raw" |
+                jq -R -s '
+                split("\n") as $lines |
+                ($lines | index("---NAMES---")) as $names_idx |
+                ($lines | index("---VIEWPORTS---")) as $vp_idx |
+                ($lines | index("---XRANDR---")) as $xr_idx |
+                ($lines[0:$names_idx]) as $desktops |
+                ($lines[$names_idx+1:$vp_idx] | join(" ")) as $names_str |
+                ($lines[$vp_idx+1:$xr_idx] | join(" ")) as $vp_str |
+                ($lines[$xr_idx+1:] | map(select(length > 0))) as $xr_lines |
+                # Parse names from string like: "main", "inet", ...
+                ($names_str | gsub("\"";"") | [scan("[^, ]+")]) as $names |
+                # Parse viewports: extract all numbers (handles "not found" gracefully)
+                ([$vp_str | scan("[0-9]+")] | map(tonumber)) as $vp |
+                # Parse xrandr into [{x, y, name}]
+                ($xr_lines | map(split(" ")) | map({x: .[0], y: .[1], name: .[2]})) as $mons |
+                # Parse desktops: "0  - DG: ... main" or "1  * DG: ... inet"
+                [ $desktops[] | select(length > 0) |
+                  (split(" ") | map(select(length > 0))) as $f |
+                  ($f[0] | tonumber) as $idx |
+                  ($f[1] == "*") as $is_current |
+                  # Viewport lookup (graceful when no viewport data)
+                  (if ($vp | length) >= (($idx + 1) * 2)
+                   then {x: ($vp[$idx * 2] | tostring), y: ($vp[$idx * 2 + 1] | tostring)}
+                   else {x: "0", y: "0"} end) as $vp_xy |
+                  # Match to monitor (fallback to first monitor)
+                  (([$mons[] | select(.x == $vp_xy.x and .y == $vp_xy.y)][0].name) //
+                   ($mons[0].name // null)) as $mon |
+                  # Desktop name from names array or fallback to index
+                  ($names[$idx] // ($idx + 1 | tostring)) as $name |
+                  {
+                    id: ($idx + 1),
+                    name: $name,
+                    monitor: $mon,
+                    is_current: $is_current,
+                    window_count: 0
+                  }
+                ]
+            '
             ;;
         hyprland)
             local monitors
             monitors=$(hyprctl monitors -j 2> /dev/null)
-            hyprctl workspaces -j 2> /dev/null | jq -c --argjson mons "$monitors" \
+            hyprctl workspaces -j 2> /dev/null | jq --argjson mons "$monitors" \
                 '[.[] | {
                     id: .id,
                     name: .name,
@@ -167,13 +187,13 @@ cmd_workspace_list() {
                 }]'
             ;;
         sway)
-            swaymsg -t get_workspaces 2> /dev/null | jq -c '[.[] | {
+            swaymsg -t get_workspaces 2> /dev/null | jq '[.[] | {
                 id: .num, name: .name, monitor: .output,
                 is_current: .focused, window_count: (.windows // 0)
             }]'
             ;;
         niri)
-            niri msg --json workspaces 2> /dev/null | jq -c '[.[] | {
+            niri msg --json workspaces 2> /dev/null | jq '[.[] | {
                 id: .id, name: (.name // (.idx | tostring)),
                 monitor: null, is_current: (.is_active // false),
                 window_count: 0
@@ -184,7 +204,7 @@ cmd_workspace_list() {
             local result="[" first=true
             for i in $(seq 1 9); do
                 local obj
-                obj=$(jq -c -n --argjson id "$i" --arg name "tag$i" \
+                obj=$(jq -n --argjson id "$i" --arg name "tag$i" \
                     '{id: $id, name: $name, monitor: null, is_current: false, window_count: 0}')
                 if $first; then
                     result="${result}${obj}"
@@ -202,7 +222,7 @@ cmd_workspace_list() {
                 name=$(echo "$line" | sed -n 's/^[0-9]*: *//p')
                 [ -z "$name" ] && name="tag$idx"
                 local obj
-                obj=$(jq -c -n --argjson id "${idx:-0}" --arg name "$name" \
+                obj=$(jq -n --argjson id "${idx:-0}" --arg name "$name" \
                     '{id: $id, name: $name, monitor: null, is_current: false, window_count: 0}')
                 if $first; then
                     result="${result}${obj}"
@@ -489,60 +509,78 @@ cmd_window_list() {
     case "$comp" in
         x11)
             # Get workspace→monitor mapping once for all windows
-            local ws_mon_map
+            local ws_mon_map names_raw
             ws_mon_map=$(_x11_ws_monitor_map)
+            names_raw=$(xprop -root _NET_DESKTOP_NAMES 2> /dev/null | sed 's/^.*= //')
 
-            local wids result="[" first=true
+            local wids
             wids=$(xprop -root _NET_CLIENT_LIST 2> /dev/null | sed 's/^.*# //' | tr -d ',')
             [ -z "$wids" ] && {
                 echo "[]"
                 return
             }
 
+            # Gather all window data in a single pass, then build JSON with one jq call
+            local all_data=""
             for wid in $wids; do
-                local title class ws_id ws_name mon is_dock
-                title=$(timeout 3 xprop -id "$wid" _NET_WM_NAME 2> /dev/null | sed 's/^.*= "//; s/"$//')
-                [ -z "$title" ] && title=$(timeout 3 xprop -id "$wid" WM_NAME 2> /dev/null | sed 's/^.*= "//; s/"$//')
-                class=$(timeout 3 xprop -id "$wid" WM_CLASS 2> /dev/null | sed 's/^.*"\([^"]*\)", "\([^"]*\)".*/\2/')
-                echo "$class" | grep -q 'not found' && class=""
-                ws_id=$(timeout 3 xprop -id "$wid" _NET_WM_DESKTOP 2> /dev/null | sed 's/^.*= //')
-
-                # Skip dock windows
-                is_dock=$(timeout 3 xprop -id "$wid" _NET_WM_WINDOW_TYPE 2> /dev/null | grep -c '_NET_WM_WINDOW_TYPE_DOCK')
-                [ "$is_dock" -gt 0 ] && continue
-
-                # Handle sticky windows
-                local ws_json="null"
-                if [ -n "$ws_id" ] && [ "$ws_id" != "not found" ] && [ "$ws_id" != "4294967295" ]; then
-                    ws_name=$(xprop -root _NET_DESKTOP_NAMES 2> /dev/null |
-                        sed 's/^.*= //' | awk -F', ' -v idx=$((ws_id + 1)) '{gsub(/"/, "", $idx); print $idx}')
-                    mon=$(echo "$ws_mon_map" | jq -r --arg idx "$ws_id" '.[$idx] // empty' 2> /dev/null)
-                    ws_json=$(jq -c -n --argjson id "$((ws_id + 1))" --arg name "${ws_name:-}" \
-                        '{id: $id, name: ($name | select(. != "") // null)}')
-                fi
-
-                local obj
-                obj=$(jq -c -n \
-                    --arg addr "$wid" \
-                    --arg title "$title" \
-                    --arg class "$class" \
-                    --argjson ws "$ws_json" \
-                    --arg monitor "${mon:-}" \
-                    '{address: $addr, title: $title, class: $class,
-                      workspace: $ws, monitor: ($monitor | select(. != "") // null),
-                      focused: false}')
-
-                if $first; then
-                    result="${result}${obj}"
-                    first=false
-                else result="${result},${obj}"; fi
+                # Single xprop call for all properties
+                local props
+                props=$(xprop -id "$wid" _NET_WM_NAME WM_CLASS _NET_WM_DESKTOP _NET_WM_WINDOW_TYPE 2> /dev/null)
+                # Skip dock windows early
+                echo "$props" | grep -q '_NET_WM_WINDOW_TYPE_DOCK' && continue
+                # Parse fields from combined output
+                local title class ws_id
+                title=$(echo "$props" | sed -n 's/^_NET_WM_NAME(UTF8_STRING) = "\(.*\)"/\1/p' | head -1)
+                [ -z "$title" ] && title=$(echo "$props" | sed -n 's/^WM_NAME(STRING) = "\(.*\)"/\1/p' | head -1)
+                class=$(echo "$props" | sed -n 's/^WM_CLASS(STRING) = ".*", "\(.*\)"/\1/p' | head -1)
+                ws_id=$(echo "$props" | sed -n 's/^_NET_WM_DESKTOP(CARDINAL) = //p' | head -1)
+                # Append as delimited block
+                all_data="${all_data}${wid}|${title}|${class}|${ws_id}
+"
             done
-            echo "${result}]"
+
+            # Build JSON in a single jq pass with name/monitor resolution
+            printf '%s' "$all_data" | jq -R -s '
+                split("\n") as $lines |
+                ($lines | map(select(length > 0))) as $wins |
+                [ $wins[] |
+                  (split("|")) as $f |
+                  ($f[3]) as $ws_raw |
+                  (if ($ws_raw | length > 0) and ($ws_raw != "not found.") and ($ws_raw != "not found")
+                   then (try ($ws_raw | tonumber) catch null) as $n |
+                        (if $n != null and $n < 4294967295 then $n else null end)
+                   else null end) as $ws_id |
+                  {
+                    address: $f[0],
+                    title: ($f[1] // ""),
+                    class: ($f[2] // null),
+                    ws_id: $ws_id,
+                    monitor: null,
+                    focused: false
+                  }
+                ]
+            ' | jq --argjson mons "$ws_mon_map" --arg names "$names_raw" '
+                . as $wins |
+                ($names | gsub("\"";"") | split(", ")) as $name_list |
+                [ $wins[] |
+                  (if .ws_id != null
+                   then ($name_list[.ws_id] // null) as $wn |
+                        {address: .address, title: .title, class: .class,
+                         workspace: {id: (.ws_id + 1), name: $wn},
+                         monitor: ($mons[(.ws_id | tostring)] // null),
+                         focused: false}
+                   else
+                        {address: .address, title: .title, class: .class,
+                         workspace: null, monitor: null, focused: false}
+                   end
+                  )
+                ]
+            '
             ;;
         hyprland)
             local monitors
             monitors=$(hyprctl monitors -j 2> /dev/null)
-            hyprctl clients -j 2> /dev/null | jq -c --argjson mons "$monitors" \
+            hyprctl clients -j 2> /dev/null | jq --argjson mons "$monitors" \
                 '[.[] | select(.mapped and (.hidden | not)) | {
                     address: .address, title: .title, class: .class,
                     workspace: {id: .workspace.id, name: .workspace.name},
@@ -551,7 +589,7 @@ cmd_window_list() {
                 }]'
             ;;
         sway)
-            swaymsg -t get_tree 2> /dev/null | jq -c \
+            swaymsg -t get_tree 2> /dev/null | jq \
                 '[.. | objects | select(.type == "output") | .name as $mon |
                   .. | objects | select(.type == "workspace") |
                   .num as $ws_id | .name as $ws_name |
@@ -568,7 +606,7 @@ cmd_window_list() {
                   }]'
             ;;
         niri)
-            niri msg --json windows 2> /dev/null | jq -c '[.[] | {
+            niri msg --json windows 2> /dev/null | jq '[.[] | {
                 address: (.id | tostring), title: (.title // ""),
                 class: (.app_id // null),
                 workspace: (if .workspace_id then {id: .workspace_id, name: (.workspace_id | tostring)} else null end),
@@ -590,7 +628,7 @@ cmd_window_list() {
                 class=$(echo "$line" | sed -n 's/.*class="\([^"]*\)".*/\1/p')
                 tags=$(echo "$line" | sed -n 's/.*tags=\([0-9,]*\).*/\1/p')
                 local obj
-                obj=$(jq -c -n \
+                obj=$(jq -n \
                     --arg addr "$id" --arg title "$title" --arg class "$class" \
                     --arg tags "${tags:-}" \
                     '{address: $addr, title: $title, class: $class,
@@ -621,34 +659,40 @@ cmd_window_focused() {
                 echo "null"
                 return
             }
-            local title class ws_id ws_name
-            title=$(timeout 3 xprop -id "$wid" _NET_WM_NAME 2> /dev/null | sed 's/^.*= "//; s/"$//')
-            class=$(timeout 3 xprop -id "$wid" WM_CLASS 2> /dev/null | sed 's/^.*"\([^"]*\)", "\([^"]*\)".*/\2/')
-            echo "$class" | grep -q 'not found' && class=""
-            ws_id=$(timeout 3 xprop -id "$wid" _NET_WM_DESKTOP 2> /dev/null | sed 's/^.*= //')
+
+            # Single xprop call for all properties
+            local props
+            props=$(xprop -id "$wid" _NET_WM_NAME WM_CLASS _NET_WM_DESKTOP 2> /dev/null)
+            local title class ws_id
+            title=$(echo "$props" | sed -n 's/^_NET_WM_NAME(UTF8_STRING) = "\(.*\)"/\1/p' | head -1)
+            [ -z "$title" ] && title=$(echo "$props" | sed -n 's/^WM_NAME(STRING) = "\(.*\)"/\1/p' | head -1)
+            class=$(echo "$props" | sed -n 's/^WM_CLASS(STRING) = ".*", "\(.*\)"/\1/p' | head -1)
+            ws_id=$(echo "$props" | sed -n 's/^_NET_WM_DESKTOP(CARDINAL) = //p' | head -1)
+
             local ws_json="null"
-            if [ -n "$ws_id" ] && [ "$ws_id" != "not found" ] && [ "$ws_id" != "4294967295" ]; then
+            if [ -n "$ws_id" ] && [ "$ws_id" != "not found" ] && [ "$ws_id" != "not found." ] && [ "$ws_id" != "4294967295" ]; then
+                local ws_name
                 ws_name=$(xprop -root _NET_DESKTOP_NAMES 2> /dev/null |
                     sed 's/^.*= //' | awk -F', ' -v idx=$((ws_id + 1)) '{gsub(/"/, "", $idx); print $idx}')
-                ws_json=$(jq -c -n --argjson id "$((ws_id + 1))" --arg name "${ws_name:-}" \
+                ws_json=$(jq -n --argjson id "$((ws_id + 1))" --arg name "${ws_name:-}" \
                     '{id: $id, name: ($name | select(. != "") // null)}')
             fi
-            jq -c -n \
+            jq -n \
                 --arg addr "$wid" --arg title "$title" --arg class "$class" \
                 --argjson ws "$ws_json" \
                 '{address: $addr, title: $title, class: $class,
                   workspace: $ws, monitor: null, focused: true}'
             ;;
-        hyprland) hyprctl activewindow -j 2> /dev/null | jq -c '{address: .address, title: .title, class: .class, workspace: {id: (.workspace.id // null), name: (.workspace.name // null)}, monitor: (.monitor // null), focused: true}' ;;
+        hyprland) hyprctl activewindow -j 2> /dev/null | jq '{address: .address, title: .title, class: .class, workspace: {id: (.workspace.id // null), name: (.workspace.name // null)}, monitor: (.monitor // null), focused: true}' ;;
         sway)
-            swaymsg -t get_tree 2> /dev/null | jq -c \
+            swaymsg -t get_tree 2> /dev/null | jq \
                 '[.. | objects | select(.focused and has("pid") and (.pid | type == "number"))][0] |
                  {address: (.id | tostring), title: .name,
                   class: (.app_id // .window_properties.class // null),
                   workspace: null, monitor: null, focused: true}'
             ;;
         niri)
-            niri msg --json focused-window 2> /dev/null | jq -c \
+            niri msg --json focused-window 2> /dev/null | jq \
                 '{address: (.id | tostring), title: (.title // ""),
                   class: (.app_id // null),
                   workspace: (if .workspace_id then {id: .workspace_id, name: (.workspace_id | tostring)} else null end),
@@ -666,7 +710,7 @@ cmd_window_focused() {
             line=$(somewm-client client list 2> /dev/null | head -1)
             title=$(echo "$line" | sed -n 's/.*title="\([^"]*\)".*/\1/p')
             class=$(echo "$line" | sed -n 's/.*class="\([^"]*\)".*/\1/p')
-            jq -c -n --arg title "$title" --arg class "$class" \
+            jq -n --arg title "$title" --arg class "$class" \
                 '{address: null, title: $title, class: $class,
                   workspace: null, monitor: null, focused: true}'
             ;;
@@ -775,8 +819,7 @@ cmd_monitor_list() {
     comp=$(detect_compositor)
     case "$comp" in
         x11)
-            local objs
-            objs=$(xrandr --current 2> /dev/null | grep ' connected' | while IFS= read -r line; do
+            xrandr --current 2> /dev/null | grep ' connected' | while IFS= read -r line; do
                 local name w h x y
                 name=$(echo "$line" | awk '{print $1}')
                 local geo
@@ -795,37 +838,35 @@ cmd_monitor_list() {
                 fi
                 local is_primary="false"
                 echo "$line" | grep -q 'primary' && is_primary="true"
-                jq -c -n --arg name "$name" --argjson w "${w:-0}" --argjson h "${h:-0}" \
+                jq -n --arg name "$name" --argjson w "${w:-0}" --argjson h "${h:-0}" \
                     --argjson x "${x:-0}" --argjson y "${y:-0}" --argjson current "$is_primary" \
                     '{name: $name, description: $name, width: $w, height: $h,
                       x: $x, y: $y, scale: 1.0, is_current: $current}'
-            done | paste -sd, -)
-            [ -z "$objs" ] && objs="null"
-            echo "[$objs]"
+            done | jq -s '.'
             ;;
         hyprland)
-            hyprctl monitors -j 2> /dev/null | jq -c '[.[] | {
+            hyprctl monitors -j 2> /dev/null | jq '[.[] | {
                 name: .name, description: .description,
                 width: (.width / .scale | floor), height: (.height / .scale | floor),
                 x: .x, y: .y, scale: .scale, is_current: .focused
             }]'
             ;;
         sway)
-            swaymsg -t get_outputs 2> /dev/null | jq -c '[.[] | {
+            swaymsg -t get_outputs 2> /dev/null | jq '[.[] | {
                 name: .name, description: .make,
                 width: (.rect.width // .current_mode.width), height: (.rect.height // .current_mode.height),
                 x: .rect.x, y: .rect.y, scale: .scale, is_current: .focused
             }]'
             ;;
         niri)
-            niri msg --json outputs 2> /dev/null | jq -c '[.[] | {
+            niri msg --json outputs 2> /dev/null | jq '[.[] | {
                 name: .name, description: (.make // .name),
                 width: .width, height: .height, x: .x, y: .y,
                 scale: .scale, is_current: (.is_focused // false)
             }]'
             ;;
         river)
-            wlr-randr --json 2> /dev/null | jq -c '[.[] | select(.enabled) | {
+            wlr-randr --json 2> /dev/null | jq '[.[] | select(.enabled) | {
                 name: .name, description: .description,
                 width: (.modes[] | select(.current) | .width),
                 height: (.modes[] | select(.current) | .height),
@@ -913,7 +954,7 @@ _x11_ws_monitor_map() {
             fi
         done <<< "$xrandr_connected"
         # Use string keys (--arg) to avoid "cannot index object with number"
-        result=$(echo "$result" | jq -c --arg idx "$idx" --argjson mon "$mon" '.[$idx] = $mon')
+        result=$(echo "$result" | jq --arg idx "$idx" --argjson mon "$mon" '.[$idx] = $mon')
         idx=$((idx + 1))
     done
     echo "$result"
@@ -932,6 +973,7 @@ main() {
             case "$2" in
                 name) cmd_compositor_name ;;
                 detect) cmd_compositor_detect ;;
+                logout) cmd_compositor_logout ;;
                 *)
                     echo "error: unknown subcommand '$2'" >&2
                     exit 1
