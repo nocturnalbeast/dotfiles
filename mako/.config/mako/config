@@ -39,13 +39,13 @@ icon-location=left
 format=<b>%s</b>\n%b
 text-alignment=left
 
+icon-path=$HOME/.local/share/icons/Tela-dark:/usr/share/icons/breeze
 [urgency=low]
 font=sans 11
 background-color=#131313
 text-color=#808080
 progress-color=over #777777
 default-timeout=2000
-icon-path=~/.local/share/notification_icons/info.svg
 border-color=#9ccbfb
 
 [urgency=normal]
@@ -54,7 +54,6 @@ background-color=#131313
 text-color=#7b7b7b
 progress-color=over #777777
 default-timeout=5000
-icon-path=~/.local/share/notification_icons/warning.svg
 border-color=#9ccbfb
 
 [urgency=critical]
@@ -63,7 +62,6 @@ background-color=#604545
 text-color=#0a0a0a
 progress-color=#ffb3b2
 default-timeout=0
-icon-path=~/.local/share/notification_icons/error.svg
 border-color=#ffb3b2
 
 [mode=do-not-disturb]
