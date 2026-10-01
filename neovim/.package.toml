@@ -1,0 +1,6 @@
+enabled = true
+description = "Neovim configuration"
+tags = ["cli", "editor"]
+os = ["linux", "macos"]
+arch = []
+condition = ""
