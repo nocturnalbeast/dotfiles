@@ -1,0 +1,6 @@
+enabled = true
+description = "rift tiling window manager (runtime-exclusive alternative to aerospace)"
+tags = ["gui", "wm", "terminal"]
+os = ["macos"]
+arch = []
+condition = ""
