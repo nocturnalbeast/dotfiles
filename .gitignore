@@ -44,6 +44,15 @@ __pycache__/
 # uv script cache
 .cache/
 
+# macOS finder metadata
+.DS_Store
+
+# serena session state
+.serena/
+
+# codanna index state
+.codanna/
+
 # ruff cache
 .ruff_cache/
 
