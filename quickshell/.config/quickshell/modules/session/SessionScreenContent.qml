@@ -27,7 +27,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            color: "#000000"
+            color: Colors.surface
             opacity: SessionService.open ? 0.6 : 0.0
 
             Behavior on opacity {
