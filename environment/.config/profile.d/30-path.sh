@@ -29,3 +29,8 @@ fi
 if [ -d "$GOPATH/bin" ]; then
     export PATH="$GOPATH/bin:$PATH"
 fi
+
+# npm binaries
+if [ -d "$XDG_DATA_HOME/npm/bin" ]; then
+    export PATH="$PATH:$XDG_DATA_HOME/npm/bin"
+fi
