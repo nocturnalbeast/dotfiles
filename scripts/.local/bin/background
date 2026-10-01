@@ -3,7 +3,6 @@
 # A display server agnostic script to set and manage wallpapers.
 
 # Global configuration
-DEPENDENCIES=()
 WALLPAPER_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers"
 
 usage() {
@@ -24,12 +23,19 @@ Modes:
     tile        Tile the image
     stretch     Stretch to fit screen
     maxaspect   Scale to fit screen maintaining aspect ratio
+
+Note:
+    On macOS the wallpaper is set on ALL desktops via System Events and
+    MODE is a no-op (the system-wide desktop picture style applies).
 EOF
 }
 
-# Check for required dependencies
-check_dependencies() {
-    return 0
+# Detect if running on macOS
+#
+# Returns:
+#   0 if running on macOS, 1 otherwise
+is_macos() {
+    [ "$(uname -s)" = "Darwin" ]
 }
 
 # Detect if running under Wayland
@@ -61,25 +67,25 @@ get_wallpaper_setter() {
                 done
             fi
             SWWW_MODE="$(printf '%s' "$MODE" | sed 's/center/no/;s/fill/crop/;s/maxaspect/fit/')"
-            swww img "$IMAGE" --resize "$SWWW_MODE" --transition-duration 0.5
+            echo "swww img $IMAGE --resize $SWWW_MODE --transition-duration 0.5"
             return 0
         elif command -v swaybg > /dev/null 2>&1; then
             SWAY_MODE="$(printf '%s' "$MODE" | sed 's/maxaspect/fit/')"
-            swaybg -m "$SWAY_MODE" -i "$IMAGE" &
+            echo "swaybg -m $SWAY_MODE -i $IMAGE &"
             return 0
         fi
     else
         if command -v xwallpaper > /dev/null 2>&1; then
             XWALL_MODE="$(printf '%s' "$MODE" | sed 's/fill/zoom/;s/maxaspect/maximize/')"
-            xwallpaper "--$XWALL_MODE" "$IMAGE"
+            echo "xwallpaper --$XWALL_MODE $IMAGE"
             return 0
         elif command -v feh > /dev/null 2>&1; then
             FEH_MODE="bg-$(printf '%s' "$MODE" | sed 's/maxaspect/max/;s/stretch/scale/')"
-            feh --no-fehbg "--$FEH_MODE" "$IMAGE"
+            echo "feh --no-fehbg --$FEH_MODE $IMAGE"
             return 0
         elif command -v hsetroot > /dev/null 2>&1; then
             HSET_MODE="$(printf '%s' "$MODE" | sed 's/fill/cover/;s/stretch/fill/;s/maxaspect/full/')"
-            hsetroot "-$HSET_MODE" "$IMAGE"
+            echo "hsetroot -$HSET_MODE $IMAGE"
             return 0
         fi
     fi
@@ -98,6 +104,63 @@ is_valid_mode() {
     case "$1" in
         fill | center | tile | stretch | maxaspect) return 0 ;;
         *) return 1 ;;
+    esac
+}
+
+# Resolve a path to its absolute, symlink-free form on macOS
+# (BSD readlink lacks -f, so this is the darwin readlink -f equivalent)
+#
+# Arguments:
+#   $1 - Path to resolve
+#
+# Outputs:
+#   Writes the resolved absolute path to stdout
+resolve_path_macos() {
+    if command -v realpath > /dev/null 2>&1; then
+        realpath "$1"
+    else
+        (cd "$(dirname "$1")" && printf '%s/%s\n' "$PWD" "$(basename "$1")")
+    fi
+}
+
+# Pick one random line from stdin (macOS stand-in for GNU `shuf -n 1`,
+# seeding awk's rand() from /dev/urandom)
+pick_random_line() {
+    SEED=$(od -An -N4 -tu4 /dev/urandom | tr -d '[:space:]')
+    awk -v seed="$SEED" 'BEGIN { srand(seed) } { lines[NR] = $0 } END { if (NR > 0) print lines[int(rand() * NR) + 1] }'
+}
+
+# Set the wallpaper on every macOS desktop via System Events
+#
+# Arguments:
+#   $1 - Absolute path to wallpaper image
+#
+# Returns:
+#   0 on success, or on the automation-permission case (warning only);
+#   1 on any other osascript failure
+set_picture_macos() {
+    IMAGE="$1"
+
+    if OSA_ERROR=$(osascript -e 'tell application "System Events" to tell every desktop to set picture to POSIX file "'"$IMAGE"'"' 2>&1); then
+        return 0
+    fi
+
+    case "$OSA_ERROR" in
+        *-1743* | *"Not authorized"* | *"not authorized"*)
+            # Automation permission missing — warning, not a failure: the
+            # tracker was already updated and the wallpaper will apply
+            # once permission is granted.
+            echo "Warning: wallpaper not set — System Events automation not authorized." >&2
+            echo "  $OSA_ERROR" >&2
+            echo "Approve the System Events prompt for your terminal app" >&2
+            echo "(System Settings > Privacy & Security > Automation), then re-run." >&2
+            return 0
+            ;;
+        *)
+            echo "Error: osascript failed to set wallpaper:" >&2
+            echo "  $OSA_ERROR" >&2
+            return 1
+            ;;
     esac
 }
 
@@ -124,15 +187,47 @@ set_wallpaper() {
     fi
 
     if [ -h "$IMAGE" ]; then
-        IMAGE="$(readlink -f "$IMAGE")"
+        if is_macos; then
+            RESOLVED="$(resolve_path_macos "$IMAGE")" || RESOLVED=""
+            [ -n "$RESOLVED" ] && IMAGE="$RESOLVED"
+        else
+            IMAGE="$(readlink -f "$IMAGE")"
+        fi
     fi
 
-    mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/wm"
-    ln -sfr "$IMAGE" "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_wallpaper"
+    # osascript's "POSIX file" and the tracker symlink need an absolute path
+    if is_macos; then
+        case "$IMAGE" in
+            /*) ;;
+            *) IMAGE="$PWD/$IMAGE" ;;
+        esac
+    fi
 
-    if get_wallpaper_setter "$MODE" "$IMAGE"; then
+    if is_macos; then
+        # ~/.config/wm is not stow-managed on macOS — ensure it exists
+        mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/wm"
+        # ln -sfr is GNU coreutils only; on darwin link to an absolute
+        # target with ln -sfn instead
+        ln -sfn "$IMAGE" "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_wallpaper"
+    else
+        ln -sfr "$IMAGE" "${XDG_CONFIG_HOME:-$HOME/.config}/wm/current_wallpaper"
+    fi
+
+    if is_macos; then
+        # MODE (fill/center/tile/...) is a documented no-op on macOS:
+        # System Events applies the system-wide desktop picture style and
+        # cannot honor a per-image fill mode.
+        set_picture_macos "$IMAGE"
+        return
+    fi
+
+    SETTER_CMD=$(get_wallpaper_setter "$MODE" "$IMAGE")
+    if [ -n "$SETTER_CMD" ]; then
+        eval "$SETTER_CMD"
         if [ "$OPERATION" = "set" ]; then
-            notify-send -u low -i "$IMAGE" "Wallpaper changed" "$(basename "$IMAGE")"
+            if command -v notify-send > /dev/null 2>&1; then
+                notify-send -u low -i "$IMAGE" "Wallpaper changed" "$(basename "$IMAGE")"
+            fi
         fi
     fi
 }
@@ -151,7 +246,13 @@ set_random_wallpaper() {
         return 1
     fi
 
-    IMAGE=$(find "$DIR/" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \) | shuf -n 1)
+    IMAGES=$(find "$DIR/" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.gif" \))
+    if is_macos; then
+        # shuf is GNU coreutils only
+        IMAGE=$(printf '%s\n' "$IMAGES" | pick_random_line)
+    else
+        IMAGE=$(printf '%s\n' "$IMAGES" | shuf -n 1)
+    fi
     if [ -z "$IMAGE" ]; then
         echo "No images found in directory: $DIR" >&2
         return 1
@@ -173,8 +274,6 @@ restore_wallpaper() {
 
 # Main entry point
 main() {
-    check_dependencies
-
     case "$1" in
         set)
             shift
