@@ -4,6 +4,15 @@
 -- indentexpr wiring when an indent query exists.
 -- Textobjects API verified against the main-branch README (2026-09-27):
 --   setup{ select = {...}, move = {...} } carries options only (no keymaps);
+
+-- The main branch keeps highlight/indent/fold queries under runtime/queries/
+-- but its plugin init never appends runtime/ to the rtp — without this,
+-- vim.treesitter.start() finds the parser but query.get() returns nil and
+-- code renders with zero syntax highlighting.
+local nts_runtime = vim.fn.stdpath("data") .. "/site/pack/core/opt/nvim-treesitter/runtime"
+if vim.fn.isdirectory(nts_runtime) == 1 then
+    vim.opt.runtimepath:prepend(nts_runtime)
+end
 --   keymaps call .select/.move/.swap modules explicitly via vim.keymap.set.
 
 local parsers = {
