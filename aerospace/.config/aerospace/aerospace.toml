@@ -1,0 +1,217 @@
+# AeroSpace configuration
+# TOML 1.1.0 / config-version 2
+# Modifier convention: Karabiner maps Caps Lock hold -> "meh" = Cmd+Option+Ctrl
+# All bindings use ctrl-alt-cmd-<key>; shift variants add another shift: ctrl-alt-cmd-shift-<key>
+config-version = 2
+
+start-at-login = true
+auto-reload-config = true
+
+after-startup-command = [
+    'exec-and-forget sketchybar',
+    'exec-and-forget ~/.config/aerospace/borders.sh',
+]
+after-login-command = []
+
+enable-normalization-flatten-containers = true
+enable-normalization-opposite-orientation-for-nested-containers = true
+
+accordion-padding = 30
+
+default-root-container-layout = 'tiles'
+default-root-container-orientation = 'auto'
+
+on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
+on-focus-changed = [
+    'exec-and-forget sketchybar --trigger aerospace_focus_change',
+    'exec-and-forget sketchybar --trigger aerospace_update_windows',
+]
+exec-on-workspace-change = ['/bin/bash', '-c',
+    'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE',
+]
+on-mode-changed = []
+
+automatically-unhide-macos-hidden-apps = false
+
+# 10 workspaces; 1=main, 2=inet, 3=code, 4=data, 5=play, 6=docs, 7=draw, 8=txns, 9=info, 0=misc
+persistent-workspaces = [
+    'main', 'inet', 'code', 'data', 'play', 'docs', 'draw', 'txns', 'info', 'misc',
+]
+
+# on-window-detected rules. Routes by bundle ID, then floaters last.
+on-window-detected = [
+    # main
+    { if = 'test %{app-bundle-id} = com.microsoft.Outlook', run = 'move-node-to-workspace main' },
+    { if = 'test %{app-bundle-id} = com.microsoft.teams2', run = 'move-node-to-workspace main' },
+    { if = 'test %{app-bundle-id} = com.tinyspeck.slackmacgap', run = 'move-node-to-workspace main' },
+    # inet
+    { if = 'test %{app-bundle-id} = org.mozilla.firefox', run = 'move-node-to-workspace inet' },
+    { if = 'test %{app-bundle-id} = com.google.Chrome', run = 'move-node-to-workspace inet' },
+    { if = 'test %{app-bundle-id} = com.apple.Safari', run = 'move-node-to-workspace inet' },
+    # code
+    { if = 'test %{app-bundle-id} = net.kovidgoyal.kitty', run = 'move-node-to-workspace code' },
+    { if = 'test %{app-bundle-id} = com.googlecode.iterm2', run = 'move-node-to-workspace code' },
+    { if = 'test %{app-bundle-id} = dev.zed.Zed', run = 'move-node-to-workspace code' },
+    { if = 'test %{app-bundle-id} = com.microsoft.VSCode', run = 'move-node-to-workspace code' },
+    { if = 'test %{app-bundle-id} = com.sublimemerge', run = 'move-node-to-workspace code' },
+    { if = 'test %{app-bundle-id} = dev.openchamber.desktop', run = 'move-node-to-workspace code' },
+    # data
+    { if = 'test %{app-bundle-id} = com.mongodb.compass', run = 'move-node-to-workspace data' },
+    { if = 'test %{app-bundle-id} = me.qii404.another-redis-desktop-manager', run = 'move-node-to-workspace data' },
+    { if = 'test %{app-bundle-id} = org.localsend.localsendApp', run = 'move-node-to-workspace data' },
+    { if = 'test %{app-bundle-id} = com.emtec.zoc9', run = 'move-node-to-workspace data' },
+    # play
+    { if = 'test %{app-bundle-id} = org.kde.Kdenlive', run = 'move-node-to-workspace play' },
+    { if = 'test %{app-bundle-id} = com.apple.iMovieApp', run = 'move-node-to-workspace play' },
+    # docs
+    { if = 'test %{app-bundle-id} = org.libreoffice.script', run = 'move-node-to-workspace docs' },
+    { if = 'test %{app-bundle-id} = com.microsoft.Word', run = 'move-node-to-workspace docs' },
+    { if = 'test %{app-bundle-id} = com.microsoft.Excel', run = 'move-node-to-workspace docs' },
+    { if = 'test %{app-bundle-id} = com.microsoft.Powerpoint', run = 'move-node-to-workspace docs' },
+    { if = 'test %{app-bundle-id} = com.microsoft.onenote.mac', run = 'move-node-to-workspace docs' },
+    { if = 'test %{app-bundle-id} = com.apple.iWork.Pages', run = 'move-node-to-workspace docs' },
+    { if = 'test %{app-bundle-id} = com.apple.iWork.Keynote', run = 'move-node-to-workspace docs' },
+    { if = 'test %{app-bundle-id} = com.logseq.logseq', run = 'move-node-to-workspace docs' },
+    # draw
+    { if = 'test %{app-bundle-id} = com.jgraph.drawio.desktop', run = 'move-node-to-workspace draw' },
+    # txns
+    { if = 'test %{app-bundle-id} = net.whatsapp.WhatsApp', run = 'move-node-to-workspace txns' },
+    # info
+    { if = 'test %{app-bundle-id} = com.apple.ActivityMonitor', run = 'move-node-to-workspace info' },
+    { if = 'test %{app-bundle-id} = ai.elementlabs.lmstudio', run = 'move-node-to-workspace info' },
+    { if = 'test %{app-bundle-id} = com.dalcu.mlx-core', run = 'move-node-to-workspace info' },
+    { if = 'test %{app-bundle-id} = com.youssofal.mtplx', run = 'move-node-to-workspace info' },
+    { if = 'test %{app-bundle-id} = dev.kdrag0n.MacVirt', run = 'move-node-to-workspace info' },
+    # misc
+    # check-further-callbacks: first-match-wins otherwise; 1Password both moves AND floats
+    { if = 'test %{app-bundle-id} = com.1password.1password', run = 'move-node-to-workspace misc', check-further-callbacks = true },
+    { if = 'test %{app-bundle-id} = pro.betterdisplay.BetterDisplay', run = 'move-node-to-workspace misc' },
+    { if = 'test %{app-bundle-id} = org.hammerspoon.Hammerspoon', run = 'move-node-to-workspace misc' },
+    { if = 'test %{app-bundle-id} = com.box.desktop', run = 'move-node-to-workspace misc' },
+    { if = 'test %{app-bundle-id} = org.openvpn.client.app', run = 'move-node-to-workspace misc' },
+    { if = 'test %{app-bundle-id} = org.zaproxy.zap.ZAP', run = 'move-node-to-workspace misc' },
+    { if = 'test %{app-bundle-id} = com.cisco.secureclient.gui', run = 'move-node-to-workspace misc' },
+    # floaters
+    { if = 'test %{app-bundle-id} = com.apple.finder', run = 'layout floating' },
+    { if = 'test %{app-bundle-id} = com.1password.1password', run = 'layout floating' },
+    { if = 'test %{app-bundle-id} = com.apple.systempreferences', run = 'layout floating' },
+]
+
+# Odd-numbered workspaces always live on the secondary monitor.
+# Workspaces not listed here have no force-assignment and appear on the focused monitor.
+[workspace-to-monitor-force-assignment]
+code = 'secondary'
+play = 'secondary'
+draw = 'secondary'
+info = 'secondary'
+
+[key-mapping]
+preset = 'qwerty'
+
+[focus-follows-mouse]
+enabled = false
+
+[gaps]
+inner.horizontal = 10
+inner.vertical   = 10
+outer.left       = 10
+outer.bottom     = 10
+outer.right      = 10
+# Per-monitor (AeroSpace ≥0.8.0): the built-in already reserves 38pt of
+# notch safe-area, so it only needs a small top-up under the floating bar;
+# notchless externals need the full clearance. Pattern matches the panel
+# NAME ("Built-in Retina Display") — survives dock/undock, unlike
+# monitor.main which flips to the laptop when externals unplug.
+outer.top        = [
+    { monitor."built-in.*" = 4 },
+    42,
+]
+
+[exec]
+inherit-env-vars = true
+
+[exec.env-vars]
+PATH = '/opt/homebrew/bin:${PATH}'
+
+[mode.main.binding]
+# Focus
+ctrl-alt-cmd-h = 'focus left'
+ctrl-alt-cmd-j = 'focus down'
+ctrl-alt-cmd-k = 'focus up'
+ctrl-alt-cmd-l = 'focus right'
+ctrl-alt-cmd-left = 'focus left'
+ctrl-alt-cmd-down = 'focus down'
+ctrl-alt-cmd-up = 'focus up'
+ctrl-alt-cmd-right = 'focus right'
+
+# Cycle focus (DFS order)
+ctrl-alt-cmd-c = 'focus dfs-next'
+ctrl-alt-cmd-shift-c = 'focus dfs-prev'
+
+# Move window
+ctrl-alt-cmd-shift-h = 'move left'
+ctrl-alt-cmd-shift-j = 'move down'
+ctrl-alt-cmd-shift-k = 'move up'
+ctrl-alt-cmd-shift-l = 'move right'
+ctrl-alt-cmd-shift-left = 'move left'
+ctrl-alt-cmd-shift-down = 'move down'
+ctrl-alt-cmd-shift-up = 'move up'
+ctrl-alt-cmd-shift-right = 'move right'
+
+# Workspace switch (auto-back-and-forth)
+ctrl-alt-cmd-1 = 'workspace --auto-back-and-forth main'
+ctrl-alt-cmd-2 = 'workspace --auto-back-and-forth inet'
+ctrl-alt-cmd-3 = 'workspace --auto-back-and-forth code'
+ctrl-alt-cmd-4 = 'workspace --auto-back-and-forth data'
+ctrl-alt-cmd-5 = 'workspace --auto-back-and-forth play'
+ctrl-alt-cmd-6 = 'workspace --auto-back-and-forth docs'
+ctrl-alt-cmd-7 = 'workspace --auto-back-and-forth draw'
+ctrl-alt-cmd-8 = 'workspace --auto-back-and-forth txns'
+ctrl-alt-cmd-9 = 'workspace --auto-back-and-forth info'
+ctrl-alt-cmd-0 = 'workspace --auto-back-and-forth misc'
+
+# Move to workspace
+ctrl-alt-cmd-shift-1 = 'move-node-to-workspace main'
+ctrl-alt-cmd-shift-2 = 'move-node-to-workspace inet'
+ctrl-alt-cmd-shift-3 = 'move-node-to-workspace code'
+ctrl-alt-cmd-shift-4 = 'move-node-to-workspace data'
+ctrl-alt-cmd-shift-5 = 'move-node-to-workspace play'
+ctrl-alt-cmd-shift-6 = 'move-node-to-workspace docs'
+ctrl-alt-cmd-shift-7 = 'move-node-to-workspace draw'
+ctrl-alt-cmd-shift-8 = 'move-node-to-workspace txns'
+ctrl-alt-cmd-shift-9 = 'move-node-to-workspace info'
+ctrl-alt-cmd-shift-0 = 'move-node-to-workspace misc'
+
+ctrl-alt-cmd-tab = 'workspace-back-and-forth'
+
+# Resize
+ctrl-alt-cmd-r = 'mode resize'
+ctrl-alt-cmd-minus = 'resize smart -50'
+ctrl-alt-cmd-equal = 'resize smart +50'
+
+# Layout cycle (full 4-way; aerospace applies first non-active layout -> cycles)
+ctrl-alt-cmd-m = 'layout h_tiles v_tiles h_accordion v_accordion'
+
+# Windows
+ctrl-alt-cmd-q = 'close --quit-if-last-window'
+ctrl-alt-cmd-shift-q = 'close'
+ctrl-alt-cmd-f = 'fullscreen'
+ctrl-alt-cmd-shift-f = 'layout floating tiling'
+
+# Spawn
+ctrl-alt-cmd-enter = 'exec-and-forget open -n /Applications/kitty.app'
+ctrl-alt-cmd-w = 'exec-and-forget open -n /Applications/Firefox.app'
+ctrl-alt-cmd-e = 'exec-and-forget open ~'
+
+# Reload / pause
+ctrl-alt-cmd-esc = 'reload-config'
+ctrl-alt-cmd-shift-e = 'enable toggle'
+
+[mode.resize.binding]
+h = 'resize width -50'
+j = 'resize height +50'
+k = 'resize height -50'
+l = 'resize width +50'
+b = 'balance-sizes'
+esc = 'mode main'
+ctrl-alt-cmd-r = 'mode main'
