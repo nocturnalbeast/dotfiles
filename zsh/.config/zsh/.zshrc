@@ -30,12 +30,6 @@ source "$ZDOTDIR/include/options.zsh"
 
 ## 4: setup required directories and paths
 
-# xdg base directory specification
-typeset -gx XDG_DATA_HOME=${XDG_DATA_HOME:-"$HOME/.local/share"}
-typeset -gx XDG_STATE_HOME=${XDG_STATE_HOME:-"$HOME/.local/state"}
-typeset -gx XDG_CACHE_HOME=${XDG_CACHE_HOME:-"$HOME/.cache"}
-typeset -gx XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-"$HOME/.config"}
-
 # source xdg user dirs if present
 [[ -f "$XDG_CONFIG_HOME/user-dirs.dirs" ]] && {
     source "$XDG_CONFIG_HOME/user-dirs.dirs"
@@ -110,9 +104,6 @@ zsh-defer -a _early_init
 
 
 ## 10: miscellaneous settings
-
-# deduplicate PATH
-typeset -gU PATH path
 
 # word characters for shell operations
 typeset -g WORDCHARS='*?[]~=&;!#$%^(){}'
@@ -281,3 +272,10 @@ zsh-defer -ac 'unfunction _deferred_plugin_load _early_init _post_plugin_setup l
 if [ -n "${ZSH_PROFILE_STARTUP:+x}" ]; then
     zprof
 fi
+
+
+## 17: forge integration
+
+# the plugin loads deferred (after compinit + fzf-tab); the plugin script
+# itself sets _FORGE_PLUGIN_LOADED on successful load
+zsh-defer -a source "$ZDOTDIR/include/forge.zsh"
