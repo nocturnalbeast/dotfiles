@@ -1,6 +1,0 @@
-enabled = true
-description = "vivid: LS_COLORS generator"
-tags = ["cli", "shell", "theming"]
-os = ["linux", "macos"]
-arch = []
-condition = ""
