@@ -32,7 +32,7 @@ padding = 8
 horizontal_padding = 8
 text_icon_padding = 0
 frame_width = 2
-frame_color = "#999999"
+frame_color = "#9ccbfb"
 gap_size = 4
 corner_radius = 0
 separator_color = auto
@@ -83,22 +83,25 @@ force_xwayland = false
 per_monitor_dpi = true
 
 [urgency_low]
-background = "#333333"
-foreground = "#EAEAEA"
+background = "#131313"
+foreground = "#808080"
 highlight = "#EAEAEA"
 timeout = 2
 icon = ~/.local/share/notification_icons/info.svg
+frame_color = "#9ccbfb"
 
 [urgency_normal]
-background = "#EAEAEA"
-foreground = "#333333"
+background = "#131313"
+foreground = "#7b7b7b"
 highlight = "#333333"
 timeout = 5
 icon = ~/.local/share/notification_icons/warning.svg
+frame_color = "#9ccbfb"
 
 [urgency_critical]
-background = "#D23D3D"
-foreground = "#000000"
+background = "#604545"
+foreground = "#0a0a0a"
 highlight = "#000000"
 timeout = 0
 icon = ~/.local/share/notification_icons/error.svg
+frame_color = "#ffb3b2"
