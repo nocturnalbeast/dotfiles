@@ -12,17 +12,8 @@
   - switch menu system backend from dmenu to rofi
   - rework dmenu-helper into backend-agnostic helper
 
-- gtk:
-  - remove all theme files and replace them with oomox/themix config files and have the install/bootstrap script generate them on the fly
-  - add GTK4 configuration
-
 - kitty:
   - update config specifically for kittens
-
-- neovim:
-  - add configuration for required GUIs (neovide/fvim/etc.)
-  - rewrite config in lua
-  - rename top-level folder from `nvim` to `neovim`
 
 - scripts:
   - implement scratchpad script
