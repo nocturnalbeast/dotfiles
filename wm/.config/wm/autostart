@@ -22,6 +22,7 @@ BSPWM_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/bspwm"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}"
 ENTRIES="
 layout :: hot :: x11 :: oneshot :: xrandr ::  :: [ -f \"${WM_CONFIG}/current_layout\" ] :: ${WM_CONFIG}/layouts/\"\$(cat \"${WM_CONFIG}/current_layout\" 2>/dev/null)\"
+xsettingsd :: cold :: x11 :: daemon ::  ::  ::  :: xsettingsd
 set-dpi :: hot :: x11 :: oneshot :: display ::  ::  :: display set-dpi
 wallpaper :: hot :: both :: oneshot :: background ::  ::  :: background restore
 pipewire :: cold :: both :: daemon :: systemctl pipewire :: pipewire ::  :: systemctl --user is-active --quiet pipewire.service 2>/dev/null || systemctl --user start pipewire.service 2>/dev/null || pipewire
@@ -30,6 +31,7 @@ picom :: hot :: x11 :: daemon ::  ::  ::  :: picom -b
 clipcatd :: cold :: both :: daemon ::  ::  ::  :: clipcatd
 lockctl :: cold :: both :: daemon :: lockctl :: xss-lock swayidle hypridle ::  :: lockctl start
 quickshell :: hot :: both :: daemon ::  ::  ::  :: quickshell
+theme-watch :: cold :: both :: daemon :: theme ::  ::  :: theme watch
 nm-applet :: cold :: both :: daemon ::  ::  ::  :: nm-applet
 blueman-applet :: cold :: both :: daemon ::  ::  ::  :: blueman-applet
 udiskie :: cold :: both :: daemon ::  ::  ::  :: udiskie -Avnt
