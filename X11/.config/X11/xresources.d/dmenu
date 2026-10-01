@@ -1,13 +1,13 @@
 ! dmenu settings
 dmenu.font:            sans:style=Medium:size=11:antialias=true:autohint=true
-dmenu.background:      #525252
-dmenu.foreground:      #000000
-dmenu.selbackground:   #000000
-dmenu.selforeground:   #ffffff
-dmenu.hlbackground:    #525252
-dmenu.hlforeground:    #ff3333
-dmenu.selhlbackground: #000000
-dmenu.selhlforeground: #ff9999
+dmenu.background:      #0a0a0a
+dmenu.foreground:      #7b7b7b
+dmenu.selbackground:   #9ccbfb
+dmenu.selforeground:   #0a0a0a
+dmenu.hlbackground:    #9ccbfb
+dmenu.hlforeground:    #0a0a0a
+dmenu.selhlbackground: #131313
+dmenu.selhlforeground: #7b7b7b
 dmenu.alphabg:         150
 dmenu.alphafg:         255
 dmenu.alphaselbg:      180
