@@ -4,13 +4,9 @@ local dpi = xresources.apply_dpi
 
 local vars = require("vars")
 
-local ok, prism = pcall(require, "prismtheme")
 local xrdb = xresources.get_current_theme()
 
 local function color(key, fallback)
-    if ok and prism[key] then
-        return prism[key]
-    end
     return xrdb[key] or fallback
 end
 
