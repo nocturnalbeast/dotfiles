@@ -56,9 +56,9 @@ show_indicators = yes
 
 # icons
 enable_recursive_icon_lookup = true
-icon_theme = hicolor
+icon_theme = "Tela-dark"
 icon_position = left
-min_icon_size = 0
+min_icon_size = 24
 max_icon_size = 32
 
 # history
@@ -87,7 +87,7 @@ background = "#131313"
 foreground = "#808080"
 highlight = "#EAEAEA"
 timeout = 2
-icon = ~/.local/share/notification_icons/info.svg
+icon = "dialog-information"
 frame_color = "#9ccbfb"
 
 [urgency_normal]
@@ -95,7 +95,7 @@ background = "#131313"
 foreground = "#7b7b7b"
 highlight = "#333333"
 timeout = 5
-icon = ~/.local/share/notification_icons/warning.svg
+icon = "dialog-warning"
 frame_color = "#9ccbfb"
 
 [urgency_critical]
@@ -103,5 +103,5 @@ background = "#604545"
 foreground = "#0a0a0a"
 highlight = "#000000"
 timeout = 0
-icon = ~/.local/share/notification_icons/error.svg
+icon = "dialog-error"
 frame_color = "#ffb3b2"
