@@ -1,0 +1,6 @@
+enabled = true
+description = "karabiner-elements keyboard remapping (caps→meh)"
+tags = ["gui", "keyboard", "input"]
+os = ["macos"]
+arch = []
+condition = ""
