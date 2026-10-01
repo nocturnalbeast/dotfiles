@@ -165,19 +165,49 @@ set_dpi() {
     # Set X resources (for apps reading Xrm directly)
     echo "Xft.dpi: $SELECTED_DPI" | xrdb -merge
 
-    # Generate xsettingsd config from template + DPI values
+    # Update owned DPI keys in the live xsettingsd config. Partial rewrite:
+    # foreign keys belong to other writers and survive untouched.
+    # Writer contract (00 §2.6): hold the theming flock for the whole
+    # read-modify-write — concurrent theme applies rewrite other keys
+    # in this same file, and unlocked interleaving erases keys.
+    THEMING_LOCK="${XDG_CACHE_HOME:-$HOME/.cache}/theming/lock"
+    (
+        flock -w 60 9 || {
+            echo "display: theming lock busy (60s) — DPI write aborted" >&2
+            exit 1
+        }
+        _xsettingsd_write "$SELECTED_DPI" "$RGBA"
+    ) 9> "$THEMING_LOCK" || return 1
+}
+
+_xsettingsd_write() {
+    local SELECTED_DPI="${1:?dpi}" RGBA="${2:-rgb}"
     mkdir -p "$XSETTINGSD_DIR"
+    touch "$XSETTINGSD_CONF"
+    [ -n "$(tail -c 1 "$XSETTINGSD_CONF")" ] && echo >> "$XSETTINGSD_CONF"
+
+    # One-time migration: carry over template-only keys, then retire it.
+    # Theming-owned keys never migrate — live values are authoritative.
+    if [[ -f $XSETTINGSD_TEMPLATE ]]; then
+        grep -vxFf "$XSETTINGSD_CONF" "$XSETTINGSD_TEMPLATE" |
+            grep -vE '^(Net/ThemeName|Net/IconThemeName|Gtk/CursorThemeName|Gtk/FontName) ' \
+                >> "$XSETTINGSD_CONF" || true
+        rm -f "$XSETTINGSD_TEMPLATE"
+    fi
+
+    # Strip old owned keys, append fresh values
+    grep -vE '^(Xft/DPI|Xft/RGBA|Gdk/WindowScalingFactor|Gdk/UnscaledDPI) ' \
+        "$XSETTINGSD_CONF" > "${XSETTINGSD_CONF}.tmp" || true
     {
-        cat "$XSETTINGSD_TEMPLATE" 2> /dev/null
         echo "Xft/DPI $((SELECTED_DPI * 1024))"
         echo "Xft/RGBA \"$RGBA\""
         echo "Gdk/WindowScalingFactor $((SELECTED_DPI / 96))"
         echo "Gdk/UnscaledDPI $((SELECTED_DPI * 1024 / (SELECTED_DPI / 96)))"
-    } > "$XSETTINGSD_CONF"
+    } >> "${XSETTINGSD_CONF}.tmp"
+    mv "${XSETTINGSD_CONF}.tmp" "$XSETTINGSD_CONF"
 
-    # Restart xsettingsd
-    pkill xsettingsd 2> /dev/null
-    xsettingsd &
+    # Reload xsettingsd (SIGHUP re-reads the config; no restart)
+    pkill -HUP xsettingsd 2> /dev/null
 }
 
 # ============================================================
