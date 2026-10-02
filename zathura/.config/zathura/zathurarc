@@ -4,43 +4,43 @@
 # |___|__,|_| |_|_|___|_| |__,|
 
 
-set font                        "sans 10"
+set font                        "Inter Display 12"
 
-set default-fg                  "#FFFFFF"
-set default-bg                  "#000000"
+set default-fg                  "#7b7b7b"
+set default-bg                  "#0a0a0a"
 
-set statusbar-fg                "#303030"
-set statusbar-bg                "#EAEAEA"
+set statusbar-fg                "#808080"
+set statusbar-bg                "#131313"
 
-set inputbar-fg                 "#0E0E0E" 
-set inputbar-bg                 "#EAEAEA"
+set inputbar-fg                 "#7b7b7b"
+set inputbar-bg                 "#131313"
 
-set notification-error-bg       "#FF9999"
-set notification-error-fg       "#303030"
-set notification-warning-bg     "#FFCC99"
-set notification-warning-fg     "#303030"
-set notification-bg             "#D0D0D0"
-set notification-fg             "#303030"
+set notification-error-bg       "#0a0a0a"
+set notification-error-fg       "#ffb3b2"
+set notification-warning-bg     "#0a0a0a"
+set notification-warning-fg     "#cbcb76"
+set notification-bg             "#0a0a0a"
+set notification-fg             "#7b7b7b"
 
-set completion-bg               "#D0D0D0"
-set completion-fg               "#303030"
-set completion-group-bg         "#DEDEDE"
-set completion-group-fg         "#000000"
-set completion-highlight-bg     "#FFFFFF"
-set completion-highlight-fg     "#000000"
+set completion-bg               "#131313"
+set completion-fg               "#7b7b7b"
+set completion-group-bg         "#1b1b1b"
+set completion-group-fg         "#0a0a0a"
+set completion-highlight-bg     "#9ccbfb"
+set completion-highlight-fg     "#0a0a0a"
 
-set highlight-color             "#808080"
-set highlight-active-color      "#FFFFFF"
+set highlight-color             "#80d4d4"
+set highlight-active-color      "#9ccbfb"
 
-set index-bg                    "#000000"
-set index-fg                    "#EAEAEA"
-set index-active-bg             "#EAEAEA"
-set index-active-fg             "#000000"
+set index-bg                    "#0a0a0a"
+set index-fg                    "#7b7b7b"
+set index-active-bg             "#131313"
+set index-active-fg             "#9ccbfb"
 
 set recolor                     true
 set recolor-keephue             true
-set recolor-lightcolor          "#000000"
-set recolor-darkcolor           "#FFFFFF"
+set recolor-lightcolor          "#0a0a0a"
+set recolor-darkcolor           "#7b7b7b"
 
 set statusbar-v-padding         15
 set statusbar-h-padding         45
