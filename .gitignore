@@ -64,3 +64,6 @@ beets/.config/beets/state.pickle
 
 # awesomewm external libs
 awesome/.config/awesome/extlib
+
+# sketchybar generated colors
+sketchybar/.config/sketchybar/colors_generated.lua
