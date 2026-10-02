@@ -90,6 +90,6 @@ systemd_socket = false
 tcp_port = 8889
 
 [theme]
-name = "default"
+name = "custom" # theme:managed
 debug = false
 max_depth = 10

@@ -1,0 +1,19 @@
+[theme]
+name = "custom"
+
+[colors]
+Base = "#7b7b7b"
+Muted = "#808080"
+Annotation = "#eeb4ea"
+Guidance = "#9ccbfb"
+Title = "#9ccbfb"
+Important = "#464646"
+AlertInfo = "#a0d49b"
+AlertWarn = "#cbcb76"
+AlertError = "#ffb3b2"
+SyntaxCommand = "#a0d49b"
+SyntaxFlag = "#dbb9f9"
+SyntaxString = "#cbcb76"
+SyntaxVariable = "#80d4d4"
+SyntaxOperator = "#7c7c7c"
+SyntaxComment = "#808080"
