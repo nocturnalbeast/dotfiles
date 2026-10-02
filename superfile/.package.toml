@@ -1,0 +1,6 @@
+enabled = true
+description = "superfile terminal file manager"
+tags = ["terminal", "tui"]
+os = ["macos", "linux"]
+arch = []
+condition = ""
