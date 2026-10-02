@@ -1,0 +1,34 @@
+#!/bin/sh
+# plugins/omniwm_bridge — registers omniwmctl watch callbacks that fire
+# sketchybar triggers (wm_omniwm.lua adapter's event source). Mirrors
+# plugins/rift_bridge: each event gets a DETACHED persistent watch process
+# (omniwmctl stays alive with --reconnect; blocking is why this script must
+# background them and exit). The bar re-QUERIES full state on each trigger
+# (never-trust-payloads invariant), so no event payload plumbing here.
+#
+# IDEMPOTENT: the kill-pattern targets only OUR watches (the trigger argv
+# carries the anchor string) — the pow-af watch from LaunchAgent
+# local.omniwm.extras does NOT match and is left alone.
+#
+# Event mapping (rift vocabulary → omniwm watch events):
+#   focused_window_changed ← focus
+#   windows_changed        ← windows-changed (and layout-changed)
+#   workspace_changed      ← active-workspace
+
+SB=/opt/homebrew/bin/sketchybar
+OW=/opt/homebrew/bin/omniwmctl
+ANCHOR="omniwm_bridge_evt"
+
+# stale watches from a previous bridge generation (ours only, by anchor)
+pkill -f "sketchybar --trigger $ANCHOR" 2>/dev/null
+sleep 0.3
+
+register() { # $1 = omniwm watch event, $2 = EVENT= name for the bar
+    nohup "$OW" watch "$1" --reconnect \
+        --exec "$SB" --trigger "$ANCHOR" "EVENT=$2" >/dev/null 2>&1 &
+}
+
+register focus            focused_window_changed
+register windows-changed  windows_changed
+register layout-changed   windows_changed
+register active-workspace workspace_changed

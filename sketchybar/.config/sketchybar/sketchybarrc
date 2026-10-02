@@ -1,0 +1,20 @@
+#!/usr/bin/env lua
+
+-- Mirrors the archived config's install/sbar.lua mechanism: SbarLua's .so
+-- lives in ~/.local/share/sketchybar_lua/ and must be on package.cpath
+-- before require("sketchybar") resolves (it is required by init.lua).
+package.cpath = package.cpath .. ";" .. os.getenv("HOME") .. "/.local/share/sketchybar_lua/?.so"
+
+-- DEVIATION from plan: sketchybar v2.24.0 `--reload` does NOT kill the
+-- running Lua config process (SBarLua only self-exits when its parent dies,
+-- via its orphan_check timer). Each reload would otherwise leak a stale
+-- lua with live event subscribers -> duplicated callbacks and flicker.
+-- Kill any stale instance of this config (all but ourself) before loading.
+-- $PPID of the shell is this lua process.
+os.execute([[
+  for pid in $(pgrep -f 'lua .*sketchybar/sketchybarrc' 2>/dev/null); do
+    if [ "$pid" != "$PPID" ]; then kill "$pid" 2>/dev/null; fi
+  done
+]])
+
+require("init")

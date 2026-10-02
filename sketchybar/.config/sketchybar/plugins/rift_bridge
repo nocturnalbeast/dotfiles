@@ -1,0 +1,34 @@
+#!/bin/sh
+# plugins/rift_bridge — registers sketchybar-trigger callbacks in the Rift
+# WM (Phase 3 WM abstraction, helpers/wm_rift.lua). Each event gets its own
+# DETACHED persistent `rift-cli subscribe cli` process (they connect to
+# Rift's Mach service and stay alive — blocking is why this script must
+# background them and exit). The bar re-QUERIES full state on each trigger
+# (never-trust-payloads invariant), so no event payload plumbing here.
+#
+# IDEMPOTENT: registers only subscriptions that are missing — the user's
+# dotfiles own their own Rift subscriptions (do NOT `subscribe unsub-cli`;
+# that would wipe dotfile wiring). Marker: "EVENT=<name>" in the args.
+# Single instance: stale subscribers from a previous bridge run are killed
+# first — the kill-pattern targets only OUR subscribers (the trigger argv
+# carries the anchor string); the user's dotfile Rift subscribers do NOT
+# match and are left alone.
+
+SB=/opt/homebrew/bin/sketchybar
+RC=/opt/homebrew/bin/rift-cli
+ANCHOR="rift_bridge_evt"
+
+# stale subscribers from a previous bridge generation (ours only, by anchor)
+pkill -f "sketchybar --trigger $ANCHOR" 2>/dev/null
+sleep 0.3
+
+EVENTS="workspace_changed windows_changed focused_window_changed window_title_changed"
+
+existing=$($RC subscribe list-cli 2>/dev/null)
+for evt in $EVENTS; do
+    if printf '%s' "$existing" | grep -q "EVENT=$evt"; then
+        continue # ours already registered (idempotent)
+    fi
+    nohup $RC subscribe cli --event "$evt" --command sh \
+        --args -c --args "$SB --trigger $ANCHOR EVENT=$evt" >/dev/null 2>&1 &
+done

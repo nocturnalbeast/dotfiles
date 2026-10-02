@@ -1,0 +1,6 @@
+enabled = true
+description = "sketchybar status bar (menu bar replacement for aerospace)"
+tags = ["gui", "bar", "guicomponent"]
+os = ["macos"]
+arch = []
+condition = ""

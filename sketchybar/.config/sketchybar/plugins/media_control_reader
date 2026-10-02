@@ -1,0 +1,119 @@
+#!/bin/sh
+# plugins/media_control_reader — long-lived `media-control stream` reader.
+#
+# `media-control stream` (macOS 26 MediaRemote shim) emits ONE JSON line
+# per playback change and never exits. This script reads it line-by-line
+# and fans each change out to sketchybar as a custom `media_update` event
+# (registered in init.lua; consumed by items/media.lua):
+#
+#   sketchybar --trigger media_update TITLE=… ARTIST=… PLAYING=0|1 BUNDLE=…
+#
+# Stream line shape (verified live):
+#   {"type":"data","diff":false,"payload":{…full state…}}   initial + track change
+#   {"type":"data","diff":true, "payload":{"playing":true}} PARTIAL diff — only
+#                                                           changed fields
+#   {"type":"data","diff":false,"payload":{}}               empty — ignore
+#
+# Therefore: a payload field ABSENT from the line must NOT be sent as an
+# env var (media.lua keeps its cached value for that field). Presence is
+# detected via jq's `-e` exit code (`// empty` → no output → nonzero);
+# present values are stringified, newline-sanitized, truncated ~100B.
+# NOTE: do NOT split fields via IFS here — /bin/sh (bash 3.2 posix-mode)
+# refuses to word-split on non-whitespace control-char IFS (verified).
+#
+# PROCESS SHAPE: deliberately ONE sh process. A plain
+# `media-control stream | while read` pipeline forks a subshell with an
+# IDENTICAL argv (ps/pgrep then count 2 per reader). Instead the stream
+# writer is backgrounded into a FIFO and the main shell reads the FIFO
+# directly — plus a trap so TERM/exit never orphans the writer child.
+#
+# Single-instance guard: the bar (re)spawns this script on every config
+# load; a surviving instance keeps pushing, so duplicates must exit.
+# pgrep pattern is ANCHORED (`media_control_reader$`) so the transient
+# `sh -c 'nohup … &'` spawn wrapper (whose argv ends in `&`, not the
+# script name) can never match, and our own PID ($$) is excluded.
+#
+# Spawn idiom: plugins/network_load — detached nohup + redirects from
+# media.lua, survives bar reloads (AGENT.md reload-semantics contract).
+# items/media.lua keeps a ≥30s `media-control get` fallback poll, so this
+# reader dying never strands the pill.
+
+MC=/opt/homebrew/bin/media-control
+JQ=/usr/bin/jq
+SB=/opt/homebrew/bin/sketchybar
+GREP=/usr/bin/grep
+PGREP=/usr/bin/pgrep
+MKFIFO=/usr/bin/mkfifo
+FIFO=/tmp/media_control_reader.fifo
+
+if "$PGREP" -f 'media_control_reader$' | "$GREP" -vw "$$" >/dev/null 2>&1; then
+  exit 0 # already running — single writer
+fi
+
+[ -p "$FIFO" ] || "$MKFIFO" "$FIFO"
+
+"$MC" stream >"$FIFO" 2>/dev/null &
+STREAM_PID=$!
+trap '/bin/kill "$STREAM_PID" 2>/dev/null; exit 0' INT TERM EXIT
+
+# Liveness guard: if the writer died at spawn (e.g. the media-control
+# binary is missing — exec fails and no process ever holds the FIFO's
+# write end open), the blocking read below would hang forever, and the
+# single-instance pgrep above would then match this hung shell on every
+# reload — permanently. Dead writer ⇒ no data can ever come: exit
+# cleanly (media.lua's ≥30s fallback poll covers the pill).
+/bin/kill -0 "$STREAM_PID" 2>/dev/null || exit 0
+
+# jq field programs. Each prints the sanitized value (newline-free,
+# ≤100 chars) or NOTHING when the payload lacks the field; with -e that
+# nothing becomes a nonzero exit = "absent" = omit the env var.
+# CAUTION: jq's `//` treats false as null-ish — boolean presence must be
+# tested with `== null`, never `// null` (playing:false vanished otherwise).
+#
+# FULL-STATE lines (diff:false — initial + every track change) carry the
+# ENTIRE payload: an absent artist there means "track has NO artist".
+# Empties are signalled via RESET=1 (see below) because the sketchybar
+# transport DROPS empty-valued env vars. PARTIAL diffs (diff:true) keep
+# the omit-absent semantics — absent = unchanged.
+TITLE_JQ='.payload.title // empty | tostring | gsub("[\\n\\r]"; " ") | .[0:100]'
+ARTIST_JQ='.payload.artist // empty | tostring | gsub("[\\n\\r]"; " ") | .[0:100]'
+PLAYING_JQ='if .payload.playing == null then empty
+  elif .payload.playing then "1" else "0" end'
+BUNDLE_JQ='.payload.bundleIdentifier // empty | tostring | gsub("[\\n\\r]"; " ") | .[0:100]'
+
+while IFS= read -r line; do
+  # Cheap pre-filter: skip lines whose payload carries none of the four
+  # tracked keys (empty payloads, elapsedTime-only progress diffs) —
+  # no jq spawn for the common no-op case. ("playing" with colon can't
+  # collide with "playbackRate" — no colon there.)
+  printf '%s' "$line" | "$GREP" -qE '"(title|artist|playing|bundleIdentifier)":' || continue
+
+  # Full-state line? (compact JSON: "diff":false). Full states carry the
+  # ENTIRE payload, so absent fields mean "explicitly empty" — but the
+  # sketchybar transport DROPS empty-valued env vars (verified: `ARTIST=`
+  # never arrives in Lua), so empties are signalled with RESET=1 instead:
+  # media.lua clears title/artist/bundle BEFORE applying present vars.
+  # (Without this, artist-less tracks kept the previous track's artist.)
+  full=0
+  printf '%s' "$line" | "$GREP" -qE '"diff" *: *false' && full=1
+
+  set --
+  if [ "$full" -eq 1 ]; then
+    set -- "RESET=1"
+  fi
+  if t=$(printf '%s' "$line" | "$JQ" -er "$TITLE_JQ" 2>/dev/null); then
+    set -- "$@" "TITLE=$t"
+  fi
+  if a=$(printf '%s' "$line" | "$JQ" -er "$ARTIST_JQ" 2>/dev/null); then
+    set -- "$@" "ARTIST=$a"
+  fi
+  if p=$(printf '%s' "$line" | "$JQ" -er "$PLAYING_JQ" 2>/dev/null); then
+    set -- "$@" "PLAYING=$p"
+  fi
+  if b=$(printf '%s' "$line" | "$JQ" -er "$BUNDLE_JQ" 2>/dev/null); then
+    set -- "$@" "BUNDLE=$b"
+  fi
+  if [ $# -gt 0 ]; then
+    "$SB" --trigger media_update "$@" >/dev/null 2>&1
+  fi
+done <"$FIFO"
