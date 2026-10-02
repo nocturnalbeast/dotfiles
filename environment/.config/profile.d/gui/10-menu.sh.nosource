@@ -43,22 +43,22 @@ MENU_BORDER_WIDTH="2"
 
 # menu colors
 # menu background color
-MENU_COLOR_BG="#0a0a0a"
+MENU_COLOR_BG="#0a0a0a" # theme:managed
 # menu text color
-MENU_COLOR_FG="#fafafa"
+MENU_COLOR_FG="#7b7b7b" # theme:managed
 # header background color
-MENU_COLOR_HEADER_BG="#171717"
+MENU_COLOR_HEADER_BG="#131313" # theme:managed
 # header foreground color
-MENU_COLOR_HEADER_FG="#fafafa"
+MENU_COLOR_HEADER_FG="#7b7b7b" # theme:managed
 # selected item background
-MENU_COLOR_SELECTED_BG="#262626"
+MENU_COLOR_SELECTED_BG="#9ccbfb" # theme:managed
 # selected item foreground
-MENU_COLOR_SELECTED_FG="#fafafa"
+MENU_COLOR_SELECTED_FG="#0a0a0a" # theme:managed
 # selected item fg (active)
-MENU_COLOR_SELECTED_FG_ACTIVE="#a1a1a1"
+MENU_COLOR_SELECTED_FG_ACTIVE="#808080" # theme:managed
 # selected item fg (urgent)
-MENU_COLOR_SELECTED_FG_URGENT="#ff6467"
+MENU_COLOR_SELECTED_FG_URGENT="#ffb3b2" # theme:managed
 # menu border color
-MENU_COLOR_BORDER="#737373"
+MENU_COLOR_BORDER="#7f7f7f" # theme:managed
 # menu separator color
-MENU_COLOR_SEPARATOR="#262626"
+MENU_COLOR_SEPARATOR="#7f7f7f" # theme:managed
