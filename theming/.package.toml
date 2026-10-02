@@ -1,0 +1,6 @@
+enabled = true
+description = "theming: config-driven theme system (palette → GTK/Qt/icons/cursors/WM/CLI)"
+tags = ["theming", "cli", "gtk", "qt", "linux"]
+os = ["linux"]
+arch = []
+condition = ""
