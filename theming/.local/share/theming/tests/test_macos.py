@@ -54,8 +54,10 @@ class TestSketchybar(unittest.TestCase):
         self.assertIn("surface = 0xff0F1114,", lua)
         self.assertIn("primary = 0xff9CCBFB,", lua)
         self.assertIn("outline_variant = 0xff44474E,", lua)
-        for role in ("rose", "mint", "teal", "violet"):
+        for role in ("teal", "green", "tertiary_container"):
             self.assertIn(f"{role} = ", lua)
+        self.assertNotIn("violet = ", lua)
+        self.assertNotIn("lime = ", lua)
 
     def test_missing_role_fails_loud(self):
         from theme.palette import PaletteError, material_roles

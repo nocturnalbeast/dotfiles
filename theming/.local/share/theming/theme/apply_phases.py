@@ -188,7 +188,9 @@ def run_members(ctx: Context, members: Sequence[Component]) -> int:
     rest = [m for m in members if m is not scheme]
 
     groups = sorted({m.group for m in members if m.group})
-    logio.phase(f"apply · {'/'.join(groups) if len(groups) > 1 else groups[0]}")
+    logio.phase(
+        f"apply · {'/'.join(groups) if groups else 'nothing (all members skipped)'}"
+    )
 
     jobs = max(1, int(getattr(ctx, "jobs", 1)))
     parallel = jobs > 1 and not ctx.dry_run and len(rest) > 1

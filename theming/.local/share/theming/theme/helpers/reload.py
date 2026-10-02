@@ -138,8 +138,14 @@ def sketchybar_reload() -> bool:
 
 
 def borders_relaunch(script: Path) -> bool:
-    """Re-exec the generated borders.sh (idempotent: it pkills first)."""
+    """Spawn the generated borders.sh detached — borders is a
+    long-running process; a blocking run would hang the apply."""
     if not shutil.which("borders"):
         return False
-    _run(["sh", str(script)])
+    subprocess.Popen(
+        ["sh", str(script)],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        start_new_session=True,
+    )
     return True

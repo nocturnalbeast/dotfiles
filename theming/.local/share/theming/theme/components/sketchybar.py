@@ -14,32 +14,20 @@ from theme.state import make_record, read_member
 
 COLORS_GENERATED = Path.home() / ".config/sketchybar/colors_generated.lua"
 
-# colors.lua requires every one of these from the generated module
+# exactly what colors.lua reads — the pcall guard checks gen.primary
 REQUIRED_ROLES = (
     "surface",
     "surface_container_high",
     "outline",
+    "outline_variant",
     "primary",
     "on_surface_variant",
     "on_surface",
-    "error",
-    "tertiary",
-    "inverse_primary",
-    "on_primary_fixed",
-    "tertiary_container",
-    "outline_variant",
     "red",
-    "orange",
     "yellow",
-    "lime",
     "green",
-    "mint",
     "teal",
-    "azure",
-    "blue",
-    "violet",
-    "magenta",
-    "rose",
+    "tertiary_container",
 )
 
 
