@@ -36,7 +36,9 @@ Singleton {
     }
 
     // ── Cache path ──
-    readonly property string _cachePath: Quickshell.env("HOME") + "/.config/quickshell/weather_cache.json"
+    // XDG-compliant: Quickshell.cacheDir resolves to ~/.cache/quickshell/by-shell/<shell-id>.
+    readonly property string _cacheDir: Quickshell.cacheDir
+    readonly property string _cachePath: Quickshell.cachePath("weather_cache.json")
 
     // ── Public helpers ──
 
@@ -311,7 +313,7 @@ Singleton {
 
     function _writeCache(json) {
         var escaped = json.replace(/'/g, "'\\''");
-        cacheWriteProc.command = ["bash", "-c", "echo '" + escaped + "' > '" + root._cachePath + "'"];
+        cacheWriteProc.command = ["bash", "-c", "mkdir -p '" + root._cacheDir + "' && echo '" + escaped + "' > '" + root._cachePath + "'"];
         cacheWriteProc.running = true;
     }
 
