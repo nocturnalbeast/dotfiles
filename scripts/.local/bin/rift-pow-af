@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+# rift-pow-af : auto-focus previous occupied workspace when current workspace empties
+# Only triggers when a window is closed in the current workspace (not on workspace navigation)
+
+STATE_FILE="/tmp/rift-pow-af-state"
+
+prev_state=$(cat "$STATE_FILE" 2>/dev/null || echo "-1:-")
+curr_ws="${RIFT_WORKSPACE_NAME:--}"
+curr_count="${RIFT_WINDOW_COUNT:--1}"
+
+echo "${curr_count}:${curr_ws}" > "$STATE_FILE"
+
+prev_count=$(echo "$prev_state" | cut -d: -f1)
+prev_ws=$(echo "$prev_state" | cut -d: -f2-)
+
+if [ "$curr_count" = "0" ] && [ "$curr_ws" = "$prev_ws" ] && [ "$prev_count" -gt 0 ] 2>/dev/null; then
+    rift-cli execute workspace last
+fi
