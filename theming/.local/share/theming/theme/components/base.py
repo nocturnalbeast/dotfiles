@@ -27,6 +27,7 @@ class Component(ABC):
     key: str = ""
     group: str = ""  # stamp file this member's record lives in; "" for groups
     write_deps: frozenset[str] = frozenset()  # ordering edges among parallel writes
+    platform: str = ""  # "" any · "linux" · "darwin"
 
     def __init_subclass__(cls, **kw: Any) -> None:
         super().__init_subclass__(**kw)

@@ -20,6 +20,7 @@ HOME = Path.home()
 class CursorsComponent(Component):
     key = "cursors"
     group = "gui"
+    platform = "linux"
 
     def consumed_slice(self, ctx: Context) -> dict[str, Any]:
         """gui.cursor_pack/theme/size + palette mode/accent + base00/base01."""

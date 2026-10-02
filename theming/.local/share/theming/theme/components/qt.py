@@ -58,6 +58,7 @@ def _shift(hex_color: str, t: float) -> str:
 class QtComponent(Component):
     key = "qt"
     group = "qt"
+    platform = "linux"
 
     def consumed_slice(self, ctx: Context) -> dict[str, Any]:
         return {

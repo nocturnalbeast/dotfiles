@@ -127,3 +127,19 @@ def awesome_restart() -> bool:
     except subprocess.TimeoutExpired:
         return False
     return True
+
+
+def sketchybar_reload() -> bool:
+    """sketchybar picks up colors_generated.lua on --reload."""
+    if not shutil.which("sketchybar"):
+        return False
+    _run(["sketchybar", "--reload"])
+    return True
+
+
+def borders_relaunch(script: Path) -> bool:
+    """Re-exec the generated borders.sh (idempotent: it pkills first)."""
+    if not shutil.which("borders"):
+        return False
+    _run(["sh", str(script)])
+    return True

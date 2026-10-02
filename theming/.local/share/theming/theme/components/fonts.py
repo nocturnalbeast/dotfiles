@@ -31,6 +31,7 @@ def _alias_xml(family: str, prefer: list[str]) -> str:
 class FontsComponent(Component):
     key = "fonts"
     group = "gui"
+    platform = "linux"
 
     def consumed_slice(self, ctx: Context) -> dict[str, Any]:
         return {k: ctx.config["fonts"][k] for k in ("sans", "serif", "monospace")}

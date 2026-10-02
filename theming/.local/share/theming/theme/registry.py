@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from theme.componentgroups.all import AllGroup
+from theme.componentgroups.macos import MacOSGroup
 from theme.componentgroups.gui import GUIGroup
 from theme.componentgroups.tui import TUIGroup
 from theme.components.base import Component
@@ -20,6 +21,7 @@ REGISTRY: dict[str, Component] = {
     "tui": _tui,
     "qt": _qt,
     "wm": _wm,
+    "macos": MacOSGroup(),
     "all": _all,
 }
 for member in _group.members:
@@ -28,5 +30,7 @@ for member in _tui.members:
     REGISTRY[member.key] = member
 for member in _wm.members:
     REGISTRY[member.key] = member
+for member in MacOSGroup().members:
+    REGISTRY[member.key] = member
 
-SHIPPED = {"gui", "tui", "qt", "wm", "palette", "watch"}
+SHIPPED = {"gui", "tui", "qt", "wm", "macos", "palette", "watch"}

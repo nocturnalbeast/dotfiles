@@ -104,6 +104,19 @@ _SLOT16_CROSSWALK = {
 }
 
 
+def material_roles(
+    palette: dict[str, Any], required: list[str] | tuple[str, ...]
+) -> dict[str, str]:
+    """Material roles of the active variant; hard-requires `required`
+    (missing role raises — no silent fallbacks)."""
+    variant = active_variant(palette)
+    material = (variant.get("extensions") or {}).get("material") or {}
+    missing = [r for r in required if not material.get(r)]
+    if missing:
+        raise PaletteError(f"material roles missing: {', '.join(missing)}")
+    return {r: normalize_hex(str(material[r])) for r in required}
+
+
 def slot16(palette: dict[str, Any], name: str) -> str:
     """Semantic base16 slot: anchored crosswalk token, terminal_gui ramp fallback."""
     if name in _SLOT16_CROSSWALK:

@@ -22,8 +22,12 @@ class ComponentGroup(Component):
         raise RuntimeError("groups are dispatched via apply, not write_effects")
 
     def status(self, ctx: Context) -> int:
+        import sys
+
         code = 0
         for member in self.members:
+            if member.platform and member.platform != sys.platform:
+                continue
             code = max(code, member.status(ctx))
         return code
 

@@ -25,6 +25,7 @@ GS_SCHEMA = "org.gnome.desktop.interface"
 class GTKComponent(Component):
     key = "gtk"
     group = "gui"
+    platform = "linux"
 
     def consumed_slice(self, ctx: Context) -> dict[str, Any]:
         """gui theme/tweaks/size/env_override/font_size + fonts.sans + palette mode/accent."""

@@ -57,6 +57,7 @@ def _rgb_colon(hex_color: str) -> str:
 
 class WMMember(Component):
     group = "wm"
+    platform = "linux"
 
     def _eff(self, ctx: Context, surfaces: dict[str, Any], **kw: Any) -> Effects:
         h = slice_hash(self.consumed_slice(ctx))

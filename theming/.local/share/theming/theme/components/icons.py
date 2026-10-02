@@ -19,6 +19,7 @@ from theme.state import make_record, read_member, update_member
 class IconsComponent(Component):
     key = "icons"
     group = "gui"
+    platform = "linux"
 
     def consumed_slice(self, ctx: Context) -> dict[str, Any]:
         """gui.icon_pack/icon_theme + palette mode/accent."""

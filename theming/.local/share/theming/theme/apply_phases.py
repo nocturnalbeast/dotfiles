@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Iterator, Sequence
@@ -13,6 +15,7 @@ from theme.resources.base import Context
 
 # shared surfaces: id → (path, writer kind, writer kwargs)
 from theme.components.gtk import S1, S2, S3, S4, S6
+from theme.components.aerospace import BORDERS_SH
 from theme.components.wm import BSPWM_SET_COLORS, XRESOURCES
 
 SURFACE_SPECS: dict[str, tuple[Path, str, dict[str, Any]]] = {
@@ -25,6 +28,7 @@ SURFACE_SPECS: dict[str, tuple[Path, str, dict[str, Any]]] = {
 
 SURFACE_XRESOURCES = XRESOURCES
 SURFACE_BSPWM = BSPWM_SET_COLORS
+SURFACE_BORDERS_SH = BORDERS_SH
 
 RELOAD_ORDER = (
     "sighup",
@@ -35,6 +39,8 @@ RELOAD_ORDER = (
     "fcache",
     "iconcache",
     "xsetroot",
+    "sketchybar",
+    "borders",
     "awesome",
 )
 
@@ -51,6 +57,19 @@ def _waves(members: list[Component]) -> Iterator[list[Component]]:
             remaining.remove(m)
         done.update(m.key for m in wave)
         yield wave
+
+
+def _native(m: Component) -> bool:
+    return (
+        not m.platform
+        or {"linux": "linux", "darwin": "darwin"}.get(m.platform) == sys.platform
+    )
+
+
+def _skip_note(m: Component) -> None:
+    from theme.helpers.logio import action
+
+    action(f"{m.key}: skipped ({m.platform}-only, running on {sys.platform})")
 
 
 def _safe_write(m: Component, ctx: Context) -> Effects:
@@ -145,6 +164,12 @@ def _run_reloads(ctx: Context, declared: list[tuple[str, dict[str, Any]]]) -> No
                     ],
                 ):
                     ctx.restart_hints.append("root cursor (xsetroot absent or X11-off)")
+            elif kind == "sketchybar":
+                if reload.sketchybar_reload():
+                    ok("sketchybar reloaded")
+            elif kind == "borders":
+                if reload.borders_relaunch(SURFACE_BORDERS_SH):
+                    ok("borders relaunched")
             elif kind == "awesome":
                 if reload.awesome_restart():
                     ok("awesome restarted (W2 reload)")
@@ -154,6 +179,11 @@ def run_members(ctx: Context, members: Sequence[Component]) -> int:
     """Run members and join effects; records replay in members-list order regardless of worker completion."""
     from theme.state import commit_members
 
+    runnable = [m for m in members if _native(m)]
+    for m in members:
+        if m not in runnable:
+            _skip_note(m)
+    members = runnable
     scheme = next((m for m in members if m.key == "scheme"), None)
     rest = [m for m in members if m is not scheme]
 

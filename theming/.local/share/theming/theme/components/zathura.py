@@ -59,6 +59,7 @@ def zathura_values(palette: dict[str, Any], config: dict[str, Any]) -> dict[str,
 class ZathuraComponent(Component):
     key = "zathura"
     group = "gui"
+    platform = "linux"
 
     def consumed_slice(self, ctx: Context) -> dict[str, Any]:
         return {"values": zathura_values(ctx.palette, ctx.config)}

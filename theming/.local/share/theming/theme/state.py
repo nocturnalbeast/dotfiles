@@ -15,7 +15,7 @@ LOCK_PATH = CACHE_DIR / "lock"
 STATE_DIR = (
     Path(os.environ.get("XDG_STATE_HOME", Path.home() / ".local/state")) / "theming"
 )
-GROUPS = ("gui", "qt", "wm", "tui")
+GROUPS = ("gui", "qt", "wm", "tui", "macos")
 
 
 class ThemeBusy(RuntimeError):
