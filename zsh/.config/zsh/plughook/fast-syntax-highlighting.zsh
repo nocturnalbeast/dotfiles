@@ -5,10 +5,10 @@ function atload() {
     local theme="$HOME/.cache/theming/fsh/theme.ini"
     if [[ -f $theme ]]; then
         if [[ ! -f "$FAST_WORK_DIR/current_theme.zsh" || $theme -nt "$FAST_WORK_DIR/current_theme.zsh" ]]; then
-            fast-theme $theme
+            fast-theme $theme >/dev/null
         fi
     elif [[ ! -f "$FAST_WORK_DIR/current_theme.zsh" ]]; then
-        fast-theme clean
+        fast-theme clean >/dev/null
     fi
 }
 
