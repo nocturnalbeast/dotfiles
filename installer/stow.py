@@ -47,7 +47,7 @@ def stow_reinstall(pkg_path: Path, target: Path, pkg_name: str) -> bool:
     result = subprocess.run(
         [
             "stow",
-            "--override='.*'",
+            "--override=.*",
             "-R",
             "-t",
             str(target),
