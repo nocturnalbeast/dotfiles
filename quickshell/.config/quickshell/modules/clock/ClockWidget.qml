@@ -70,8 +70,7 @@ Item {
         cursorShape: Qt.PointingHandCursor
         onClicked: function (mouse) {
             if (mouse.button === Qt.RightButton) {
-                Config.use24Hour = !Config.use24Hour;
-                Config.save();
+                Config.set("use24Hour", !Config.use24Hour);
             } else {
                 root.clicked();
             }

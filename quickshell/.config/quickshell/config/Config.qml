@@ -15,18 +15,38 @@ Singleton {
     property var _data: ({})
 
     // ── Watched file view (live reload on change) ──
+    // blockLoading: text() blocks until loaded. Combined with the synchronous
+    // read in Component.onCompleted, this guarantees singletons created after
+    // us (e.g. CaffeineService) read real values instead of defaults.
+    // onFileChanged → reload() makes external edits live-reload (watchChanges
+    // alone only emits the signal).
     FileView {
+        id: configFile
         path: root.configPath
         watchChanges: true
+        blockLoading: true
+        onFileChanged: reload()
         onLoaded: {
             try {
                 root._data = JSON.parse(text());
             } catch (e) {
-                // Config file missing or invalid — use defaults
+                // Config file invalid — use defaults
                 root._data = {};
             }
         }
         onLoadFailed: {
+            root._data = {};
+        }
+    }
+
+    // Blocking initial read: runs during Config's construction, before any
+    // consumer singleton's Component.onCompleted can observe the properties.
+    // (Previously the async load lost the race and CaffeineService's startup
+    // persist() overwrote config.json with "{}".)
+    Component.onCompleted: {
+        try {
+            root._data = JSON.parse(configFile.text());
+        } catch (e) {
             root._data = {};
         }
     }
@@ -55,7 +75,24 @@ Singleton {
     property int osdTimeout: _data.osdTimeout ?? Defaults.osdTimeout
 
     // ── Persistence ──
+
+    // Preferred write path: updates _data (keeps property bindings live-reload
+    // safe) and persists. Direct imperative property assignment (e.g.
+    // Config.foo = x) breaks the property's binding — use this instead.
+    function set(key, value) {
+        if (!configFile.loaded)
+            return;
+        var next = {};
+        for (var k in root._data)
+            next[k] = root._data[k];
+        next[key] = value;
+        root._data = next;
+        save();
+    }
+
     function save() {
+        if (!configFile.loaded)
+            return;
         var obj = {};
         // Only write properties that differ from defaults
         if (root.barHeightPct !== Defaults.barHeightPct)
@@ -123,5 +160,6 @@ Singleton {
         id: resetProc
         running: false
         command: ["rm", "-f", root.configPath]
+        onExited: configFile.reload()
     }
 }

@@ -47,6 +47,13 @@ Item {
     }
 
     function close() {
+        // Clear the active-popup reference on every close path (widget toggle,
+        // Escape, closeBarPopup). Previously this was only cleared via the
+        // bar's click-catcher / EWMH focus change, leaving a stale reference
+        // that suppressed volume/brightness OSD and could dangle after
+        // layout switches (bricking popups until restart).
+        if (Visibility.activeBarPopup === root)
+            Visibility.activeBarPopup = null;
         popupOpacity = 0;
         popupScale = 0.95;
         closeTimer.restart();
@@ -65,6 +72,14 @@ Item {
     property real popupScale: 0.95
 
     readonly property bool isOpen: popupWindow.visible
+
+    // Safety net: if this popup is destroyed while registered (e.g. bar
+    // switch with a popup open), drop the stale reference so Visibility
+    // never calls into a destroyed object.
+    Component.onDestruction: {
+        if (Visibility.activeBarPopup === root)
+            Visibility.activeBarPopup = null;
+    }
 
     Timer {
         id: closeTimer

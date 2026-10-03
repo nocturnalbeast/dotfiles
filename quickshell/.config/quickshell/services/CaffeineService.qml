@@ -13,34 +13,38 @@ Singleton {
 
     function toggle() {
         if (enabled)
-            disable();
+            disable(true);
         else
-            enable();
+            enable(true);
     }
 
-    function enable() {
+    // persistChange: only user-initiated toggles write to disk. The startup
+    // path must read, never write — persisting at startup previously raced
+    // the async config load and wiped config.json.
+    function enable(persistChange) {
         LockService.stopDaemon();
         enabled = true;
         since = new Date();
-        persist();
+        if (persistChange)
+            persist();
     }
 
-    function disable() {
+    function disable(persistChange) {
         LockService.startDaemon();
         enabled = false;
         since = null;
-        persist();
+        if (persistChange)
+            persist();
     }
 
     function persist() {
-        Config.caffeineEnabled = enabled;
-        Config.save();
+        Config.set("caffeineEnabled", enabled);
     }
 
     Component.onCompleted: {
         if (Config.caffeineEnabled)
-            enable();
+            enable(false);
         else
-            disable();
+            disable(false);
     }
 }

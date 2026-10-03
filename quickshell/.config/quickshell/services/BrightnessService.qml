@@ -137,11 +137,13 @@ Singleton {
                     if (!isNaN(val) && val >= 0 && val <= 100) {
                         root.percentage = val;
                         root.available = true;
-                    } else {
-                        root.available = false;
                     }
+                    // Bad/empty read: keep polling. Setting available=false
+                    // here previously bricked the service permanently (the
+                    // poll timer gates on `available`, so a single transient
+                    // ddcutil glitch stopped all recovery).
                 } catch (e) {
-                    root.available = false;
+                    // Same: ignore transient parse errors, keep polling.
                 }
             }
         }

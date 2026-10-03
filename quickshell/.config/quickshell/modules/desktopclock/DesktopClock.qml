@@ -18,10 +18,17 @@ PanelWindow {
 
     color: "transparent"
 
-    // Empty input region — all mouse events pass through to
-    // windows below (including the bar). Standard pattern for
-    // fullscreen transparent PanelWindows (noctalia, dankmaterial).
-    mask: Region {}
+    // Input mask matching the clock's visual content (clockContent).
+    // The previous `mask: Region {}` (empty region → full click-through)
+    // never becomes an effective empty X input region on X11: quickshell's
+    // empty-mask path depends on the expose/polish → WindowTransparentForInput
+    // → XFixes chain, which fails for windows that map at runtime. Result: the
+    // fullscreen window swallowed ALL clicks (including the bar's) whenever
+    // the workspace was empty. A non-empty mask rides the reliable rule that
+    // an unset input shape tracks the bounding shape: input is confined to the
+    // clock glyphs, everything else (the whole bar strip included) passes
+    // through to windows below. DesktopClockFace exposes innerItem for this.
+    mask: Region { item: clockFace.innerItem }
 
     Component.onCompleted: {
         WallpaperPlacement.registerPollConsumer();

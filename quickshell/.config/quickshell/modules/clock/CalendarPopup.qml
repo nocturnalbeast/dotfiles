@@ -171,14 +171,18 @@ ColumnLayout {
 
                     return "transparent";
                 }
-                visible: index >= dayGrid.firstDay
+                // NOTE: no `visible:` here. Qt positioners exclude invisible
+                // (and zero-size) children from layout — `visible: index >=
+                // firstDay` collapsed the leading blank cells and shifted all
+                // dates to column 0. Keep the cells laid out (transparent,
+                // empty text) so the weekday alignment is preserved.
                 border.color: isToday(index - dayGrid.firstDay + 1) ? Colors.popupSeparator : Colors.popupMuted
                 border.width: isToday(index - dayGrid.firstDay + 1) ? Spacing.popupBorderWidth : 0
 
                 Text {
                     font.family: Typography.barFontFamily
                     anchors.centerIn: parent
-                    text: index - dayGrid.firstDay + 1
+                    text: index >= dayGrid.firstDay ? index - dayGrid.firstDay + 1 : ""
                     font.pointSize: Typography.popupMutedSize
                     color: isToday(index - dayGrid.firstDay + 1) ? Colors.popupHeaderFg : Colors.popupContentFg
                     font.weight: isToday(index - dayGrid.firstDay + 1) ? Font.Medium : Font.Normal

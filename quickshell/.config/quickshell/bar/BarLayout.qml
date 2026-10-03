@@ -109,13 +109,18 @@ Item {
             "type": "bluetooth"
         },
         {
-            "type": "separator"
+            // hideWhen: collapses together with the clock module — without
+            // this, hiding the clock (empty workspace → desktop clock) leaves
+            // two adjacent separators = double gap between bluetooth/caffeine.
+            "type": "separator",
+            "hideWhen": "workspaceEmpty"
         },
         {
             "type": "clock"
         },
         {
-            "type": "separator"
+            "type": "separator",
+            "hideWhen": "workspaceEmpty"
         },
         {
             "type": "keepAwake"
@@ -161,7 +166,12 @@ Item {
 
         DelegateChoice {
             roleValue: "separator"
-            delegate: Separator {}
+            delegate: Separator {
+                // Collapses (Qt positioners skip invisible items) when the
+                // adjacent conditional module hides. Currently used for the
+                // two clock-adjacent separators (workspaceEmpty).
+                visible: !(modelData.hideWhen === "workspaceEmpty" && WmDetector.isWorkspaceEmpty)
+            }
         }
         DelegateChoice {
             roleValue: "barswitch"

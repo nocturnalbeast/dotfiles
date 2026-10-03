@@ -201,10 +201,10 @@ Singleton {
                 }
             }
         }
-        onExited: function (code, status) {
-            if (code !== 0)
-                root._onFetchError();
-        }
+        // NOTE: no onExited error handler. StdioCollector.onStreamFinished is
+        // the guaranteed single completion path (it fires before onExited,
+        // synchronously, even for failed processes); handling errors in both
+        // places double-counted _retryCount per failure.
     }
 
     Process {
@@ -226,10 +226,7 @@ Singleton {
                 }
             }
         }
-        onExited: function (code, status) {
-            if (code !== 0)
-                root._onFetchError();
-        }
+        // NOTE: no onExited error handler — see geoCityProc.
     }
 
     // ── Weather fetch ──
@@ -285,10 +282,7 @@ Singleton {
                 }
             }
         }
-        onExited: function (code, status) {
-            if (code !== 0)
-                root._onFetchError();
-        }
+        // NOTE: no onExited error handler — see geoCityProc.
     }
 
     function _onFetchError() {
