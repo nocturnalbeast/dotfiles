@@ -30,8 +30,8 @@ mono_option        = average
 [color]
 gradient           = 1
 gradient_count     = 2
-gradient_color_1   = '#8f8f8f'
-gradient_color_2   = '#eaeaea'
+gradient_color_1   = '#808080'
+gradient_color_2   = '#7b7b7b'
 
 
 [smoothing]
