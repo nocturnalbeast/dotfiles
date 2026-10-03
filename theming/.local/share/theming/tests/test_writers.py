@@ -390,7 +390,6 @@ class TestFshTheme(unittest.TestCase):
         self.assertEqual(styles["pathseparator"], "")
         self.assertEqual(styles["paired-bracket"], "bg:#6f6f6f")
         content = fsh_theme_ini(styles, "/home/x/.cache/theming/fsh/theme.ini")
-        self.assertTrue(content.startswith(";"))
         self.assertIn("[command-point]", content)
         self.assertIn("secondary = /home/x/.cache/theming/fsh/theme.ini", content)
         # every emitted value honors the no-space/bg: grammar

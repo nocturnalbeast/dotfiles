@@ -149,13 +149,7 @@ def fsh_styles(palette: dict[str, Any]) -> dict[str, str]:
 
 
 def fsh_theme_ini(styles: dict[str, str], secondary_path: str) -> str:
-    lines = [
-        "; managed by the theming system — regenerated on apply;",
-        "; hand edits will be overwritten. Value grammar: comma-separated",
-        "; tokens with NO spaces; hex fg, bg:#hex background, attributes,",
-        "; none. Comments are ';' only — never '#'.",
-        "",
-    ]
+    lines: list[str] = []
     for section, keys in SECTION_STYLES.items():
         lines.append(f"[{section}]")
         width = max(len(k) for k in keys)
