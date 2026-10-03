@@ -8,3 +8,4 @@ condition = ""
 [ignore]
 linux = ["Library"]
 macos = ["^/\\.config/mozilla"]
+fold = true
