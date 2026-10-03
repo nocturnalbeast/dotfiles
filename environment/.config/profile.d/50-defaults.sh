@@ -5,7 +5,7 @@
 export EDITOR="nvim"
 export VISUAL="nvim"
 export TERMINAL="kitty"
-export BROWSER="librewolf"
+export BROWSER="firefox"
 export BROWSER_PRIVATE_OPT="--private-window"
 export SYSTEMD_EDITOR="$EDITOR"
 export READER="zathura"
