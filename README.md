@@ -73,11 +73,12 @@ A package can ship both platforms' trees in one directory and exclude the foreig
 [ignore]  # per-OS subtree exclusions (stow regexes)
 linux = ["Library"]  # ignored when target OS is linux (the macOS tree)
 macos = ["^/\\.config/mozilla"]  # ignored when target OS is macos (the linux tree)
+fold = true  # rules only prune whole top-level trees — keep directory folding
 ```
 
 Matching follows [stow's ignore-list semantics](https://www.gnu.org/software/stow/manual/stow.html#Ignore-Lists): a regex without `/` matches a basename anywhere in the package (a matching directory node skips its whole subtree), while a regex containing `/` is compiled as `(^|/)(rule)(/|$)` and matched against `"/" + subpath` — so an anchored path rule MUST start with `^/` (a bare `^` never matches, because stow always prepends a leading `/` to the subpath it tests).
 
-For packages with `[ignore]` rules, the installer (re)generates `<pkg>/.stow-local-ignore` before every stow: stow's built-in default ignores as a baseline, then the per-OS rules for the target OS. When the current OS has no rules, the stale generated file is removed so stow's defaults apply again. Generated files are gitignored (`**/.stow-local-ignore`); never edit or commit them. Packages declaring `[ignore]` rules are also stowed with `--no-folding` automatically, since stow's tree folding can bypass file-level ignores.
+For packages with `[ignore]` rules, the installer (re)generates `<pkg>/.stow-local-ignore` before every stow: stow's built-in default ignores as a baseline, then the per-OS rules for the target OS. When the current OS has no rules, the stale generated file is removed so stow's defaults apply again. Generated files are gitignored (`**/.stow-local-ignore`); never edit or commit them. Packages declaring `[ignore]` rules are also stowed with `--no-folding` automatically, since stow's tree folding can bypass file-level ignores. Rules that prune whole top-level trees are evaluated before folding, so such packages may set `fold = true` in the `[ignore]` table to keep stow's single-symlink directory folding (recommended for packages whose trees are written to by running applications); packages with file-level or nested rules must NOT set it (folding can bypass those ignores — stow issue #131).
 
 **Bootstrap context**
 
