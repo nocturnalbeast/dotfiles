@@ -43,10 +43,10 @@ check_dependencies() {
     fi
 
     if [ "$CONTAINER_RUNTIME" = "podman" ]; then
-        IMAGE_NAME="localhost/owntone-pulse:29.0"
-        SELINUX_SUFFIX=":Z"
+        IMAGE_NAME="localhost/owntone-pulse:29.3"
+        SELINUX_SUFFIX=""
     else
-        IMAGE_NAME="owntone-pulse:29.0"
+        IMAGE_NAME="owntone-pulse:29.3"
         SELINUX_SUFFIX=""
     fi
 }
@@ -113,6 +113,7 @@ create_container() {
     "$CONTAINER_RUNTIME" run -d \
         --name="$CONTAINER_NAME" \
         --network=host \
+        --security-opt label=disable \
         -e UID=$(id -u) \
         -e GID=$(id -g) \
         -v "$CONFIG_DIR":/etc/owntone"$SELINUX_SUFFIX" \
