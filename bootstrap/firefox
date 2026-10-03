@@ -4,18 +4,74 @@
 #   - arkenfox user.js (updater.sh + prefsCleaner.sh fetched fresh each run,
 #     hardened against GitHub 429 rate-limit pages)
 #   - gwfox theme (chrome/, cloned fresh each install)
-#   - enterprise policies.json (/etc/firefox/policies/policies.json)
+#   - enterprise policies: linux /etc/firefox/policies/policies.json (sudo),
+#     macOS per-user ~/Library/Preferences/org.mozilla.firefox.plist (plutil,
+#     no sudo - survives every firefox update)
 #
 # Invoked by the repo installer as: bootstrap/firefox <install|reinstall|uninstall>
 # (cwd = repo root). user-overrides.js is a tracked repo input and is NEVER
-# touched by this script; the arkenfox updater appends it to user.js (last
-# pref wins).
+# modified or overwritten by this script: the linux profile is stowed with it
+# already in place, and on macOS the tracked staging copy
+# (firefox/Library/Application Support/Firefox/user-overrides.js) is copied
+# into the profile only when the profile has none. The arkenfox updater
+# appends it to user.js (last pref wins).
 
-FIREFOX_PROFILE_DIR="${FIREFOX_PROFILE_DIR:-$HOME/.config/mozilla/firefox/dpr72wmm.defprofile}"
+# Platform context: DOTS_OS is exported by the installer (README, Multi-OS
+# section); fall back to uname for standalone runs.
+if [ -z "$DOTS_OS" ]; then
+    DOTS_OS="$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/^darwin$/macos/')"
+fi
+case "$DOTS_OS" in
+    linux) ;;
+    macos) ;;
+    *)
+        echo "Unsupported DOTS_OS: $DOTS_OS"
+        exit 1
+        ;;
+esac
+
+# Profile directory (an FIREFOX_PROFILE_DIR set in the environment wins):
+#   linux: XDG profile stowed straight from the repo tree.
+#   macos: ~/Library/Application Support/Firefox (stowed from the repo tree);
+#     the profile itself is resolved from profiles.ini - the Path= of the
+#     profile named defprofile, falling back to the first Path= entry
+#     (profile dir names are unpredictable <hash>.name strings).
+if [ -n "$FIREFOX_PROFILE_DIR" ]; then
+    : # explicit environment override - trust it as-is
+elif [ "$DOTS_OS" = "linux" ]; then
+    FIREFOX_PROFILE_DIR="$HOME/.config/mozilla/firefox/dpr72wmm.defprofile"
+else
+    FIREFOX_ROOT="$HOME/Library/Application Support/Firefox"
+    FIREFOX_PROFILE_PATH="$(awk -F= '
+        $1 == "Name" { fp_name = $2 }
+        $1 == "Path" {
+            sub(/\r$/, "", $2)
+            if (!fp_seen) { fp_first = $2; fp_seen = 1 }
+            if (fp_name == "defprofile") { print $2; fp_found = 1; exit }
+        }
+        END { if (!fp_found && fp_seen) print fp_first }
+    ' "$FIREFOX_ROOT/profiles.ini" 2> /dev/null)"
+    if [ -z "$FIREFOX_PROFILE_PATH" ]; then
+        echo "Could not resolve a Firefox profile from $FIREFOX_ROOT/profiles.ini"
+        echo "(looked for the profile named defprofile, then any Path= entry)."
+        echo "Seed the profile first (README, Multi-OS: Seeding a new machine)"
+        echo "or set FIREFOX_PROFILE_DIR explicitly."
+        exit 1
+    fi
+    FIREFOX_PROFILE_DIR="${FIREFOX_ROOT}/${FIREFOX_PROFILE_PATH}"
+fi
 CHROME_DIR="${FIREFOX_PROFILE_DIR}/chrome"
 THEME_REPO="${THEME_REPO:-https://github.com/akkva/gwfox.git}"
 ARKENFOX_REPO="${ARKENFOX_REPO:-arkenfox/user.js}"
-POLICIES_DST="/etc/firefox/policies/policies.json"
+
+# Enterprise policies destination:
+#   linux: system-wide JSON, sudo-installed.
+#   macos: per-user plist, no sudo.
+if [ "$DOTS_OS" = "linux" ]; then
+    POLICIES_DST="/etc/firefox/policies/policies.json"
+else
+    POLICIES_DST="$HOME/Library/Preferences/org.mozilla.firefox.plist"
+fi
 
 download_file() {
     if command -v curl > /dev/null 2>&1; then
@@ -149,12 +205,14 @@ first_nonempty_line() {
     awk 'NF { print; exit }' "$1" 2> /dev/null
 }
 
-# Install the enterprise policies skeleton to $POLICIES_DST. Deliberately
-# NON-FATAL: arkenfox + theme are already applied by the time this runs, so
-# on sudo failure we print the exact manual command and continue (exit 0).
+# Install the enterprise policies skeleton. Deliberately NON-FATAL:
+# arkenfox + theme are already applied by the time this runs, so on
+# failure we print the exact manual commands and continue (exit 0).
+# Single source of truth: the JSON heredoc below - linux installs it
+# verbatim (sudo), macOS converts it to a per-user plist with plutil.
 install_policies() {
     pl_tmp="$(mktemp 2> /dev/null)" || {
-        echo "WARNING: could not create a temp file - skipping policies.json install." >&2
+        echo "WARNING: could not create a temp file - skipping policies install." >&2
         return 0
     }
 
@@ -222,15 +280,45 @@ install_policies() {
 }
 POLICIES
 
-    if sudo_cmd install -Dm644 "$pl_tmp" "$POLICIES_DST"; then
-        echo "Installed policies.json to $POLICIES_DST"
+    if [ "$DOTS_OS" = "linux" ]; then
+        # Portable install idiom (`install -D` is GNU-only): mkdir + install.
+        if sudo_cmd mkdir -p "$(dirname "$POLICIES_DST")" &&
+            sudo_cmd install -m 0644 "$pl_tmp" "$POLICIES_DST"; then
+            echo "Installed policies.json to $POLICIES_DST"
+            rm -f "$pl_tmp"
+        else
+            # Keep the temp file on failure so the printed manual command stays
+            # actionable (it is cleaned up on the success path above).
+            echo "WARNING: could not install policies.json (sudo failed or unavailable)." >&2
+            echo "  The file is kept at ${pl_tmp} - install it manually with:"
+            echo "  sudo mkdir -p \"$(dirname "$POLICIES_DST")\" && sudo install -m 0644 \"$pl_tmp\" \"$POLICIES_DST\""
+        fi
+        return 0
+    fi
+
+    # macOS: convert the same JSON to a per-user plist with plutil (ships
+    # with macOS) - no sudo, lives outside the app bundle, survives every
+    # firefox update. `defaults read` afterwards nudges cfprefsd to load it.
+    pl_plist="$(mktemp 2> /dev/null)" || {
+        echo "WARNING: could not create a temp file - skipping policies install." >&2
         rm -f "$pl_tmp"
+        return 0
+    }
+    if plutil -extract policies xml1 -o "$pl_plist" "$pl_tmp" &&
+        plutil -insert EnterprisePoliciesEnabled -bool true "$pl_plist" &&
+        mkdir -p "$HOME/Library/Preferences" &&
+        install -m 0644 "$pl_plist" "$POLICIES_DST"; then
+        defaults read org.mozilla.firefox > /dev/null 2>&1 || true
+        echo "Installed policies plist to $POLICIES_DST"
+        rm -f "$pl_tmp" "$pl_plist"
     else
-        # Keep the temp file on failure so the printed manual command stays
-        # actionable (it is cleaned up on the success path above).
-        echo "WARNING: could not install policies.json (sudo failed or unavailable)." >&2
-        echo "  The file is kept at ${pl_tmp} - install it manually with:"
-        echo "  sudo install -Dm644 \"$pl_tmp\" \"$POLICIES_DST\""
+        # Keep the temp files on failure so the printed manual commands stay
+        # actionable (they are cleaned up on the success path above).
+        echo "WARNING: could not install the policies plist (plutil/install failed)." >&2
+        echo "  The files are kept at ${pl_tmp} (json) and ${pl_plist} (plist) - convert + install manually with:"
+        echo "  plutil -extract policies xml1 -o \"$pl_plist\" \"$pl_tmp\""
+        echo "  plutil -insert EnterprisePoliciesEnabled -bool true \"$pl_plist\""
+        echo "  install -m 0644 \"$pl_plist\" \"$POLICIES_DST\""
     fi
 }
 
@@ -284,6 +372,24 @@ case "$1" in
         if [ "$1" = "reinstall" ]; then
             rm -rf "${CHROME_DIR:?}"
             rm -f "${FIREFOX_PROFILE_DIR:?}/user.js"
+        fi
+
+        # --- macOS: stage user-overrides.js ----------------------------------
+        # The linux profile is stowed from the repo, so its tracked
+        # user-overrides.js is already in place. The macOS profile is
+        # created by the seeding runbook (README) and starts without one,
+        # so deploy the tracked staging copy from the repo tree (cwd =
+        # repo root). NEVER overwrite an existing profile copy - it is
+        # the live input the arkenfox updater appends below.
+        if [ "$DOTS_OS" = "macos" ] &&
+            [ ! -e "$FIREFOX_PROFILE_DIR/user-overrides.js" ] &&
+            [ -f "firefox/Library/Application Support/Firefox/user-overrides.js" ]; then
+            if cp "firefox/Library/Application Support/Firefox/user-overrides.js" \
+                "$FIREFOX_PROFILE_DIR/user-overrides.js"; then
+                echo "Staged user-overrides.js into $FIREFOX_PROFILE_DIR"
+            else
+                echo "warning: could not stage user-overrides.js into the profile" >&2
+            fi
         fi
 
         # --- arkenfox deploy -------------------------------------------------
@@ -390,9 +496,13 @@ case "$1" in
             fi
         done
 
-        # Remove the policy file, then the policy dirs only if empty
-        # (rmdir never removes non-empty directories).
-        if sudo_cmd rm -f "$POLICIES_DST"; then
+        # Remove the policy file. Linux: also the policy dirs if empty
+        # (rmdir never removes non-empty directories). macOS: the plist
+        # is a per-user file - plain rm, no sudo, no Preferences cleanup.
+        if [ "$DOTS_OS" = "macos" ]; then
+            rm -f "$POLICIES_DST"
+            echo "Removed $POLICIES_DST"
+        elif sudo_cmd rm -f "$POLICIES_DST"; then
             sudo_cmd rmdir /etc/firefox/policies /etc/firefox 2> /dev/null || true
             echo "Removed $POLICIES_DST"
         else
