@@ -1,4 +1,8 @@
-// macOS staging copy: firefox/Library/Application Support/Firefox/user-overrides.js (keep in sync)
+// macOS staging copy of user-overrides.js - synced with the linux copy at
+// .config/mozilla/firefox/dpr72wmm.defprofile/user-overrides.js.
+// bootstrap/firefox deploys this file into the seeded macOS profile
+// (~/Library/Application Support/Firefox/Profiles/<hash>.defprofile/).
+
 // --- Base requirements (gwfox install) ---
 user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 user_pref("svg.context-properties.content.enabled", true);
@@ -20,5 +24,5 @@ user_pref("gwfox.toolbar", true);   // auto-hide bookmarks bar (fades out, shows
 user_pref("sidebar.verticalTabs", true);
 user_pref("sidebar.visibility", "always-show");
 
-// --- Linux: rounded bottom corners ---
-user_pref("widget.gtk.rounded-bottom-corners.enabled", true);
+// --- macOS: ---
+user_pref("widget.macos.native-context-menus", false); // macOS: gwfox requires native context menus off

@@ -1,6 +1,10 @@
 enabled = true
 description = "Firefox browser configuration"
 tags = ["gui", "browser", "x11", "wayland", "web"]
-os = ["linux"]
+os = ["linux", "macos"]
 arch = []
 condition = ""
+
+[ignore]
+linux = ["Library"]
+macos = ["^/\\.config/mozilla"]
