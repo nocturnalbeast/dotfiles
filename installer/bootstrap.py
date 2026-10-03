@@ -5,6 +5,8 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+from .package import get_current_arch, get_current_host, get_current_os
+
 
 def get_bootstrap_script(root_dir: Path, pkg_name: str) -> Optional[Path]:
     """Get the bootstrap script path for a package if it exists."""
@@ -14,7 +16,14 @@ def get_bootstrap_script(root_dir: Path, pkg_name: str) -> Optional[Path]:
     return None
 
 
-def run_bootstrap(root_dir: Path, pkg_name: str, action: str) -> tuple[bool, str]:
+def run_bootstrap(
+    root_dir: Path,
+    pkg_name: str,
+    action: str,
+    target_os: Optional[str] = None,
+    target_arch: Optional[str] = None,
+    target_host: Optional[str] = None,
+) -> tuple[bool, str]:
     """
     Run a package's bootstrap script.
 
@@ -22,6 +31,9 @@ def run_bootstrap(root_dir: Path, pkg_name: str, action: str) -> tuple[bool, str
         root_dir: Repository root directory
         pkg_name: Name of the package
         action: Action to pass to bootstrap script (install/reinstall/uninstall)
+        target_os: Target OS override (exported as DOTS_OS)
+        target_arch: Target architecture override (exported as DOTS_ARCH)
+        target_host: Target host override (exported as DOTS_HOST)
 
     Returns:
         Tuple of (success, output_message)
@@ -30,11 +42,17 @@ def run_bootstrap(root_dir: Path, pkg_name: str, action: str) -> tuple[bool, str
     if not script_path:
         return True, "No bootstrap script"
 
+    env = os.environ.copy()
+    env["DOTS_OS"] = target_os or get_current_os()
+    env["DOTS_ARCH"] = target_arch or get_current_arch()
+    env["DOTS_HOST"] = target_host or get_current_host()
+
     result = subprocess.run(
         [str(script_path), action],
         cwd=root_dir,
         capture_output=True,
         text=True,
+        env=env,
     )
 
     if result.returncode == 0:

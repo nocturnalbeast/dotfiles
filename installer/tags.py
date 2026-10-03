@@ -9,6 +9,7 @@ from .package import (
     get_package_by_name,
     get_current_os,
     get_current_arch,
+    get_current_host,
 )
 
 
@@ -21,11 +22,13 @@ class TagManager:
         ignore_dirs: set[str],
         target_os: Optional[str] = None,
         target_arch: Optional[str] = None,
+        target_host: Optional[str] = None,
     ):
         self.root_dir = root_dir
         self.ignore_dirs = ignore_dirs
         self.target_os = target_os or get_current_os()
         self.target_arch = target_arch or get_current_arch()
+        self.target_host = target_host or get_current_host()
         self._packages: Optional[list[Package]] = None
         self._tags_cache: Optional[set[str]] = None
 
@@ -67,7 +70,8 @@ class TagManager:
             available, _ = pkg.is_available_for(
                 self.target_os,
                 self.target_arch,
-                check_condition,
+                target_host=self.target_host,
+                check_condition=check_condition,
             )
             if available:
                 result.append(pkg)
@@ -88,7 +92,8 @@ class TagManager:
             available, reason = pkg.is_available_for(
                 self.target_os,
                 self.target_arch,
-                check_condition,
+                target_host=self.target_host,
+                check_condition=check_condition,
             )
             if not available:
                 result.append((pkg, reason))
@@ -164,6 +169,7 @@ class TagManager:
                 is_avail, _ = pkg.is_available_for(
                     self.target_os,
                     self.target_arch,
+                    target_host=self.target_host,
                 )
                 if is_avail:
                     available.append(pkg)

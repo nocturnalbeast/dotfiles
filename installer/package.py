@@ -1,5 +1,6 @@
 """Package discovery and metadata loading."""
 
+import os
 import platform
 import shutil
 import subprocess
@@ -38,6 +39,26 @@ def get_current_arch() -> str:
     return arch_map.get(machine, machine)
 
 
+def get_current_host() -> str:
+    """
+    Get the current host name.
+
+    Resolution order:
+        1. Override file at ${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/host
+           (single line, stripped; empty file falls through to auto-detect)
+        2. platform.node(), lowercased, truncated at the first dot
+           ("Earth.local" -> "earth")
+    """
+    config_home = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+    override_file = Path(config_home) / "dotfiles" / "host"
+    if override_file.is_file():
+        lines = override_file.read_text().splitlines()
+        if lines and lines[0].strip():
+            return lines[0].strip()
+
+    return platform.node().lower().split(".", 1)[0]
+
+
 @dataclass
 class Package:
     """Represents a dotfiles package with its metadata."""
@@ -48,8 +69,10 @@ class Package:
     description: Optional[str] = None
     os: list[str] = field(default_factory=list)
     arch: list[str] = field(default_factory=list)
+    hosts: list[str] = field(default_factory=list)
     enabled: bool = True
     condition: Optional[str] = None
+    ignore: dict[str, list[str]] = field(default_factory=dict)
 
     @property
     def all_tags(self) -> list[str]:
@@ -75,6 +98,13 @@ class Package:
             return True
         check_arch = target_arch or get_current_arch()
         return check_arch in self.arch
+
+    def matches_host(self, target_host: Optional[str] = None) -> bool:
+        """Check if package supports the target host."""
+        if not self.hosts:
+            return True
+        check_host = target_host or get_current_host()
+        return check_host in self.hosts
 
     def check_condition(self) -> tuple[bool, str]:
         """
@@ -107,6 +137,7 @@ class Package:
         self,
         target_os: Optional[str] = None,
         target_arch: Optional[str] = None,
+        target_host: Optional[str] = None,
         check_condition: bool = True,
     ) -> tuple[bool, str]:
         """
@@ -123,6 +154,9 @@ class Package:
 
         if not self.matches_arch(target_arch):
             return False, f"Architecture mismatch (requires: {self.arch})"
+
+        if not self.matches_host(target_host):
+            return False, f"Host mismatch (requires: {self.hosts})"
 
         if check_condition and self.condition:
             cond_ok, cond_msg = self.check_condition()
@@ -155,6 +189,28 @@ def discover_packages(root_dir: Path, ignore_dirs: set[str]) -> list[Package]:
             continue
 
         metadata = load_package_metadata(item)
+        metadata_file = item / ".package.toml"
+
+        hosts = metadata.get("hosts", [])
+        if not isinstance(hosts, list) or not all(
+            isinstance(host, str) for host in hosts
+        ):
+            raise ValueError(f"{metadata_file}: 'hosts' must be a list of host names")
+
+        ignore = metadata.get("ignore", {})
+        if not isinstance(ignore, dict):
+            raise ValueError(
+                f"{metadata_file}: 'ignore' must be a table of per-OS rule lists"
+            )
+        for os_name, os_rules in ignore.items():
+            if not isinstance(os_rules, list) or not all(
+                isinstance(rule, str) for rule in os_rules
+            ):
+                raise ValueError(
+                    f"{metadata_file}: 'ignore.{os_name}' must be a list "
+                    "of rule strings"
+                )
+
         pkg = Package(
             name=item.name,
             path=item,
@@ -162,8 +218,10 @@ def discover_packages(root_dir: Path, ignore_dirs: set[str]) -> list[Package]:
             description=metadata.get("description"),
             os=metadata.get("os", []),
             arch=metadata.get("arch", []),
+            hosts=metadata.get("hosts", []),
             enabled=metadata.get("enabled", True),
             condition=metadata.get("condition"),
+            ignore=ignore,
         )
         packages.append(pkg)
 

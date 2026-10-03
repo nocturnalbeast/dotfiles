@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 from .bootstrap import run_bootstrap
-from .package import Package, get_current_os, get_current_arch
+from .package import Package, get_current_os, get_current_arch, get_current_host
 from .stow import (
     is_stowed,
     stow_check,
@@ -50,16 +50,19 @@ class DotfilesManager:
         target_dir: Path,
         target_os: Optional[str] = None,
         target_arch: Optional[str] = None,
+        target_host: Optional[str] = None,
     ):
         self.root_dir = root_dir
         self.target_dir = target_dir
         self.target_os = target_os or get_current_os()
         self.target_arch = target_arch or get_current_arch()
+        self.target_host = target_host or get_current_host()
         self.tag_manager = TagManager(
             root_dir,
             IGNORE_DIRS,
             self.target_os,
             self.target_arch,
+            self.target_host,
         )
 
     def install(self, pkg: Package, skip_unavailable: bool = True) -> bool:
@@ -67,6 +70,7 @@ class DotfilesManager:
         available, reason = pkg.is_available_for(
             self.target_os,
             self.target_arch,
+            target_host=self.target_host,
         )
         if not available:
             if skip_unavailable:
@@ -76,16 +80,23 @@ class DotfilesManager:
                 print_error(f"{pkg.name}: {reason}")
                 return False
 
-        if is_stowed(pkg.path, self.target_dir, pkg.name):
+        if is_stowed(pkg.path, self.target_dir, pkg.name, target_os=self.target_os):
             print_error(f"Package {pkg.name} is already installed")
             return False
 
         if not pkg.has_metadata:
             print_warn(f"Package {pkg.name} has no .package.toml metadata file")
 
-        if stow_install(pkg.path, self.target_dir, pkg.name):
+        if stow_install(pkg.path, self.target_dir, pkg.name, target_os=self.target_os):
             print_success(f"Installed {pkg.name}")
-            success, msg = run_bootstrap(self.root_dir, pkg.name, "install")
+            success, msg = run_bootstrap(
+                self.root_dir,
+                pkg.name,
+                "install",
+                target_os=self.target_os,
+                target_arch=self.target_arch,
+                target_host=self.target_host,
+            )
             if not success:
                 print_error(f"Bootstrap for {pkg.name}: {msg}")
             return True
@@ -98,6 +109,7 @@ class DotfilesManager:
         available, reason = pkg.is_available_for(
             self.target_os,
             self.target_arch,
+            target_host=self.target_host,
         )
         if not available:
             if skip_unavailable:
@@ -110,9 +122,18 @@ class DotfilesManager:
         if not pkg.has_metadata:
             print_warn(f"Package {pkg.name} has no .package.toml metadata file")
 
-        if stow_reinstall(pkg.path, self.target_dir, pkg.name):
+        if stow_reinstall(
+            pkg.path, self.target_dir, pkg.name, target_os=self.target_os
+        ):
             print_success(f"Reinstalled {pkg.name}")
-            success, msg = run_bootstrap(self.root_dir, pkg.name, "reinstall")
+            success, msg = run_bootstrap(
+                self.root_dir,
+                pkg.name,
+                "reinstall",
+                target_os=self.target_os,
+                target_arch=self.target_arch,
+                target_host=self.target_host,
+            )
             if not success:
                 print_error(f"Bootstrap for {pkg.name}: {msg}")
             return True
@@ -121,33 +142,53 @@ class DotfilesManager:
             return False
 
     def uninstall(self, pkg: Package) -> bool:
-        """Uninstall a single package."""
-        if not is_stowed(pkg.path, self.target_dir, pkg.name):
+        """Uninstall a single package, probing all per-OS ignore views."""
+        views = [os for os in sorted(pkg.ignore) if os != self.target_os] + [
+            self.target_os
+        ]
+        stowed_any = False
+        last_view = None
+        for view in views:
+            if not is_stowed(pkg.path, self.target_dir, pkg.name, target_os=view):
+                continue
+            stowed_any = True
+            last_view = view
+            if not stow_uninstall(pkg.path, self.target_dir, pkg.name, target_os=view):
+                print_error(f"Failed to uninstall package {pkg.name}")
+                return False
+
+        if not stowed_any:
             print_error(f"Package {pkg.name} is not installed")
             return False
 
-        if stow_uninstall(pkg.path, self.target_dir, pkg.name):
-            print_success(f"Uninstalled {pkg.name}")
-            success, msg = run_bootstrap(self.root_dir, pkg.name, "uninstall")
-            if not success:
-                print_error(f"Bootstrap for {pkg.name}: {msg}")
-            return True
-        else:
-            print_error(f"Failed to uninstall package {pkg.name}")
-            return False
+        print_success(f"Uninstalled {pkg.name}")
+        success, msg = run_bootstrap(
+            self.root_dir,
+            pkg.name,
+            "uninstall",
+            target_os=last_view,
+            target_arch=self.target_arch,
+            target_host=self.target_host,
+        )
+        if not success:
+            print_error(f"Bootstrap for {pkg.name}: {msg}")
+        return True
 
     def check(self, pkg: Package) -> None:
         """Check and display package status."""
         available, reason = pkg.is_available_for(
             self.target_os,
             self.target_arch,
+            target_host=self.target_host,
         )
 
         if not available:
             print_warn(f"Package {pkg.name} is not available: {reason}")
             return
 
-        status = stow_check(pkg.path, self.target_dir, pkg.name)
+        status = stow_check(
+            pkg.path, self.target_dir, pkg.name, target_os=self.target_os
+        )
 
         if status["installed"]:
             print_info(f"Package {pkg.name} is installed")
@@ -181,15 +222,18 @@ class DotfilesManager:
             available, reason = pkg.is_available_for(
                 self.target_os,
                 self.target_arch,
+                target_host=self.target_host,
             )
 
             if show_platform:
                 os_str = ", ".join(pkg.os) if pkg.os else "all"
                 arch_str = ", ".join(pkg.arch) if pkg.arch else "all"
+                host_str = ", ".join(pkg.hosts) if pkg.hosts else "all"
                 enabled_str = "" if pkg.enabled else "\033[91m[disabled]\033[0m "
                 avail_str = "" if available else "\033[93m[unavailable]\033[0m "
                 print(
-                    f"  {enabled_str}{avail_str}{pkg.name:<20} [{tags_str}] os:{os_str} arch:{arch_str}"
+                    f"  {enabled_str}{avail_str}{pkg.name:<20} [{tags_str}]"
+                    f" os:{os_str} arch:{arch_str} host:{host_str}"
                 )
             else:
                 if not show_unavailable and not available:
@@ -198,7 +242,7 @@ class DotfilesManager:
                 print(f"  {enabled_str}{pkg.name:<20} [{tags_str}]")
 
         print(f"\nTotal: {len(packages)} package(s)")
-        print(f"Platform: {self.target_os}/{self.target_arch}")
+        print(f"Platform: {self.target_os}/{self.target_arch} host:{self.target_host}")
 
     def list_tags(self) -> None:
         """List all available tags."""
@@ -218,6 +262,7 @@ class DotfilesManager:
         installed = 0
         not_installed = 0
         unavailable = 0
+        errors = 0
 
         print("Package Status:")
         print("-" * 70)
@@ -226,25 +271,39 @@ class DotfilesManager:
             available, reason = pkg.is_available_for(
                 self.target_os,
                 self.target_arch,
+                target_host=self.target_host,
             )
 
             if not available:
                 status = f"\033[90munavailable ({reason})\033[0m"
                 unavailable += 1
-            elif is_stowed(pkg.path, self.target_dir, pkg.name):
-                status = "\033[92minstalled\033[0m"
-                installed += 1
             else:
-                status = "\033[91mnot installed\033[0m"
-                not_installed += 1
+                try:
+                    if is_stowed(
+                        pkg.path,
+                        self.target_dir,
+                        pkg.name,
+                        target_os=self.target_os,
+                    ):
+                        status = "\033[92minstalled\033[0m"
+                        installed += 1
+                    else:
+                        status = "\033[91mnot installed\033[0m"
+                        not_installed += 1
+                except StowError as e:
+                    status = (
+                        f"\033[90merror (stow ignore generation failed: {e})\033[0m"
+                    )
+                    errors += 1
 
             print(f"  {pkg.name:<20} {status}")
 
         print("-" * 70)
         print(
-            f"Installed: {installed}, Not installed: {not_installed}, Unavailable: {unavailable}"
+            f"Installed: {installed}, Not installed: {not_installed}, "
+            f"Unavailable: {unavailable}, Errors: {errors}"
         )
-        print(f"Platform: {self.target_os}/{self.target_arch}")
+        print(f"Platform: {self.target_os}/{self.target_arch} host:{self.target_host}")
 
         missing_metadata = self.tag_manager.get_packages_without_metadata()
         if missing_metadata:
@@ -276,6 +335,11 @@ def create_parser() -> argparse.ArgumentParser:
         "--arch",
         dest="target_arch",
         help=f"Target architecture (default: {get_current_arch()})",
+    )
+    parser.add_argument(
+        "--host",
+        dest="target_host",
+        help=f"Target host (default: {get_current_host()})",
     )
 
     subparsers = parser.add_subparsers(dest="action", help="Action to perform")
@@ -355,6 +419,7 @@ def main(args: Optional[list[str]] = None) -> int:
         ns.target,
         ns.target_os,
         ns.target_arch,
+        ns.target_host,
     )
 
     if ns.action == "list":
@@ -371,12 +436,16 @@ def main(args: Optional[list[str]] = None) -> int:
                 available, _ = pkg.is_available_for(
                     manager.target_os,
                     manager.target_arch,
+                    target_host=manager.target_host,
                 )
                 if not show_all and not available:
                     continue
                 print(f"  {pkg.name:<20} [{tags_str}]")
             print(f"\nTotal: {len(packages)} package(s)")
-            print(f"Platform: {manager.target_os}/{manager.target_arch}")
+            print(
+                f"Platform: {manager.target_os}/{manager.target_arch}"
+                f" host:{manager.target_host}"
+            )
         else:
             manager.list_packages(
                 ns.tags,
@@ -423,10 +492,14 @@ def main(args: Optional[list[str]] = None) -> int:
 
     failed = 0
     for pkg in packages:
-        if ns.action in ["install", "reinstall"]:
-            result = action_method(pkg, skip_unavailable=not include_unavailable)
-        else:
-            result = action_method(pkg)
+        try:
+            if ns.action in ["install", "reinstall"]:
+                result = action_method(pkg, skip_unavailable=not include_unavailable)
+            else:
+                result = action_method(pkg)
+        except StowError as e:
+            print_error(f"{pkg.name}: {e}")
+            result = False
         if result is False:
             failed += 1
 
