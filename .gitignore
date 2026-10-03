@@ -71,3 +71,33 @@ sketchybar/.config/sketchybar/colors_generated.lua
 # cava shaders and rendered themes
 cava/.config/cava/shaders/
 cava/.config/cava/themes/
+
+# firefox user data
+/firefox/.config/mozilla/firefox/*/*
+!/firefox/.config/mozilla/firefox/*/user-overrides.js
+/firefox/.config/mozilla/firefox/Crash Reports/
+/firefox/.config/mozilla/firefox/Pending Pings/
+/firefox/.config/mozilla/firefox/Profile Groups/
+/firefox/.config/mozilla/firefox/*/prefs.js
+/firefox/.config/mozilla/firefox/*/places.sqlite*
+/firefox/.config/mozilla/firefox/*/cookies.sqlite*
+/firefox/.config/mozilla/firefox/*/formhistory.sqlite
+/firefox/.config/mozilla/firefox/*/logins.json*
+/firefox/.config/mozilla/firefox/*/key*.db
+/firefox/.config/mozilla/firefox/*/cert*.db*
+/firefox/.config/mozilla/firefox/*/permissions.sqlite*
+/firefox/.config/mozilla/firefox/*/content-prefs.sqlite*
+/firefox/.config/mozilla/firefox/*/sessionstore*
+/firefox/.config/mozilla/firefox/*/storage/
+/firefox/.config/mozilla/firefox/*/weave/
+/firefox/.config/mozilla/firefox/*/webappsstore.sqlite
+/firefox/.config/mozilla/firefox/*/bookmarkbackups/
+/firefox/.config/mozilla/firefox/*/favicons.sqlite*
+/firefox/.config/mozilla/firefox/*/browser-extension-data/
+/firefox/.config/mozilla/firefox/*/thumbnails/
+/firefox/.config/mozilla/firefox/*/datareporting/
+/firefox/.config/mozilla/firefox/*/userjs_backups/
+/firefox/.config/mozilla/firefox/*/prefsjs_backups/
+/firefox/.config/mozilla/firefox/*/lock
+/firefox/.config/mozilla/firefox/*/.parentlock
+/firefox/.config/mozilla/firefox/*/Singleton*
