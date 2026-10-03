@@ -21,15 +21,15 @@ Clone the repository and run the installer:
 
 ### Commands
 
-| Command | Description |
-|---------|-------------|
-| `install` | Install packages |
-| `reinstall` | Reinstall packages (force override) |
-| `uninstall` | Uninstall packages |
-| `check` | Check installation status and conflicts |
-| `list` | List all packages |
-| `list-tags` | List all available tags |
-| `status` | Show installation status of all packages |
+| Command     | Description                              |
+| ----------- | ---------------------------------------- |
+| `install`   | Install packages                         |
+| `reinstall` | Reinstall packages (force override)      |
+| `uninstall` | Uninstall packages                       |
+| `check`     | Check installation status and conflicts  |
+| `list`      | List all packages                        |
+| `list-tags` | List all available tags                  |
+| `status`    | Show installation status of all packages |
 
 ### Tag-based Management
 
@@ -42,6 +42,57 @@ Packages can be managed using tags for easy grouping:
 ./install uninstall --tag wayland             # Uninstall all Wayland packages
 ```
 
+### Multi-OS & Multi-Machine
+
+Packages can be restricted to specific machines, and a single package can carry divergent per-OS file trees.
+
+**Hosts**
+
+The `hosts` field gates installation by machine (empty = all hosts; checked after `os`/`arch`, before `condition`). The current host is resolved in order: the `--host` flag → the override file `~/.config/dotfiles/host` (single line, trimmed) → the system hostname, lowercased, first label only (`earth.local` → `earth`).
+
+Set the override file once per machine:
+
+```sh
+mkdir -p ~/.config/dotfiles && echo earth > ~/.config/dotfiles/host
+```
+
+`--host` is a real override, parallel to `--os`/`--arch`, so you can simulate other machines:
+
+```sh
+./install --host mars list                  # Simulate another machine (for testing)
+./install --os macos --host mars status     # Combine OS and host simulation
+```
+
+**Warning**: the mutating actions (`install`/`reinstall`/`uninstall`) with `--os`/`--host` act on the real target directory, not a simulation — match the OS used at install time (`uninstall` probes all rule views automatically, `reinstall` does not).
+
+**Per-OS package trees**
+
+A package can ship both platforms' trees in one directory and exclude the foreign tree at stow time via the optional `[ignore]` table:
+
+```toml
+[ignore]  # per-OS subtree exclusions (stow regexes)
+linux = ["Library"]  # ignored when target OS is linux (the macOS tree)
+macos = ["^/\\.config/mozilla"]  # ignored when target OS is macos (the linux tree)
+```
+
+Matching follows [stow's ignore-list semantics](https://www.gnu.org/software/stow/manual/stow.html#Ignore-Lists): a regex without `/` matches a basename anywhere in the package (a matching directory node skips its whole subtree), while a regex containing `/` is compiled as `(^|/)(rule)(/|$)` and matched against `"/" + subpath` — so an anchored path rule MUST start with `^/` (a bare `^` never matches, because stow always prepends a leading `/` to the subpath it tests).
+
+For packages with `[ignore]` rules, the installer (re)generates `<pkg>/.stow-local-ignore` before every stow: stow's built-in default ignores as a baseline, then the per-OS rules for the target OS. When the current OS has no rules, the stale generated file is removed so stow's defaults apply again. Generated files are gitignored (`**/.stow-local-ignore`); never edit or commit them. Packages declaring `[ignore]` rules are also stowed with `--no-folding` automatically, since stow's tree folding can bypass file-level ignores.
+
+**Bootstrap context**
+
+Every bootstrap script runs with `DOTS_OS`, `DOTS_ARCH` and `DOTS_HOST` exported (e.g. `DOTS_OS=linux DOTS_ARCH=x86_64 DOTS_HOST=earth`), honoring `--os`/`--arch`/`--host` overrides. Branch on these instead of probing the system; for standalone runs, fall back to `uname -s`:
+
+```sh
+if [ -z "$DOTS_OS" ]; then  # standalone run, no installer context
+    DOTS_OS="$(uname -s | tr '[:upper:]' '[:lower:]' | sed 's/^darwin$/macos/')"
+fi
+```
+
+**Divergent content**
+
+Content templating is deliberately absent: files are stowed verbatim. Diverge whole files by keeping one subtree per OS behind `[ignore]`; for divergent fragments, use your application's native include mechanism instead (git's `[include] path = ~/.gitconfig.local`, or a shell `source` of a machine-local file).
+
 ### Cross-Platform Support
 
 Packages are tagged with supported platforms. By default, only packages compatible with your OS are installed:
@@ -53,13 +104,14 @@ Packages are tagged with supported platforms. By default, only packages compatib
 ./install --os macos status    # See what's available on macOS
 ```
 
-| Flag | Description |
-|------|-------------|
-| `--os` | Target OS (linux, macos, windows) |
-| `--arch` | Target architecture (x86_64, arm64) |
-| `--platform` | Show OS/arch info in list output |
-| `--all`, `-a` | Show all packages including unavailable ones |
-| `--include-unavailable` | Install even if platform doesn't match |
+| Flag                    | Description                                  |
+| ----------------------- | -------------------------------------------- |
+| `--os`                  | Target OS (linux, macos, windows)            |
+| `--arch`                | Target architecture (x86_64, arm64)          |
+| `--host`                | Target hostname (e.g. earth)                 |
+| `--platform`            | Show OS/arch info in list output             |
+| `--all`, `-a`           | Show all packages including unavailable ones |
+| `--include-unavailable` | Install even if platform doesn't match       |
 
 ### Package Metadata
 
@@ -71,93 +123,94 @@ description = "example description"
 tags = ["tag1", "tag2"]
 os = ["linux", "macos"]  # supported platforms (empty = all)
 arch = []  # architecture restrictions (empty = all)
+hosts = []  # hostnames this package installs on (empty = all)
 condition = "<shell command>"
 ```
 
 ## Components
 
-* Desktop:
-  * [bspwm](https://github.com/baskerville/bspwm): A tiling window manager based on binary space partitioning
-  * [dunst](https://github.com/dunst-project/dunst): Lightweight notification daemon for X11
-  * [mako](https://github.com/emersion/mako): Lightweight notification daemon for Wayland
-  * [picom](https://github.com/yshui/picom): A lightweight compositor for X11
-  * [sxhkd](https://github.com/baskerville/sxhkd): Simple X hotkey daemon
-  * [kanata](https://github.com/jtroo/kanata): Cross-platform keyboard remapping daemon
-  * [kanata-tray](https://github.com/rszyma/kanata-tray): System tray icon for kanata
-  * [swww](https://github.com/Horus645/swww): Efficient animated wallpaper daemon for wayland
-  * [swaybg](https://github.com/swaywm/swaybg): Wallpaper tool for Wayland compositors
-  * [xwallpaper](https://github.com/stoeckmann/xwallpaper): Wallpaper setting utility for X11
-  * [feh](https://feh.finalrewind.org): Image viewer and wallpaper setter
+- Desktop:
+  - [bspwm](https://github.com/baskerville/bspwm): A tiling window manager based on binary space partitioning
+  - [dunst](https://github.com/dunst-project/dunst): Lightweight notification daemon for X11
+  - [mako](https://github.com/emersion/mako): Lightweight notification daemon for Wayland
+  - [picom](https://github.com/yshui/picom): A lightweight compositor for X11
+  - [sxhkd](https://github.com/baskerville/sxhkd): Simple X hotkey daemon
+  - [kanata](https://github.com/jtroo/kanata): Cross-platform keyboard remapping daemon
+  - [kanata-tray](https://github.com/rszyma/kanata-tray): System tray icon for kanata
+  - [swww](https://github.com/Horus645/swww): Efficient animated wallpaper daemon for wayland
+  - [swaybg](https://github.com/swaywm/swaybg): Wallpaper tool for Wayland compositors
+  - [xwallpaper](https://github.com/stoeckmann/xwallpaper): Wallpaper setting utility for X11
+  - [feh](https://feh.finalrewind.org): Image viewer and wallpaper setter
 
-* Shell:
-  * [zsh](https://www.zsh.org): The Z Shell
-  * [bash](https://www.gnu.org/software/bash): The Bourne Again SHell
+- Shell:
+  - [zsh](https://www.zsh.org): The Z Shell
+  - [bash](https://www.gnu.org/software/bash): The Bourne Again SHell
 
-* Applications:
-  * GUI:
-    * [dmenu](https://tools.suckless.org/dmenu): Dynamic menu for X11
-    * [fastfetch](https://github.com/fastfetch-cli/fastfetch): Fast system information tool
-    * [imv](https://sr.ht/~exec64/imv): Image viewer for X11/Wayland
-    * [kitty](https://github.com/kovidgoyal/kitty): Fast, feature-rich, GPU-based terminal emulator
-    * [mpv](https://mpv.io): Free and open source media player
-    * [pqiv](https://github.com/phillipberndt/pqiv): Powerful image viewer with minimal UI
-    * [thunar](https://docs.xfce.org/xfce/thunar/start): Modern file manager for Xfce
-    * [zathura](https://pwmt.org/projects/zathura): Document viewer with vim-like interface
-  * CLI:
-    * [bandwhich](https://github.com/imsnif/bandwhich): Network utilization monitor
-    * [bat](https://github.com/sharkdp/bat): A cat clone with syntax highlighting
-    * [beets](https://beets.io): Music library manager and MusicBrainz tagger
-    * [bottom](https://github.com/ClementTsang/bottom): Graphical process/system monitor
-    * [brightnessctl](https://github.com/Hummer12007/brightnessctl): Backlight and LED control
-    * [cava](https://github.com/karlstav/cava): Console-based audio visualizer
-    * [delta](https://github.com/dandavison/delta): A syntax-highlighting pager for git
-    * [eza](https://github.com/eza-community/eza): Modern replacement for ls
-    * [fd](https://github.com/sharkdp/fd): Simple, fast and user-friendly alternative to find
-    * [fzf](https://github.com/junegunn/fzf): Command-line fuzzy finder
-    * [gh](https://github.com/cli/cli): GitHub's official command line tool
-    * [glow](https://github.com/charmbracelet/glow): Terminal markdown viewer
-    * [handlr](https://github.com/Anomalocaridid/handlr-regex): A better xdg-utils implementation with regex support
-    * [hexyl](https://github.com/sharkdp/hexyl): Command-line hex viewer
-    * [hub](https://github.com/mislav/hub): Extension to command-line git
-    * [hyperfine](https://github.com/sharkdp/hyperfine): Command-line benchmarking tool
-    * [jq](https://github.com/jqlang/jq): Command-line JSON processor
-    * [maim](https://github.com/naelstrof/maim): Screenshot utility for X11
-    * [mimeo](https://xyne.dev/projects/mimeo): Open files by MIME-type and handle associated applications
-    * [mmv](https://github.com/itchyny/mmv): Mass rename utility
-    * [mopidy](https://github.com/mopidy/mopidy): Extensible music server
-    * [navi](https://github.com/denisidoro/navi): Interactive command-line cheatsheet
-    * [rmpc](https://github.com/mierak/rmpc): Rusty Music Player Client - a modern MPD client
-    * [neovim](https://github.com/neovim/neovim): Hyperextensible Vim-based text editor
-    * [newsboat](https://newsboat.org): Terminal RSS/Atom feed reader
-    * [pipewire](https://pipewire.org): Low-latency audio/video router and processor
-    * [playerctl](https://github.com/altdesktop/playerctl): MPRIS media player controller
-    * [ripgrep](https://github.com/BurntSushi/ripgrep): Fast grep alternative
-    * [slop](https://github.com/naelstrof/slop): Select Operation - region selector for X11
-    * [surfraw](https://gitlab.com/surfraw/Surfraw): CLI to search engines
-    * [tealdeer](https://github.com/dbrgn/tealdeer): A fast tldr client in Rust
-    * [tmux](https://github.com/tmux/tmux): Terminal multiplexer
-    * [trash-cli](https://github.com/andreafrancia/trash-cli): CLI interface to FreeDesktop.org trash
-    * [udiskie](https://github.com/coldfix/udiskie): Automounter for removable media
-    * [ueberzug](https://github.com/seebye/ueberzug): X11 image display for terminals
-    * [vivid](https://github.com/sharkdp/vivid): LS_COLORS generator
-    * [xdotool](https://github.com/jordansissel/xdotool): Command-line X11 automation tool
-    * [xh](https://github.com/ducaale/xh): Friendly and fast HTTP tool
-    * [xsecurelock](https://github.com/google/xsecurelock): X11 screen lock utility
-    * [yq](https://github.com/mikefarah/yq): YAML processor
-    * [yt-dlp](https://github.com/yt-dlp/yt-dlp): Command-line program to download videos
+- Applications:
+  - GUI:
+    - [dmenu](https://tools.suckless.org/dmenu): Dynamic menu for X11
+    - [fastfetch](https://github.com/fastfetch-cli/fastfetch): Fast system information tool
+    - [imv](https://sr.ht/~exec64/imv): Image viewer for X11/Wayland
+    - [kitty](https://github.com/kovidgoyal/kitty): Fast, feature-rich, GPU-based terminal emulator
+    - [mpv](https://mpv.io): Free and open source media player
+    - [pqiv](https://github.com/phillipberndt/pqiv): Powerful image viewer with minimal UI
+    - [thunar](https://docs.xfce.org/xfce/thunar/start): Modern file manager for Xfce
+    - [zathura](https://pwmt.org/projects/zathura): Document viewer with vim-like interface
+  - CLI:
+    - [bandwhich](https://github.com/imsnif/bandwhich): Network utilization monitor
+    - [bat](https://github.com/sharkdp/bat): A cat clone with syntax highlighting
+    - [beets](https://beets.io): Music library manager and MusicBrainz tagger
+    - [bottom](https://github.com/ClementTsang/bottom): Graphical process/system monitor
+    - [brightnessctl](https://github.com/Hummer12007/brightnessctl): Backlight and LED control
+    - [cava](https://github.com/karlstav/cava): Console-based audio visualizer
+    - [delta](https://github.com/dandavison/delta): A syntax-highlighting pager for git
+    - [eza](https://github.com/eza-community/eza): Modern replacement for ls
+    - [fd](https://github.com/sharkdp/fd): Simple, fast and user-friendly alternative to find
+    - [fzf](https://github.com/junegunn/fzf): Command-line fuzzy finder
+    - [gh](https://github.com/cli/cli): GitHub's official command line tool
+    - [glow](https://github.com/charmbracelet/glow): Terminal markdown viewer
+    - [handlr](https://github.com/Anomalocaridid/handlr-regex): A better xdg-utils implementation with regex support
+    - [hexyl](https://github.com/sharkdp/hexyl): Command-line hex viewer
+    - [hub](https://github.com/mislav/hub): Extension to command-line git
+    - [hyperfine](https://github.com/sharkdp/hyperfine): Command-line benchmarking tool
+    - [jq](https://github.com/jqlang/jq): Command-line JSON processor
+    - [maim](https://github.com/naelstrof/maim): Screenshot utility for X11
+    - [mimeo](https://xyne.dev/projects/mimeo): Open files by MIME-type and handle associated applications
+    - [mmv](https://github.com/itchyny/mmv): Mass rename utility
+    - [mopidy](https://github.com/mopidy/mopidy): Extensible music server
+    - [navi](https://github.com/denisidoro/navi): Interactive command-line cheatsheet
+    - [rmpc](https://github.com/mierak/rmpc): Rusty Music Player Client - a modern MPD client
+    - [neovim](https://github.com/neovim/neovim): Hyperextensible Vim-based text editor
+    - [newsboat](https://newsboat.org): Terminal RSS/Atom feed reader
+    - [pipewire](https://pipewire.org): Low-latency audio/video router and processor
+    - [playerctl](https://github.com/altdesktop/playerctl): MPRIS media player controller
+    - [ripgrep](https://github.com/BurntSushi/ripgrep): Fast grep alternative
+    - [slop](https://github.com/naelstrof/slop): Select Operation - region selector for X11
+    - [surfraw](https://gitlab.com/surfraw/Surfraw): CLI to search engines
+    - [tealdeer](https://github.com/dbrgn/tealdeer): A fast tldr client in Rust
+    - [tmux](https://github.com/tmux/tmux): Terminal multiplexer
+    - [trash-cli](https://github.com/andreafrancia/trash-cli): CLI interface to FreeDesktop.org trash
+    - [udiskie](https://github.com/coldfix/udiskie): Automounter for removable media
+    - [ueberzug](https://github.com/seebye/ueberzug): X11 image display for terminals
+    - [vivid](https://github.com/sharkdp/vivid): LS_COLORS generator
+    - [xdotool](https://github.com/jordansissel/xdotool): Command-line X11 automation tool
+    - [xh](https://github.com/ducaale/xh): Friendly and fast HTTP tool
+    - [xsecurelock](https://github.com/google/xsecurelock): X11 screen lock utility
+    - [yq](https://github.com/mikefarah/yq): YAML processor
+    - [yt-dlp](https://github.com/yt-dlp/yt-dlp): Command-line program to download videos
 
-* Theming:
-  * [oomox](https://github.com/themix-project/oomox): Theme generator for GTK and icons
-  * [papirus-icon-theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme): SVG icon theme base
-  * GTK/Qt Themes:
-    * `bnw`: Custom black and white theme generated with oomox
-  * Icon Themes:
-    * `bnw`: Custom monochrome variant of Papirus
-  * Cursor Theme:
-    * [Bibata](https://github.com/ful1e5/Bibata_Cursor): Modern material-based cursor theme
-  * Supported Environments:
-    * GTK 2.0/3.0/4.0: Complete theme support
-    * Qt 5/6: Theme integration via qt5ct and qt6ct
+- Theming:
+  - [oomox](https://github.com/themix-project/oomox): Theme generator for GTK and icons
+  - [papirus-icon-theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme): SVG icon theme base
+  - GTK/Qt Themes:
+    - `bnw`: Custom black and white theme generated with oomox
+  - Icon Themes:
+    - `bnw`: Custom monochrome variant of Papirus
+  - Cursor Theme:
+    - [Bibata](https://github.com/ful1e5/Bibata_Cursor): Modern material-based cursor theme
+  - Supported Environments:
+    - GTK 2.0/3.0/4.0: Complete theme support
+    - Qt 5/6: Theme integration via qt5ct and qt6ct
 
 ## Keybinding layout
 
@@ -170,22 +223,22 @@ You can use these layout diagrams to familiarize yourself with the key bindings,
 
 ## Screenshots
 
-* Default desktop - clean
+- Default desktop - clean
 
-   (to be added)
+  (to be added)
 
-* Default desktop - floating window with alternate bar
+- Default desktop - floating window with alternate bar
 
-   (to be added)
+  (to be added)
 
-* Default desktop - busy
+- Default desktop - busy
 
-   (to be added)
+  (to be added)
 
-* Menu interaction
+- Menu interaction
 
-   (to be added)
+  (to be added)
 
-* Sample GTK application (file manager)
+- Sample GTK application (file manager)
 
-   (to be added)
+  (to be added)
