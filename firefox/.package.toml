@@ -1,0 +1,6 @@
+enabled = true
+description = "Firefox browser configuration"
+tags = ["gui", "browser", "x11", "wayland", "web"]
+os = ["linux"]
+arch = []
+condition = ""

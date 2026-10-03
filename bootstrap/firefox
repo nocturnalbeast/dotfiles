@@ -1,0 +1,411 @@
+#!/usr/bin/env sh
+#
+# bootstrap/firefox - harden the stock Firefox profile:
+#   - arkenfox user.js (updater.sh + prefsCleaner.sh fetched fresh each run,
+#     hardened against GitHub 429 rate-limit pages)
+#   - gwfox theme (chrome/, cloned fresh each install)
+#   - enterprise policies.json (/etc/firefox/policies/policies.json)
+#
+# Invoked by the repo installer as: bootstrap/firefox <install|reinstall|uninstall>
+# (cwd = repo root). user-overrides.js is a tracked repo input and is NEVER
+# touched by this script; the arkenfox updater appends it to user.js (last
+# pref wins).
+
+FIREFOX_PROFILE_DIR="${FIREFOX_PROFILE_DIR:-$HOME/.config/mozilla/firefox/dpr72wmm.defprofile}"
+CHROME_DIR="${FIREFOX_PROFILE_DIR}/chrome"
+THEME_REPO="${THEME_REPO:-https://github.com/akkva/gwfox.git}"
+ARKENFOX_REPO="${ARKENFOX_REPO:-arkenfox/user.js}"
+POLICIES_DST="/etc/firefox/policies/policies.json"
+
+download_file() {
+    if command -v curl > /dev/null 2>&1; then
+        curl -sSfL -o "$1" "$2"
+        return $?
+    elif command -v wget > /dev/null 2>&1; then
+        wget -q -O "$1" "$2"
+        return $?
+    else
+        echo "Neither curl nor wget found. Please install either curl or wget first."
+        return 1
+    fi
+}
+
+kill_firefox() {
+    if pgrep -x firefox > /dev/null 2>&1; then
+        echo "Closing Firefox..."
+        pkill -x firefox
+        while pgrep -x firefox > /dev/null 2>&1; do
+            sleep 0.5
+        done
+    fi
+}
+
+# Run a command under sudo, aware of interactivity: prompt normally when
+# stdin is a tty, otherwise use sudo -n (no password prompt possible).
+# Returns sudo's exit status; callers decide whether failure is fatal.
+sudo_cmd() {
+    if [ -t 0 ]; then
+        sudo "$@"
+    else
+        sudo -n "$@" 2> /dev/null
+    fi
+}
+
+# Fetch a raw file from the arkenfox repo, hardened against rate-limiting:
+# raw.githubusercontent.com aggressively 429s by IP (a 429 error page once
+# overwrote prefsCleaner.sh on this machine), while `gh` uses an
+# authenticated API with a much higher quota. So: gh first, anonymous
+# curl/wget second, three attempts per path with exponential backoff.
+# Content validation happens at the call site (scripts and user.js need
+# different gates). $1 = repo-relative path, $2 = destination.
+fetch_raw() {
+    fr_file="$1"
+    fr_dest="$2"
+
+    # Primary: authenticated GitHub contents API via gh (the raw accept
+    # header returns the file body directly - no base64 JSON to decode).
+    if command -v gh > /dev/null 2>&1; then
+        fr_attempt=0
+        fr_delay=5
+        while [ "$fr_attempt" -lt 3 ]; do
+            fr_attempt=$((fr_attempt + 1))
+            if gh api "repos/${ARKENFOX_REPO}/contents/${fr_file}" \
+                -H "Accept: application/vnd.github.raw" > "$fr_dest" 2> /dev/null &&
+                [ -s "$fr_dest" ]; then
+                return 0
+            fi
+            [ "$fr_attempt" -lt 3 ] || break
+            echo "  gh fetch of ${fr_file} failed (attempt ${fr_attempt}/3) - retrying in ${fr_delay}s..." >&2
+            sleep "$fr_delay"
+            fr_delay=$((fr_delay * 2))
+        done
+    fi
+
+    # Fallback: anonymous raw download with backoff.
+    fr_attempt=0
+    fr_delay=5
+    fr_raw_base="https://raw.githubusercontent.com/${ARKENFOX_REPO}/master"
+    while [ "$fr_attempt" -lt 3 ]; do
+        fr_attempt=$((fr_attempt + 1))
+        if download_file "$fr_dest" "${fr_raw_base}/${fr_file}" && [ -s "$fr_dest" ]; then
+            return 0
+        fi
+        [ "$fr_attempt" -lt 3 ] || break
+        echo "  raw fetch of ${fr_file} failed (attempt ${fr_attempt}/3) - retrying in ${fr_delay}s..." >&2
+        sleep "$fr_delay"
+        fr_delay=$((fr_delay * 2))
+    done
+
+    rm -f "$fr_dest"
+    echo "error: failed to fetch ${fr_file} from ${ARKENFOX_REPO}" >&2
+    return 1
+}
+
+# A fetched script must look like a script (shebang on the first line) and
+# parse (bash -n - the arkenfox originals are bash scripts). This rejects
+# 429 rate-limit / HTML error pages masquerading as scripts.
+validate_script() {
+    vs_path="$1"
+    if [ ! -s "$vs_path" ]; then
+        echo "  ${vs_path}: empty or missing" >&2
+        return 1
+    fi
+    vs_first="$(head -n 1 "$vs_path")"
+    case "$vs_first" in
+        "#!"*) ;;
+        *)
+            echo "  ${vs_path}: not a shell script (first line: ${vs_first})" >&2
+            return 1
+            ;;
+    esac
+    if ! bash -n "$vs_path" 2> /dev/null; then
+        echo "  ${vs_path}: bash syntax check failed" >&2
+        return 1
+    fi
+    return 0
+}
+
+# Fetch an arkenfox helper script and validate it, re-fetching once if the
+# downloaded copy was invalid (final gate at the point of use).
+fetch_script() {
+    fs_file="$1"
+    fs_dest="$2"
+    fetch_raw "$fs_file" "$fs_dest" || return 1
+    if ! validate_script "$fs_dest"; then
+        echo "  re-fetching ${fs_file} (downloaded copy was invalid)..." >&2
+        fetch_raw "$fs_file" "$fs_dest" || return 1
+        validate_script "$fs_dest" || {
+            echo "error: ${fs_file} still invalid after re-fetch - giving up" >&2
+            return 1
+        }
+    fi
+    return 0
+}
+
+# Print the first non-empty line of a file (nothing if the file is missing
+# or unreadable) - used to check the arkenfox banner of user.js.
+first_nonempty_line() {
+    [ -f "$1" ] || return 0
+    awk 'NF { print; exit }' "$1" 2> /dev/null
+}
+
+# Install the enterprise policies skeleton to $POLICIES_DST. Deliberately
+# NON-FATAL: arkenfox + theme are already applied by the time this runs, so
+# on sudo failure we print the exact manual command and continue (exit 0).
+install_policies() {
+    pl_tmp="$(mktemp 2> /dev/null)" || {
+        echo "WARNING: could not create a temp file - skipping policies.json install." >&2
+        return 0
+    }
+
+    # Password manager stays ENABLED by design: PasswordManagerEnabled and
+    # OfferToSaveLogins are intentionally absent (DisablePasswordReveal only
+    # hides the eye button in about:logins - it does not disable saving).
+    # Extensions use normal_installed (not force_installed) by design:
+    # auto-installed + auto-updated, but the user keeps an escape hatch
+    # (can disable, though not remove, any of them).
+    cat > "$pl_tmp" << 'POLICIES'
+{
+  "policies": {
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisableFirefoxAccounts": true,
+    "DisableFeedbackCommands": true,
+    "DisableRemoteImprovements": true,
+    "DisableFormHistory": true,
+    "DisableFirefoxScreenshots": true,
+    "DisablePasswordReveal": true,
+    "EncryptedMediaExtensions": { "Enabled": false, "Locked": true },
+    "EnableTrackingProtection": { "Value": true, "Locked": true },
+    "HttpsOnlyMode": "force_enabled",
+    "NetworkPrediction": false,
+    "SearchSuggestEnabled": false,
+    "FirefoxHome": { "SponsoredTopSites": false, "SponsoredStories": false },
+    "FirefoxSuggest": { "WebSuggestions": false, "SponsoredSuggestions": false },
+    "UserMessaging": { "ExtensionRecommendations": false, "FeatureRecommendations": false },
+    "AIControls": { "Default": false },
+    "ExtensionSettings": {
+      "uBlock0@raymondhill.net": {
+        "installation_mode": "normal_installed",
+        "private_browsing": true,
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+      },
+      "addon@darkreader.org": {
+        "installation_mode": "normal_installed",
+        "private_browsing": true,
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/darkreader/latest.xpi"
+      },
+      "jid1-MnnxcxisBPnSXQ@jetpack": {
+        "installation_mode": "normal_installed",
+        "private_browsing": true,
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/privacy-badger17/latest.xpi"
+      },
+      "Tab-Session-Manager@sienori": {
+        "installation_mode": "normal_installed",
+        "private_browsing": true,
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/tab-session-manager/latest.xpi"
+      },
+      "ATBC@EasonWong": {
+        "installation_mode": "normal_installed",
+        "private_browsing": true,
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/adaptive-tab-bar-colour/latest.xpi"
+      },
+      "brave-search-extension@brave.com": {
+        "installation_mode": "normal_installed",
+        "private_browsing": true,
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/bravesearch/latest.xpi"
+      }
+    },
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": ""
+  }
+}
+POLICIES
+
+    if sudo_cmd install -Dm644 "$pl_tmp" "$POLICIES_DST"; then
+        echo "Installed policies.json to $POLICIES_DST"
+        rm -f "$pl_tmp"
+    else
+        # Keep the temp file on failure so the printed manual command stays
+        # actionable (it is cleaned up on the success path above).
+        echo "WARNING: could not install policies.json (sudo failed or unavailable)." >&2
+        echo "  The file is kept at ${pl_tmp} - install it manually with:"
+        echo "  sudo install -Dm644 \"$pl_tmp\" \"$POLICIES_DST\""
+    fi
+}
+
+case "$1" in
+    "install" | "reinstall")
+        # The arkenfox scripts refuse to run as root; so does this script.
+        if [ "$(id -u)" -eq 0 ]; then
+            echo "Refusing to run as root (the arkenfox scripts refuse too)."
+            exit 1
+        fi
+
+        if [ "$1" = "reinstall" ]; then
+            echo "Reinstalling Firefox hardening (arkenfox + gwfox + policies)..."
+        else
+            echo "Installing Firefox hardening (arkenfox + gwfox + policies)..."
+        fi
+
+        # --- profile validation --------------------------------------------
+        if [ ! -d "$FIREFOX_PROFILE_DIR" ]; then
+            echo "Firefox profile directory not found at $FIREFOX_PROFILE_DIR"
+            echo "Has the stow step of the installer run first?"
+            exit 1
+        fi
+
+        # prefs.js gate: Firefox only populates it on first launch; the
+        # arkenfox updater does not need it and prefsCleaner accepts an
+        # empty file - but create it so the profile is well-formed.
+        if [ ! -f "$FIREFOX_PROFILE_DIR/prefs.js" ]; then
+            echo "prefs.js missing - creating an empty one (Firefox populates it on first launch)."
+            touch "$FIREFOX_PROFILE_DIR/prefs.js"
+        fi
+
+        # --- dependency validation -----------------------------------------
+        # git is required for the theme clone; one of curl/wget/gh provides
+        # the fetch capability for the arkenfox files.
+        if ! command -v git > /dev/null 2>&1; then
+            echo "Git is required but not installed. Please install git first."
+            exit 1
+        fi
+        if ! command -v curl > /dev/null 2>&1 &&
+            ! command -v wget > /dev/null 2>&1 &&
+            ! command -v gh > /dev/null 2>&1; then
+            echo "No fetch capability found. Please install curl, wget, or gh first."
+            exit 1
+        fi
+
+        kill_firefox
+
+        # Reinstall: clear only the artifacts this script regenerates below.
+        # NEVER touch user-overrides.js (tracked repo input) or user data.
+        if [ "$1" = "reinstall" ]; then
+            rm -rf "${CHROME_DIR:?}"
+            rm -f "${FIREFOX_PROFILE_DIR:?}/user.js"
+        fi
+
+        # --- arkenfox deploy -------------------------------------------------
+        echo "Fetching arkenfox updater.sh + prefsCleaner.sh..."
+        fetch_script updater.sh "$FIREFOX_PROFILE_DIR/updater.sh" || exit 1
+        fetch_script prefsCleaner.sh "$FIREFOX_PROFILE_DIR/prefsCleaner.sh" || exit 1
+        chmod +x "$FIREFOX_PROFILE_DIR/updater.sh" "$FIREFOX_PROFILE_DIR/prefsCleaner.sh"
+
+        # updater flags: -p = target profile, -s = silent (skip confirm),
+        # -b = keep a single backup, -d = no self-update check (we just
+        # fetched a fresh validated copy; the self-update path re-downloads
+        # from rate-limited raw.githubusercontent.com).
+        echo "Running arkenfox updater (downloads user.js, appends user-overrides.js - last wins)..."
+        if ! "$FIREFOX_PROFILE_DIR/updater.sh" -p "$FIREFOX_PROFILE_DIR" -s -b -d; then
+            echo "warning: updater.sh exited non-zero - checking user.js integrity below" >&2
+        fi
+
+        # --- self-heal gate --------------------------------------------------
+        # updater.sh itself downloads user.js with plain curl (no gh
+        # fallback), so a rate-limit hit writes an error page into user.js.
+        # Verify the arkenfox banner survived; if not, rebuild user.js from
+        # a directly fetched template and re-append user-overrides.js.
+        case "$(first_nonempty_line "$FIREFOX_PROFILE_DIR/user.js")" in
+            "/******"*)
+                echo "arkenfox user.js verified (banner present)."
+                ;;
+            *)
+                echo "warning: user.js missing or invalid (rate-limited download?) - rebuilding..." >&2
+                if [ -f "$FIREFOX_PROFILE_DIR/user.js" ]; then
+                    invalid_bak="${FIREFOX_PROFILE_DIR}/user.js.invalid.bak.$(date +%Y%m%d-%H%M%S)"
+                    cp "$FIREFOX_PROFILE_DIR/user.js" "$invalid_bak"
+                    echo "  invalid user.js backed up -> $(basename "$invalid_bak")"
+                fi
+                tpl="${FIREFOX_PROFILE_DIR}/user.js.tpl.$$"
+                if ! fetch_raw user.js "$tpl"; then
+                    rm -f "$tpl"
+                    echo "error: could not fetch an arkenfox user.js template" >&2
+                    exit 1
+                fi
+                case "$(first_nonempty_line "$tpl")" in
+                    "/******"*) ;;
+                    *)
+                        rm -f "$tpl"
+                        echo "error: fetched template is not an arkenfox user.js - aborting self-heal" >&2
+                        exit 1
+                        ;;
+                esac
+                mv "$tpl" "$FIREFOX_PROFILE_DIR/user.js"
+                if [ -e "$FIREFOX_PROFILE_DIR/user-overrides.js" ]; then
+                    printf '\n' >> "$FIREFOX_PROFILE_DIR/user.js"
+                    cat "$FIREFOX_PROFILE_DIR/user-overrides.js" >> "$FIREFOX_PROFILE_DIR/user.js"
+                    echo "  user-overrides.js re-appended to rebuilt user.js"
+                fi
+                echo "  rebuilt user.js from a clean arkenfox template"
+                ;;
+        esac
+
+        # --- gwfox theme ------------------------------------------------------
+        mkdir -p "$CHROME_DIR"
+
+        echo "Downloading gwfox theme..."
+        if ! git clone --depth=1 "$THEME_REPO" "$CHROME_DIR"; then
+            echo "Failed to clone theme repository"
+            exit 1
+        fi
+
+        # --- prefsCleaner -----------------------------------------------------
+        # prefsCleaner.sh has NO -p flag and operates on the directory it
+        # lives in, so run it from the profile root. -s = start immediately,
+        # -d = no self-update (same rate-limit reasoning as the updater).
+        echo "Running arkenfox prefsCleaner..."
+        (cd "$FIREFOX_PROFILE_DIR" && ./prefsCleaner.sh -s -d) || {
+            echo "prefsCleaner.sh failed"
+            exit 1
+        }
+
+        # --- enterprise policies ---------------------------------------------
+        install_policies
+
+        echo
+        echo "Firefox hardening install completed!"
+        echo "Please restart Firefox manually to apply."
+        echo "Verify afterwards:"
+        echo "  - about:policies: every policy Active, zero errors"
+        echo "  - about:support: Enterprise Policies = Active"
+        ;;
+    "uninstall")
+        echo "Uninstalling Firefox hardening (arkenfox + gwfox + policies)..."
+
+        # Same guard as install: never operate on the profile as root.
+        if [ "$(id -u)" -eq 0 ]; then
+            echo "Refusing to run as root."
+            exit 1
+        fi
+
+        kill_firefox
+
+        # Remove ONLY the artifacts this bootstrap manages. ALL user data
+        # and the tracked user-overrides.js stay untouched.
+        for artifact in chrome user.js updater.sh prefsCleaner.sh userjs_backups prefsjs_backups; do
+            if [ -e "${FIREFOX_PROFILE_DIR:?}/$artifact" ]; then
+                rm -rf "${FIREFOX_PROFILE_DIR:?}/$artifact"
+                echo "Removed $artifact"
+            fi
+        done
+
+        # Remove the policy file, then the policy dirs only if empty
+        # (rmdir never removes non-empty directories).
+        if sudo_cmd rm -f "$POLICIES_DST"; then
+            sudo_cmd rmdir /etc/firefox/policies /etc/firefox 2> /dev/null || true
+            echo "Removed $POLICIES_DST"
+        else
+            echo "WARNING: could not remove $POLICIES_DST (sudo failed or unavailable)." >&2
+            echo "  Remove manually with:"
+            echo "  sudo rm -f \"$POLICIES_DST\" && sudo rmdir /etc/firefox/policies /etc/firefox"
+        fi
+
+        echo "Firefox hardening uninstalled successfully!"
+        echo "Please restart Firefox manually to complete the removal."
+        ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
+esac
