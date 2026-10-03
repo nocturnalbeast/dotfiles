@@ -78,6 +78,26 @@ def load_ignore_rules(pkg_path: Path, target_os: Optional[str]) -> list[str]:
     return list(rules)
 
 
+def ignore_folding_preferred(pkg_path: Path) -> bool:
+    """
+    Return True when the manifest's [ignore] table opts into tree folding.
+
+    A package whose rules prune whole TOP-LEVEL trees is fold-safe: stow
+    evaluates ignore rules at the package root before any folding, so the
+    foreign tree is dropped first and folding the rest cannot bypass it
+    (firefox live-fire lesson). Per-file links are instead fragile for
+    trees a running application writes into (stow -D/-S races with runtime
+    file creation, leaving mixed trees). Reserved key [ignore] fold = true
+    opts such a package out of the forced --no-folding; any other value,
+    a missing key, or a malformed table keeps --no-folding.
+    """
+    metadata = load_package_metadata(pkg_path)
+    ignore_table = metadata.get("ignore", {})
+    if not isinstance(ignore_table, dict):
+        return False
+    return ignore_table.get("fold") is True
+
+
 def prepare_local_ignore(pkg_path: Path, target_os: Optional[str]) -> bool:
     """
     Generate or clean up the package's .stow-local-ignore for a target OS.
@@ -159,7 +179,7 @@ def is_stowed(
     """Check if a package is already stowed."""
     rules_active = prepare_local_ignore(pkg_path, target_os)
     argv = ["stow", "-n", "-v", "-t", str(target), f"--ignore={IGNORE_PATTERN}"]
-    if rules_active:
+    if rules_active and not ignore_folding_preferred(pkg_path):
         argv.append("--no-folding")
     argv.append(pkg_name)
     result = subprocess.run(
@@ -186,7 +206,7 @@ def stow_install(
     """Install a package using stow."""
     rules_active = prepare_local_ignore(pkg_path, target_os)
     argv = ["stow", "-t", str(target), f"--ignore={IGNORE_PATTERN}"]
-    if rules_active:
+    if rules_active and not ignore_folding_preferred(pkg_path):
         argv.append("--no-folding")
     argv.append(pkg_name)
     result = subprocess.run(
@@ -214,7 +234,7 @@ def stow_reinstall(
         str(target),
         f"--ignore={IGNORE_PATTERN}",
     ]
-    if rules_active:
+    if rules_active and not ignore_folding_preferred(pkg_path):
         argv.append("--no-folding")
     argv.append(pkg_name)
     result = subprocess.run(
@@ -235,7 +255,7 @@ def stow_uninstall(
     """Uninstall a package using stow."""
     rules_active = prepare_local_ignore(pkg_path, target_os)
     argv = ["stow", "-D", "-t", str(target), f"--ignore={IGNORE_PATTERN}"]
-    if rules_active:
+    if rules_active and not ignore_folding_preferred(pkg_path):
         argv.append("--no-folding")
     argv.append(pkg_name)
     result = subprocess.run(
@@ -266,7 +286,7 @@ def stow_check(
 
     rules_active = prepare_local_ignore(pkg_path, target_os)
     argv = ["stow", "-n", "-v", "-t", str(target), f"--ignore={IGNORE_PATTERN}"]
-    if rules_active:
+    if rules_active and not ignore_folding_preferred(pkg_path):
         argv.append("--no-folding")
     argv.append(pkg_name)
     result = subprocess.run(

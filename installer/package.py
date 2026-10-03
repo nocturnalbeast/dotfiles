@@ -203,6 +203,13 @@ def discover_packages(root_dir: Path, ignore_dirs: set[str]) -> list[Package]:
                 f"{metadata_file}: 'ignore' must be a table of per-OS rule lists"
             )
         for os_name, os_rules in ignore.items():
+            if os_name == "fold":
+                # reserved: opts the package out of the forced --no-folding
+                if not isinstance(os_rules, bool):
+                    raise ValueError(
+                        f"{metadata_file}: 'ignore.fold' must be a boolean"
+                    )
+                continue
             if not isinstance(os_rules, list) or not all(
                 isinstance(rule, str) for rule in os_rules
             ):
