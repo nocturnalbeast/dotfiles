@@ -93,6 +93,16 @@ fi
 
 Content templating is deliberately absent: files are stowed verbatim. Diverge whole files by keeping one subtree per OS behind `[ignore]`; for divergent fragments, use your application's native include mechanism instead (git's `[include] path = ~/.gitconfig.local`, or a shell `source` of a machine-local file).
 
+**Seeding a new machine**
+
+A per-OS tree can point at machine-created state — the firefox macOS flavor stows `~/Library/Application Support/Firefox`, which only exists once the Mac has created it. Such packages need a one-time seed before their first install (run from the repo root):
+
+1. `firefox -CreateProfile defprofile` — the brew cask puts `firefox` on PATH; otherwise invoke the bundle binary at `/Applications/Firefox.app/Contents/MacOS/firefox`.
+2. `mv ~/Library/Application\ Support/Firefox firefox/Library/Application\ Support/Firefox` — wipe any stale dummy profiles inside it first.
+3. `./install install firefox` — stows the tree and runs the bootstrap, which auto-copies the staged `user-overrides.js` into the new profile and installs the per-user policies plist.
+
+The bootstrap closes Firefox if it is running.
+
 ### Cross-Platform Support
 
 Packages are tagged with supported platforms. By default, only packages compatible with your OS are installed:
