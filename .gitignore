@@ -67,3 +67,7 @@ awesome/.config/awesome/extlib
 
 # sketchybar generated colors
 sketchybar/.config/sketchybar/colors_generated.lua
+
+# cava shaders and rendered themes
+cava/.config/cava/shaders/
+cava/.config/cava/themes/
