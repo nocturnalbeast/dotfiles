@@ -82,6 +82,7 @@ require("snacks").setup({
         -- Four visible actions; no hidden hotkey-only items.
         preset = {
             keys = {
+                { icon = "\u{F15C}", key = "e", desc = "New Buffer", action = ":ene" },
                 { icon = "\u{F15B}", key = "f", desc = "Find File", action = ":lua Snacks.dashboard.pick('files')" },
                 {
                     icon = "\u{F017}",
