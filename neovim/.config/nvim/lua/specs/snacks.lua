@@ -82,11 +82,21 @@ require("snacks").setup({
         -- Four visible actions; no hidden hotkey-only items.
         preset = {
             keys = {
-                { icon = "", key = "f", desc = "Find File", action = ":lua Snacks.dashboard.pick('files')" },
-                { icon = "", key = "r", desc = "Recent Files", action = ":lua Snacks.dashboard.pick('oldfiles')" },
-                { icon = "", key = "g", desc = "Find Text", action = ":lua Snacks.dashboard.pick('live_grep')" },
+                { icon = "\u{F15B}", key = "f", desc = "Find File", action = ":lua Snacks.dashboard.pick('files')" },
                 {
-                    icon = "",
+                    icon = "\u{F017}",
+                    key = "r",
+                    desc = "Recent Files",
+                    action = ":lua Snacks.dashboard.pick('oldfiles')",
+                },
+                {
+                    icon = "\u{F002}",
+                    key = "g",
+                    desc = "Find Text",
+                    action = ":lua Snacks.dashboard.pick('live_grep')",
+                },
+                {
+                    icon = "\u{F013}",
                     key = "c",
                     desc = "Config",
                     action = ":lua Snacks.dashboard.pick('files', { cwd = vim.fn.stdpath('config') })",
@@ -98,8 +108,8 @@ require("snacks").setup({
         -- nerd font; MRU entries get filetype icons via mini.icons ("file").
         sections = {
             logo_section,
-            { title = " Quick Actions", section = "keys", indent = 2, padding = { 1, 1 } },
-            { title = " Recent Files", section = "recent_files", indent = 2, padding = { 1, 1 }, limit = 5 },
+            { title = "\u{F135}  Quick Actions", section = "keys", indent = 2, padding = { 1, 1 } },
+            { title = "\u{F017}  Recent Files", section = "recent_files", indent = 2, padding = { 1, 1 }, limit = 5 },
             footer_section,
         },
     },
