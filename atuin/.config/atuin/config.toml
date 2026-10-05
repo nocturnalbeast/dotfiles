@@ -93,3 +93,8 @@ tcp_port = 8889
 name = "custom" # theme:managed
 debug = false
 max_depth = 10
+
+[logs]
+dir = "~/.local/state/atuin/logs"
+level = "warn"
+retention = 2
