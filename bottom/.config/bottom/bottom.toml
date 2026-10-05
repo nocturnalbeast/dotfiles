@@ -1,31 +1,35 @@
 [flags]
-hide_avg_cpu = false
-dot_marker = false
-rate = 1000
-left_legend = false
-current_usage = false
-group_processes = true
-case_sensitive = false
-whole_word = false
-regex = true
+rate = "1s"
 temperature_type = "celsius"
-default_time_value = 60000
-time_delta = 15000
+default_time_value = "60s"
+time_delta = "15s"
 default_widget_type = "proc"
 default_widget_count = 1
 basic = false
+dot_marker = false
 use_old_network_legend = false
-hide_table_gap = true
 disable_click = false
-color = "default"
-mem_as_value = false
-tree = false
+table_gap = "none"
 
-[colors]
-table_header_color = "White"
-widget_title_color = "White"
-avg_cpu_color = "LightYellow"
-cpu_core_colors = [
+[cpu]
+hide_avg_cpu = false
+left_legend = false
+
+[processes]
+current_usage = false
+case_sensitive = false
+whole_word = false
+regex = true
+default_tree = false
+default_grouped = true
+default_memory_value = false
+
+[styles]
+theme = "default"
+
+[styles.cpu]
+avg_entry_colour = "LightYellow"
+cpu_core_colours = [
   "LightGreen",
   "LightCyan",
   "LightBlue",
@@ -37,20 +41,32 @@ cpu_core_colors = [
   "Magenta",
   "Red",
 ]
-ram_color = "LightGreen"
-swap_color = "LightYellow"
-rx_color = "LightBlue"
-tx_color = "LightRed"
-border_color = "Black"
-highlighted_border_color = "Cyan"
-text_color = "Gray"
-selected_text_color = "Black"
-selected_bg_color = "LightCyan"
-graph_color = "White"
-high_battery_color = "Green"
-medium_battery_color = "Yellow"
-low_battery_color = "Red"
 
+[styles.memory]
+ram_colour = "LightGreen"
+swap_colour = "LightYellow"
+
+[styles.network]
+rx_colour = "LightBlue"
+tx_colour = "LightRed"
+
+[styles.tables]
+headers = { colour = "White" }
+
+[styles.graphs]
+graph_colour = "White"
+
+[styles.widgets]
+widget_title = { colour = "White" }
+text = { colour = "Gray" }
+selected_text = { colour = "Black", bg_colour = "LightCyan" }
+border_colour = "DarkGray"
+selected_border_colour = "Cyan"
+
+[styles.battery]
+high_battery_colour = "Green"
+medium_battery_colour = "Yellow"
+low_battery_colour = "Red"
 
 [[row]]
 ratio = 40
