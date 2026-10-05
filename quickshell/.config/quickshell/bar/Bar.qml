@@ -54,8 +54,15 @@ PanelWindow {
         }
         height: bar.computedBarHeight
 
+        // Module shadows (MultiEffect) bleed ~blur/2 + offsetY BELOW the bar
+        // content into the window's reserved shadow strip. Sliding by exactly
+        // `height` left that bleed visible at the top edge of the screen over
+        // fullscreen apps — slide far enough that the shadows clear the
+        // window top and get clipped.
+        readonly property int shadowBleed: Shadows.barShadowBlur / 2 + Shadows.barShadowOffsetY
+
         // Slide off-screen when fullscreen app detected
-        anchors.topMargin: bar._shouldHide ? -height : 0
+        anchors.topMargin: bar._shouldHide ? -(height + shadowBleed) : 0
 
         Behavior on anchors.topMargin {
             SlideY {}
