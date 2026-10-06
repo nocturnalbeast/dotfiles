@@ -69,6 +69,7 @@ local modules = {
     "specs.imgclip",
     "specs.todo",
     "specs.guessindent",
+    "specs.incline",
     "specs.neovide",
 }
 

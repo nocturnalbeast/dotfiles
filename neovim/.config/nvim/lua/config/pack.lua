@@ -34,5 +34,7 @@ vim.pack.add({
     { src = gh("obsidian-nvim/obsidian.nvim") }, -- note-taking workflow
     { src = gh("MeanderingProgrammer/render-markdown.nvim") }, -- rendered markdown preview
     { src = gh("HakonHarnes/img-clip.nvim") }, -- paste images into notes (avif pipeline)
+    { src = gh("b0o/incline.nvim") }, -- floating per-window navigation badge
+    { src = gh("SmiteshP/nvim-navic") }, -- LSP symbol breadcrumbs (feeds incline)
     { src = gh("rafamadriz/friendly-snippets") }, -- snippet data only, loaded by blink
 })

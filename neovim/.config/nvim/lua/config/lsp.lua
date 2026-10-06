@@ -71,5 +71,15 @@ vim.api.nvim_create_autocmd("LspAttach", {
                 desc = "[T]oggle Inlay [H]ints",
             })
         end
+
+        -- Symbol breadcrumbs for the incline badge. navic.attach re-checks
+        -- documentSymbolProvider itself, but the guard avoids its error
+        -- notify path on servers without symbols (e.g. ruff).
+        if client:supports_method("textDocument/documentSymbol", event.buf) then
+            local ok, navic = pcall(require, "nvim-navic")
+            if ok then
+                navic.attach(client, event.buf)
+            end
+        end
     end,
 })
