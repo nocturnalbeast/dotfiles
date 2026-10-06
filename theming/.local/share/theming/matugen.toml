@@ -1,0 +1,18 @@
+[config]
+reload_apps = false
+
+[config.custom_colors]
+red = { color = "#ff9999", blend = false }
+orange = { color = "#ffcc99", blend = false }
+yellow = { color = "#ffff99", blend = false }
+chartreuse = { color = "#ccff99", blend = false }
+green = { color = "#99ff99", blend = false }
+spring = { color = "#99ffcc", blend = false }
+teal = { color = "#99ffff", blend = false }
+azure = { color = "#99ccff", blend = false }
+blue = { color = "#9999ff", blend = false }
+magenta = { color = "#cc99ff", blend = false }
+rose = { color = "#ff99ff", blend = false }
+pink = { color = "#ff99cc", blend = false }
+
+[templates]
