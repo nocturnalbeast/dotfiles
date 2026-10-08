@@ -1,0 +1,47 @@
+#!/usr/bin/env sh
+
+MODERNX_BASE="https://github.com/zydezu/ModernX/releases/latest/download"
+MPV_DIR="mpv/.config/mpv"
+
+cd "$(dirname "$0")/.." || exit 1
+
+fetch() {
+    # fetch <dest> <url> - curl/wget with retry, rejects HTML error pages
+    # (rate-limit/404 bodies masquerading as files, cf. bootstrap/firefox)
+    if command -v curl > /dev/null 2>&1; then
+        curl -fsSL --retry 3 -o "$1" "$2" || return 1
+    elif command -v wget > /dev/null 2>&1; then
+        wget -q --tries=3 -O "$1" "$2" || return 1
+    else
+        echo "Neither curl nor wget found." >&2
+        return 1
+    fi
+    # sanity: reject empty or HTML bodies
+    if [ ! -s "$1" ] || head -c 256 "$1" | grep -qiE '<!doctype|<html|rate limit'; then
+        echo "Downloaded '$1' looks like an error page, aborting." >&2
+        rm -f "$1"
+        return 1
+    fi
+}
+
+case "$1" in
+    "install" | "reinstall")
+        mkdir -p "${MPV_DIR}/scripts" "${MPV_DIR}/fonts" || exit 1
+        echo "Fetching ModernX (latest release)..."
+        fetch "${MPV_DIR}/scripts/modernx.lua" \
+            "${MODERNX_BASE}/modernx.lua" || exit 1
+        fetch "${MPV_DIR}/fonts/fluent-system-icons.ttf" \
+            "${MODERNX_BASE}/fluent-system-icons.ttf" || exit 1
+        echo "ModernX installed to ${MPV_DIR}/"
+        ;;
+    "uninstall")
+        rm -f "${MPV_DIR}/scripts/modernx.lua" \
+            "${MPV_DIR}/fonts/fluent-system-icons.ttf"
+        rmdir "${MPV_DIR}/fonts" 2> /dev/null # prune if we left it empty
+        echo "ModernX removed."
+        ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
+esac
