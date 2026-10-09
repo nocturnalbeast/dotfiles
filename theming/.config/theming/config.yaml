@@ -431,7 +431,7 @@ palette:
         terminal.base17: brights:base0F
   source_image: 
     /home/nocturnalbeast/.dotfiles/wallpapers/.local/share/wallpapers/amoled/w_eight.png
-  generated_at: '2026-10-02T19:21:49'
+  generated_at: '2026-10-09T00:29:24'
   effective_mode: dark
   engines:
     gui: matugen-faithful

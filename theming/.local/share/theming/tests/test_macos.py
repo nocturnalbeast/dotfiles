@@ -237,3 +237,17 @@ class TestCavaGradient(unittest.TestCase):
         out = update_gradient("[color]\ngradient = 1\n", ["#111111", "#222222"])
         self.assertIn("gradient_color_1   = '#111111'", out)
         self.assertIn("gradient_color_2   = '#222222'", out)
+
+
+class TestMpvTheme(unittest.TestCase):
+    def test_values_crosswalk(self):
+        from theme.components.mpv import theme_values
+
+        v = theme_values(TestSuperfile().palette())
+        self.assertEqual(v["osc_color"], "#0a0a0a")
+        self.assertEqual(v["title_color"], "#e0e0e0")
+        self.assertEqual(v["hover_effect_color"], "#afaccf")
+        self.assertEqual(v["seekbarfg_color"], "#afaccf")
+        self.assertEqual(v["held_element_color"], "#6f6f6f")
+        self.assertEqual(v["seekbarbg_color"], "#e0e0e0")
+        self.assertEqual(len(v), 16)

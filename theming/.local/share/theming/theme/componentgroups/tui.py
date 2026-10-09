@@ -6,6 +6,7 @@ from theme.componentgroups.base import ComponentGroup
 from theme.components.scheme import SchemeComponent
 from theme.components.atuin import AtuinComponent
 from theme.components.cava import CavaComponent
+from theme.components.mpv import MpvComponent
 from theme.components.rmpc import RmpcComponent
 from theme.components.fsh import FshComponent
 from theme.components.superfile import SuperfileComponent
@@ -22,4 +23,5 @@ class TUIGroup(ComponentGroup):
         SuperfileComponent(),
         RmpcComponent(),
         CavaComponent(),
+        MpvComponent(),
     ]
