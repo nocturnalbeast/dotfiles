@@ -211,17 +211,15 @@ condition = "<shell command>"
     - [yt-dlp](https://github.com/yt-dlp/yt-dlp): Command-line program to download videos
 
 - Theming:
-  - [oomox](https://github.com/themix-project/oomox): Theme generator for GTK and icons
-  - [papirus-icon-theme](https://github.com/PapirusDevelopmentTeam/papirus-icon-theme): SVG icon theme base
-  - GTK/Qt Themes:
-    - `bnw`: Custom black and white theme generated with oomox
-  - Icon Themes:
-    - `bnw`: Custom monochrome variant of Papirus
-  - Cursor Theme:
-    - [Bibata](https://github.com/ful1e5/Bibata_Cursor): Modern material-based cursor theme
-  - Supported Environments:
-    - GTK 2.0/3.0/4.0: Complete theme support
-    - Qt 5/6: Theme integration via qt5ct and qt6ct
+  - [theming](./theming): Unified, config-driven theming system — palette extracted
+    from the wallpaper, applied across every surface
+    - Surfaces: GTK, Qt (Kvantum/Fusion), icons, cursors, fonts, WM chrome
+      (awesome/bspwm/hypr), notifications (dunst/mako), lock screens, menus,
+      terminal (kitty/tmux via tinty), CLI (zsh, atuin, LS_COLORS), zathura,
+      superfile, rmpc, cava, mpv, sketchybar + aerospace borders (macOS)
+    - Engines: matugen / thaim / wallust — switchable per space (GUI/TUI)
+    - Usage: `theme apply all` (or per group/member); `theme status`,
+      `theme doctor`, `theme watch` for live wallpaper sync
 
 ## Keybinding layout
 
