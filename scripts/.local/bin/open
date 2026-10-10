@@ -3,11 +3,11 @@
 # A script to open files and URLs using various handlers.
 
 # Global configuration
-DEPENDENCIES="handlr mimeo xdg-open"
+DEPENDENCIES="handlr xdg-open"
 
 usage() {
     cat << EOF
-Usage: $(basename "$0") FILE/URL
+Usage: $(basename "$0") FILE/URL [FILE/URL ...]
 
 A script to open files and URLs with appropriate handlers.
 
@@ -26,30 +26,55 @@ check_dependencies() {
         fi
     done
     if [ "$found" -eq 0 ]; then
-        echo "error: No supported file opener found. Install one of: handlr, mimeo, xdg-open" >&2
+        echo "error: No supported file opener found. Install one of: handlr, xdg-open" >&2
         return 1
     fi
 }
 
-# Detects which file opener command to use.
+# Opens a single path/URL via handlr, falling back to xdg-open when handlr
+# cannot handle it.
 #
-# Outputs:
-#   Writes the detected command name to stdout.
-detect_opener_command() {
-    if command -v handlr > /dev/null 2>&1; then
-        echo "handlr open"
-    elif command -v mimeo > /dev/null 2>&1; then
-        echo "mimeo -c"
-    elif command -v xdg-open > /dev/null 2>&1; then
-        if [ "$(basename $0)" != "xdg-open" ]; then
-            echo "xdg-open"
-        else
-            echo "/usr/bin/xdg-open"
-        fi
-    else
-        echo "Error: No supported file opener command found" >&2
-        echo "Please install one of: handlr, mimeo, xdg-open" >&2
+# NOTE: handlr-regex 0.13.0 exits 0 even when no handler exists; the only
+# reliable failure signal is the "No handlers found" ERROR line on stderr
+# (verified empirically). Notifications are disabled because this script
+# reports the failure itself.
+#
+# Arguments:
+#   $1 - Path or URL to open
+open_single() {
+    ERRFILE=$(mktemp) || return 1
+    handlr --disable-notifications open "$1" 2> "$ERRFILE"
+    RC=$?
+    [ -s "$ERRFILE" ] && cat "$ERRFILE" >&2
+    if [ "$RC" -ne 0 ] || grep -q "No handlers found" "$ERRFILE"; then
+        rm -f "$ERRFILE"
+        exec /usr/bin/xdg-open "$1"
     fi
+    rm -f "$ERRFILE"
+    exit 0
+}
+
+# Opens multiple paths/URLs via handlr in one batch.
+#
+# No automatic fallback here: if some arguments opened and others failed,
+# re-dispatching all of them through xdg-open would double-open the ones
+# that already launched. Failures are reported instead.
+#
+# Arguments:
+#   $@ - Paths/URLs to open
+open_multiple() {
+    ERRFILE=$(mktemp) || return 1
+    handlr --disable-notifications open "$@" 2> "$ERRFILE"
+    RC=$?
+    [ -s "$ERRFILE" ] && cat "$ERRFILE" >&2
+    if grep -q "No handlers found" "$ERRFILE"; then
+        echo "$(basename "$0"): some arguments had no handler; arguments that already opened are not retried" >&2
+        echo "Re-run unmatched arguments with /usr/bin/xdg-open" >&2
+        rm -f "$ERRFILE"
+        exit 1
+    fi
+    rm -f "$ERRFILE"
+    exit "$RC"
 }
 
 # Main entry point that processes command-line arguments.
@@ -68,10 +93,21 @@ main() {
             ;;
         *)
             check_dependencies || exit 1
-            OPENER_CMD=$(detect_opener_command)
-            if [ -n "$OPENER_CMD" ]; then
-                $OPENER_CMD "$@"
+            if command -v handlr > /dev/null 2>&1; then
+                if [ $# -eq 1 ]; then
+                    open_single "$1"
+                else
+                    open_multiple "$@"
+                fi
+            elif command -v xdg-open > /dev/null 2>&1; then
+                if [ "$(basename "$0")" != "xdg-open" ]; then
+                    exec xdg-open "$@"
+                else
+                    exec /usr/bin/xdg-open "$@"
+                fi
             else
+                echo "Error: No supported file opener command found" >&2
+                echo "Please install one of: handlr, xdg-open" >&2
                 exit 1
             fi
             ;;
