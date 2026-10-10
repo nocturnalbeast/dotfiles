@@ -175,8 +175,8 @@ term_exec_args() {
 gen_handlr_toml() {
     term_exec_args "$TERMINAL"
     cat << EOF
-enable_selector = false
-selector = "rofi -dmenu -i -p 'Open With: '"
+enable_selector = $2
+selector = "menu run -p 'Open With: '"
 term_exec_args = '$TERM_ARGS'
 expand_wildcards = $1
 EOF
@@ -259,7 +259,7 @@ stage_create() {
         find "$USR_APPS" -maxdepth 1 -name '*.desktop' \
             -exec ln -s {} "$STAGE/data/applications/" \;
     fi
-    gen_handlr_toml true > "$STAGE/config/handlr/handlr.toml"
+    gen_handlr_toml true false > "$STAGE/config/handlr/handlr.toml"
 }
 
 # Runs one staged `handlr set`. handlr exits 0 even on failure, so the
@@ -387,11 +387,38 @@ stage_fix_case() {
 stage_run() {
     stage_create
     for CATEGORY in $WILDCARD_CATEGORIES; do apply_category "$CATEGORY"; done
-    gen_handlr_toml false > "$STAGE/config/handlr/handlr.toml"
+    gen_handlr_toml false false > "$STAGE/config/handlr/handlr.toml"
     close_wildcard_gaps
     for CATEGORY in $CONCRETE_CATEGORIES; do apply_category "$CATEGORY"; done
     apply_carveouts
+    apply_secondary '^image/' gimp.desktop
     stage_fix_case
+}
+
+# Appends a secondary (alternate) handler to staged entries whose mime key
+# matches an extended regex, so the enabled selector can offer a choice
+# (e.g. image -> imv-dir or gimp). Implemented as a direct staged-file edit:
+# no extra handlr spawns, deterministic, and drift-free because generation
+# always includes the secondaries. Skipped silently when the secondary app
+# is not installed.
+#
+# Arguments:
+#   $1 - extended regex matched against the mime key (left of =)
+#   $2 - secondary desktop file id (e.g. gimp.desktop)
+apply_secondary() {
+    AS_PAT=$1
+    AS_DESK=$2
+    desktop_exists "${AS_DESK%.desktop}" || return 0
+    AS_FILE="$STAGE/config/mimeapps.list"
+    [ -f "$AS_FILE" ] || return 0
+    AS_TMP=$(mktemp) || return 0
+    awk -v pat="$AS_PAT" -v desk="$AS_DESK" '
+        index($0, "=" desk ";") == 0 && index($0, "=") > 0 {
+            split($0, kv, "=")
+            if (kv[1] ~ pat) sub(/;$/, ";" desk ";")
+        }
+        { print }
+    ' "$AS_FILE" > "$AS_TMP" && mv "$AS_TMP" "$AS_FILE" || rm -f "$AS_TMP"
 }
 
 # handlr's embedded MIME database misses types that shared-mime-info knows
@@ -652,7 +679,7 @@ cmd_apply() {
         rm -rf "$STAGE"
         die "install failed"
     }
-    gen_handlr_toml true | write_stowed_file "$LIVE_HANDLR_TOML" 644 lenient ||
+    gen_handlr_toml true true | write_stowed_file "$LIVE_HANDLR_TOML" 644 lenient ||
         warn "could not regenerate $LIVE_HANDLR_TOML"
     rm -rf "$STAGE"
     STAGE=""
