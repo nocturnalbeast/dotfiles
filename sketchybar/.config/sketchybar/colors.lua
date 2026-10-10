@@ -1,4 +1,4 @@
--- Semantic color layer — the ONLY place Material role → meaning lives.
+-- Semantic color layer - the ONLY place Material role → meaning lives.
 -- pcall pattern: try the generated Material palette first; if
 -- colors_generated.lua is missing (fresh boot before first `theme` run)
 -- fall back to a hardcoded Material-dark baseline so init.lua never crashes.

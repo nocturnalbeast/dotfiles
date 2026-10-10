@@ -12,7 +12,7 @@ Rectangle {
     property color hoverBg: Colors.widgetHoverContentBg
     property int padding: Spacing.widgetPadding / 2
 
-    // Hover state — set externally by parent
+    // Hover state - set externally by parent
     property bool hovered: false
 
     // Text convenience (use when content is simple text)
@@ -22,7 +22,7 @@ Rectangle {
     property color textColor: Colors.widgetContentFg
     property alias textWeight: label.font.weight
 
-    // Custom content — children override text display
+    // Custom content - children override text display
     default property alias contentChildren: contentSlot.data
 
     // Layout

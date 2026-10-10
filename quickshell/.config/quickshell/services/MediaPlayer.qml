@@ -60,7 +60,7 @@ Singleton {
     property var _autoPlayer: null
 
     // ═══════════════════════════════════════════
-    // FUNCTIONS — BACKWARD-COMPATIBLE
+    // FUNCTIONS - BACKWARD-COMPATIBLE
     // ═══════════════════════════════════════════
     function playPause() {
         if (activePlayer)
@@ -80,7 +80,7 @@ Singleton {
     }
 
     // ═══════════════════════════════════════════
-    // FUNCTIONS — NEW
+    // FUNCTIONS - NEW
     // ═══════════════════════════════════════════
     function seek(offset) {
         if (activePlayer && activePlayer.canSeek)
@@ -124,7 +124,7 @@ Singleton {
     // PLAYER TRACKING
     // ═══════════════════════════════════════════
 
-    // Watch each player — auto-switch when one starts playing
+    // Watch each player - auto-switch when one starts playing
     Instantiator {
         model: Mpris.players
         delegate: Connections {

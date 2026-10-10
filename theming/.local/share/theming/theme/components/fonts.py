@@ -48,7 +48,7 @@ class FontsComponent(Component):
         )
 
     def build(self, ctx: Context) -> dict[str, Any]:
-        # fonts own no external resources — build is a no-op
+        # fonts own no external resources - build is a no-op
         return {
             "config_hash": slice_hash(self.consumed_slice(ctx)),
             "built_config_hash": slice_hash(self.consumed_slice(ctx)),

@@ -80,7 +80,7 @@ def slot(palette: dict[str, Any], name: str) -> str:
 
 
 def ramp16(palette: dict[str, Any]) -> dict[str, str]:
-    """The GUI-engine base16 ramp (base00–base0F) — terminal_gui."""
+    """The GUI-engine base16 ramp (base00-base0F) - terminal_gui."""
     variant = palette["variants"][mode(palette)]
     return (variant.get("extensions", {}) or {}).get("terminal_gui") or {}
 
@@ -108,7 +108,7 @@ def material_roles(
     palette: dict[str, Any], required: list[str] | tuple[str, ...]
 ) -> dict[str, str]:
     """Material roles of the active variant; hard-requires `required`
-    (missing role raises — no silent fallbacks)."""
+    (missing role raises - no silent fallbacks)."""
     variant = active_variant(palette)
     material = (variant.get("extensions") or {}).get("material") or {}
     missing = [r for r in required if not material.get(r)]

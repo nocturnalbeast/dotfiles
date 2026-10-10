@@ -1,4 +1,4 @@
-"""GTK member: S1–S6 gtk-owned keys, colloid-class resources."""
+"""GTK member: S1-S6 gtk-owned keys, colloid-class resources."""
 
 from __future__ import annotations
 
@@ -66,7 +66,7 @@ class GTKComponent(Component):
         elif needs_build and ctx.dry_run:
             action(
                 f"would build {resource.naming_for(ctx)}"
-                f"{'' if src.head != 'unknown' else ' (unknown — clone absent)'}"
+                f"{'' if src.head != 'unknown' else ' (unknown - clone absent)'}"
             )
             built_hash = old.get("built_config_hash", slice_h)
         return {
@@ -110,7 +110,7 @@ class GTKComponent(Component):
             return Effects()
         # S5 gsettings: key-disjoint from shared surfaces; dconf is the observed store
         if not gsettings_set(GS_SCHEMA, "gtk-theme", values["S5"]["gtk-theme"]):
-            warn("gsettings backend missing — S5 skipped")
+            warn("gsettings backend missing - S5 skipped")
         else:
             gsettings_set(GS_SCHEMA, "font-name", values["S5"]["font-name"])
             gsettings_set(GS_SCHEMA, "color-scheme", values["S5"]["color-scheme"])

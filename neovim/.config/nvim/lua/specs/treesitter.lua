@@ -6,7 +6,7 @@
 --   setup{ select = {...}, move = {...} } carries options only (no keymaps);
 
 -- The main branch keeps highlight/indent/fold queries under runtime/queries/
--- but its plugin init never appends runtime/ to the rtp — without this,
+-- but its plugin init never appends runtime/ to the rtp - without this,
 -- vim.treesitter.start() finds the parser but query.get() returns nil and
 -- code renders with zero syntax highlighting.
 local nts_runtime = vim.fn.stdpath("data") .. "/site/pack/core/opt/nvim-treesitter/runtime"

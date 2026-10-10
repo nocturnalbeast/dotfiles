@@ -19,7 +19,7 @@ local function check()
                 missing[#missing + 1] = cmd
                 if #missing == 1 then
                     naughty.notify({
-                        title = "Awesome WM — missing scripts",
+                        title = "Awesome WM - missing scripts",
                         text = table.concat(missing, ", ") .. " not found on $PATH",
                         timeout = 10,
                         urgency = "normal",

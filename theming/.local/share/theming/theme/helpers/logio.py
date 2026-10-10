@@ -155,7 +155,7 @@ def set_deferred(on: bool) -> None:
 
 def replay(member_order: list[str] | None = None) -> None:
     """Render records appended since defer-on, grouped by member in
-    canonical order — default output stays byte-identical to
+    canonical order - default output stays byte-identical to
     a serial run regardless of worker completion order."""
     pending = RUN.records[RUN.defer_mark :]
     RUN.defer_mark = len(RUN.records)
@@ -388,7 +388,7 @@ class StatusLog:
                     Panel("\n".join(lines), title=self.label, border_style="err")
                 )
         else:
-            action(f"{self.label} — done")
+            action(f"{self.label} - done")
         return False
 
 
@@ -403,7 +403,7 @@ def confirm(question: str, default: bool = False) -> bool:
         return True
     if not sys.stdin.isatty():
         raise RuntimeError(
-            f"{question} — confirmation required but stdin is not a TTY (use --yes)"
+            f"{question} - confirmation required but stdin is not a TTY (use --yes)"
         )
     return Confirm.ask(question, default=default, console=err_console)
 

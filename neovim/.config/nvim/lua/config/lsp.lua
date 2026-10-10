@@ -17,7 +17,7 @@ vim.lsp.enable(enabled_servers)
 --
 -- DECISION (deviation from the plan's `LspRequest` autocmd): on nvim 0.12.5
 -- the LspRequest payload is `data.request = { type = "pending"|"complete"|
--- "cancel", bufnr, method }` — it carries no error/result info — and its
+-- "cancel", bufnr, method }` - it carries no error/result info - and its
 -- "complete" event is queued (schedule_wrap in rpc.lua) BEFORE the rename
 -- handler applies the workspace edits, so an autocmd there would `wall`
 -- stale buffers. Post-hooking the rename handler guarantees the write runs

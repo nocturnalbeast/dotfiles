@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# devour — cross-compositor window swallower.
+# devour - cross-compositor window swallower.
 #
 # Hides the focused window, runs a command, then restores the window.
 # Typical use: run a GUI app from a terminal without the terminal visible.

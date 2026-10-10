@@ -1,21 +1,21 @@
--- items/media.lua — now-playing pill (right wing — this display has a
+-- items/media.lua - now-playing pill (right wing - this display has a
 -- notch covering center).
 --
--- Source: /opt/homebrew/bin/media-control (macOS 26 MediaRemote shim —
+-- Source: /opt/homebrew/bin/media-control (macOS 26 MediaRemote shim -
 -- supersedes nowplaying-cli, whose `get playback_state` was broken (fact 7)
 -- which is why paused-dimming never worked; media-control's `playing` /
 -- `playbackRate` DO work).
 --
--- Update paths (belt and suspenders — AGENT.md "Hammerspoon event bridge"
+-- Update paths (belt and suspenders - AGENT.md "Hammerspoon event bridge"
 -- + reload-semantics contract):
 --   * PUSH: plugins/media_control_reader (spawned detached below, the
 --     network_load idiom) reads `media-control stream` and fires
 --     `media_update` per change. Stream lines are PARTIAL diffs
 --     (`{"diff":true,"payload":{"playing":true}}`), so ABSENT env vars
---     mean "unchanged" — only present vars update the cache. A BARE
+--     mean "unchanged" - only present vars update the cache. A BARE
 --     media_update (no vars) is a ping → full `get` re-query.
 --   * POLL: ≥30s fallback via jq-narrowed `media-control get` (raw get is
---     ~309B — over the ~300B exec budget, facts 3/15) so the pill stays
+--     ~309B - over the ~300B exec budget, facts 3/15) so the pill stays
 --     correct if the reader dies.
 --
 -- `get` output is JSON → SBarLua auto-decodes (fact 4). Idle = empty
@@ -26,7 +26,7 @@
 -- Rendering: ONE pill (bracket) around an icon item + title/artist
 -- STACKED (the wifi-counter pattern): two width=0 chips anchored at the
 -- same right edge (adjacent zero-width slots coincide), y_offset ±6,
--- small text — title on top (bright; dim-when-paused wired via
+-- small text - title on top (bright; dim-when-paused wired via
 -- media-control `playing`), artist below (muted). The bracket draws the
 -- ONE pill surface; the icon item carries the play state color.
 local colors = require("colors")
@@ -43,29 +43,29 @@ local POLL_INTERVAL = 30 -- slow fallback (push events are the primary driver)
 -- Scrolling text: NATIVE item-level `scroll_texts` on a FIXED-width,
 -- right-aligned label box. The daemon animates a sub-pixel text offset
 -- (text.c: CTLineDraw at bounds.x - text->scroll) re-kicked by its 1s
--- refresh clock — smooth, CoreText-correct for UTF-8 (a Lua byte-sub
+-- refresh clock - smooth, CoreText-correct for UTF-8 (a Lua byte-sub
 -- marquee corrupted multi-byte chars). Fixed label boxes of EQUAL width
 -- keep the zero-width-slot stack coincident (verified on the wifi chips).
 -- Pause freezes: scroll_texts toggled off in apply().
 local TITLE_BOX = 140 -- pt, fixed scroll window (9pt font ≈ 28 chars)
 local ARTIST_BOX = 96 -- pt (8pt font ≈ 22 chars)
 -- Below these CHAR counts the chip hugs its text instead (dynamic width,
--- no scroll) — short tracks shrink the pill; long ones scroll in place.
+-- no scroll) - short tracks shrink the pill; long ones scroll in place.
 local TITLE_HUG_AT = 24
 local ARTIST_HUG_AT = 20
 
 local PSEUDO_TITLE = "Firefox is playing media"
 local FIREFOX_BUNDLE = "org.mozilla.firefox"
 
--- Main-exclusive cluster (reload-free mode swap via mode_changed — AGENT.md
--- facts 16–18). Note the interplay with the idle-hidden drawing cache
--- below: the mode gate WINS — set_drawing forces off while hidden, and
+-- Main-exclusive cluster (reload-free mode swap via mode_changed - AGENT.md
+-- facts 16-18). Note the interplay with the idle-hidden drawing cache
+-- below: the mode gate WINS - set_drawing forces off while hidden, and
 -- apply_mode restores cache.drawing on re-show.
 local visible = mode.get() == "main"
 
 -- Item creation order: right-side items render REVERSE of add order, so
 -- media.main (icon) is added LAST → renders LEFTMOST of the cluster.
--- Visual: [󰝚] [title / artist stacked] — title & artist are width=0
+-- Visual: [󰝚] [title / artist stacked] - title & artist are width=0
 -- chips whose adjacent zero-width slots coincide at one x; their labels
 -- right-align to it (each padding_right from the shared anchor), giving
 -- the vertical stack (wifi.up/wifi.down mechanics, AGENT.md fact 2).
@@ -90,7 +90,7 @@ local media_title = sbar.add("item", "media.title", {
 	y_offset = 6,
 	background = { drawing = false }, -- ONE pill: the bracket draws it
 	-- RIGHT edge of the cluster (chips share the anchor; equal padding on
-	-- both keeps the stack coincident) — 2 = matches media.title (was 6:
+	-- both keeps the stack coincident) - 2 = matches media.title (was 6:
 	-- right inner read 12 vs the 8pt module convention)
 	padding_left = 0,
 	padding_right = 2,
@@ -109,14 +109,14 @@ local media_artist = sbar.add("item", "media.artist", {
 		color = colors.muted,
 		width = ARTIST_BOX,
 		align = "right",
-		padding_right = 6, -- equal to media.title — same right edge
+		padding_right = 6, -- equal to media.title - same right edge
 	},
 	y_offset = -6,
 	background = { drawing = false },
 	padding_left = 0,
-	padding_right = 2, -- MUST equal media.title — the shared right anchor
+	padding_right = 2, -- MUST equal media.title - the shared right anchor
 	-- (a drift here skews the stack; regression 2026-08-27). 2 (not 6):
-	-- right inner was 12 (label.pr 6 + this 6), now 8 — and the −4
+	-- right inner was 12 (label.pr 6 + this 6), now 8 - and the −4
 	-- offsets the icon.pr +4 slot shift, keeping the vol gap at 8pt
 })
 
@@ -134,7 +134,7 @@ local media = sbar.add("item", "media.main", {
 	},
 	-- RESERVED BAND for the stacked chips (wifi-head pattern): the chips
 	-- are width=0 overlays whose ink overflows LEFTWARD from their slots
-	-- (right of this one) — without a reserve it draws across the icon.
+	-- (right of this one) - without a reserve it draws across the icon.
 	-- Empty-string label + padding: only the padding occupies the slot.
 	-- Band is RETUNED dynamically (retune_band below) to hug the wider
 	-- chip per track. Add-time 70 = safe floor until first retune.
@@ -159,7 +159,7 @@ local media_bracket = sbar.add("bracket", "media.bracket",
 		padding_left = 0,
 		padding_right = 0,
 		-- NO bracket paddings (they EXTEND the bg and cancel the members'
-		-- island-gap item paddings — see wifi.bracket note)
+		-- island-gap item paddings - see wifi.bracket note)
 	})
 
 -- ============================================================================
@@ -216,11 +216,11 @@ end
 
 -- Deterministic-ish: the gutter biases the icon→text gap 1:1 through
 -- the hug (gutter 2 → gap 10.5 with icon.pr 3; 0 → 7.5, matching the
--- module rhythm — re-measured 2026-09-04 after the inner-padding rework)
+-- module rhythm - re-measured 2026-09-04 after the inner-padding rework)
 -- lands ≈6pt.
 local BAND_GUTTER = 0
 -- MAX must cover the widest chip at max_chars: a 28-char 9pt title runs
--- ~140pt — a 130 clamp made long-title tracks overflow the band and
+-- ~140pt - a 130 clamp made long-title tracks overflow the band and
 -- collide with the icon (observed live). 170 gives headroom.
 local BAND_MIN, BAND_MAX = 40, 170
 local QUANTUM = 2
@@ -250,12 +250,12 @@ local function retune_band()
 		widest = absorb(qa, widest)
 	end
 	if widest <= 0 then
-		return -- no rects yet — keep current band
+		return -- no rects yet - keep current band
 	end
 	local desired = math.ceil((widest + BAND_GUTTER) / QUANTUM) * QUANTUM
 	desired = math.min(BAND_MAX, math.max(BAND_MIN, desired))
 	if math.abs(desired - band_current) < QUANTUM then
-		return -- within hysteresis — no churn
+		return -- within hysteresis - no churn
 	end
 	band_current = desired
 	media:set({ label = { padding_right = desired } })
@@ -263,7 +263,7 @@ end
 
 local function apply()
 	-- Dim-when-paused (media-control `playing`); pause ALSO freezes the
-	-- native scroll (scroll_texts off — the running pass finishes, no
+	-- native scroll (scroll_texts off - the running pass finishes, no
 	-- re-kick until playback resumes)
 	local dim = not cache.playing
 	set_drawing(true)
@@ -306,16 +306,16 @@ local function apply()
 
 	-- after the daemon lays out the new chip texts, re-measure and
 	-- re-size the icon item's reserved band (0.1s settle; tray.lua
-	-- retune_band pattern — rects are content-sized in hug mode, so the
+	-- retune_band pattern - rects are content-sized in hug mode, so the
 	-- band hugs too; in scroll mode it stabilizes at box+gutter)
 	sbar.delay(0.1, retune_band)
 end
 
 -- ============================================================================
--- Fallback poll — jq-narrowed `get` (stays well under the ~300B budget;
+-- Fallback poll - jq-narrowed `get` (stays well under the ~300B budget;
 -- raw get is ~309B and grows with long titles). Decodes to a table
 -- {title, artist, playing, bundle} (fact 4). Non-table output (reader/CLI
--- hiccup) keeps the last known state — no flicker on transient failure.
+-- hiccup) keeps the last known state - no flicker on transient failure.
 -- ============================================================================
 
 local GET_CMD = MEDIA_CONTROL
@@ -351,7 +351,7 @@ local function refresh()
 end
 
 -- ============================================================================
--- Push path — media_update from plugins/media_control_reader. Absent vars
+-- Push path - media_update from plugins/media_control_reader. Absent vars
 -- = "field unchanged" (stream partial diffs); bare trigger (no vars) =
 -- ping → full re-query (wake/unlock burst via init.lua lock.observer).
 -- ============================================================================
@@ -359,9 +359,9 @@ end
 media:subscribe("media_update", function(env)
 	if env.RESET == "1" then
 		-- full-state line from the reader: absent fields are EXPLICITLY
-		-- empty (artist-less track) — clear before applying present vars.
+		-- empty (artist-less track) - clear before applying present vars.
 		-- (The transport drops empty-valued env vars, so the reader sends
-		-- RESET=1 instead of ARTIST= etc. — see plugins/media_control_reader)
+		-- RESET=1 instead of ARTIST= etc. - see plugins/media_control_reader)
 		cache.title = ""
 		cache.artist = ""
 		cache.bundle = ""
@@ -383,7 +383,7 @@ media:subscribe("media_update", function(env)
 		cache.bundle = env.BUNDLE
 	end
 	-- playing with no known title = anomalous partial state (e.g.
-	-- resume-from-nothing diff) — resolve with a full re-query rather
+	-- resume-from-nothing diff) - resolve with a full re-query rather
 	-- than hiding while audio plays
 	if cache.playing and cache.title == "" then
 		refresh()
@@ -398,7 +398,7 @@ end)
 
 -- Wake/lock resync: system_woke (real wake via the HS bridge, or the
 -- unlock burst from init.lua's lock.observer) re-queries media state.
--- Separate always-on observer — the media items themselves are
+-- Separate always-on observer - the media items themselves are
 -- updates-gated in monitor mode (fact 17: mode.relay / aerospace.observer
 -- idiom; refresh itself gated by `polling` so hidden mode runs no execs).
 local sync = sbar.add("item", "media.sync", { drawing = "off", updates = true })
@@ -409,7 +409,7 @@ sync:subscribe("system_woke", function()
 end)
 
 -- Click anywhere on the cluster = play/pause (NAME-guarded: the click
--- broadcast reaches BOTH subscriptions — each must filter for itself).
+-- broadcast reaches BOTH subscriptions - each must filter for itself).
 -- The stream reader pushes the state change; the 0.3s re-read is
 -- belt-and-suspenders for reader death.
 local function toggle()
@@ -435,7 +435,7 @@ media_title:subscribe("mouse.clicked", popup.guard(media_title.name, click_dispa
 media_artist:subscribe("mouse.clicked", popup.guard(media_artist.name, click_dispatch))
 
 -- ============================================================================
--- Mode gating (Lua poll chain gated by `polling` — fact 16). Drawing is
+-- Mode gating (Lua poll chain gated by `polling` - fact 16). Drawing is
 -- restored to cache.drawing on re-show: hidden-by-mode does not count as
 -- idle, playback continues while the pill is away.
 -- ============================================================================

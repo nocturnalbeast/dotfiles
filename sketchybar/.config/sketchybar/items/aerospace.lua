@@ -1,31 +1,31 @@
--- items/aerospace.lua — AeroSpace TRIO (compact three-segment design,
+-- items/aerospace.lua - AeroSpace TRIO (compact three-segment design,
 -- replaces the full workspace strip + items/front_app.lua):
 --
 --   [mode_switch] [aerospace.monitor] [aerospace.ws] [aerospace.window]
 --
---   * aerospace.monitor — display-layout pill: mirrored 󰍡 / extended
+--   * aerospace.monitor - display-layout pill: mirrored 󰍡 / extended
 --     (focused monitor's type: 󰌢 Built-in, 󰍹 external) / hidden when
 --     single-monitor. Click → monitor-focus menu. Hover (reveal) →
 --     layout summary.
---   * aerospace.ws — ACTIVE workspace pill: ws-type glyph + name. Click →
+--   * aerospace.ws - ACTIVE workspace pill: ws-type glyph + name. Click →
 --     workspace picker menu (declared toml order, current accent).
 --     Hover (append) → app names in the active ws.
---   * aerospace.window — ACTIVE window pill: app ligature + title
---     (Lua-side trunc at 50 — max_chars is add-time-only). Hidden when no
+--   * aerospace.window - ACTIVE window pill: app ligature + title
+--     (Lua-side trunc at 50 - max_chars is add-time-only). Hidden when no
 --     focused window. Hover (replace) →
 --     full untruncated title.
 --
 -- ADAPTER EXTRACTION (2026-09-04, Phase 1): this file is now the
--- WM-AGNOSTIC WIDGET — it renders state and owns nothing AeroSpace-specific.
+-- WM-AGNOSTIC WIDGET - it renders state and owns nothing AeroSpace-specific.
 -- The data plane (commands, sweep, parsing, topology, actions, observer,
 -- timers) lives in helpers/wm_aerospace.lua behind the helpers/wm adapter
 -- registry; Rift/OmniWM adapters slot in behind the same interface
--- (Phase 3/4). Rendering is driven by the adapter's on_sweep callback —
+-- (Phase 3/4). Rendering is driven by the adapter's on_sweep callback -
 -- driven by the supervisor's detect loop (wm.supervise at file end).
 --
 -- Invariants preserved from the strip era:
---   * FULL RE-QUERY per event — never trust event payloads (adapter-owned)
---   * change-detection caches here — no label churn
+--   * FULL RE-QUERY per event - never trust event payloads (adapter-owned)
+--   * change-detection caches here - no label churn
 local colors = require("colors")
 local settings = require("settings")
 local icons = require("helpers.icons")
@@ -37,7 +37,7 @@ require("helpers.wm_aerospace") -- registers the AeroSpace adapter (side effect)
 require("helpers.wm_rift") -- registers the Rift adapter
 require("helpers.wm_omniwm") -- registers the OmniWM adapter
 
--- The ACTIVE adapter (resolved per call — the supervisor may re-bind on
+-- The ACTIVE adapter (resolved per call - the supervisor may re-bind on
 -- WM hot-switch; never cache the returned adapter)
 local function AD()
 	return wm.active_adapter()
@@ -46,7 +46,7 @@ end
 local SB_BIN = "/opt/homebrew/bin/sketchybar"
 
 -- Menu pick round-trip events (click_script → custom event → subscriber;
--- click_script is daemon-side hit-tested, so no fact-14 broadcast hazard —
+-- click_script is daemon-side hit-tested, so no fact-14 broadcast hazard -
 -- the mode_switch menu idiom, see AGENT.md "mode_switch menu contract").
 -- Registered BEFORE the items that subscribe to them.
 sbar.add("event", "ws_menu_pick")
@@ -75,7 +75,7 @@ local ICON_LAPTOP = "󰌢"
 local ICON_DISPLAY = "󰍹"
 
 -- ============================================================================
--- ITEM CREATION — add order = render order: monitor, ws, window
+-- ITEM CREATION - add order = render order: monitor, ws, window
 -- (left side renders in ADD order; fact 2)
 -- ============================================================================
 
@@ -133,9 +133,9 @@ local window_item = sbar.add("item", "aerospace.window", {
 	drawing = "off", -- no focused window yet
 	icon = {
 		-- inherits the sbar.default icon font (settings.font.icons =
-		-- VictorMono NF) — the single icon font; app glyphs come from
+		-- VictorMono NF) - the single icon font; app glyphs come from
 		-- helpers/icons.lua's generated NF map (NF glyph ink sits ~1.7pt
-		-- low in its em-box — +1 nudge, like every other pill icon)
+		-- low in its em-box - +1 nudge, like every other pill icon)
 		string = "󰖯",
 		padding_left = 8,
 		padding_right = 6,
@@ -147,19 +147,19 @@ local window_item = sbar.add("item", "aerospace.window", {
 		color = colors.fg,
 		padding_right = 8,
 		-- belt only (never binds): real truncation is Lua-side
-		-- trunc_title() — max_chars is add-time-only
+		-- trunc_title() - max_chars is add-time-only
 		max_chars = 64,
 	},
 	background = pill.background(),
 	padding_left = settings.paddings,
-	-- 6: the outer spacer before the app-menu strip's pill bg —
+	-- 6: the outer spacer before the app-menu strip's pill bg -
 	-- PIXEL-calibrated (visual gap = this + 2 bg-inset slop = the
 	-- standard 8pt; rect-level 8 measured 10 visually)
 	padding_right = 6,
 })
 
 -- ============================================================================
--- HOVER (payloads are cache-only — see AGENT.md hover convention)
+-- HOVER (payloads are cache-only - see AGENT.md hover convention)
 -- ============================================================================
 
 local function ws_apps_payload()
@@ -219,7 +219,7 @@ local hov_monitor = hover.new(monitor_item, monitor_summary, {
 })
 
 -- window pill: REPLACE mode (payload = full title; resting string is the
--- Lua-truncated title — label.max_chars is add-time-only and no-ops at
+-- Lua-truncated title - label.max_chars is add-time-only and no-ops at
 -- runtime, so the truncation lives in trunc_title()). No popup → hover
 -- owns all three subscriptions (vol/memory pattern).
 local function trunc_title(t)
@@ -239,7 +239,7 @@ end, {
 })
 
 -- ============================================================================
--- RENDER (change-detection caches — no label churn)
+-- RENDER (change-detection caches - no label churn)
 -- ============================================================================
 
 local function render_ws()
@@ -316,7 +316,7 @@ end
 local ws_ctl = popup.new(ws_item)
 
 local function build_ws_menu(b)
-	-- hot-swap race: builds run in popup's ASYNC stale-sweep callback —
+	-- hot-swap race: builds run in popup's ASYNC stale-sweep callback -
 	-- the adapter may have died between click and build
 	local a = AD()
 	if not a then
@@ -325,7 +325,7 @@ local function build_ws_menu(b)
 	local st = a.get_state()
 	if #st.workspace_list == 0 then
 		-- refresh_workspace_list is an OPTIONAL adapter method (only
-		-- wm_aerospace implements it) — a blind nil-call crashed the
+		-- wm_aerospace implements it) - a blind nil-call crashed the
 		-- handler under rift/omniwm
 		if a.refresh_workspace_list then
 			-- bar loaded while the WM was down → the load-time list is
@@ -358,7 +358,7 @@ local function build_ws_menu(b)
 		local is_current = (ws == st.focused.ws)
 		-- row icon = the workspace's own glyph (WS_GLYPHS, same map the
 		-- ws pill renders); active ws is highlighted by accent color on
-		-- icon+label — NO check mark (the highlight is enough, user
+		-- icon+label - NO check mark (the highlight is enough, user
 		-- request 2026-09-04)
 		b.action(WS_GLYPHS[ws] or WS_GLYPH_DEFAULT, ws,
 			SB_BIN .. " --trigger ws_menu_pick TARGET=" .. ws,
@@ -370,7 +370,7 @@ end
 ws_item:subscribe("ws_menu_pick", function(env)
 	ws_ctl:close()
 	-- custom triggers can fire while the trio is hidden (drawing=off)
-	-- or mid hot-swap — never dereference a nil adapter
+	-- or mid hot-swap - never dereference a nil adapter
 	local a = AD()
 	if not a then
 		return
@@ -415,13 +415,13 @@ end
 monitor_item:subscribe("monitor_menu_pick", function(env)
 	mon_ctl:close()
 	-- custom triggers can fire while the trio is hidden (drawing=off)
-	-- or mid hot-swap — never dereference a nil adapter
+	-- or mid hot-swap - never dereference a nil adapter
 	local a = AD()
 	if not a then
 		return
 	end
 	-- monitor ids are OPAQUE STRINGS (aerospace: numeric strings; rift:
-	-- display UUIDs; omniwm: its own) — compare as strings, pass
+	-- display UUIDs; omniwm: its own) - compare as strings, pass
 	-- through verbatim; NEVER tonumber (Rift UUIDs nil out)
 	local current = a.get_state().focused.monitor_id
 	if env.TARGET and env.TARGET ~= "" and (current == "" or env.TARGET ~= current) then
@@ -430,11 +430,11 @@ monitor_item:subscribe("monitor_menu_pick", function(env)
 end)
 
 -- ============================================================================
--- MOUSE (popup.guard on every handler — facts 13/14)
+-- MOUSE (popup.guard on every handler - facts 13/14)
 -- ============================================================================
 
 ws_item:subscribe("mouse.clicked", popup.guard(ws_item.name, function()
-	local a = AD() -- hot-swap race — a click can land on an unbound trio
+	local a = AD() -- hot-swap race - a click can land on an unbound trio
 	if not a then
 		return
 	end
@@ -442,7 +442,7 @@ ws_item:subscribe("mouse.clicked", popup.guard(ws_item.name, function()
 end))
 
 monitor_item:subscribe("mouse.clicked", popup.guard(monitor_item.name, function()
-	local a = AD() -- hot-swap race — a click can land on an unbound trio
+	local a = AD() -- hot-swap race - a click can land on an unbound trio
 	if not a then
 		return
 	end
@@ -450,7 +450,7 @@ monitor_item:subscribe("mouse.clicked", popup.guard(monitor_item.name, function(
 end))
 
 -- MERGED exited.global handlers (one subscription: popup close + hover
--- collapse — the established no_global_exit pattern)
+-- collapse - the established no_global_exit pattern)
 ws_item:subscribe("mouse.exited.global", popup.guard(ws_item.name, function()
 	ws_ctl:close()
 	hov_ws.collapse()
@@ -461,28 +461,28 @@ monitor_item:subscribe("mouse.exited.global", popup.guard(monitor_item.name, fun
 end))
 
 -- ============================================================================
--- Bar-hover app-menu strip — hovering ANYWHERE over the bar reveals the
+-- Bar-hover app-menu strip - hovering ANYWHERE over the bar reveals the
 -- front app's macOS menu-bar titles as an inline text strip immediately
 -- AFTER the window pill (left side grows rightward into the gap before
 -- the right wing); leaving the bar collapses it.
 --
 -- Architecture:
---   * app_menu.1 .. app_menu.N (N=12) — position LEFT, created AFTER
+--   * app_menu.1 .. app_menu.N (N=12) - position LEFT, created AFTER
 --     aerospace.window so they render after it (left side = ADD order,
 --     fact 2). Born label width = 0 + icon off → zero footprint at rest
 --     (the reveal-mode pattern). Each chip's click_script clicks the REAL
---     macOS menu (`menus -s N` — plugins/menus, Accessibility-granted)
+--     macOS menu (`menus -s N` - plugins/menus, Accessibility-granted)
 --     then fires `app_menu_hover_off` to collapse the strip.
---   * bar.hover.observer — hidden always-on item (aerospace.observer
+--   * bar.hover.observer - hidden always-on item (aerospace.observer
 --     idiom) subscribing the GLOBAL mouse events:
 --       mouse.entered.global → EXPAND  (cached titles → labels, dynamic)
 --       mouse.exited.global  → COLLAPSE (widths back to 0)
 --       app_menu_hover_off   → COLLAPSE (post-selection)
 --       front_app_switched   → async titles refresh (`menus -l`)
---     NO popup.guard on these handlers — DELIBERATE (fact-14 corollary,
+--     NO popup.guard on these handlers - DELIBERATE (fact-14 corollary,
 --     source-verified in bar_manager.c v2.24.0): the .global variants are
 --     broadcast via bar_manager_custom_events_trigger to EVERY subscribed
---     item on bar-enter/bar-leave transitions — fanning out IS the
+--     item on bar-enter/bar-leave transitions - fanning out IS the
 --     feature; a NAME guard would break it. Forced synthetic triggers
 --     take the same fan-out path, so CLI validation behaves identically.
 --   * Titles cache: fetched once at module load + refreshed async on
@@ -521,10 +521,10 @@ for i = 1, MENU_CHIPS do
 			string = "",
 			width = 0, -- zero footprint at rest; expand sets dynamic
 			-- SAME font as every other pill label (settings.font.text,
-			-- 14pt) — the 9pt mini-style is retired per user preference
+			-- 14pt) - the 9pt mini-style is retired per user preference
 			font = settings.font.text,
 			color = colors.fg,
-			-- (label pl is inert on width-0 chips — the INSET comes from
+			-- (label pl is inert on width-0 chips - the INSET comes from
 			-- the item pl below; kept 0 here)
 			padding_left = 0,
 			padding_right = 8, -- gap between titles when expanded (= label pr convention)
@@ -541,7 +541,7 @@ for i = 1, MENU_CHIPS do
 end
 
 -- The strip's pill: an IN-BAR bracket around the chips (brackets are
--- bar-layer groups — correct here, unlike popup windows which draw their
+-- bar-layer groups - correct here, unlike popup windows which draw their
 -- own background). GATED: drawing off while collapsed so the width-0
 -- chips never draw an empty pill; on during expansion only.
 local menu_bracket = sbar.add("bracket", "app_menu.bracket", (function()
@@ -556,7 +556,7 @@ end)(), {
 	padding_left = 0,
 	padding_right = 0,
 	-- NO bracket paddings: bracket padding EXTENDS the bg beyond the
-	-- member cells (cancels island gaps / doubles content insets —
+	-- member cells (cancels island gaps / doubles content insets -
 	-- measured). Left gap + title inset come from chip 1's item/label
 	-- paddings; right inset from every chip's label pr=8.
 })
@@ -594,7 +594,7 @@ bar_hover:subscribe("front_app_switched", refresh_menu_titles)
 refresh_menu_titles()
 
 -- ============================================================================
--- SUPERVISE — hand the trio to the WM supervisor: it detects which
+-- SUPERVISE - hand the trio to the WM supervisor: it detects which
 -- supported WM is running (active-first probe, then prefer order every
 -- 30s), binds/unbinds the matching adapter, and hides the trio entirely
 -- when none runs (user choice: degraded states live in logs, not in bar
@@ -604,7 +604,7 @@ local function set_trio_visible(show)
 	ws_item:set({ drawing = show and "on" or "off" })
 	if not show then
 		-- window/monitor manage their own drawing on the next bind's
-		-- render — force them off while hidden (no sweep will run)
+		-- render - force them off while hidden (no sweep will run)
 		window_item:set({ drawing = "off" })
 		monitor_item:set({ drawing = "off" })
 	end

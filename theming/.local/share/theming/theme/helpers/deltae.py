@@ -76,7 +76,7 @@ def _delta_e2000_lab(
     kC: float = 1.0,
     kH: float = 1.0,
 ) -> float:
-    """CIEDE2000 between two CIELAB tuples (Sharma 2005 eqs. 1–26)."""
+    """CIEDE2000 between two CIELAB tuples (Sharma 2005 eqs. 1-26)."""
     L1, a1, b1 = lab1
     L2, a2, b2 = lab2
 
@@ -143,7 +143,7 @@ def scheme_distance(query: dict[str, str], candidate: dict[str, str]) -> float:
     """Weighted mean ΔE00 between two base00-base0F slot dicts.
 
     Slots iterate base00→base0F (SLOT_WEIGHTS order). A query slot whose
-    normalized hex equals an earlier query slot's is DROPPED — its weight
+    normalized hex equals an earlier query slot's is DROPPED - its weight
     leaves the denominator (one comparison per distinct query color).
     Slots missing from either dict are skipped and the mean renormalizes
     over the remaining Σw. With nothing comparable, returns +inf.

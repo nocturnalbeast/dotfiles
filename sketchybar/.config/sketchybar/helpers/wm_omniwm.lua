@@ -1,18 +1,18 @@
--- helpers/wm_omniwm.lua — OmniWM adapter (helpers/wm registry, Phase 4).
+-- helpers/wm_omniwm.lua - OmniWM adapter (helpers/wm registry, Phase 4).
 --
 -- Event-driven refresh via plugins/omniwm_bridge (registers omniwmctl watch
 -- processes that fire omniwm_bridge_evt sketchybar triggers; idempotent)
 -- + a 120s safety refresh. Every trigger re-QUERIES full state (never-trust-
 -- payloads invariant).
 --
--- Display topology changes ONLY on plug/unplug — it is cached (start +
+-- Display topology changes ONLY on plug/unplug - it is cached (start +
 -- hs_screen ONLY, never in the sweep; cf. wm_aerospace) so the sweep stays
 -- at 2 sequential queries per event.
 --
 -- ⚠ DATA PLANE (2026-09-14): `omniwmctl query … --format json` returns an
--- ENVELOPED payload (.result.payload.*) — and sbar.exec AUTO-DECODES it
+-- ENVELOPED payload (.result.payload.*) - and sbar.exec AUTO-DECODES it
 -- into a Lua table (fact 4). The v1 adapter ran the JSON through jq→TSV
--- and tostring()'d the decoded table — the parser got "table: 0x…" and
+-- and tostring()'d the decoded table - the parser got "table: 0x…" and
 -- the trio rendered permanently empty. This adapter consumes the decoded
 -- tables DIRECTLY (no jq, no TSV). Raw JSON never round-trips as a
 -- string at all.
@@ -50,7 +50,7 @@ local on_sweep_cb = nil
 local bound = false
 
 -- JSON query: sbar.exec auto-decodes the enveloped JSON into a Lua table
--- (fact 4) — the raw JSON never round-trips as a string, and the decoder
+-- (fact 4) - the raw JSON never round-trips as a string, and the decoder
 -- handles OmniWM's nested shapes fine (unlike Rift's, which segfaulted).
 local function query_json(subcmd, k)
 	sbar.exec(OW .. " " .. subcmd .. " 2>/dev/null", function(out)
@@ -71,7 +71,7 @@ local function refresh_all()
 		-- parse into fresh locals; commit ONLY on success (rows > 0) so a
 		-- transient query failure keeps the last-known-good state instead
 		-- of blanking the trio until the next event. apps_by_ws resets per
-		-- commit (fresh table) — stale ws entries drop on success only.
+		-- commit (fresh table) - stale ws entries drop on success only.
 		local new_ws_list, new_ws_number, new_apps_by_ws = {}, {}, {}
 		local new_focused_ws = ""
 		for _, w in ipairs(rows) do
@@ -94,7 +94,7 @@ local function refresh_all()
 				new_ws_list, new_ws_number, new_focused_ws, new_apps_by_ws
 		end
 		-- 2. focused window (the isFocused row of query windows; written
-		-- only when a focused row is found — failures keep last-known-good)
+		-- only when a focused row is found - failures keep last-known-good)
 		query_json("query windows --format json", function(env2)
 			if refresh_generation ~= gen then
 				return
@@ -134,7 +134,7 @@ local function schedule_refresh()
 end
 
 -- ============================================================================
--- TOPOLOGY (start + hs_screen ONLY — display layout changes on plug/unplug,
+-- TOPOLOGY (start + hs_screen ONLY - display layout changes on plug/unplug,
 -- never in the sweep; keeps per-event cost at 2 sequential queries)
 -- ============================================================================
 
@@ -145,7 +145,7 @@ local function refresh_topology()
 			return
 		end
 		local payload = (env.result or {}).payload or {}
-		-- displays: id | name | isCurrent — parse into fresh locals; commit
+		-- displays: id | name | isCurrent - parse into fresh locals; commit
 		-- ONLY on success (≥1 display) so a transient failure keeps the
 		-- last-known-good topology
 		local new_monitors, new_focused_mon = {}, ""
@@ -173,7 +173,7 @@ sbar.add("event", "omniwm_bridge_evt")
 local bridge_observer = sbar.add("item", "omniwm.bridge_observer", { drawing = "off", updates = true })
 bridge_observer:subscribe("omniwm_bridge_evt", schedule_refresh)
 -- hs_screen (registered by init.lua BEFORE this module loads): display
--- layout changed — refresh the topology cache + a coalesced sweep (focus
+-- layout changed - refresh the topology cache + a coalesced sweep (focus
 -- may have moved with the display, cf. wm_aerospace)
 bridge_observer:subscribe("hs_screen", function()
 	if not bound then
@@ -211,11 +211,11 @@ end
 function M.detect(cb)
 	-- ASYNC process probe (2026-09-27): sync io.popen on the
 	-- supervisor's detect TIMER is a proven hang vector (Lua 5.5.1
-	-- pclose reaping corruption; 2026-09-15/27 incidents) — the
+	-- pclose reaping corruption; 2026-09-15/27 incidents) - the
 	-- contract is now async-boolean-callback (helpers/wm header). Safe
 	-- where the 2026-09-04 nil-cb crash came from: that callback was
-	-- NOT always invoked — this one always is. pgrep stdout is a plain
-	-- string in sbar.exec (non-JSON) — empty/nil/false = stopped.
+	-- NOT always invoked - this one always is. pgrep stdout is a plain
+	-- string in sbar.exec (non-JSON) - empty/nil/false = stopped.
 	sbar.exec("/usr/bin/pgrep -x OmniWM 2>/dev/null", function(out)
 		cb(out ~= nil and out ~= "" and out ~= false)
 	end)
@@ -225,7 +225,7 @@ function M.start(cb)
 	on_sweep_cb = cb
 	bound = true
 	refresh_generation = refresh_generation + 1
-	-- topology cache: fetched once here (hs_screen refreshes it later) —
+	-- topology cache: fetched once here (hs_screen refreshes it later) -
 	-- the sweep never queries displays
 	refresh_topology()
 	sbar.exec("/bin/sh /Users/betranttitus/.config/sketchybar/plugins/omniwm_bridge", function()

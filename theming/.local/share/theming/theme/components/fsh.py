@@ -1,6 +1,6 @@
 """fsh member: palette-driven zsh theme.ini (upstream base16.ini
 crosswalk, hex truecolor); activation is the zsh plughook's job,
-never apply — a subshell cannot reach running shells."""
+never apply - a subshell cannot reach running shells."""
 
 from __future__ import annotations
 

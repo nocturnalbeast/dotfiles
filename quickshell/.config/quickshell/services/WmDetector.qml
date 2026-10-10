@@ -32,7 +32,7 @@ Singleton {
     // Convenience: true only when running bspwm specifically
     readonly property bool isBspwm: isX11 && wmName === "bspwm"
 
-    // Unified workspace empty detection — delegated to WmBackend facade
+    // Unified workspace empty detection - delegated to WmBackend facade
     readonly property bool isWorkspaceEmpty: WmBackend.isWorkspaceEmpty
 
     Process {

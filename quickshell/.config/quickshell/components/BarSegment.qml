@@ -16,7 +16,7 @@ Item {
     property bool reversed: false
     property bool interactive: true
 
-    // Text swap animation — driven by parent
+    // Text swap animation - driven by parent
     property string displayHeader: headerText
     property string displayContent: contentText
     property real swapOpacity: 1.0
@@ -31,13 +31,13 @@ Item {
     implicitHeight: Typography.barHeight
 
     // HoverHandler for reliable hover detection (handles focus loss
-    // when FocusGrab backdrop intercepts input — MouseArea can get stuck)
+    // when FocusGrab backdrop intercepts input - MouseArea can get stuck)
     HoverHandler {
         id: hoverHandler
     }
 
-    // Normal:   [header][content] — header anchored left, content right of it
-    // Reversed: [content][header] — content anchored left, header right of it
+    // Normal:   [header][content] - header anchored left, content right of it
+    // Reversed: [content][header] - content anchored left, header right of it
     Rectangle {
         id: headerRect
 

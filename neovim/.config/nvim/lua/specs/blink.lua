@@ -1,4 +1,4 @@
--- blink.cmp — completion engine (v1, lua fuzzy implementation: no build step).
+-- blink.cmp - completion engine (v1, lua fuzzy implementation: no build step).
 --
 -- Snippets use blink's native vim.snippet engine (preset = "default");
 -- friendly-snippets (on the runtimepath via config/pack.lua) is loaded

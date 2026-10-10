@@ -119,7 +119,7 @@ Singleton {
     property color popupContentBg: Qt.rgba(0.980, 0.980, 0.980, 0.04)
     property color popupContentFg: Qt.rgba(0.980, 0.980, 0.980, 0.90)
 
-    // Buttons — subtle light tint
+    // Buttons - subtle light tint
     property color popupButtonBg: Qt.rgba(0.980, 0.980, 0.980, 0.06)
     property color popupButtonHoverBg: Qt.rgba(0.980, 0.980, 0.980, 0.10)
     property color popupButtonFg: Qt.rgba(0.980, 0.980, 0.980, 0.90)
@@ -128,10 +128,10 @@ Singleton {
     property color popupBarTrack: Qt.rgba(0.980, 0.980, 0.980, 0.12)
     property color popupBarFill: Qt.rgba(0.980, 0.980, 0.980, 0.70)
 
-    // Borders — subtle outline
+    // Borders - subtle outline
     property color popupBorder: Qt.rgba(0.451, 0.451, 0.451, 0.50)
 
-    // Separator — very subtle
+    // Separator - very subtle
     property color popupSeparator: Qt.rgba(0.451, 0.451, 0.451, 0.20)
 
     // Muted / secondary text
@@ -140,7 +140,7 @@ Singleton {
     // Hover bg for list items
     property color popupHoverBg: Qt.rgba(0.980, 0.980, 0.980, 0.08)
 
-    // Accent border (BarPopup shell ring — breathing animation)
+    // Accent border (BarPopup shell ring - breathing animation)
     property color popupBorderAccent: Qt.rgba(0.980, 0.980, 0.980, 0.15)
 
     // ═══════════════════════════════════════════
@@ -160,7 +160,7 @@ Singleton {
     // ═══════════════════════════════════════════
     function deriveTokens() {
         if (root.mode === "dark") {
-            // Widget tokens — dark translucent surfaces from M3 palette
+            // Widget tokens - dark translucent surfaces from M3 palette
             root.widgetHeaderBg = withAlpha(root.surfaceContainerHigh, 0.75);
             root.widgetHeaderFg = withAlpha(root.on_surface, 0.85);
             root.widgetContentBg = withAlpha(root.surfaceContainer, 0.62);
@@ -172,7 +172,7 @@ Singleton {
             root.widgetBarTrack = withAlpha(root.on_surface, 0.3);
             root.widgetBarFill = withAlpha(root.on_surface, 1.0);
 
-            // Popup tokens — dark surfaces, light text (matching bar theme)
+            // Popup tokens - dark surfaces, light text (matching bar theme)
             root.popupBg = withAlpha(root.surfaceContainerHigh, 0.85);
             root.popupHeaderBg = withAlpha(root.surfaceContainerHighest, 0.90);
             root.popupHeaderFg = withAlpha(root.on_surface, 0.95);
@@ -189,7 +189,7 @@ Singleton {
             root.popupHoverBg = withAlpha(root.on_surface, 0.08);
             root.popupBorderAccent = withAlpha(root.on_surface, 0.15);
 
-            // Bar blur tint — dark surface overlay
+            // Bar blur tint - dark surface overlay
             root.barBlurTint = root.surface;
             root.barBlurTintOpacity = 0.3;
 
@@ -197,11 +197,11 @@ Singleton {
             root.success = "#22c55e";
             root.warning = "#f59e0b";
 
-            // Desktop clock — light text on dark wallpaper
+            // Desktop clock - light text on dark wallpaper
             root.desktopClockText = withAlpha(root.on_surface, 0.85);
             root.desktopClockSubtext = withAlpha(root.on_surface, 0.55);
         } else {
-            // Widget tokens — light translucent surfaces from M3 palette
+            // Widget tokens - light translucent surfaces from M3 palette
             root.widgetHeaderBg = withAlpha(root.surfaceContainerHigh, 0.80);
             root.widgetHeaderFg = withAlpha(root.on_surface, 0.85);
             root.widgetContentBg = withAlpha(root.surfaceContainer, 0.65);
@@ -213,7 +213,7 @@ Singleton {
             root.widgetBarTrack = withAlpha(root.on_surface, 0.12);
             root.widgetBarFill = withAlpha(root.on_surface, 0.80);
 
-            // Popup tokens — light surfaces, dark text
+            // Popup tokens - light surfaces, dark text
             root.popupBg = withAlpha(root.surface, 0.80);
             root.popupHeaderBg = withAlpha(root.surfaceContainerHighest, 0.92);
             root.popupHeaderFg = withAlpha(root.on_surface, 0.92);
@@ -230,7 +230,7 @@ Singleton {
             root.popupHoverBg = withAlpha(root.on_surface, 0.08);
             root.popupBorderAccent = withAlpha(root.on_surface, 0.15);
 
-            // Bar blur tint — light surface overlay
+            // Bar blur tint - light surface overlay
             root.barBlurTint = root.surface;
             root.barBlurTintOpacity = 0.4;
 
@@ -238,7 +238,7 @@ Singleton {
             root.success = "#16a34a";
             root.warning = "#d97706";
 
-            // Desktop clock — dark text on light wallpaper
+            // Desktop clock - dark text on light wallpaper
             root.desktopClockText = withAlpha(root.on_surface, 0.85);
             root.desktopClockSubtext = withAlpha(root.on_surface, 0.55);
         }
@@ -251,7 +251,7 @@ Singleton {
     function applyFallbackDark() {
         root.mode = "dark";
 
-        // Base M3 tokens — shadcn neutral dark palette
+        // Base M3 tokens - shadcn neutral dark palette
         root.primary = "#e5e5e5";
         root.on_primary = "#171717";
         root.primaryContainer = "#262626";
@@ -290,7 +290,7 @@ Singleton {
     function applyFallbackLight() {
         root.mode = "light";
 
-        // Base M3 tokens — shadcn neutral light palette
+        // Base M3 tokens - shadcn neutral light palette
         root.primary = "#171717";
         root.on_primary = "#fafafa";
         root.primaryContainer = "#e5e5e5";
@@ -420,7 +420,7 @@ Singleton {
     // INITIALIZATION
     // ═══════════════════════════════════════════
     Component.onCompleted: {
-        // Apply fallback on startup — loadColors() will override if matugen JSON exists
+        // Apply fallback on startup - loadColors() will override if matugen JSON exists
         if (root.mode === "dark") {
             root.applyFallbackDark();
         } else {

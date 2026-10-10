@@ -1,4 +1,4 @@
--- items/tray.lua — Wi-Fi pill: ONE visual pill, stacked bandwidth chips.
+-- items/tray.lua - Wi-Fi pill: ONE visual pill, stacked bandwidth chips.
 --
 -- Layout (right side, visual L→R inside ONE pill drawn by wifi.bracket):
 --   [ ↑ up  ]  stacked 10pt chips (y_offset ±4, no own background)
@@ -7,7 +7,7 @@
 --
 -- ONE PILL, not two: the old look of "a pill on top of a pill" was the
 -- state item AND the bracket both drawing pill backgrounds. Now ONLY the
--- bracket draws — the chips and the state item have background off.
+-- bracket draws - the chips and the state item have background off.
 --
 --   head:  SSID chain: hs_wifi cache → ipconfig awk (30s tick, only while
 --          HS cache empty) → IP (fact-8 degradation).
@@ -18,9 +18,9 @@
 --          network_load bridge's 2s events, pretty-formatted.
 --   hover: append "IP <addr> · <txrate> Mbps" on the state
 --          item (helpers/hover). IP is CACHED from the 30s ipconfig tick;
---          hover never execs. The 2s chip ticks write CHIP labels only —
+--          hover never execs. The 2s chip ticks write CHIP labels only -
 --          they can't touch the hovered head label.
---   click: detail popup (Hostname/Router/RSSI rows — copy-on-click;
+--   click: detail popup (Hostname/Router/RSSI rows - copy-on-click;
 --          click-to-copy) anchored on the state item.
 --
 -- Bandwidth: the compiled `network_load` C bridge (plugins/) pushes
@@ -33,7 +33,7 @@
 -- Hammerspoon bridge: `hs_wifi` events trigger instant refreshes and
 -- cache RSSI/TXRATE/SSID (see AGENT.md "Hammerspoon event bridge").
 -- SSID="" (Location-denied) just exercises the documented fallback chain
--- — the bar never pokes the Location dialog (fact 8).
+-- - the bar never pokes the Location dialog (fact 8).
 --
 -- WHY NOT AN ALIAS: native menu bar is hidden (`_HIHideMenuBar=1`) so
 -- SystemUIServer exposes nothing to mirror.
@@ -52,17 +52,17 @@ local BARS_1 = "󰤟" -- below −75
 local ICON_OFF = "󰤭"
 local ICON_VPN = "󰌾"
 
-local CHIP_UP_ICON = "󰜷" -- md-arrow_up_bold (U+F0737) — real arrows (the
-local CHIP_DOWN_ICON = "󰜮" -- md-arrow_down_bold (U+F072E) — old codepoints were md-twitch/md-order_numeric_ascending!)
+local CHIP_UP_ICON = "󰜷" -- md-arrow_up_bold (U+F0737) - real arrows (the
+local CHIP_DOWN_ICON = "󰜮" -- md-arrow_down_bold (U+F072E) - old codepoints were md-twitch/md-order_numeric_ascending!)
 
 -- ============================================================================
--- Bandwidth bridge spawn (unchanged — see header)
+-- Bandwidth bridge spawn (unchanged - see header)
 -- ============================================================================
 sbar.exec("killall network_load >/dev/null 2>&1; nohup " .. CONFIG_DIR
 	.. "/plugins/network_load en0 network_update 2.0 >/dev/null 2>&1 &")
 
 -- ============================================================================
--- Items — right side renders REVERSE of add order. Add chips FIRST, state
+-- Items - right side renders REVERSE of add order. Add chips FIRST, state
 -- item LAST → visual L→R inside the bracket pill: [↑][↓][󰤨 head]
 -- ============================================================================
 
@@ -71,11 +71,11 @@ local wifi_up = sbar.add("item", "wifi.up", {
 	width = 0,
 	icon = {
 		string = CHIP_UP_ICON,
-		-- 2: matches the head icon's left inset — consistent pill rhythm
+		-- 2: matches the head icon's left inset - consistent pill rhythm
 		-- (4 read as over-padded on the left)
 		padding_left = 2,
 		-- minimal gap to the counter (icon renders immediately left of
-		-- the dynamic-width label — [icon][text] packs and overflows
+		-- the dynamic-width label - [icon][text] packs and overflows
 		-- leftward from the shared right anchor)
 		padding_right = 1,
 		font = { family = settings.font_family.icons, size = 8.0 },
@@ -85,7 +85,7 @@ local wifi_up = sbar.add("item", "wifi.up", {
 		font = { family = settings.font_family.numbers, size = 8.0 },
 		color = colors.fg,
 		string = "",
-		-- DYNAMIC width (no align/width): [icon][text] packs tightly — the
+		-- DYNAMIC width (no align/width): [icon][text] packs tightly - the
 		-- icon sits right next to the counter. The item's right anchor
 		-- (slot x + this equal padding) keeps both counters' right edges
 		-- on the same coordinate. 7: breathing room to the pill's right
@@ -97,7 +97,7 @@ local wifi_up = sbar.add("item", "wifi.up", {
 	y_offset = 6,
 	background = { drawing = false }, -- ONE pill: the bracket draws it
 	-- RIGHT edge of the cluster (first-added renders rightmost); equal
-	-- on both chips so the stack stays put — 6 = pixel-calibrated
+	-- on both chips so the stack stays put - 6 = pixel-calibrated
 	padding_left = 0,
 	padding_right = 6,
 })
@@ -107,7 +107,7 @@ local wifi_down = sbar.add("item", "wifi.down", {
 	width = 0,
 	icon = {
 		string = CHIP_DOWN_ICON,
-		padding_left = 2, -- matches wifi.up — consistent pill rhythm
+		padding_left = 2, -- matches wifi.up - consistent pill rhythm
 		padding_right = 1, -- minimal gap to the counter (see wifi.up note)
 		font = { family = settings.font_family.icons, size = 8.0 },
 		color = colors.muted,
@@ -116,12 +116,12 @@ local wifi_down = sbar.add("item", "wifi.down", {
 		font = { family = settings.font_family.numbers, size = 8.0 },
 		color = colors.fg,
 		string = "",
-		padding_right = 7, -- equal to wifi.up — same right edge
+		padding_right = 7, -- equal to wifi.up - same right edge
 	},
 		y_offset = -6,
 		background = { drawing = false },
 		padding_left = 0,
-		padding_right = 6, -- MUST equal wifi.up — the shared right anchor
+		padding_right = 6, -- MUST equal wifi.up - the shared right anchor
 		-- (a 3pt drift here skews the whole stack; regression 2026-08-27)
 	})
 
@@ -141,7 +141,7 @@ local wifi = sbar.add("item", "wifi", {
 		string = "",
 		font = settings.font.text,
 		color = colors.fg,
-		-- RESERVED BAND for the stacked chips (DYNAMIC — see retune_band):
+		-- RESERVED BAND for the stacked chips (DYNAMIC - see retune_band):
 		-- the chips are width=0 items whose text overflows LEFTWARD from
 		-- their slots (right of this one). The add-time 64 is a safe floor;
 		-- every 2s tick re-measures the chips' rendered rects and retunes
@@ -150,7 +150,7 @@ local wifi = sbar.add("item", "wifi", {
 	},
 	background = { drawing = false }, -- the bracket is the ONE pill surface
 	-- LEFT edge of the cluster. Member item paddings are INERT for a
-	-- bracket's bg edge (measured twice) — the clock|wifi visual gap is
+	-- bracket's bg edge (measured twice) - the clock|wifi visual gap is
 	-- owned by clock.padding_right = 6 (the standalone neighbor knob,
 	-- same pattern as battery.pl on the cluster's right side)
 	padding_left = settings.paddings,
@@ -167,19 +167,19 @@ local wifi_bracket = sbar.add("bracket", "wifi.bracket", { wifi_up.name, wifi_do
 	padding_left = 0,
 	padding_right = 0,
 	-- NO bracket paddings: bracket padding EXTENDS the bg (cancels the
-	-- members' island-gap item paddings — measured). Outer gaps come
+	-- members' island-gap item paddings - measured). Outer gaps come
 	-- from the members' item paddings (head pl / chips pr = paddings)
 })
 
 -- ============================================================================
--- Caches (hover payloads are cache-only — the hover convention)
+-- Caches (hover payloads are cache-only - the hover convention)
 -- ============================================================================
 
 -- state cache: filled by refresh_state (30s tick + wifi_change/woke/hs_wifi)
 local state = { ip = "", ipconfig_ssid = "", connected = false, vpn = false }
 -- bandwidth cache: filled by network_update (2s bridge events)
 local bw = { up = "", down = "" }
--- Hammerspoon bridge cache (instant; strings — "" when HS down/denied)
+-- Hammerspoon bridge cache (instant; strings - "" when HS down/denied)
 local wifi_ev = { rssi = "", txrate = "", ssid = "" }
 
 -- ============================================================================
@@ -237,7 +237,7 @@ local function signal_icon(rssi)
 	return BARS_1
 end
 
--- "IP <addr> · <txrate> Mbps" — only pieces we actually have (dBm lives
+-- "IP <addr> · <txrate> Mbps" - only pieces we actually have (dBm lives
 -- in the popup's RSSI row, not the hover).
 -- Trailing " ·": the label's LAST glyph sits immediately before the
 -- counters in BOTH states (resting base carries its own trailing dot;
@@ -257,13 +257,13 @@ local function hover_payload()
 	end
 	local s = table.concat(parts, " · ")
 	if s == "" then
-		return "" -- no data — reveal no-ops, resting label stays dotted
+		return "" -- no data - reveal no-ops, resting label stays dotted
 	end
 	return s .. " ·"
 end
 
 -- ============================================================================
--- Render paths (ALL label writes go through render_label — see header)
+-- Render paths (ALL label writes go through render_label - see header)
 -- ============================================================================
 
 local hov -- forward-declared: render_label branches on hov.is_hovered()
@@ -283,8 +283,8 @@ local function render_icon()
 end
 
 -- Resting head label: the dot separator lives HERE (not in one render
--- path) so every consumer — resting renders, hover collapse restore,
--- hover recomposition — sees the SAME dotted base. Hover gets a narrow
+-- path) so every consumer - resting renders, hover collapse restore,
+-- hover recomposition - sees the SAME dotted base. Hover gets a narrow
 -- sep ("·" already ends the base) to avoid doubling it.
 local function resting_label()
 	local base = base_label()
@@ -305,7 +305,7 @@ end
 hov = hover.new(wifi, hover_payload, { base = resting_label, sep = " " })
 
 -- ============================================================================
--- DYNAMIC reserved band — re-measure the chips' rendered widths and size
+-- DYNAMIC reserved band - re-measure the chips' rendered widths and size
 -- the head's label padding to hug them. Closed loop, one-directional
 -- (chip text → chip rect → head padding → head layout): the chips'
 -- positions never depend on the band, so it cannot oscillate. Quantized
@@ -344,14 +344,14 @@ local function retune_band()
 		absorb(qd)
 	end
 	if widest <= 0 then
-		return -- no rects yet (pre-layout) — keep current band
+		return -- no rects yet (pre-layout) - keep current band
 	end
 	-- quantize: round UP to the next quantum so the band only grows
 	-- within a bucket, never clips mid-bucket
 	local desired = math.ceil((widest + BAND_GUTTER) / QUANTUM) * QUANTUM
 	desired = math.min(BAND_MAX, math.max(BAND_MIN, desired))
 	if math.abs(desired - band_current) < QUANTUM then
-		return -- within hysteresis — no churn
+		return -- within hysteresis - no churn
 	end
 	band_current = desired
 	wifi:set({ label = { padding_right = desired } })
@@ -361,7 +361,7 @@ end
 -- Bandwidth (2s bridge events → cache + label-only render; icon unaffected)
 -- ============================================================================
 
--- last-rendered chip state, idle flag folded in (it drives muted/fg) —
+-- last-rendered chip state, idle flag folded in (it drives muted/fg) -
 -- change detection per the cpu.lua/memory.lua last_value idiom: an idle
 -- link ticks byte-identical strings every 2s, and the old form wrote
 -- BOTH chips + scheduled a band-retune query on EVERY tick (~43k no-op
@@ -371,7 +371,7 @@ local last_up_state, last_down_state = nil, nil
 wifi:subscribe("network_update", function(env)
 	-- bridge sends lowercase keys (upload/download); normalize case.
 	-- Chips carry the speeds (idle → muted); the head label is untouched
-	-- here — a hovered head can never be collapsed by the 2s tick.
+	-- here - a hovered head can never be collapsed by the 2s tick.
 	bw.up = env.UPLOAD or env.upload or ""
 	bw.down = env.DOWNLOAD or env.download or ""
 	local up, idle_up = pretty(bw.up)
@@ -381,10 +381,10 @@ wifi:subscribe("network_update", function(env)
 	local up_changed = up_state ~= last_up_state
 	local down_changed = down_state ~= last_down_state
 	if not up_changed and not down_changed then
-		return -- byte-identical tick — no writes, no retune
+		return -- byte-identical tick - no writes, no retune
 	end
 	last_up_state, last_down_state = up_state, down_state
-	-- SAME color for both counters (fg; muted when idle) — the old
+	-- SAME color for both counters (fg; muted when idle) - the old
 	-- yellow/cyan split is retired per user preference
 	if up_changed then
 		wifi_up:set({
@@ -424,7 +424,7 @@ local function refresh_state()
 
 		-- SSID fallback: only while the HS cache is empty (HS down or
 		-- Location-denied). Fact 8: ipconfig SSID content may itself be
-		-- privacy-redacted ("<redacted>" marker) — treat that as empty so
+		-- privacy-redacted ("<redacted>" marker) - treat that as empty so
 		-- the chain degrades to the IP (show state/IP, never marker noise).
 		if state.connected and wifi_ev.ssid == "" then
 			sbar.exec(
@@ -446,7 +446,7 @@ end
 wifi:subscribe({ "wifi_change", "system_woke", "forced" }, refresh_state)
 
 -- ============================================================================
--- Hammerspoon bridge — hs_wifi (instant refresh on link/power/SSID change)
+-- Hammerspoon bridge - hs_wifi (instant refresh on link/power/SSID change)
 -- ============================================================================
 
 wifi:subscribe("hs_wifi", function(env)
@@ -457,14 +457,14 @@ wifi:subscribe("hs_wifi", function(env)
 end)
 
 -- ============================================================================
--- Detail popup rows (verbatim from the old bracket popup — now anchored on
+-- Detail popup rows (verbatim from the old bracket popup - now anchored on
 -- `wifi`; names unchanged so sbar.query/copy keep working)
 -- ============================================================================
 local function detail_row(id, title)
 	-- styled to MATCH the popup DSL's b.kv rows (helpers/popup.lua):
 	-- muted key left in a 90pt column, value right in 160pt, and the
 	-- same 12pt transparent row padding that b.add injects (without it
-	-- the text hugs the popup edge — visually off vs every other popup)
+	-- the text hugs the popup edge - visually off vs every other popup)
 	local row_icon = sbar.add("item", id .. ".t", {
 		position = "popup." .. wifi.name,
 		icon = {
@@ -485,9 +485,9 @@ local function detail_row(id, title)
 end
 
 -- SSID row REMOVED (resting pill label shows it), IP row REMOVED (hover
--- append shows it), Link-rate row REMOVED (hover append shows it) — the
+-- append shows it), Link-rate row REMOVED (hover append shows it) - the
 -- popup only carries data absent from the pill/hover (2026-09-04)
--- Popup header (muted, centered, not copyable) — created FIRST so the
+-- Popup header (muted, centered, not copyable) - created FIRST so the
 -- popup's member order renders it on top
 local row_hdr = sbar.add("item", "wifi.hdr.t", {
 	position = "popup." .. wifi.name,
@@ -505,7 +505,7 @@ local row_hdr = sbar.add("item", "wifi.hdr.t", {
 })
 local row_host = detail_row("wifi.host", "Hostname:")
 local row_router = detail_row("wifi.router", "Router:")
--- bridge enrichment row (hs_wifi cache; "—" until an event carried data)
+-- bridge enrichment row (hs_wifi cache; "-" until an event carried data)
 local row_rssi = detail_row("wifi.rssi", "RSSI:")
 
 -- RSSI quality word (dBm → human). Rough 5GHz-band buckets.
@@ -520,24 +520,24 @@ local function rssi_quality(rssi)
 	return "Weak"
 end
 
--- Fill the bridge-enrichment rows from the hs_wifi cache (no exec — the
--- values arrived with the event; muted "—" when never/not populated).
+-- Fill the bridge-enrichment rows from the hs_wifi cache (no exec - the
+-- values arrived with the event; muted "-" when never/not populated).
 local function fill_signal_rows()
 	local rssi = tonumber(wifi_ev.rssi)
 	row_rssi:set({
 		label = {
-			string = rssi and (rssi .. " dBm (" .. rssi_quality(rssi) .. ")") or "—",
+			string = rssi and (rssi .. " dBm (" .. rssi_quality(rssi) .. ")") or "-",
 			color = rssi and colors.fg or colors.muted,
 		},
 	})
 end
 
 -- Click the pill → toggle detail popup (fills rows on open).
--- NAME-guarded: mouse.clicked is a broadcast — without the filter, any
+-- NAME-guarded: mouse.clicked is a broadcast - without the filter, any
 -- click anywhere toggled this popup too.
 -- Lifecycle via helpers/popup (central pill styling): the PERMANENT rows
 -- below are registered with wifi_ctl:track (bracket-wrapped + hidden on
--- close, never removed); prefix avoids their names — the stale-row sweep
+-- close, never removed); prefix avoids their names - the stale-row sweep
 -- has nothing transient to clean in this popup.
 local wifi_ctl = popup.new(wifi, { prefix = "wifi.transient." })
 wifi:subscribe("mouse.clicked", popup.guard(wifi.name, function()
@@ -553,7 +553,7 @@ wifi:subscribe("mouse.clicked", popup.guard(wifi.name, function()
 	end)
 end))
 
--- Popup rows: click to copy. Each row's subscription is NAME-guarded —
+-- Popup rows: click to copy. Each row's subscription is NAME-guarded -
 -- the click broadcast would otherwise run copy_label with a FOREIGN
 -- env.NAME (querying that item and copying ITS label).
 local function copy_label(env)

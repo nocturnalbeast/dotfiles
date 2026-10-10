@@ -1,11 +1,11 @@
--- items/weather.lua — IP-geolocated weather (plan §4a).
+-- items/weather.lua - IP-geolocated weather (plan §4a).
 --   * geoip: ipinfo.io → ~/.cache/sketchybar/geo.json with embedded
 --     `fetched` timestamp; refreshed only when >24h old (travel-safe)
 --   * weather: open-meteo `current=temperature_2m,weather_code`
---     (LONG param names latitude=/longitude= — P1-5)
+--     (LONG param names latitude=/longitude= - P1-5)
 --   * both curls piped through jq to COMPACT output (raw open-meteo JSON
 --     ~400B flirts with the sbar.exec output-transport limit)
---   * WMO code → Nerd Font glyph; failure → dim "—", never crash
+--   * WMO code → Nerd Font glyph; failure → dim "-", never crash
 -- 15min poll.
 local colors = require("colors")
 local settings = require("settings")
@@ -18,8 +18,8 @@ local CURL = "/usr/bin/curl"
 
 -- jq portability: pick the first existing of the known absolute paths
 -- (one-time io.open probe at module load). If none exist, keep the stock
--- path — the pipe then yields empty output and the pill degrades to the
--- dim "—" exactly as before.
+-- path - the pipe then yields empty output and the pill degrades to the
+-- dim "-" exactly as before.
 local JQ = "/usr/bin/jq"
 for _, candidate in ipairs({ "/usr/bin/jq", "/opt/homebrew/bin/jq", "/usr/local/bin/jq" }) do
 	local probe = io.open(candidate, "r")
@@ -91,8 +91,8 @@ local function wmo_desc(code)
 end
 
 -- ============================================================================
--- Item (monitor-exclusive: born hidden + updates off in main mode —
--- reload-free swap via mode_changed, see AGENT.md facts 16–18)
+-- Item (monitor-exclusive: born hidden + updates off in main mode -
+-- reload-free swap via mode_changed, see AGENT.md facts 16-18)
 -- ============================================================================
 local visible = mode.get() == "monitor"
 
@@ -110,7 +110,7 @@ local weather = sbar.add("item", "weather", {
 		padding_right = 6,
 	},
 	label = {
-		string = "—",
+		string = "-",
 		font = settings.font.numbers,
 		color = colors.muted,
 		padding_right = 8,
@@ -126,7 +126,7 @@ local cache_state = { city = "", loc = "", temp = nil, code = nil }
 local function render_dim()
 	weather:set({
 		icon = { string = ICON_UNKNOWN, color = colors.muted },
-		label = { string = "—", color = colors.muted },
+		label = { string = "-", color = colors.muted },
 	})
 end
 
@@ -230,7 +230,7 @@ local function fetch_weather()
 end
 
 -- ============================================================================
--- Click popup: location details (from cache — no fetch on the click path;
+-- Click popup: location details (from cache - no fetch on the click path;
 -- helpers/popup lifecycle, rows tracked + removed on close)
 -- ============================================================================
 
@@ -247,13 +247,13 @@ end
 
 weather:subscribe("mouse.clicked", ctl:clicked(build_popup))
 
--- Hover append — condition text from the cached weather_code (no
+-- Hover append - condition text from the cached weather_code (no
 -- feels-like: the existing fetch doesn't request apparent_temperature,
--- and hover must not add execs — see AGENT.md hover convention)
+-- and hover must not add execs - see AGENT.md hover convention)
 local hov = hover.new(weather, function()
 	return cache_state.code ~= nil and wmo_desc(cache_state.code) or ""
 end, { base = function()
-	return cache_state.temp ~= nil and (cache_state.temp .. UNIT_SUFFIX) or "—"
+	return cache_state.temp ~= nil and (cache_state.temp .. UNIT_SUFFIX) or "-"
 end, no_global_exit = true })
 
 -- merged exited.global: popup close + hover collapse (hover.lua note)
@@ -263,12 +263,12 @@ weather:subscribe("mouse.exited.global", popup.guard(weather.name, function()
 end))
 
 -- Refetch on wake (pill would otherwise sit stale after a long sleep
--- until the next 15min tick) — same pattern as battery.lua. Hidden in
+-- until the next 15min tick) - same pattern as battery.lua. Hidden in
 -- main mode, updates=false stops the server-side dispatch (fact 16).
 weather:subscribe({ "system_woke", "forced" }, fetch_weather)
 
 -- ============================================================================
--- Mode gating: the 15min poll is a Lua sbar.delay chain — updates=false
+-- Mode gating: the 15min poll is a Lua sbar.delay chain - updates=false
 -- does NOT stop it (fact 16), so gate it with a `polling` flag. apply_mode
 -- flips drawing/updates, kills/restarts the chain, closes the popup.
 -- ============================================================================

@@ -1,13 +1,13 @@
--- items/battery.lua — REAL battery (MacBook Pro M4 Max, plan P0-1:
+-- items/battery.lua - REAL battery (MacBook Pro M4 Max, plan P0-1:
 -- "always rendered when present"). pmset -g batt parse; event-driven via
--- the Hammerspoon bridge `hs_battery` event (instant, richer data — see
+-- the Hammerspoon bridge `hs_battery` event (instant, richer data - see
 -- AGENT.md "Hammerspoon event bridge") + builtin power_source_change +
 -- system_woke, with a 60s fallback poll (item stays correct if
--- Hammerspoon isn't running — belt and suspenders). Hides itself if pmset
+-- Hammerspoon isn't running - belt and suspenders). Hides itself if pmset
 -- reports no battery (desktop).
 --
--- Colors: green >40, yellow 20–40, red <20; charging → accent + bolt glyph.
--- Click → detail popup (cycles / health + discharge watts — ONLY data
+-- Colors: green >40, yellow 20-40, red <20; charging → accent + bolt glyph.
+-- Click → detail popup (cycles / health + discharge watts - ONLY data
 -- absent from the pill and hover; hs_battery cache, no execs) via the
 -- shared popup DSL (b.header/b.kv/b.empty). Hover → time-estimate append
 -- (helpers/hover, cache-only).
@@ -46,10 +46,10 @@ local battery = sbar.add("item", "battery", {
 -- pmset states are semicolon-delimited: "; charging;", "; charged;",
 -- "; discharging;", "AC attached; not charging". A bare "charging"
 -- substring also hits "discharging"/"not charging", and "AC Power" is
--- present whenever plugged in (full battery included) — so match the
+-- present whenever plugged in (full battery included) - so match the
 -- delimited tokens only (verified phrasing: "96%; charging;").
 -- Time estimate ("0:20 remaining") is ABSENT when pmset reports
--- "(no estimate)" — the popup degrades gracefully (muted "No estimate").
+-- "(no estimate)" - the popup degrades gracefully (muted "No estimate").
 local function parse_batt(out)
 	local o = out or ""
 	local pct = tonumber(o:match("(%d+)%%"))
@@ -80,10 +80,10 @@ local function batt_colors(st)
 end
 
 -- Change-detection cache: only touch the bar when pct/charging actually
--- moved (no label churn — same philosophy as media.lua's string cache).
+-- moved (no label churn - same philosophy as media.lua's string cache).
 local shown = { pct = -1, charging = nil }
 
--- Hover/estimate cache — fed by BOTH update paths (pmset H:MM string and
+-- Hover/estimate cache - fed by BOTH update paths (pmset H:MM string and
 -- the hs_battery TIME_REMAINING minutes); pure reads, no execs.
 local est = { min = nil, charging = nil, watts = nil }
 
@@ -121,7 +121,7 @@ local function refresh()
 end
 
 -- ============================================================================
--- Hammerspoon bridge — hs_battery (instant, event-driven). Also caches the
+-- Hammerspoon bridge - hs_battery (instant, event-driven). Also caches the
 -- fields pmset can't provide (watts / cycles / health / time-to-min) for
 -- the popup enrichment below; nil until the first event, so a dead
 -- Hammerspoon degrades the popup to the pmset rows only.
@@ -153,10 +153,10 @@ end)
 battery:subscribe({ "power_source_change", "system_woke", "forced" }, refresh)
 
 -- ============================================================================
--- Click popup — ONLY data not already shown by the resting pill (charge %,
+-- Click popup - ONLY data not already shown by the resting pill (charge %,
 -- icon, color state) or the hover append (time estimate, AC watts):
 -- discharge wattage + cycle count + health, read from the hs_battery
--- cache (no execs — opens instantly). Reworked 2026-09-04: the old
+-- cache (no execs - opens instantly). Reworked 2026-09-04: the old
 -- charge/state/time rows duplicated the pill and hover.
 -- ============================================================================
 
@@ -169,7 +169,7 @@ local function build_popup(b)
 		b.show()
 		return
 	end
-	-- discharge draw: the hover only shows watts when on AC — this row is
+	-- discharge draw: the hover only shows watts when on AC - this row is
 	-- the battery-side complement
 	if ev.watts and ev.watts < 0 then
 		b.kv("Draw:", string.format("%.1f W", math.abs(ev.watts)))
@@ -187,7 +187,7 @@ end
 battery:subscribe("mouse.clicked", ctl:clicked(build_popup))
 
 -- ============================================================================
--- Hover append — time estimate from the est cache (helpers/hover; no
+-- Hover append - time estimate from the est cache (helpers/hover; no
 -- execs): "1h 23m to full" / "4h 08m left" / "on AC · 37.4 W" /
 -- "no estimate"
 -- ============================================================================

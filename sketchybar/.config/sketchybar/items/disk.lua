@@ -1,11 +1,11 @@
--- items/disk.lua — root filesystem usage via `df -g /`. 60s poll.
+-- items/disk.lua - root filesystem usage via `df -g /`. 60s poll.
 -- Click → popup listing mounted volumes with % used (ONE batched
 -- /bin/df -h exec, awk-compacted to stay well under the sbar.exec
--- truncation limit — fact 3; rows parsed in Lua).
+-- truncation limit - fact 3; rows parsed in Lua).
 -- Hover → "/ used/total GB" append from the same root df parse (the
 -- awk now also emits size+used; cache-only, no new execs).
 -- Monitor-exclusive: born hidden + updates off in main mode (reload-free
--- mode swap via mode_changed — AGENT.md facts 16–18).
+-- mode swap via mode_changed - AGENT.md facts 16-18).
 local colors = require("colors")
 local settings = require("settings")
 local pill = require("helpers.pill")
@@ -45,7 +45,7 @@ local abs = { used = nil, size = nil } -- hover payload cache (df -g blocks)
 
 local function refresh()
 	-- cap% + 1G-blocks total/used (the two extra fields feed the hover
-	-- append; output stays ~20B — far under budget)
+	-- append; output stays ~20B - far under budget)
 	sbar.exec("/bin/df -g / | /usr/bin/awk 'NR==2 {print $5, $2, $3; exit}'", function(out)
 		local cap, size, used = (out or ""):match("^(%d+)%%%s+(%d+)%s+(%d+)")
 		local v = tonumber(cap)
@@ -66,7 +66,7 @@ local function refresh()
 end
 
 -- ============================================================================
--- Click popup — mounted volumes with % used (cpu-popup row idiom)
+-- Click popup - mounted volumes with % used (cpu-popup row idiom)
 -- ============================================================================
 
 local ctl = popup.new(disk)
@@ -74,11 +74,11 @@ local ctl = popup.new(disk)
 -- ONE batched exec; awk emits "cap% size used mount" per row and drops
 -- pseudo filesystems (devfs, map *) and throwaway system volumes
 -- (VM/Preboot/Update/xarts/iSCPreboot/Hardware) so the transported
--- output stays tiny (~100B live, capped at 8 rows ≈ 280B worst case —
+-- output stays tiny (~100B live, capped at 8 rows ≈ 280B worst case -
 -- fact 3 truncation). Every stage's stderr is silenced so the head cap
 -- can never leak broken-pipe noise. NOTE: this macOS df has 10 columns;
 -- mount is $NF (volume names containing spaces truncate at the first
--- space — cosmetic only).
+-- space - cosmetic only).
 local DF_CMD = "/bin/df -h 2>/dev/null | /usr/bin/tail -n +2 2>/dev/null | /usr/bin/awk '"
 	.. [[ $1 == "devfs" { next } ]]
 	.. [[ $1 ~ /^map/ { next } ]]
@@ -96,7 +96,7 @@ local function build_popup(b)
 			end
 		end
 		if #vols == 0 then
-			return -- nothing parsed — never open an empty popup
+			return -- nothing parsed - never open an empty popup
 		end
 		b.header("Volumes")
 		for i, vol in ipairs(vols) do
@@ -127,7 +127,7 @@ disk:subscribe("mouse.exited.global", popup.guard(disk.name, function()
 end))
 
 -- ============================================================================
--- Mode gating (Lua poll chain gated by `polling` — fact 16)
+-- Mode gating (Lua poll chain gated by `polling` - fact 16)
 -- ============================================================================
 
 local polling = false

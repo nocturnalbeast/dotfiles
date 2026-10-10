@@ -1,15 +1,15 @@
--- helpers/wm_rift.lua — Rift adapter (helpers/wm registry, Phase 3).
+-- helpers/wm_rift.lua - Rift adapter (helpers/wm registry, Phase 3).
 --
 -- Event-driven refresh via plugins/rift_bridge (registers
 -- rift_bridge_evt sketchybar triggers for workspace/window/focus/title
--- events; idempotent — leaves dotfile subscriptions alone) + a 30s
+-- events; idempotent - leaves dotfile subscriptions alone) + a 30s
 -- safety refresh. Every trigger re-QUERIES full state (never-trust-
 -- payloads invariant).
 --
 -- ⚠ SEGFAULT history (2026-09-14): the config SEGFAULTED (exit 139) once
--- with this adapter bound; root cause was never isolated — bridging/
+-- with this adapter bound; root cause was never isolated - bridging/
 -- queries/detect were all suspects. The queries stay jq→TSV deliberately
--- (raw JSON never reaches sbar.exec's auto-decoder — a segfault suspect
+-- (raw JSON never reaches sbar.exec's auto-decoder - a segfault suspect
 -- on nested/null JSON, unconfirmed). Rift quirks (v0.5.8.1): workspace
 -- ids are opaque strings ("VirtualWorkspaceId(1v1)"); CLI subscriptions
 -- do NOT survive a Rift restart (the supervisor's re-bind re-runs the
@@ -60,7 +60,7 @@ local function split_tsv(line)
 	return parts
 end
 
--- TSV query: output is deliberately NOT JSON — sbar.exec passes the raw
+-- TSV query: output is deliberately NOT JSON - sbar.exec passes the raw
 -- string through and we parse Lua-side (see the segfault note above).
 local function query_tsv(subcmd, jq_filter, k)
 	sbar.exec(RC .. " " .. subcmd .. " 2>/dev/null | " .. JQ .. " -r " .. jq_filter, function(out)
@@ -84,14 +84,14 @@ local function refresh_all()
 			if p[1] and p[1] ~= "" then
 				local name, active, id = p[1], p[2], p[3]
 				-- jq emits 3 columns (name|active|id); `workspace switch`
-				-- takes the row's 0-based index — enumerated HERE (the
+				-- takes the row's 0-based index - enumerated HERE (the
 				-- pre-insert #ws_list IS that row's 0-based position),
 				-- never a 4th TSV column.
 				ws_index[name] = #ws_list
 				ws_list[#ws_list + 1] = name
 				ws_ids[name] = id
 				-- PUBLISH to the module table: get_state() reads THIS table
-				-- (the parsed rows must never stay stage-local — that kept
+				-- (the parsed rows must never stay stage-local - that kept
 				-- the trio permanently empty, 2026-09-14)
 				workspaces[#workspaces + 1] = {
 					name = name,
@@ -136,7 +136,7 @@ local function refresh_all()
 						local p = split_tsv(line)
 						if p[1] and p[1] ~= "" then
 							-- PUBLISH to the module table (same rule as the
-							-- workspaces stage — get_state() reads it)
+							-- workspaces stage - get_state() reads it)
 							displays[#displays + 1] = {
 								uuid = p[1],
 								name = p[2],
@@ -188,7 +188,7 @@ bridge_observer:subscribe("rift_bridge_evt", schedule_refresh)
 -- ============================================================================
 
 function M.switch_ws(name)
-	-- `workspace switch` takes the NUMERIC workspace id — empirically the
+	-- `workspace switch` takes the NUMERIC workspace id - empirically the
 	-- query row's 0-based index (NOT the opaque VirtualWorkspaceId string:
 	-- "switch 'VirtualWorkspaceId(2v1)'" → "invalid digit found in string";
 	-- switch 2 → inet ✓ 2026-09-14). Keep ws_index as the source of truth.
@@ -210,13 +210,13 @@ end
 
 function M.detect(cb)
 	-- ASYNC process probe (2026-09-27): the sync io.popen form ran on
-	-- the supervisor's detect TIMER — a proven hang vector (Lua 5.5.1
+	-- the supervisor's detect TIMER - a proven hang vector (Lua 5.5.1
 	-- pclose reaping corruption; 2026-09-15/27 incidents), so the
 	-- contract is now async-boolean-callback (helpers/wm header). Safe
 	-- where the 2026-09-04 nil-cb crash came from: that callback was
-	-- NOT always invoked — this one always is. The daemon binary is
+	-- NOT always invoked - this one always is. The daemon binary is
 	-- `rift`; `rift-cli` may exist while Rift is stopped. pgrep stdout
-	-- is a plain string in sbar.exec (non-JSON) — empty/nil/false =
+	-- is a plain string in sbar.exec (non-JSON) - empty/nil/false =
 	-- stopped.
 	sbar.exec("/usr/bin/pgrep -x rift 2>/dev/null", function(out)
 		cb(out ~= nil and out ~= "" and out ~= false)
@@ -237,7 +237,7 @@ function M.start(cb)
 		end
 		refresh_all()
 		-- Re-arm insurance: Rift subscribers have no --reconnect and die
-		-- with the WM — without this, event delivery silently degrades to
+		-- with the WM - without this, event delivery silently degrades to
 		-- this 30s poll after a mid-window Rift restart. Probe liveness by
 		-- the bridge's anchor (the trigger argv only OUR subscribers carry)
 		-- and re-run the idempotent bridge when they're gone.

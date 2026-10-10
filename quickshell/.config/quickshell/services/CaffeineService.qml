@@ -19,7 +19,7 @@ Singleton {
     }
 
     // persistChange: only user-initiated toggles write to disk. The startup
-    // path must read, never write — persisting at startup previously raced
+    // path must read, never write - persisting at startup previously raced
     // the async config load and wiped config.json.
     function enable(persistChange) {
         LockService.stopDaemon();

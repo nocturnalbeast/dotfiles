@@ -45,7 +45,7 @@ Singleton {
     }
 
     // ─── spectrwm: read region_padding from config file ───
-    // Spectrwm doesn't have a CLI query tool — values are static in config.
+    // Spectrwm doesn't have a CLI query tool - values are static in config.
     // region_padding = N is the equivalent of bspwm's window_gap.
     Process {
         id: spectrwmGapProc

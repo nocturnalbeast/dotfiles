@@ -9,7 +9,7 @@ ColumnLayout {
 
     property date currentDate: new Date()
 
-    // Sync with ClockWidget scroll — when offset changes, shift the displayed month
+    // Sync with ClockWidget scroll - when offset changes, shift the displayed month
     property bool _syncing: false
 
     Connections {
@@ -172,7 +172,7 @@ ColumnLayout {
                     return "transparent";
                 }
                 // NOTE: no `visible:` here. Qt positioners exclude invisible
-                // (and zero-size) children from layout — `visible: index >=
+                // (and zero-size) children from layout - `visible: index >=
                 // firstDay` collapsed the leading blank cells and shifted all
                 // dates to column 0. Keep the cells laid out (transparent,
                 // empty text) so the weekday alignment is preserved.

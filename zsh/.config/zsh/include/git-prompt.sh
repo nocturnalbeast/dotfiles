@@ -1,19 +1,19 @@
 #!/hint/sh
-# git-prompt.sh — async comprehensive git status for starship prompt
+# git-prompt.sh - async comprehensive git status for starship prompt
 #
 # Replaces starship's [git_branch], [git_commit], [git_state],
 # [git_metrics], and [git_status] modules. All git operations run in a
 # background process; the prompt reads cached results via [env_var.*]
 # modules (<1ms per render regardless of repo size).
 #
-# Exports RAW values (branch name, status glyphs, metrics numbers) — no
+# Exports RAW values (branch name, status glyphs, metrics numbers) - no
 # ANSI codes. starship's env_var format strings apply the styling.
 
 # per-shell cache (avoids write conflicts between concurrent shells)
 _GSD_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/gsd-prompt.$$"
 _GSD_TS=0
 
-# initialize env vars — unset so starship skips modules until first computation
+# initialize env vars - unset so starship skips modules until first computation
 unset GSD_BRANCH GSD_STATUS GSD_ADDED GSD_DELETED GSD_STATE
 
 # source results from the previous background computation
@@ -38,7 +38,7 @@ __gsd_compute() {
 
     # background: compute in orphaned subshell (no job notifications)
     # outer ( ) exits immediately, orphaning the inner & job so neither
-    # bash nor zsh tracks it — no [N] PID or "done" notifications
+    # bash nor zsh tracks it - no [N] PID or "done" notifications
     ( (
         # ━━━ Nerd Font symbols for status (matching starship.toml) ━━━
         _S_CONFLICT=$'\U000f0b65'
@@ -142,7 +142,7 @@ __gsd_hook() {
 
 # ━━━ FIFO + zle -F: async prompt redraw without signals ━━━
 # zle -F handlers ONLY fire when ZLE is idle (at the prompt), so
-# zle reset-prompt is always safe — no crashes from calling it
+# zle reset-prompt is always safe - no crashes from calling it
 # during command execution or PROMPT evaluation.
 # bash fallback: no auto-redraw; next prompt shows updated info.
 

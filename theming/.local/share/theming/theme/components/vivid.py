@@ -1,5 +1,5 @@
 """TUI vivid member: LS_COLORS theme.yml derived from tinty's
-current_scheme at apply time — stays in lockstep on partial failure."""
+current_scheme at apply time - stays in lockstep on partial failure."""
 
 from __future__ import annotations
 
@@ -38,7 +38,7 @@ ANCHOR_SLOTS = {
     "magenta": "base0E",
     "cyan": "base0C",
 }
-# bright accents: 30% toward fg — a distinguishable companion tone in
+# bright accents: 30% toward fg - a distinguishable companion tone in
 # both modes (dark: lighter, light: deeper), no extra scheme slots needed
 BRIGHT_ANCHORS = {
     "brightred": "base08",

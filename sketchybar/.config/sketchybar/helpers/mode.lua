@@ -1,17 +1,17 @@
--- helpers/mode.lua — bar mode machinery (main / monitor), RELOAD-FREE.
+-- helpers/mode.lua - bar mode machinery (main / monitor), RELOAD-FREE.
 -- Mode persists in settings.MODE_FILE; toggle writes the file and triggers
--- the custom "mode_changed" event — items flip their own drawing/updates
--- (see init.lua union order + AGENT.md facts 16–18). No `sketchybar
+-- the custom "mode_changed" event - items flip their own drawing/updates
+-- (see init.lua union order + AGENT.md facts 16-18). No `sketchybar
 -- --reload` on mode toggle: one config process for the whole session.
 -- (Reload machinery was removed from here; `--reload` remains for THEME
 -- switches only, driven by theme.sh.)
 --
--- DELIVERY GOTCHA (empirically verified — AGENT.md fact 17): `--trigger` /
+-- DELIVERY GOTCHA (empirically verified - AGENT.md fact 17): `--trigger` /
 -- sbar.trigger does NOT reach items with updates=false. A mode-exclusive
 -- item born hidden (updates=false) would therefore NEVER hear mode_changed
--- and could never re-show — the naive `item:subscribe("mode_changed", …)`
+-- and could never re-show - the naive `item:subscribe("mode_changed", …)`
 -- design deadlocks after one toggle. Solution: this module owns ONE relay
--- item (mode.relay: drawing=off, updates=true FOREVER — the aerospace.
+-- item (mode.relay: drawing=off, updates=true FOREVER - the aerospace.
 -- observer idiom) that receives the event and dispatches to Lua listeners
 -- via mode.on_change(), independent of every target item's updates flag.
 local settings = require("settings")
@@ -33,7 +33,7 @@ function mode.get()
 end
 
 -- ============================================================================
--- mode_changed relay (see header). Item creation happens on first use —
+-- mode_changed relay (see header). Item creation happens on first use -
 -- always inside init.lua's begin_config/end_config window, since every
 -- caller (mode_switch + mode-exclusive modules) is required there.
 -- ============================================================================

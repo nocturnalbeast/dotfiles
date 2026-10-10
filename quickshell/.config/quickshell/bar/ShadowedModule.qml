@@ -60,7 +60,7 @@ Item {
         }
     }
 
-    // Reusable hover/press state tracker — overrides scale to 1.0
+    // Reusable hover/press state tracker - overrides scale to 1.0
     // so only ShadowedModule's own scale binding animates.
     HoverPress {
         id: hoverPress

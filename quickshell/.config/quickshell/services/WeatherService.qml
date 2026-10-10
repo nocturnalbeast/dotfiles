@@ -226,7 +226,7 @@ Singleton {
                 }
             }
         }
-        // NOTE: no onExited error handler — see geoCityProc.
+        // NOTE: no onExited error handler - see geoCityProc.
     }
 
     // ── Weather fetch ──
@@ -282,7 +282,7 @@ Singleton {
                 }
             }
         }
-        // NOTE: no onExited error handler — see geoCityProc.
+        // NOTE: no onExited error handler - see geoCityProc.
     }
 
     function _onFetchError() {
@@ -359,7 +359,7 @@ Singleton {
                     root.forecast = fc;
                     root.ready = true;
                 } catch (e) {
-                    // Cache invalid — will fetch fresh data when polling starts
+                    // Cache invalid - will fetch fresh data when polling starts
                 }
             }
         }

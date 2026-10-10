@@ -1,4 +1,4 @@
-"""Engine registry: flavors ARE engines — flat, complete pipelines."""
+"""Engine registry: flavors ARE engines - flat, complete pipelines."""
 
 from __future__ import annotations
 

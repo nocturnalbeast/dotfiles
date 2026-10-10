@@ -1,10 +1,10 @@
--- items/uptime.lua — time since boot from sysctl kern.boottime.
+-- items/uptime.lua - time since boot from sysctl kern.boottime.
 -- 60s poll. Label "3d 4h" (hours-only under a day).
 -- Click → popup: exact boot timestamp + humanized uptime.
 -- Hover → exact boot timestamp append (helpers/hover; boot epoch is
--- cached on first read — read_boot never re-execs within a boot).
+-- cached on first read - read_boot never re-execs within a boot).
 -- Monitor-exclusive: born hidden + updates off in main mode (reload-free
--- mode swap via mode_changed — AGENT.md facts 16–18).
+-- mode swap via mode_changed - AGENT.md facts 16-18).
 local colors = require("colors")
 local settings = require("settings")
 local pill = require("helpers.pill")
@@ -83,7 +83,7 @@ local function refresh()
 end
 
 -- ============================================================================
--- Click popup — boot timestamp + humanized uptime (fresh read on open,
+-- Click popup - boot timestamp + humanized uptime (fresh read on open,
 -- cpu-popup idiom; rows tracked + removed on close)
 -- ============================================================================
 
@@ -130,7 +130,7 @@ uptime:subscribe("mouse.exited.global", popup.guard(uptime.name, function()
 end))
 
 -- ============================================================================
--- Mode gating (Lua poll chain gated by `polling` — fact 16)
+-- Mode gating (Lua poll chain gated by `polling` - fact 16)
 -- ============================================================================
 
 local polling = false

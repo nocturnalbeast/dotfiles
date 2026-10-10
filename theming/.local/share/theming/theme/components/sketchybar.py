@@ -14,7 +14,7 @@ from theme.state import make_record, read_member
 
 COLORS_GENERATED = Path.home() / ".config/sketchybar/colors_generated.lua"
 
-# exactly what colors.lua reads — the pcall guard checks gen.primary
+# exactly what colors.lua reads - the pcall guard checks gen.primary
 REQUIRED_ROLES = (
     "surface",
     "surface_container_high",

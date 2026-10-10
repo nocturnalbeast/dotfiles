@@ -14,7 +14,7 @@ def _run(cmd: list[str], check: bool = False) -> subprocess.CompletedProcess:
 
 
 def sighup_xsettingsd() -> bool:
-    """SIGHUP reload — never kill/respawn. Returns alive-after."""
+    """SIGHUP reload - never kill/respawn. Returns alive-after."""
     r = _run(["pgrep", "-x", "xsettingsd"])
     if r.returncode != 0:
         return False
@@ -114,7 +114,7 @@ def mako_reload() -> bool:
 
 
 def awesome_restart() -> bool:
-    """W2 reload: awesome re-reads xrdb on restart — MUST run after
+    """W2 reload: awesome re-reads xrdb on restart - MUST run after
     xrdb_merge and LAST overall."""
     if not shutil.which("awesome-client"):
         return False
@@ -138,7 +138,7 @@ def sketchybar_reload() -> bool:
 
 
 def borders_relaunch(script: Path) -> bool:
-    """Spawn the generated borders.sh detached — borders is a
+    """Spawn the generated borders.sh detached - borders is a
     long-running process; a blocking run would hang the apply."""
     if not shutil.which("borders"):
         return False

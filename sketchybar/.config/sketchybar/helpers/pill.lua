@@ -1,15 +1,15 @@
--- helpers/pill.lua — single source of truth for the bar's frosted-pill
+-- helpers/pill.lua - single source of truth for the bar's frosted-pill
 -- background spec (previously copy-pasted into every items/*.lua).
 --
 -- Standard pill: frosted bg @ 0.75 alpha, hairline fg border @ 0.08,
--- height 26, corner_radius 6 — the "disconnected module" look (the bar
+-- height 26, corner_radius 6 - the "disconnected module" look (the bar
 -- itself is invisible; each item renders its own pill, see init.lua).
 --
 -- opts (optional table):
 --   accent = <color>  accent-tinted pill state (focused workspace,
 --                     active caffeine): bg = accent tinted at `tint`
 --                     (default 0.18), border = SOLID accent
---   tint   = <alpha>  alpha override for the accent bg tint (0–1)
+--   tint   = <alpha>  alpha override for the accent bg tint (0-1)
 local colors = require("colors")
 
 local pill = {}

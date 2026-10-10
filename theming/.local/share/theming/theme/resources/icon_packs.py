@@ -20,7 +20,7 @@ class IconPack(Resource):
         return ctx.icons_dir
 
     def post_install(self, ctx: Context, theme_dir: Path) -> None:
-        """Sed only files containing the pack's base hex — the anchor itself scopes the rewrite, so no dir allowlist is needed."""
+        """Sed only files containing the pack's base hex - the anchor itself scopes the rewrite, so no dir allowlist is needed."""
         accent = resolve_accent(ctx.palette)
         anchor = self.base_hex.lower()
         found = 0
@@ -40,7 +40,7 @@ class IconPack(Resource):
                     found += 1
         if found == 0:
             raise RuntimeError(
-                f"{self.key}: sed found 0 occurrences of base hex {anchor} — "
+                f"{self.key}: sed found 0 occurrences of base hex {anchor} - "
                 "upstream anchor changed; resource class stale"
             )
 

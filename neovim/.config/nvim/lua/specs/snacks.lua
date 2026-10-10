@@ -1,4 +1,4 @@
--- snacks.nvim — exactly the modules approved in plan decision #14:
+-- snacks.nvim - exactly the modules approved in plan decision #14:
 -- picker, dashboard, notifier, bigfile, quickfile, statuscolumn, words.
 -- Every other snacks module stays at its default (disabled).
 -- Picker keymaps live in config/keymaps.lua, not here.

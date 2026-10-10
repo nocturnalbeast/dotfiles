@@ -12,7 +12,7 @@ ColumnLayout {
         titleText: "Now Playing"
     }
 
-    // Track info + seek + volume — grouped with tighter internal spacing
+    // Track info + seek + volume - grouped with tighter internal spacing
     ColumnLayout {
         Layout.fillWidth: true
         spacing: Spacing.popupListSpacing
@@ -75,7 +75,7 @@ ColumnLayout {
 
                     Text {
                         font.family: Typography.barFontFamily
-                        text: (MediaPlayer.artist || "—") + "  •  " + (MediaPlayer.album || "—")
+                        text: (MediaPlayer.artist || "-") + "  •  " + (MediaPlayer.album || "-")
                         font.pointSize: Typography.popupMutedSize
                         color: Colors.popupMuted
                         Layout.fillWidth: true

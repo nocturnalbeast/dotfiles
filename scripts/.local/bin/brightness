@@ -56,14 +56,14 @@ Arguments:
 EOF
 }
 
-# Check for required dependencies — at least one backend must be available.
+# Check for required dependencies - at least one backend must be available.
 check_dependencies() {
     _cache_init
-    # Fast path — trust cache if fresh
+    # Fast path - trust cache if fresh
     if _cache_fresh "$CACHE_BACKEND" 60; then
         return 0
     fi
-    # Slow path — probe for any available backend
+    # Slow path - probe for any available backend
     if brightnessctl -c backlight info > /dev/null 2>&1; then
         return 0
     fi
@@ -146,7 +146,7 @@ _ddc_debounce() {
 # --- ddcutil wrapper ---
 
 # Wrap ddcutil with --bus N (when cached) and a timeout guard.
-# --bus skips the /dev/i2c scan phase — the single biggest ddcutil
+# --bus skips the /dev/i2c scan phase - the single biggest ddcutil
 # performance win per the documentation.  timeout prevents ddcutil
 # from hanging on unresponsive I2C buses.
 _ddc() {
@@ -161,7 +161,7 @@ _ddc() {
 # --- VCP query helpers ---
 
 # Query VCP 10 (brightness) and cache both current and max values.
-# Retries once with a 0.5s delay — DDC communication is inherently
+# Retries once with a 0.5s delay - DDC communication is inherently
 # unreliable and often succeeds on the second attempt.
 _ddc_query_vcp10() {
     _dqv_attempt=0
@@ -241,7 +241,7 @@ detect_brightness_command() {
                     echo "ddcutil"
                     return 0
                 fi
-                # Bus device gone — fall through to re-detect
+                # Bus device gone - fall through to re-detect
             else
                 echo "$_dbc_name"
                 return 0
@@ -259,7 +259,7 @@ detect_brightness_command() {
     if command -v ddcutil > /dev/null 2>&1; then
         _dbc_detect=$(ddcutil detect --brief 2> /dev/null)
         # Accept both valid ("Display 1") and marginal ("Invalid display")
-        # entries — DDC can fail during detect yet succeed for VCP operations.
+        # entries - DDC can fail during detect yet succeed for VCP operations.
         _dbc_bus=$(echo "$_dbc_detect" | grep 'I2C bus:' | head -1 | sed 's/.*\/dev\/i2c-//')
         if [ -n "$_dbc_bus" ] && [ -c "/dev/i2c-${_dbc_bus}" ]; then
             _cache_write "$CACHE_BACKEND" "ddcutil"

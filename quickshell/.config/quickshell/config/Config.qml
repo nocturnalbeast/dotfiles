@@ -30,7 +30,7 @@ Singleton {
             try {
                 root._data = JSON.parse(text());
             } catch (e) {
-                // Config file invalid — use defaults
+                // Config file invalid - use defaults
                 root._data = {};
             }
         }
@@ -78,7 +78,7 @@ Singleton {
 
     // Preferred write path: updates _data (keeps property bindings live-reload
     // safe) and persists. Direct imperative property assignment (e.g.
-    // Config.foo = x) breaks the property's binding — use this instead.
+    // Config.foo = x) breaks the property's binding - use this instead.
     function set(key, value) {
         if (!configFile.loaded)
             return;

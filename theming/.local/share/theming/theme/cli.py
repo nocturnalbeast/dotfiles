@@ -296,7 +296,7 @@ def _dispatch(args, command: str) -> int:
         target = "all"
     if target not in REGISTRY:
         err_console.print(
-            f"[red]unknown target[/red] {target!r} — "
+            f"[red]unknown target[/red] {target!r} - "
             f"valid: {', '.join(sorted(REGISTRY))}"
         )
         return 2
@@ -317,7 +317,7 @@ def _dispatch(args, command: str) -> int:
             from theme.helpers.logio import confirm
 
             confirm(f"Force-rebuild {target!r} from source (long-running)?")
-        # mutating ops: whole-invocation lock — dry-run is
+        # mutating ops: whole-invocation lock - dry-run is
         # lock-free
         lock = nullcontext() if args.dry_run else mutation_lock()
         with lock:

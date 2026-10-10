@@ -1,13 +1,13 @@
--- helpers/wm_aerospace.lua — AeroSpace adapter (helpers/wm registry).
+-- helpers/wm_aerospace.lua - AeroSpace adapter (helpers/wm registry).
 --
 -- OWNS the AeroSpace data plane (moved verbatim from items/aerospace.lua
--- in the 2026-09-04 adapter extraction — Phase 1, zero behavior change):
+-- in the 2026-09-04 adapter extraction - Phase 1, zero behavior change):
 --   * commands (byte budgets: fact 3/15):
 --       focused workspace ~5B · ws|apps map ≤320B · focused window ≤200B
 --       monitor topology ~150B JSON · mirror state ~24B (system_profiler)
 --   * sweep: 3 tiny execs, FULL RE-QUERY per event (never trust payloads,
 --     aerospace 0.21.x bug window), 0.2s coalescing via generation counter
---   * monitor TOPOLOGY + mirror state: SLOW (system_profiler ~0.5s) —
+--   * monitor TOPOLOGY + mirror state: SLOW (system_profiler ~0.5s) -
 --     queried ONLY at start + hs_screen, never in the sweep
 --   * 120s periodic safety refresh; initial sweep at start
 --   * hidden observer subscribed to the three aerospace events
@@ -15,7 +15,7 @@
 --     hs_screen (topology is display-layout dependent)
 --
 -- NOT owned here: the trio items, glyphs, hover payloads, render
--- change-detection, menus, app-menu strip — those are the widget's
+-- change-detection, menus, app-menu strip - those are the widget's
 -- (items/aerospace.lua); they consume this adapter via helpers/wm.
 local M = { name = "aerospace" }
 
@@ -24,7 +24,7 @@ local wm = require("helpers.wm")
 local AEROSPACE = "/opt/homebrew/bin/aerospace"
 
 -- Hard ceiling for the remaining sync/slow exec sites below: a wedged
--- child must die, not leak — the same hang-class hardening that took
+-- child must die, not leak - the same hang-class hardening that took
 -- io.popen off the detect loop (Lua 5.5.1 pclose reaping corruption,
 -- 2026-09-15/27 incidents)
 local TIMEOUT = "/opt/homebrew/bin/timeout"
@@ -49,21 +49,21 @@ local WINDOWS_CMD = AEROSPACE .. [[ list-windows --all --format '%{workspace}|%{
 	.. [[END { for (i = 1; i <= n; i++) { nm = order[i]; print nm "|" apps[nm] } }']]
 	.. [[ 2>/dev/null | /usr/bin/head -c 320]]
 
--- Focused window: app|title|monitor-id (title may contain "|" — parse as
+-- Focused window: app|title|monitor-id (title may contain "|" - parse as
 -- first field | greedy middle | trailing digits). ≤200B; a title long
 -- enough to hit the cap fails the trailing-digits match and is simply
 -- skipped (next event/refresh catches up). monitor-id feeds the monitor
--- pill FREE — no extra exec.
+-- pill FREE - no extra exec.
 local FOCUSED_WINDOW_CMD = AEROSPACE
 	.. [[ list-windows --focused --format '%{app-name}|%{window-title}|%{monitor-id}' 2>/dev/null ]]
 	.. [[| /usr/bin/head -c 200]]
 
--- Monitor topology (~150B JSON, auto-decoded — fact 4) + mirror state
+-- Monitor topology (~150B JSON, auto-decoded - fact 4) + mirror state
 -- (~24B: one "Mirror: On/Off" line per display). SLOW (system_profiler
--- ~0.5s) — start + hs_screen ONLY, never in the sweep. Both are
+-- ~0.5s) - start + hs_screen ONLY, never in the sweep. Both are
 -- timeout-wrapped (8s ceiling: system_profiler is slow legitimately; a
 -- hung aerospace/system_profiler child must not stall the topology
--- refresh path — 2026-09-27)
+-- refresh path - 2026-09-27)
 local MONITORS_CMD = TIMEOUT .. " 8 " .. AEROSPACE .. " list-monitors --json 2>/dev/null"
 local MIRROR_CMD = TIMEOUT .. " 8 /usr/sbin/system_profiler SPDisplaysDataType 2>/dev/null"
 	.. [[ | /usr/bin/grep -i mirror | /usr/bin/head -n 4]]
@@ -74,7 +74,7 @@ local MIRROR_CMD = TIMEOUT .. " 8 /usr/sbin/system_profiler SPDisplaysDataType 2
 
 local workspace_list = {} -- ordered workspace names (declared toml order)
 local workspace_list_loaded = false -- LAZY (2026-09-15): filled at first
--- start() — the old module-scope io.popen ran a synchronous aerospace
+-- start() - the old module-scope io.popen ran a synchronous aerospace
 -- spawn on EVERY bar load even when AeroSpace was never bound; the ws
 -- menu's refresh-on-empty (items/aerospace.lua) covers a WM-down load
 
@@ -90,12 +90,12 @@ local on_sweep_cb = nil -- widget render callback (invoked post-sweep)
 -- generation is stale (sbar.delay timers cannot be cancelled directly)
 local poll_gen = 0
 -- start()/stop() gate (wm_rift/wm_omniwm idiom): aerospace events and
--- hs_screen fire on the observer even while another WM is bound —
+-- hs_screen fire on the observer even while another WM is bound -
 -- schedule_sweep/refresh_topology no-op until the supervisor binds us
 local bound = false
 
 -- ============================================================================
--- Workspace list (declared order parser — unchanged from the strip era)
+-- Workspace list (declared order parser - unchanged from the strip era)
 -- ============================================================================
 
 local function load_declared_order()
@@ -118,7 +118,7 @@ end
 
 local function load_workspace_list()
 	-- timeout 5 (2026-09-27): this io.popen runs at first bind / ws-menu
-	-- refresh — the same pclose hang class; a hung aerospace must not
+	-- refresh - the same pclose hang class; a hung aerospace must not
 	-- wedge the adapter start path
 	local handle = io.popen(TIMEOUT .. " 5 " .. AEROSPACE .. " list-workspaces --all 2>/dev/null")
 	if not handle then
@@ -149,7 +149,7 @@ local function load_workspace_list()
 	return list
 end
 
--- (workspace_list is NOT loaded at module scope — see
+-- (workspace_list is NOT loaded at module scope - see
 -- workspace_list_loaded in STATE: lazy, at first start())
 
 -- ============================================================================
@@ -228,7 +228,7 @@ local function schedule_sweep()
 end
 
 -- ============================================================================
--- TOPOLOGY (start + hs_screen ONLY — system_profiler is ~0.5s, never in
+-- TOPOLOGY (start + hs_screen ONLY - system_profiler is ~0.5s, never in
 -- the sweep; both execs are event-gated)
 -- ============================================================================
 
@@ -247,7 +247,7 @@ local function refresh_topology()
 		end
 		topology.monitors = monitors
 		-- mirror probe second: render only once both caches land (render
-		-- is idempotent — safe if this fires between the two)
+		-- is idempotent - safe if this fires between the two)
 		sbar.exec(MIRROR_CMD, function(mirror_out)
 			topology.mirrored = (mirror_out or ""):find("Mirror:%s*On", 1) ~= nil
 			topology.loaded = true
@@ -263,7 +263,7 @@ end
 
 -- ============================================================================
 -- OBSERVER (hidden item subscribed to the aerospace events; hs_screen
--- ALSO refreshes topology — the slow probe is event-gated. Both are
+-- ALSO refreshes topology - the slow probe is event-gated. Both are
 -- gated on `bound`: no-op while the supervisor has another WM bound)
 -- ============================================================================
 
@@ -284,9 +284,9 @@ end)
 -- ============================================================================
 
 --- Refresh workspace_list (sync io.popen; cb optional). The list loads
--- lazily at first start() (2026-09-15 — was a synchronous spawn at
+-- lazily at first start() (2026-09-15 - was a synchronous spawn at
 -- module scope on every bar load); a bar load while the WM is down
--- bakes an EMPTY list — the ws menu refreshes on open (2026-09-04).
+-- bakes an EMPTY list - the ws menu refreshes on open (2026-09-04).
 function M.refresh_workspace_list(cb)
 	workspace_list = load_workspace_list()
 	if cb then
@@ -314,14 +314,14 @@ function M.start(cb)
 	on_sweep_cb = cb
 	bound = true
 	-- lazy workspace-list load (first bind only): keeps the aerospace
-	-- spawn off the module require path — every bar load, WM or not
+	-- spawn off the module require path - every bar load, WM or not
 	if not workspace_list_loaded then
 		workspace_list_loaded = true
 		workspace_list = load_workspace_list()
 	end
 	poll_gen = poll_gen + 1
 	local gen = poll_gen
-	-- Initial sweep at start — aerospace fires nothing at login.
+	-- Initial sweep at start - aerospace fires nothing at login.
 	sweep()
 	refresh_topology()
 	local function periodic_refresh()
@@ -345,13 +345,13 @@ end
 
 function M.detect(cb)
 	-- ASYNC process probe (2026-09-27): the sync io.popen form ran on
-	-- the supervisor's detect TIMER — a proven hang vector (Lua 5.5.1
+	-- the supervisor's detect TIMER - a proven hang vector (Lua 5.5.1
 	-- pclose reaping corruption; 2026-09-15/27 incidents), so the
 	-- contract is now async-boolean-callback (helpers/wm header). Safe
 	-- where the 2026-09-04 nil-cb crash came from: that callback was
-	-- NOT always invoked — this one always is. AeroSpace is a GUI app
+	-- NOT always invoked - this one always is. AeroSpace is a GUI app
 	-- (bobko.aerospace); app running == backend usable. pgrep stdout
-	-- is a plain string in sbar.exec (non-JSON) — empty/nil/false =
+	-- is a plain string in sbar.exec (non-JSON) - empty/nil/false =
 	-- not running.
 	sbar.exec("/usr/bin/pgrep -x AeroSpace 2>/dev/null", function(out)
 		cb(out ~= nil and out ~= "" and out ~= false)

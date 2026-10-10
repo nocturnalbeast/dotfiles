@@ -60,7 +60,7 @@ Item {
     }
 
     // ── Debounced position update ──
-    // Component.onCompleted is too early — layout hasn't settled.
+    // Component.onCompleted is too early - layout hasn't settled.
     // Geometry changes during layout transitions (bar switch, fullscreen)
     // restart the timer so position is computed only once after settling.
     Timer {

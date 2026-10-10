@@ -44,13 +44,13 @@ ShellRoot {
     // Usage: qs ipc call <target> <command> [args]
     //
     // Targets:
-    //   bar        – bar visibility, switching, dimensions
-    //   volume     – audio volume control
-    //   brightness – screen brightness control
-    //   media      – media playback control
-    //   lock       – screen lock & idle daemon control
-    //   weather    – weather data & refresh
-    //   shell      – shell-level commands (popups, etc.)
+    //   bar        - bar visibility, switching, dimensions
+    //   volume     - audio volume control
+    //   brightness - screen brightness control
+    //   media      - media playback control
+    //   lock       - screen lock & idle daemon control
+    //   weather    - weather data & refresh
+    //   shell      - shell-level commands (popups, etc.)
 
     // ── Bar IPC ──
     // Usage: qs ipc call bar <command>

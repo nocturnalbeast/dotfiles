@@ -25,7 +25,7 @@ Singleton {
     readonly property real fillOpacity: 1.0
     readonly property int verticalBarInset: 10
 
-    // Popup dimensions — Maia style, zero radius
+    // Popup dimensions - Maia style, zero radius
     // Width is screen-percentage (uniform across all monitors)
     readonly property real popupWidthPct: 13
     // Gap between bar module and popup window

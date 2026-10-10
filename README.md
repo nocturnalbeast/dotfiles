@@ -63,7 +63,7 @@ mkdir -p ~/.config/dotfiles && echo earth > ~/.config/dotfiles/host
 ./install --os macos --host mars status     # Combine OS and host simulation
 ```
 
-**Warning**: the mutating actions (`install`/`reinstall`/`uninstall`) with `--os`/`--host` act on the real target directory, not a simulation — match the OS used at install time (`uninstall` probes all rule views automatically, `reinstall` does not).
+**Warning**: the mutating actions (`install`/`reinstall`/`uninstall`) with `--os`/`--host` act on the real target directory, not a simulation - match the OS used at install time (`uninstall` probes all rule views automatically, `reinstall` does not).
 
 **Per-OS package trees**
 
@@ -73,12 +73,12 @@ A package can ship both platforms' trees in one directory and exclude the foreig
 [ignore]  # per-OS subtree exclusions (stow regexes)
 linux = ["Library"]  # ignored when target OS is linux (the macOS tree)
 macos = ["^/\\.config/mozilla"]  # ignored when target OS is macos (the linux tree)
-fold = true  # rules only prune whole top-level trees — keep directory folding
+fold = true  # rules only prune whole top-level trees - keep directory folding
 ```
 
-Matching follows [stow's ignore-list semantics](https://www.gnu.org/software/stow/manual/stow.html#Ignore-Lists): a regex without `/` matches a basename anywhere in the package (a matching directory node skips its whole subtree), while a regex containing `/` is compiled as `(^|/)(rule)(/|$)` and matched against `"/" + subpath` — so an anchored path rule MUST start with `^/` (a bare `^` never matches, because stow always prepends a leading `/` to the subpath it tests).
+Matching follows [stow's ignore-list semantics](https://www.gnu.org/software/stow/manual/stow.html#Ignore-Lists): a regex without `/` matches a basename anywhere in the package (a matching directory node skips its whole subtree), while a regex containing `/` is compiled as `(^|/)(rule)(/|$)` and matched against `"/" + subpath` - so an anchored path rule MUST start with `^/` (a bare `^` never matches, because stow always prepends a leading `/` to the subpath it tests).
 
-For packages with `[ignore]` rules, the installer (re)generates `<pkg>/.stow-local-ignore` before every stow: stow's built-in default ignores as a baseline, then the per-OS rules for the target OS. When the current OS has no rules, the stale generated file is removed so stow's defaults apply again. Generated files are gitignored (`**/.stow-local-ignore`); never edit or commit them. Packages declaring `[ignore]` rules are also stowed with `--no-folding` automatically, since stow's tree folding can bypass file-level ignores. Rules that prune whole top-level trees are evaluated before folding, so such packages may set `fold = true` in the `[ignore]` table to keep stow's single-symlink directory folding (recommended for packages whose trees are written to by running applications); packages with file-level or nested rules must NOT set it (folding can bypass those ignores — stow issue #131).
+For packages with `[ignore]` rules, the installer (re)generates `<pkg>/.stow-local-ignore` before every stow: stow's built-in default ignores as a baseline, then the per-OS rules for the target OS. When the current OS has no rules, the stale generated file is removed so stow's defaults apply again. Generated files are gitignored (`**/.stow-local-ignore`); never edit or commit them. Packages declaring `[ignore]` rules are also stowed with `--no-folding` automatically, since stow's tree folding can bypass file-level ignores. Rules that prune whole top-level trees are evaluated before folding, so such packages may set `fold = true` in the `[ignore]` table to keep stow's single-symlink directory folding (recommended for packages whose trees are written to by running applications); packages with file-level or nested rules must NOT set it (folding can bypass those ignores - stow issue #131).
 
 **Bootstrap context**
 
@@ -96,11 +96,11 @@ Content templating is deliberately absent: files are stowed verbatim. Diverge wh
 
 **Seeding a new machine**
 
-A per-OS tree can point at machine-created state — the firefox macOS flavor stows `~/Library/Application Support/Firefox`, which only exists once the Mac has created it. Such packages need a one-time seed before their first install (run from the repo root):
+A per-OS tree can point at machine-created state - the firefox macOS flavor stows `~/Library/Application Support/Firefox`, which only exists once the Mac has created it. Such packages need a one-time seed before their first install (run from the repo root):
 
-1. `firefox -CreateProfile defprofile` — the brew cask puts `firefox` on PATH; otherwise invoke the bundle binary at `/Applications/Firefox.app/Contents/MacOS/firefox`.
-2. `mv ~/Library/Application\ Support/Firefox firefox/Library/Application\ Support/Firefox` — wipe any stale dummy profiles inside it first.
-3. `./install install firefox` — stows the tree and runs the bootstrap, which auto-copies the staged `user-overrides.js` into the new profile and installs the per-user policies plist.
+1. `firefox -CreateProfile defprofile` - the brew cask puts `firefox` on PATH; otherwise invoke the bundle binary at `/Applications/Firefox.app/Contents/MacOS/firefox`.
+2. `mv ~/Library/Application\ Support/Firefox firefox/Library/Application\ Support/Firefox` - wipe any stale dummy profiles inside it first.
+3. `./install install firefox` - stows the tree and runs the bootstrap, which auto-copies the staged `user-overrides.js` into the new profile and installs the per-user policies plist.
 
 The bootstrap closes Firefox if it is running.
 
@@ -211,13 +211,13 @@ condition = "<shell command>"
     - [yt-dlp](https://github.com/yt-dlp/yt-dlp): Command-line program to download videos
 
 - Theming:
-  - [theming](./theming): Unified, config-driven theming system — palette extracted
+  - [theming](./theming): Unified, config-driven theming system - palette extracted
     from the wallpaper, applied across every surface
     - Surfaces: GTK, Qt (Kvantum/Fusion), icons, cursors, fonts, WM chrome
       (awesome/bspwm/hypr), notifications (dunst/mako), lock screens, menus,
       terminal (kitty/tmux via tinty), CLI (zsh, atuin, LS_COLORS), zathura,
       superfile, rmpc, cava, mpv, sketchybar + aerospace borders (macOS)
-    - Engines: matugen / thaim / wallust — switchable per space (GUI/TUI)
+    - Engines: matugen / thaim / wallust - switchable per space (GUI/TUI)
     - Usage: `theme apply all` (or per group/member); `theme status`,
       `theme doctor`, `theme watch` for live wallpaper sync
 

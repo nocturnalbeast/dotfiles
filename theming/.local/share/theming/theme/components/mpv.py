@@ -54,7 +54,7 @@ class MpvComponent(Component):
             ok("mpv: would rewrite modernx theme keys")
             return Effects()
         if not MODERNX_CONF.exists():
-            ok("mpv: modernx.conf absent — nothing to theme")
+            ok("mpv: modernx.conf absent - nothing to theme")
             return Effects()
         new_text = writers.update_eq_kv(
             MODERNX_CONF.read_text(), theme_values(ctx.palette)

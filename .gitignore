@@ -97,7 +97,7 @@ cava/.config/cava/themes/
 /firefox/.config/mozilla/firefox/*/.parentlock
 /firefox/.config/mozilla/firefox/*/Singleton*
 
-# firefox macOS tree — same rules as the linux tree
+# firefox macOS tree - same rules as the linux tree
 /firefox/Library/Application Support/Firefox/Profiles/*/*
 !/firefox/Library/Application Support/Firefox/Profiles/*/user-overrides.js
 /firefox/Library/Application Support/Firefox/Crash Reports/

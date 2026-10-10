@@ -1,11 +1,11 @@
--- items/power.lua — session power menu (rightmost position).
+-- items/power.lua - session power menu (rightmost position).
 -- Click → popup: Lock / Sleep / Restart / Shutdown.
--- Lock uses `pmset displaysleepnow` — reliable and permission-free (the
+-- Lock uses `pmset displaysleepnow` - reliable and permission-free (the
 -- ctrl+cmd+Q keystroke needs Accessibility grants sketchybar may not have).
 -- Restart/Shutdown via System Events AppleScript.
 --
 -- Popup rows fire the custom `power_action` event (bluetooth bt_refresh
--- idiom) — the Lua handler performs the action AND tears the popup down,
+-- idiom) - the Lua handler performs the action AND tears the popup down,
 -- so the Lua open-flag never desyncs. (The old click_scripts closed the
 -- popup CLI-side; the first anchor click after an action was swallowed.)
 local colors = require("colors")
@@ -49,7 +49,7 @@ local power = sbar.add("item", "power", {
 	icon = {
 		string = "󰐥",
 		color = colors.accent,
-		-- 8/8: icon-only item — padding_right keeps MDI glyph ink (wider
+		-- 8/8: icon-only item - padding_right keeps MDI glyph ink (wider
 		-- than its advance width) off the pill border (fact 19)
 		padding_left = 8,
 		-- +1: NF glyph ink sits ~1.7pt low in its em-box
@@ -60,7 +60,7 @@ local power = sbar.add("item", "power", {
 	label = { drawing = false },
 	background = pill.background(),
 	-- RIGHTMOST pill in BOTH modes: outer padding 0 so the pill sits
-	-- flush on the bar's own edge (bar padding is 0 — see init.lua).
+	-- flush on the bar's own edge (bar padding is 0 - see init.lua).
 	-- padding_left keeps the normal island gap to the wifi cluster.
 	padding_left = settings.paddings,
 	padding_right = 0,
@@ -68,7 +68,7 @@ local power = sbar.add("item", "power", {
 })
 
 -- ============================================================================
--- Popup (helpers/popup lifecycle — rows tracked + removed on close,
+-- Popup (helpers/popup lifecycle - rows tracked + removed on close,
 -- unlike the old version which leaked power.pop.* items forever)
 -- ============================================================================
 

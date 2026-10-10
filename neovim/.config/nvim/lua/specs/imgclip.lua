@@ -1,4 +1,4 @@
--- img-clip.nvim — AVIF paste pipeline. Harvested from linkarzu/neobean
+-- img-clip.nvim - AVIF paste pipeline. Harvested from linkarzu/neobean
 -- img-clip.lua (skitty-mode branches dropped); format/quality hoisted to
 -- constants, dir aligned to the obsidian attachments folder ('assets').
 local IMG_FORMAT = "avif"

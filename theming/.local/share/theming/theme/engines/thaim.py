@@ -102,7 +102,7 @@ def extract_thaimeleon(image: str) -> dict[str, dict[str, str]]:
                 raise GenerationError(f"thaimeleon ({m}): unparseable palette YAML")
             if bool(data.get("is_light_theme")) != (m == "light"):
                 raise GenerationError(
-                    f"thaimeleon ({m}): is_light_theme mismatch — mode forcing failed"
+                    f"thaimeleon ({m}): is_light_theme mismatch - mode forcing failed"
                 )
             result[m] = {k: v for k, v in data.items() if k != "is_light_theme"}
     return result

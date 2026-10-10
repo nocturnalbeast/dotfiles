@@ -26,7 +26,7 @@ Singleton {
     }
 
     // === Event stream (niri msg --json event-stream) ===
-    // Events carry complete state inline — no separate polling needed.
+    // Events carry complete state inline - no separate polling needed.
     // Once this socket is open, it won't accept further requests, so
     // action commands (focusWorkspace via wmctl) use separate processes.
     Process {
@@ -53,7 +53,7 @@ Singleton {
     }
 
     function handleEvent(event) {
-        // Events carry full state arrays — read directly, no re-poll
+        // Events carry full state arrays - read directly, no re-poll
         if (event.WorkspacesChanged) {
             let wsl = event.WorkspacesChanged.workspaces || [];
             root.buildWorkspaces(wsl);

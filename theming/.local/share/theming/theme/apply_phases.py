@@ -77,7 +77,7 @@ def _safe_write(m: Component, ctx: Context) -> Effects:
     logio.set_current_member(m.key)
     try:
         return m.write_effects(ctx)
-    except Exception as e:  # noqa: BLE001 — reported, run continues
+    except Exception as e:  # noqa: BLE001 - reported, run continues
         from theme.helpers.logio import fail
 
         fail(f"{m.key}: {e}")
@@ -113,7 +113,7 @@ def _merge_managed(managed: list[tuple[str, str, str | None]]) -> None:
 
 
 def _run_reloads(ctx: Context, declared: list[tuple[str, dict[str, Any]]]) -> None:
-    """Ordered, deduped, best-effort reloads — a failure warns, never fails the apply."""
+    """Ordered, deduped, best-effort reloads - a failure warns, never fails the apply."""
     from theme.helpers.logio import ok
 
     seen: dict[tuple[str, str], dict[str, Any]] = {}
@@ -134,14 +134,14 @@ def _run_reloads(ctx: Context, declared: list[tuple[str, dict[str, Any]]]) -> No
                     ok("xresources merged live (W1)")
                 else:
                     warn(
-                        "xrdb absent or no X session — writes landed, "
+                        "xrdb absent or no X session - writes landed, "
                         "reload on next X11 session"
                     )
             elif kind == "bspwm":
                 if reload.bspwm_apply_colors(SURFACE_BSPWM):
                     ok("bspwm colors applied live (W3)")
                 else:
-                    warn("bspc absent — manual reload needed")
+                    warn("bspc absent - manual reload needed")
             elif kind == "dunst":
                 if reload.dunst_reload():
                     ok("dunst reloaded (W6)")

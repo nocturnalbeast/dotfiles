@@ -146,7 +146,7 @@ Singleton {
                 }
 
                 if (luksMapper) {
-                    // LUKS is unlocked — use mapper device info
+                    // LUKS is unlocked - use mapper device info
                     var mapperMounts = luksMapper.mountpoints || [];
                     realMounts = mapperMounts.filter(function (m) {
                         return m && m !== "[SWAP]" && m !== "";

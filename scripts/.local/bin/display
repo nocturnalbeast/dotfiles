@@ -20,7 +20,7 @@ Display management utility (X11).
 Commands:
   focused              Print the currently focused display name
   window-display ID    Print the display a window is on
-  mirrored             Print "yes" or "no" — are monitors mirrored?
+  mirrored             Print "yes" or "no" - are monitors mirrored?
   set-dpi              Calculate and apply DPI settings
   layout current       Print the currently active layout name
   layout list          List available layouts
@@ -168,12 +168,12 @@ set_dpi() {
     # Update owned DPI keys in the live xsettingsd config. Partial rewrite:
     # foreign keys belong to other writers and survive untouched.
     # Writer contract (00 §2.6): hold the theming flock for the whole
-    # read-modify-write — concurrent theme applies rewrite other keys
+    # read-modify-write - concurrent theme applies rewrite other keys
     # in this same file, and unlocked interleaving erases keys.
     THEMING_LOCK="${XDG_CACHE_HOME:-$HOME/.cache}/theming/lock"
     (
         flock -w 60 9 || {
-            echo "display: theming lock busy (60s) — DPI write aborted" >&2
+            echo "display: theming lock busy (60s) - DPI write aborted" >&2
             exit 1
         }
         _xsettingsd_write "$SELECTED_DPI" "$RGBA"
@@ -187,7 +187,7 @@ _xsettingsd_write() {
     [ -n "$(tail -c 1 "$XSETTINGSD_CONF")" ] && echo >> "$XSETTINGSD_CONF"
 
     # One-time migration: carry over template-only keys, then retire it.
-    # Theming-owned keys never migrate — live values are authoritative.
+    # Theming-owned keys never migrate - live values are authoritative.
     if [[ -f $XSETTINGSD_TEMPLATE ]]; then
         grep -vxFf "$XSETTINGSD_CONF" "$XSETTINGSD_TEMPLATE" |
             grep -vE '^(Net/ThemeName|Net/IconThemeName|Gtk/CursorThemeName|Gtk/FontName) ' \

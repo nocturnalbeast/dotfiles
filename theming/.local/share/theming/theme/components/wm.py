@@ -87,7 +87,7 @@ class XresourcesMember(WMMember):
             return Effects(code=1)
         updates = {}
         # ANSI → base16 slot uses the terminal-standard mapping, NOT
-        # sequential base16 — color8 is bright-black, not base08/error-red
+        # sequential base16 - color8 is bright-black, not base08/error-red
         ansi_to_base16 = {
             0: "base00",
             1: "base08",
@@ -231,7 +231,7 @@ end""",
                 conf,
             )
             atomic_write(HYPRland_CONF, conf)
-            ok("hypr borders written (W4 — next session)")
+            ok("hypr borders written (W4 - next session)")
 
         return self._eff(
             ctx,
@@ -259,7 +259,7 @@ class NotifyMember(WMMember):
     key = "notify"
 
     def _notify_icon_settings(self, ctx: Context) -> tuple[str, int]:
-        """(icon_theme, min_icon_size): XDG icon dirs are Type=Fixed —
+        """(icon_theme, min_icon_size): XDG icon dirs are Type=Fixed -
         a size not shipped as a dir misses even when the file exists;
         use the largest fixed dir containing dialog icons."""
         from theme.resources.base import ICON_PACKS
@@ -302,7 +302,7 @@ class NotifyMember(WMMember):
         n = self._notify_colors(ctx)
         icon_theme, min_icon_size = self._notify_icon_settings(ctx)
 
-        # W6 dunst — key-scoped INI rewrite
+        # W6 dunst - key-scoped INI rewrite
         if DUNSTRC.exists():
             text = DUNSTRC.read_text()
             section = ""
@@ -369,7 +369,7 @@ class NotifyMember(WMMember):
             atomic_write(DUNSTRC, "\n".join(out) + "\n")
             ok("dunst config written (W6)")
 
-        # W7 mako — key-scoped rewrite, same mapping
+        # W7 mako - key-scoped rewrite, same mapping
         if MAKO_CONFIG.exists():
             updates = {
                 "default": {
@@ -481,9 +481,9 @@ class LockMember(WMMember):
         for var, value in conversions.items():
             text, _ = writers.managed_line_set(text, var, f'"{value}"')
         atomic_write(SCREENLOCK_ENV, text)
-        ok("xsecurelock env written (W8 — next lock)")
+        ok("xsecurelock env written (W8 - next lock)")
 
-        # W5: hyprlock — key-scoped color writes in widget blocks
+        # W5: hyprlock - key-scoped color writes in widget blocks
         if HYPRLOCK_CONF.exists():
             conf = HYPRLOCK_CONF.read_text()
             accent = core_token(ctx.palette, "accent")
@@ -509,7 +509,7 @@ class LockMember(WMMember):
                 conf,
             )
             atomic_write(HYPRLOCK_CONF, conf)
-            ok("hyprlock colors written (W5 — next lock)")
+            ok("hyprlock colors written (W5 - next lock)")
 
         return self._eff(ctx, {"xsecurelock": "written", "hyprlock": "written"})
 
@@ -564,7 +564,7 @@ class MenuMember(WMMember):
             if var not in seen:
                 out.append(f'{var}="{value}" # theme:managed')
         atomic_write(MENU_ENV, "\n".join(out) + "\n")
-        ok("menu palette written (W9 — next invocation)")
+        ok("menu palette written (W9 - next invocation)")
         return self._eff(ctx, {"menu": "written"})
 
     def status(self, ctx: Context) -> int:
@@ -594,7 +594,7 @@ class BarMember(WMMember):
             ok("bar: would write barFontFamily")
             return Effects()
         if not QS_DEFAULTS.exists():
-            warn("quickshell Defaults.qml absent — bar member no-op")
+            warn("quickshell Defaults.qml absent - bar member no-op")
             return self._eff(ctx, {})
         sans = ctx.config["fonts"]["sans"][0]
         conf = QS_DEFAULTS.read_text()
@@ -603,7 +603,7 @@ class BarMember(WMMember):
             fail("barFontFamily line not found in Defaults.qml (W10 anchor drift)")
             return Effects(code=1)
         atomic_write(QS_DEFAULTS, conf)
-        ok("bar font written (W10 — restart qs)")
+        ok("bar font written (W10 - restart qs)")
         return self._eff(ctx, {"defaults_qml": "written"})
 
     def status(self, ctx: Context) -> int:

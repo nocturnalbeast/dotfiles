@@ -134,7 +134,7 @@ Item {
         }
     }
 
-    // Scroll overlay — captures wheel events without blocking clicks
+    // Scroll overlay - captures wheel events without blocking clicks
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.NoButton

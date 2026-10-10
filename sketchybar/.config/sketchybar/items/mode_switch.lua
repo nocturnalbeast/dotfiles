@@ -1,14 +1,14 @@
--- items/mode_switch.lua — leftmost item; barswitch + SYSTEM menu.
---   LEFT-click  → system menu popup (static, synchronous build — opens
+-- items/mode_switch.lua - leftmost item; barswitch + SYSTEM menu.
+--   LEFT-click  → system menu popup (static, synchronous build - opens
 --                 instantly): About This Mac, System Settings, Force
 --                 Quit front app, then a divider and the stack controls
 --                 (Restart AeroSpace / Reload Sketchybar / Restart
 --                 Hammerspoon). Rows fire `sys_menu_pick TARGET=<id>`
 --                 round-trips; commands execute Lua-side from ACTIONS.
---                 (The old front-app `menus` popup was retired — the
+--                 (The old front-app `menus` popup was retired - the
 --                 bar-hover app-menu strip covers front-app menus.)
 --   RIGHT-click → instant mode.toggle() (main/monitor barswitch).
--- Icon-only: the Apple glyph (md-apple) in BOTH modes — no label.
+-- Icon-only: the Apple glyph (md-apple) in BOTH modes - no label.
 -- Icon codepoints VERIFIED against the font cmap (caffeine rule).
 local colors = require("colors")
 local settings = require("settings")
@@ -33,7 +33,7 @@ local mode_switch = sbar.add("item", "mode_switch", {
 	},
 	background = pill.background(),
 	-- LEFTMOST pill of the bar: outer padding 0 so the pill sits flush on
-	-- the bar's own edge (bar padding is 0 — see init.lua). padding_right
+	-- the bar's own edge (bar padding is 0 - see init.lua). padding_right
 	-- keeps the normal island gap to the aerospace trio.
 	padding_left = 0,
 	padding_right = settings.paddings,
@@ -43,7 +43,7 @@ local mode_switch = sbar.add("item", "mode_switch", {
 
 -- ============================================================================
 -- System menu popup (helpers/popup lifecycle; rows tracked + removed by
--- exact name). STATIC rows — no async fetch, the menu opens instantly.
+-- exact name). STATIC rows - no async fetch, the menu opens instantly.
 -- ============================================================================
 
 local ctl = popup.new(mode_switch)
@@ -57,12 +57,12 @@ local ACTIONS = {
 	{ id = "fquit",     icon = "\u{F015C}", label = "Force Quit Front App",
 	  -- Accessibility-gated (same TCC grant as plugins/menus). unix id +
 	  -- shell kill: System Events has no kill verb (-1708, measured);
-	  -- kill -9 = force quit (no save prompts — that is the point)
+	  -- kill -9 = force quit (no save prompts - that is the point)
 	  cmd = "/usr/bin/osascript -e 'tell application \"System Events\" to set p to unix id of (first application process whose frontmost is true)' -e 'do shell script \"kill -9 \" & p'" },
 	{ id = "divider" },
 	{ id = "aero",      icon = "\u{F0709}", label = "Restart AeroSpace",
 	  -- GUI app (cask, /Applications/AeroSpace.app), NOT a brew service
-	  -- (brew services restart aerospace → "No available formula") —
+	  -- (brew services restart aerospace → "No available formula") -
 	  -- graceful SIGTERM then relaunch
 	  cmd = "killall AeroSpace >/dev/null 2>&1; sleep 0.5; open -a AeroSpace" },
 	{ id = "sbar",      icon = "\u{F0453}", label = "Reload Sketchybar",
@@ -105,7 +105,7 @@ end)
 -- ============================================================================
 
 -- mouse.clicked is a BROADCAST (every subscriber fires, env.NAME names
--- the clicked item) — guard or ANY click in the bar opens the menu.
+-- the clicked item) - guard or ANY click in the bar opens the menu.
 mode_switch:subscribe("mouse.clicked", popup.guard(mode_switch.name, function(env)
 	if env.BUTTON == "right" then
 		mode.toggle()

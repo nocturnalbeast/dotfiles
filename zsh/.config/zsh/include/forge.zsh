@@ -12,7 +12,7 @@ fi
 # locals of that function and vanish when it returns.
 # also revive _forge_reset's dead padding: it reads BUFFERLINES, which
 # nothing ever sets, so the post-action prompt redraw (zle -I + reset-prompt)
-# climbs the rows the action just printed and overwrites them — with a
+# climbs the rows the action just printed and overwrites them - with a
 # multi-row prompt (starship) that eats the last output line(s).
 eval "$(forge zsh plugin | sed -E \
     -e 's/^typeset -h(a?) /typeset -gh\1 /' \

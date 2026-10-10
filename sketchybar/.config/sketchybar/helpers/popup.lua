@@ -1,11 +1,11 @@
--- helpers/popup.lua — the ONE popup lifecycle idiom for every click-popup
+-- helpers/popup.lua - the ONE popup lifecycle idiom for every click-popup
 -- in the bar (bluetooth / clock / cpu / weather / power / battery / uptime
 -- / disk). Replaces five divergent open/close implementations.
 --
 -- Usage:
 --   local popup = require("helpers.popup")
 --   local ctl = popup.new(anchor_item)   -- anchor carries popup={align=...}
---   -- (bluetooth passes { prefix = "bt." } — legacy row names)
+--   -- (bluetooth passes { prefix = "bt." } - legacy row names)
 --
 --   local function build(b)              -- called synchronously by ctl:open
 --     b.add("item.pop.row", { ... })     -- full item name; anchored at
@@ -19,28 +19,28 @@
 --
 --   -- EXTERNALLY-owned rows (created by the caller, e.g. tray's permanent
 --   -- detail rows): hidden with the popup and joined to its pill, but
---   -- NEVER removed by close() — the owning module manages their lifetime:
+--   -- NEVER removed by close() - the owning module manages their lifetime:
 --   ctl:track("wifi.ssid.t")
 --
 -- Pill treatment: the anchor's NATIVE popup background is styled once at
--- controller creation (popup.background = pill + 10pt corner) — popup
+-- controller creation (popup.background = pill + 10pt corner) - popup
 -- windows draw their own background; BRACKETS CANNOT style them
 -- (group_calculate_bounds runs in the bar layout loop and collapses around
--- popup-positioned members — the failed first attempt). Row breathing room
+-- popup-positioned members - the failed first attempt). Row breathing room
 -- comes from b.add injecting transparent per-row background padding.
 --
 -- Semantics:
 --   * ctl:open(build)  marks open, bumps a generation counter, then (after
 --                      the stale-row sweep below) runs build
 --   * ctl:close()      hides the popup AND removes every child row this
---                      controller created — by EXACT name, tracked in
+--                      controller created - by EXACT name, tracked in
 --                      Lua. Varying-length lists never leave stale rows.
 --   * b.add / b.show   are no-ops once a newer open/close has superseded
 --                      the build's generation (async-safe: clock/cpu
 --                      rows arrive from sbar.exec AFTER the click)
 --
 -- WHY tracked exact names instead of sbar.remove("/regex/"): sketchybar
--- compiles /…/ arguments as POSIX ERE, where `%` is a LITERAL — the old
+-- compiles /…/ arguments as POSIX ERE, where `%` is a LITERAL - the old
 -- Lua-escaped forms like sbar.remove("/bt%.dev%.*/") matched nothing
 -- (silent no-ops; rows silently accumulated). (AGENT.md machine fact 13.)
 --
@@ -50,7 +50,7 @@
 -- mouse.clicked / mouse.scrolled / mouse.exited.global are BROADCAST
 -- events: EVERY subscriber's callback fires, with env.NAME identifying
 -- the item that was actually clicked/scrolled/exited. An unguarded
--- handler therefore runs on EVERY interaction in the bar — observed
+-- handler therefore runs on EVERY interaction in the bar - observed
 -- live: a clock click toggled the bar MODE via mode_switch's unguarded
 -- handler, and any popup-anchor click fired every other popup at once
 -- (exec storm + EPIPE noise). ALWAYS wrap mouse.* handlers:
@@ -82,17 +82,17 @@ end
 -- row). Two defenses:
 --
 --   1. OPEN-TIME sweep (LAZY since 2026-09-15: the former load-time
---      exec ran once per controller — a dozen serialized `--query bar |
+--      exec ran once per controller - a dozen serialized `--query bar |
 --      grep` pipes per reload for rows nobody sees until a popup opens;
 --      the first open() sweep covers the same reload race):
 --      one `sketchybar --query bar | grep` exec discovers any item
 --      whose name starts with this controller's row prefix (e.g.
 --      "battery.pop."), and each discovered row is removed BY EXACT
---      NAME. Removing an item that provably exists is silent — unlike
+--      NAME. Removing an item that provably exists is silent - unlike
 --      removing a missing name, which prints
 --      `[!] Remove: Item ... not found` to stderr (noise gate).
 --   2. anchor liveness: before building, sbar.query(anchor) must return
---      a table — a mode-exclusive anchor (clock in monitor mode) is gone
+--      a table - a mode-exclusive anchor (clock in monitor mode) is gone
 --      after a reload and the build aborts instead of orphaning rows.
 
 local COLORS = require("colors")
@@ -123,22 +123,22 @@ function M.new(anchor, opts)
 		prefix = row_prefix,
 		open_flag = false,
 		rows = {}, -- exact names of popup child items WE created
-		external = {}, -- externally-owned rows (ctl:track) — hidden, never removed
+		external = {}, -- externally-owned rows (ctl:track) - hidden, never removed
 		epoch = 0, -- bumped on every open/close; stale builds die against it
 	}
 
-	-- Pill treatment (CENTRAL — the only correct hook): popup windows draw
+	-- Pill treatment (CENTRAL - the only correct hook): popup windows draw
 	-- their OWN popup->background (popup.c: popup_draw clears/draws it;
 	-- defaults are a near-invisible 0x44000000 with no border). Style the
 	-- ANCHOR's popup.background once, at controller creation:
 	--   anchor:set({ popup = { background = <pill> } })
-	-- routes through background_parse_sub_domain (popup.c:475-484) — the
+	-- routes through background_parse_sub_domain (popup.c:475-484) - the
 	-- SAME property tree as item backgrounds. BRACKETS CANNOT DO THIS:
 	-- group_calculate_bounds runs in the BAR layout loop and collapses
 	-- around popup-positioned members (the failed first attempt).
 	-- Shape: standard pill, softer 10pt corner. The horizontal padding
 	-- keys are accepted but VISUALLY INERT here (popup window bounds
-	-- derive from content — background_draw renders bounds as-is, padding
+	-- derive from content - background_draw renders bounds as-is, padding
 	-- does not inflate them); the visible breathing room comes from b.add
 	-- injecting transparent per-row background padding instead. height=26
 	-- is harmless: popup_calculate_bounds overwrites bounds from content.
@@ -148,7 +148,7 @@ function M.new(anchor, opts)
 	popup_bg.padding_right = 10
 	-- Pill↔popup gap = 8pt, matching the inter-pill island spacing
 	-- (popup y_offset is a DOWNWARD shift; default 0 sits ~1pt under the
-	-- pill — pixel-measured, 2026-09-04)
+	-- pill - pixel-measured, 2026-09-04)
 	anchor:set({ popup = { background = popup_bg, y_offset = 7 } })
 
 	-- ONE compact exec: lists the anchor + any rows carrying our prefix.
@@ -176,7 +176,7 @@ function M.new(anchor, opts)
 	end
 
 	-- No load-time sweep_stale() (removed 2026-09-15): it ran once per
-	-- controller on every bar load — a dozen serialized `--query bar |
+	-- controller on every bar load - a dozen serialized `--query bar |
 	-- grep` pipes for rows nobody sees until a popup opens. Deferred to
 	-- ctl:open() below, whose sweep covers the same reload race.
 
@@ -226,14 +226,14 @@ function M.new(anchor, opts)
 			local b = {}
 			function b.add(name, props)
 				if ctl.epoch ~= generation then
-					return -- superseded (closed/re-opened meanwhile) — drop row
+					return -- superseded (closed/re-opened meanwhile) - drop row
 				end
 				props = props or {}
 				props.position = "popup." .. ctl.anchor.name
 				-- Breathing room inside the popup pill: each row's own
 				-- (transparent) background padding pads its computed
 				-- length, so the popup's drawn background extends past the
-				-- text. The popup background itself cannot pad — its bounds
+				-- text. The popup background itself cannot pad - its bounds
 				-- derive from content and background_draw renders as-is.
 				if type(props.background) ~= "table" then
 					props.background = {}
@@ -254,10 +254,10 @@ function M.new(anchor, opts)
 			-- Grammar: muted = keys/glyphs · yellow = percent chips ·
 			-- accent = active/selected only · values copy-on-click.
 			-- Row names embed ctl.epoch: names must NEVER repeat across
-			-- opens — SBarLua subscriptions survive sbar.remove keyed by
+			-- opens - SBarLua subscriptions survive sbar.remove keyed by
 			-- name, so a recreated name ACCUMULATES duplicate handlers
 			-- (measured: one click → N× handler runs, 2026-09-04).
-			-- NOTE: these locals MUST precede b.show — b.show centers the
+			-- NOTE: these locals MUST precede b.show - b.show centers the
 			-- header over ui_max_w, and a local declared after a function
 			-- is invisible to it (Lua upvalue scoping; broke once already).
 			local epoch_tag = ctl.epoch
@@ -274,7 +274,7 @@ function M.new(anchor, opts)
 
 			--- Muted title (data popups). Centered over the kv columns at
 			-- show-time (width = widest kv span); with no kv rows it stays
-			-- dynamic-width (renders left — nothing to center over).
+			-- dynamic-width (renders left - nothing to center over).
 			function b.header(text)
 				ui_header_item = b.add(ui_name("hdr"), {
 					icon = { drawing = false },
@@ -295,7 +295,7 @@ function M.new(anchor, opts)
 				})
 			end
 
-			--- Muted centered fallback row (uniform empty state — popups
+			--- Muted centered fallback row (uniform empty state - popups
 			-- open even with no data; they never refuse).
 			function b.empty(text)
 				b.add(ui_name("empty"), {
@@ -318,7 +318,7 @@ function M.new(anchor, opts)
 						width = opts.key_w or 90,
 						-- TEXT, not a glyph: the icon slot inherits the
 						-- bar's icon font (VictorMono, monospace) unless
-						-- overridden — set the label font explicitly
+						-- overridden - set the label font explicitly
 						font = SETTINGS.font.text,
 					},
 					label = {
@@ -330,7 +330,7 @@ function M.new(anchor, opts)
 				})
 			if opts.copy ~= false and value ~= "" then
 				-- "'\\''" is the POSIX \' escape (the old "'\''" collapsed
-				-- to "'''" — copy broke on values containing ', leaking the
+				-- to "'''" - copy broke on values containing ', leaking the
 				-- trailing text to the shell); identical to b.chip below
 				local esc = value:gsub("'", "'\\''")
 					item:subscribe("mouse.clicked", M.guard(name, function()
@@ -404,7 +404,7 @@ function M.new(anchor, opts)
 				elseif ui_header_item then
 					-- action menus have natural-width rows: measure the
 					-- popup's content span after layout, then widen the
-					-- header to it (deferred — the popup must draw first)
+					-- header to it (deferred - the popup must draw first)
 					local gen = ctl.epoch
 					sbar.delay(0.15, function()
 						if ctl.epoch ~= gen or not ctl.open_flag then
@@ -442,9 +442,9 @@ function M.new(anchor, opts)
 		end
 	end
 
-	--- Register an EXTERNALLY-owned popup row (created by the caller —
+	--- Register an EXTERNALLY-owned popup row (created by the caller -
 	--- e.g. tray's permanent detail rows): it joins the popup's pill and
-	--- hides with the popup, but close() NEVER removes it — the owning
+	--- hides with the popup, but close() NEVER removes it - the owning
 	--- module manages its lifetime. Call once per row at the row's
 	--- creation site.
 	function ctl:track(name)

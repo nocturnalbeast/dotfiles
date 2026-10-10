@@ -67,7 +67,7 @@ Singleton {
 
     property int activeBar: 0  // 0 = mainbar, 1 = monbar
 
-    // Manual hide state — set via IPC hideBar/showBar/toggleBar.
+    // Manual hide state - set via IPC hideBar/showBar/toggleBar.
     // Orthogonal to fullscreen auto-hide; bar hides if either is true.
     property bool manualHidden: false
 
@@ -75,7 +75,7 @@ Singleton {
         root.activeBar = root.activeBar === 0 ? 1 : 0;
     }
 
-    // Calendar month offset — scrolled from ClockWidget, watched by CalendarPopup.
+    // Calendar month offset - scrolled from ClockWidget, watched by CalendarPopup.
     // Resets to 0 when CalendarPopup opens (resyncs to current month).
     property int calendarMonthOffset: 0
 

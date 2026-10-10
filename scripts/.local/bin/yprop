@@ -520,7 +520,7 @@ _xprop_get() {
     timeout 3 xprop -id "$wid" "$prop" 2> /dev/null | sed 's/^.*= //' | tr -d '"'
 }
 
-# Read WM_CLASS — returns the class (second field), not the instance.
+# Read WM_CLASS - returns the class (second field), not the instance.
 _xprop_class() {
     local wid="$1"
     local result

@@ -9,7 +9,7 @@ from theme.resources.base import Context
 
 
 class ComponentGroup(Component):
-    """Composite over members; no own stamp — members stamp into their group's file."""
+    """Composite over members; no own stamp - members stamp into their group's file."""
 
     members: list[Component] = []
 

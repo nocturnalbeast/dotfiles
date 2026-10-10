@@ -24,7 +24,7 @@ PanelWindow {
     aboveWindows: false
 
     // Fullscreen handling: animate bar sliding off-screen.
-    // PanelWindow.visible toggle causes malloc corruption —
+    // PanelWindow.visible toggle causes malloc corruption -
     // instead, slide a child wrapper off-screen via negative topMargin.
     property bool _shouldHide: {
         if (Visibility.manualHidden)
@@ -44,7 +44,7 @@ PanelWindow {
         bottom: -Shadows.barShadowBlur
     }
 
-    // Bar content wrapper — this is what slides on/off screen
+    // Bar content wrapper - this is what slides on/off screen
     Item {
         id: barContent
         anchors {
@@ -57,7 +57,7 @@ PanelWindow {
         // Module shadows (MultiEffect) bleed ~blur/2 + offsetY BELOW the bar
         // content into the window's reserved shadow strip. Sliding by exactly
         // `height` left that bleed visible at the top edge of the screen over
-        // fullscreen apps — slide far enough that the shadows clear the
+        // fullscreen apps - slide far enough that the shadows clear the
         // window top and get clipped.
         readonly property int shadowBleed: Shadows.barShadowBlur / 2 + Shadows.barShadowOffsetY
 
@@ -88,18 +88,18 @@ PanelWindow {
                 var row = loader.item.childAt(lp.x, lp.y);
 
                 if (row) {
-                    // Found a Row — check if we're over a module or separator
+                    // Found a Row - check if we're over a module or separator
                     var rp = loader.item.mapToItem(row, lp.x, lp.y);
                     var child = row.childAt(rp.x, rp.y);
                     // Separators are 4px wide; modules are wider
                     if (child && child.width > Spacing.separatorWidth) {
-                        // Over a module — let the module handle the wheel event
+                        // Over a module - let the module handle the wheel event
                         event.accepted = false;
                         return;
                     }
                 }
 
-                // Empty area or separator — handle bar-level scroll
+                // Empty area or separator - handle bar-level scroll
                 var delta = event.angleDelta.y || event.angleDelta.x || event.pixelDelta.y || event.pixelDelta.x;
                 if (delta === 0)
                     return;

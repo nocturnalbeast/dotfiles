@@ -248,7 +248,7 @@ def on_overlay_draw(widget, cctx, ctx):
         )
 
     # Draw self-generated status bar (hostname, uptime) using monospace for
-    # Nerd Font icon coverage — sans fonts typically lack these glyphs.
+    # Nerd Font icon coverage - sans fonts typically lack these glyphs.
     if ctx.status:
         cctx.select_font_face(
             "monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL

@@ -1,5 +1,5 @@
 """Atuin member: theme file + config reference; name 'custom' must
-not collide with atuin builtins — a builtin shadows any same-name file."""
+not collide with atuin builtins - a builtin shadows any same-name file."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ THEME_NAME = "custom"
 MANAGED_MARKER = "# theme:managed"
 
 # atuin Meaning ← palette slot; syntax meanings follow upstream zsh base16
-# conventions. Foreground-only — atuin theme files cannot carry modifiers.
+# conventions. Foreground-only - atuin theme files cannot carry modifiers.
 MEANING_SLOTS = {
     "Base": "base06",
     "Muted": "base03",

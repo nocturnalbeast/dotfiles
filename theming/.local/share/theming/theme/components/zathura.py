@@ -15,7 +15,7 @@ from theme.state import make_record, read_member
 ZATHURARC = Path.home() / ".config/zathura/zathurarc"
 
 # zathura set-key ← palette slot. highlight-color is base0C, NOT base0D:
-# base0D is the core accent and feeds highlight-active-color — the two
+# base0D is the core accent and feeds highlight-active-color - the two
 # search-hit colors must stay distinct.
 COLOR_KEYS = {
     "default-fg": "base06",
@@ -69,7 +69,7 @@ class ZathuraComponent(Component):
             ok("zathura: would rewrite zathurarc color/font keys")
             return Effects()
         if not ZATHURARC.exists():
-            warn("zathura: zathurarc absent — nothing to theme")
+            warn("zathura: zathurarc absent - nothing to theme")
             return Effects()
         values = zathura_values(ctx.palette, ctx.config)
         text = writers.read_surface(ZATHURARC)

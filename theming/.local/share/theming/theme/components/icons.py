@@ -1,4 +1,4 @@
-"""Icons member: S1–S5 icon keys, icon-pack resources."""
+"""Icons member: S1-S5 icon keys, icon-pack resources."""
 
 from __future__ import annotations
 

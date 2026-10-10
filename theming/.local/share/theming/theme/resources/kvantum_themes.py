@@ -1,4 +1,4 @@
-"""Kvantum theme resources: colloid, orchis, materia — palette-injected KDE ports written to ~/.config/Kvantum/theming/."""
+"""Kvantum theme resources: colloid, orchis, materia - palette-injected KDE ports written to ~/.config/Kvantum/theming/."""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ HOME = Path.home()
 KVANTUM_CONFIG_DIR = HOME / ".config/Kvantum"
 THEMING_THEME_DIR = KVANTUM_CONFIG_DIR / "theming"
 
-# ladder stops (bg→fg mix ratios — ColloidDark's relative offsets)
+# ladder stops (bg→fg mix ratios - ColloidDark's relative offsets)
 LADDER = {
     "window": 0.06,
     "alt_base": 0.08,
@@ -136,7 +136,7 @@ class KvantumTheme(Resource):
             count = svg.lower().count(anchor.lower())
             if count == 0:
                 raise RuntimeError(
-                    f"{self.key}: SVG anchor {anchor} found 0 times — "
+                    f"{self.key}: SVG anchor {anchor} found 0 times - "
                     "upstream changed; anchor map stale"
                 )
             svg = re.sub(re.escape(anchor), new, svg, flags=re.IGNORECASE)

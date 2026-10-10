@@ -46,7 +46,7 @@ Singleton {
     }
 
     // ═══════════════════════════════════════════
-    // MIXER — audio sinks & linked streams
+    // MIXER - audio sinks & linked streams
     // ═══════════════════════════════════════════
 
     // All audio output devices (sinks)
@@ -101,7 +101,7 @@ Singleton {
         var mediaName = node.properties["media.name"];
         var desc = node.description;
         var name = appName || (desc ? desc : node.name);
-        return mediaName ? name + " — " + mediaName : name;
+        return mediaName ? name + " - " + mediaName : name;
     }
 
     // ═══════════════════════════════════════════

@@ -1,4 +1,4 @@
-"""Cursors member: S1–S5 cursor keys + S7 root cursor."""
+"""Cursors member: S1-S5 cursor keys + S7 root cursor."""
 
 from __future__ import annotations
 

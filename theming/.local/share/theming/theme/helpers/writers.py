@@ -114,7 +114,7 @@ def managed_line_set(text: str, var: str, value: str | None) -> tuple[str, bool]
     Returns (new_text, neutralized_unmanaged). An existing UNMANAGED
     active export of `var` is neutralized (commented) so the managed
     line is the only authority; the caller reports the neutralization.
-    An existing managed line is updated IN PLACE — position, indent and
+    An existing managed line is updated IN PLACE - position, indent and
     file layout are preserved across applies (the export moves only if
     the file never had a managed line, in which case it is appended).
     """
@@ -216,7 +216,7 @@ def update_prefixed_lines(text: str, templates: dict[str, str]) -> str:
 def update_marker_block(text: str, begin: str, end: str, body: str) -> str:
     """Replace the marked region [begin, end] with body.
 
-    The region is created (before `end` anchor / at EOF) when absent —
+    The region is created (before `end` anchor / at EOF) when absent -
     the fontconfig bootstrap path.
     """
     pattern = re.compile(re.escape(begin) + r".*?" + re.escape(end), re.DOTALL)
@@ -250,13 +250,13 @@ def write_report(path: Path, updates: dict[str, str]) -> dict[str, str]:
 
 
 def update_colon_kv(text: str, updates: Mapping[str, str]) -> str:
-    """X-style `*.key:  value` lines — formatting-preserving.
+    """X-style `*.key:  value` lines - formatting-preserving.
 
     Replaces ONLY the value in existing lines, preserving the exact
     whitespace alignment after the colon (column look survives).
     Interleaved comments and foreign lines untouched byte-for-byte.
     Missing keys are appended at the end (with simple 3-space
-    alignment — they had no prior formatting to preserve)."""
+    alignment - they had no prior formatting to preserve)."""
     lines = _split_keepends(text)
     seen: set[str] = set()
     out: list[str] = []

@@ -1,10 +1,10 @@
--- items/clock.lua — %I:%M %p label (12-hour, hh:mm AM/PM), 30s refresh via
+-- items/clock.lua - %I:%M %p label (12-hour, hh:mm AM/PM), 30s refresh via
 -- update_freq. Click → popup with full date + next 2 today's events
 -- (icalBuddy; guard: binary missing or error → date lines only).
 -- NOTE deviation from plan: the brew formula is `ical-buddy` but the BINARY
--- is /opt/homebrew/bin/icalBuddy (capital B) — verified on this machine.
+-- is /opt/homebrew/bin/icalBuddy (capital B) - verified on this machine.
 -- Main-exclusive: born hidden + updates off in monitor mode (reload-free
--- mode swap via mode_changed — AGENT.md facts 16–18). No Lua poll gate
+-- mode swap via mode_changed - AGENT.md facts 16-18). No Lua poll gate
 -- needed: the 30s refresh is update_freq (server-side), which updates=
 -- false stops (fact 16).
 local colors = require("colors")
@@ -41,7 +41,7 @@ local clock_item = sbar.add("item", "clock", {
 	},
 	background = pill.background(),
 	padding_left = settings.paddings,
-	-- 6 (not 3): wifi cluster is the right neighbor — bracket member
+	-- 6 (not 3): wifi cluster is the right neighbor - bracket member
 	-- paddings are inert, so THIS side owns the 8pt visual gap
 	padding_right = 6,
 	popup = { align = "center" },
@@ -49,7 +49,7 @@ local clock_item = sbar.add("item", "clock", {
 
 -- Hover append: "01:21 AM  ·  Friday, 21 August 2026" (helpers/hover;
 -- base called fresh at reveal/collapse so a tick mid-hover restores
--- correctly — payload is a pure os.date, no execs). Declared BEFORE
+-- correctly - payload is a pure os.date, no execs). Declared BEFORE
 -- render_time: the tick calls hov.refresh.
 local hov = hover.new(clock_item, function()
 	return os.date("%A, %d %B %Y")
@@ -66,7 +66,7 @@ end
 clock_item:subscribe({ "forced", "routine", "system_woke" }, render_time)
 
 -- ============================================================================
--- Calendar popup (helpers/popup lifecycle — rows built async on open,
+-- Calendar popup (helpers/popup lifecycle - rows built async on open,
 -- tracked + removed on close; stale icalBuddy callbacks no-op)
 -- ============================================================================
 
@@ -90,7 +90,7 @@ local function build_popup(b)
 					b.action("󰃶", line, "")
 				end
 			end
-			-- icalBuddy output arrives async — reveal the popup only once
+			-- icalBuddy output arrives async - reveal the popup only once
 			-- the children exist (b.show() is generation-guarded: no-op
 			-- if the popup was closed while we were fetching)
 			b.show()
@@ -107,7 +107,7 @@ end))
 
 -- ============================================================================
 -- Mode gating (drawing/updates only + close popup; update_freq needs no
--- Lua gate — updates=false stops routine ticks server-side, fact 16)
+-- Lua gate - updates=false stops routine ticks server-side, fact 16)
 -- ============================================================================
 
 local function apply_mode()

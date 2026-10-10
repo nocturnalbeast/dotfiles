@@ -44,7 +44,7 @@ def rgb_distance(a: str, b: str) -> float:
 
 
 def shift_lightness(value: str, delta: float, clamp: float) -> str:
-    """HSL lightness shift for base10–17 derivation."""
+    """HSL lightness shift for base10-17 derivation."""
     import colorsys
 
     r, g, b = (x / 255.0 for x in hex_to_rgb_tuple(value))

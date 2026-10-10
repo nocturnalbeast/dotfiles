@@ -58,7 +58,7 @@ class CavaComponent(Component):
             ok("cava: would rewrite gradient stops")
             return Effects()
         if not CAVA_CONFIG.exists():
-            ok("cava: config absent — nothing to theme")
+            ok("cava: config absent - nothing to theme")
             return Effects()
         colors = gradient_colors(ctx.palette)
         new_text = update_gradient(CAVA_CONFIG.read_text(), colors)

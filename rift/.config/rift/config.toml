@@ -1,4 +1,4 @@
-# rift config — full AeroSpace-parity replacement (runtime-exclusive with AeroSpace)
+# rift config - full AeroSpace-parity replacement (runtime-exclusive with AeroSpace)
 # Layout judgment per workspace from AeroSpace routing rules:
 #   main  master_stack (active conversation master, rest stacked)
 #   inet  bsp          (co-equal browser windows)
@@ -9,7 +9,7 @@
 #   draw/txns/info/misc bsp (trivial single-app)
 
 [settings]
-# Animations (rift's headline UX vs aerospace — both ON per decision)
+# Animations (rift's headline UX vs aerospace - both ON per decision)
 animate = true
 animation_duration = 0.2
 animation_fps = 100.0
@@ -19,7 +19,7 @@ animation_fps = 100.0
 default_disable = false
 
 # Mouse behavior (aerospace had focus-follows-mouse off; rift's warping
-# pair is the better default — flip to false if it fights muscle memory)
+# pair is the better default - flip to false if it fights muscle memory)
 focus_follows_mouse = false
 mouse_follows_focus = true
 mouse_hides_on_focus = false
@@ -35,7 +35,7 @@ auto_focus_blacklist = [
 
 # Startup integrations:
 # 1. pow-af: auto-focus previous occupied workspace when current empties
-#    (surviving script from the lost config — proven wiring restored)
+#    (surviving script from the lost config - proven wiring restored)
 # 2. sketchybar triggers (rift workspace/windows events; the bar item is
 #    deferred per decision, but the events are cheap to emit now)
 run_on_start = [
@@ -60,7 +60,7 @@ master_count = 1
 master_side = "left"
 new_window_placement = "stack"
 
-# Gaps — mirror AeroSpace: inner 10, outer 10, top 48 clears the sketchybar
+# Gaps - mirror AeroSpace: inner 10, outer 10, top 48 clears the sketchybar
 # overlay bar (bar floats via topmost, but aerospace reserved 48 for it and
 # the visual result was right)
 [settings.layout.gaps.outer]
@@ -74,7 +74,7 @@ right = 10
 
 # Built-in Retina (primary): rift auto-reserves the menu bar (frame y=38),
 # so it only needs a small extra gap → window-top = 38 + 4 = 42.
-# A per_display override REPLACES the whole outer group — all four edges
+# A per_display override REPLACES the whole outer group - all four edges
 # required. UUID from `rift-cli query displays` (stable for built-ins).
 [settings.layout.gaps.per_display."37D8832A-2D66-02CA-B9F7-8F30A301B230".outer]
 top = 4
@@ -86,7 +86,7 @@ right = 10
 horizontal = 10
 vertical = 10
 
-# Menubar indicators off — sketchybar is the bar
+# Menubar indicators off - sketchybar is the bar
 [settings.ui.menu_bar]
 enabled = false
 
@@ -124,24 +124,33 @@ reapply_app_rules_on_title_change = false
 
 # AeroSpace's 10 named workspaces, same order (rift: 0-based indices)
 workspace_names = [
-  "main", "inet", "code", "data", "play", "docs", "draw", "txns", "info", "misc",
+  "main",
+  "inet",
+  "code",
+  "data",
+  "play",
+  "docs",
+  "draw",
+  "txns",
+  "info",
+  "misc",
 ]
-default_workspace = 2  # "code" — the dev home
+default_workspace = 2 # "code" - the dev home
 
 workspace_rules = [
-  { workspace = 0, layout = "master_stack" },  # main
-  { workspace = 1, layout = "bsp" },           # inet
-  { workspace = 2, layout = "bsp" },           # code
-  { workspace = 3, layout = "bsp" },           # data
-  { workspace = 4, layout = "master_stack" },  # play
-  { workspace = 5, layout = "master_stack" },  # docs
-  { workspace = 6, layout = "bsp" },           # draw
-  { workspace = 7, layout = "bsp" },           # txns
-  { workspace = 8, layout = "bsp" },           # info
-  { workspace = 9, layout = "bsp" },           # misc
+  { workspace = 0, layout = "master_stack" }, # main
+  { workspace = 1, layout = "bsp" },          # inet
+  { workspace = 2, layout = "bsp" },          # code
+  { workspace = 3, layout = "bsp" },          # data
+  { workspace = 4, layout = "master_stack" }, # play
+  { workspace = 5, layout = "master_stack" }, # docs
+  { workspace = 6, layout = "bsp" },          # draw
+  { workspace = 7, layout = "bsp" },          # txns
+  { workspace = 8, layout = "bsp" },          # info
+  { workspace = 9, layout = "bsp" },          # misc
 ]
 
-# App rules — ported 1:1 from AeroSpace on-window-detected routing
+# App rules - ported 1:1 from AeroSpace on-window-detected routing
 # (aerospace names → 0-based indices: main=0 inet=1 code=2 data=3 play=4
 #  docs=5 draw=6 txns=7 info=8 misc=9)
 app_rules = [
@@ -198,38 +207,38 @@ app_rules = [
   { app_id = "org.openvpn.client.app", workspace = 9 },
   { app_id = "org.zaproxy.zap.ZAP", workspace = 9 },
   { app_id = "com.cisco.secureclient.gui", workspace = 9 },
-  # floaters (no workspace — just float)
+  # floaters (no workspace - just float)
   { app_id = "com.apple.finder", floating = true },
   { app_id = "com.apple.systempreferences", floating = true },
 ]
 
 # ============================================================================
-# Keys — meh = Ctrl+Alt+Meta (mirrors AeroSpace's Karabiner caps-lock map)
+# Keys - meh = Ctrl+Alt+Meta (mirrors AeroSpace's Karabiner caps-lock map)
 # meh+shift adds Shift. Same muscle memory in both WMs.
 # ============================================================================
 [modifier_combinations]
 meh = "Ctrl + Alt + Meta"
-mehs = "Ctrl + Alt + Meta + Shift"   # meh + shift
+mehs = "Ctrl + Alt + Meta + Shift" # meh + shift
 
 [keys]
-# --- Focus (meh + h/j/k/l, arrows) — aerospace parity incl. arrows ---
+# --- Focus (meh + h/j/k/l, arrows) - aerospace parity incl. arrows ---
 "meh + H" = { move_focus = "left" }
 "meh + J" = { move_focus = "down" }
 "meh + K" = { move_focus = "up" }
 "meh + L" = { move_focus = "right" }
-"meh + Left"  = { move_focus = "left" }
-"meh + Down"  = { move_focus = "down" }
-"meh + Up"    = { move_focus = "up" }
+"meh + Left" = { move_focus = "left" }
+"meh + Down" = { move_focus = "down" }
+"meh + Up" = { move_focus = "up" }
 "meh + Right" = { move_focus = "right" }
 
-# --- Move window (meh+shift + h/j/k/l, arrows) — aerospace parity ---
+# --- Move window (meh+shift + h/j/k/l, arrows) - aerospace parity ---
 "mehs + H" = { move_node = "left" }
 "mehs + J" = { move_node = "down" }
 "mehs + K" = { move_node = "up" }
 "mehs + L" = { move_node = "right" }
-"mehs + Left"  = { move_node = "left" }
-"mehs + Down"  = { move_node = "down" }
-"mehs + Up"    = { move_node = "up" }
+"mehs + Left" = { move_node = "left" }
+"mehs + Down" = { move_node = "down" }
+"mehs + Up" = { move_node = "up" }
 "mehs + Right" = { move_node = "right" }
 
 # --- Workspace switching (meh + 1..0 → main..misc, auto-back-and-forth on) ---
@@ -268,7 +277,7 @@ mehs = "Ctrl + Alt + Meta + Shift"   # meh + shift
 "mehs + Minus" = { resize_window_shrink = "smart" }
 "mehs + Equal" = { resize_window_grow = "smart" }
 
-# --- Layout cycling (aerospace: meh+m cycled 4 layouts) — rift equivalent:
+# --- Layout cycling (aerospace: meh+m cycled 4 layouts) - rift equivalent:
 #     hot-set the engine. meh+m cycles traditional→bsp→stack→master_stack. ---
 "meh + M" = { exec = ["/bin/sh", "-c", "$HOME/.config/rift/cycle-layout.sh"] }
 
@@ -278,12 +287,12 @@ mehs = "Ctrl + Alt + Meta + Shift"   # meh + shift
 
 # --- Joining (rift-native nicety aerospace lacked; meh+shift arrows are
 #     taken by move-node. Ctrl+Alt (no Meta) is distinct from every meh
-#     chord — adding Meta/Ctrl/Alt to meh collapses into it) ---
-"Ctrl + Alt + Left"  = { join_window = "left" }
+#     chord - adding Meta/Ctrl/Alt to meh collapses into it) ---
+"Ctrl + Alt + Left" = { join_window = "left" }
 "Ctrl + Alt + Right" = { join_window = "right" }
-"Ctrl + Alt + Up"    = { join_window = "up" }
-"Ctrl + Alt + Down"  = { join_window = "down" }
-"Ctrl + Alt + E"     = "unjoin_windows"
+"Ctrl + Alt + Up" = { join_window = "up" }
+"Ctrl + Alt + Down" = { join_window = "down" }
+"Ctrl + Alt + E" = "unjoin_windows"
 
 # --- Container toggles (aerospace's layout h/v toggles ≈ rift's) ---
 "meh + Comma" = "toggle_stack"
@@ -303,30 +312,54 @@ mehs = "Ctrl + Alt + Meta + Shift"   # meh + shift
 "meh + E" = { exec = ["/usr/bin/open", "~"] }
 
 # --- Reload / pause (aerospace parity: meh+esc reload; meh+shift+e enable-toggle
-#     has no rift analog — rift IS the manager; use save_and_exit for quit) ---
+#     has no rift analog - rift IS the manager; use save_and_exit for quit) ---
 "meh + Esc" = "reload_config"
 
-# --- Mission control (rift's own exploded view) — Ctrl+Alt variants stay
+# --- Mission control (rift's own exploded view) - Ctrl+Alt variants stay
 #     clear of meh+M (cycle-layout) and mehs+M (promote-to-master) ---
 "Ctrl + Alt + M" = "show_mission_control_all"
 "Ctrl + Alt + Shift + M" = "show_mission_control_current"
 
 # --- Master-stack adjustments (only active on master_stack workspaces) ---
-# Key names: rift doesn't support BracketLeft/BracketRight — use I/O
+# Key names: rift doesn't support BracketLeft/BracketRight - use I/O
 # (vim/dwm mnemonic). meh+I/O = master ratio; mehs+I/O = master count.
 # 0.5.3 quirk: config-key forms of adjust_master_* don't parse (main-branch
-# wiki skew) — exec the CLI subcommands instead (verified in 0.5.3 help).
-"meh + I" = { exec = ["/opt/homebrew/bin/rift-cli", "execute", "layout", "adjust-master-ratio", "0.05"] }
-"meh + O" = { exec = ["/opt/homebrew/bin/rift-cli", "execute", "layout", "adjust-master-ratio", "-0.05"] }
-"mehs + I" = { exec = ["/opt/homebrew/bin/rift-cli", "execute", "layout", "adjust-master-count", "1"] }
-"mehs + O" = { exec = ["/opt/homebrew/bin/rift-cli", "execute", "layout", "adjust-master-count", "-1"] }
+# wiki skew) - exec the CLI subcommands instead (verified in 0.5.3 help).
+"meh + I" = { exec = [
+  "/opt/homebrew/bin/rift-cli",
+  "execute",
+  "layout",
+  "adjust-master-ratio",
+  "0.05",
+] }
+"meh + O" = { exec = [
+  "/opt/homebrew/bin/rift-cli",
+  "execute",
+  "layout",
+  "adjust-master-ratio",
+  "-0.05",
+] }
+"mehs + I" = { exec = [
+  "/opt/homebrew/bin/rift-cli",
+  "execute",
+  "layout",
+  "adjust-master-count",
+  "1",
+] }
+"mehs + O" = { exec = [
+  "/opt/homebrew/bin/rift-cli",
+  "execute",
+  "layout",
+  "adjust-master-count",
+  "-1",
+] }
 "mehs + M" = "promote_to_master"
 
 # --- Scrolling-layout niceties (harmless on other engines; future-proof
 #     for when a workspace is flipped to scrolling) ---
-"Ctrl + Alt + Shift + Left"  = { scroll_strip = { delta = -0.5 } }
+"Ctrl + Alt + Shift + Left" = { scroll_strip = { delta = -0.5 } }
 "Ctrl + Alt + Shift + Right" = { scroll_strip = { delta = 0.5 } }
-"Ctrl + Alt + C"             = "center_selection"
+"Ctrl + Alt + C" = "center_selection"
 
 # --- Debug ---
 "mehs + D" = "debug"

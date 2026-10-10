@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""tools/gen_icon_map.py — regenerate helpers/icons.lua as a VMNF map.
+"""tools/gen_icon_map.py - regenerate helpers/icons.lua as a VMNF map.
 
 Deterministic generator: parses the archive's sketchybar-app-font ligature
 table (~340 app names) + the legacy hand-written map, resolves every
@@ -9,7 +9,7 @@ with UTF-8 glyph literals. Run twice → identical output.
   python3 tools/gen_icon_map.py
 
 Resolution order (per ligature name, e.g. "microsoft_teams"):
-  1. OVERRIDES        explicit brand fixes (curated — edit HERE, not the
+  1. OVERRIDES        explicit brand fixes (curated - edit HERE, not the
                       output, so regen stays stable)
   2. exact            prefix preference: md- > dev- > fa- > seti- >
                       custom- > bare
@@ -21,10 +21,10 @@ Resolution order (per ligature name, e.g. "microsoft_teams"):
                       calculator, calendar, gear, dollar, desktop,
                       terminal, default, one_password, …)
   5. CATEGORIES       token-set heuristics (browser/terminal/chat/…)
-  6. fallback         md-window_maximize — generic window glyph.
+  6. fallback         md-window_maximize - generic window glyph.
                       (NOTE: the task spec named U+F03A4 as the generic
                       window, but in THIS VMNF build F03A4 is
-                      md-numeric_1_box — a "1" in a box. F05AF is the
+                      md-numeric_1_box - a "1" in a box. F05AF is the
                       real filled window glyph; flip FALLBACK if the
                       other codepoint is ever insisted upon.)
 
@@ -48,7 +48,7 @@ FONT = Path.home() / "Library/Fonts/VictorMonoNerdFont-Regular.ttf"
 # The pre-rewrite hand-written helpers/icons.lua merged at generation time.
 # FROZEN here (not parsed live): the generator's own output replaces that
 # file, so re-parsing it would silently drop these entries after the first
-# run (observed live — the first idempotency check lost 8 apps).
+# run (observed live - the first idempotency check lost 8 apps).
 LEGACY_EXTRA = {
     "Activity Monitor": "default",
     "Another Redis Desktop Manager": "mongodb",
@@ -67,13 +67,13 @@ LEGACY_EXTRA = {
 OVERRIDES = {
     # ligature name          -> NF glyph name          (why)
     # browsers without NF brand glyphs
-    "arc": "md-web_box",                 # Arc browser
+    "arc": "md-web_box",  # Arc browser
     "brave_browser": "md-web_box",
     "vivaldi": "md-web_box",
     "libre_wolf": "md-web_box",
     "min_browser": "md-web_box",
     "qute_browser": "md-web_box",
-    "mullvad_browser": "md-shield_lock", # privacy browser
+    "mullvad_browser": "md-shield_lock",  # privacy browser
     "tor_browser": "md-shield_lock",
     # chat platforms without glyphs
     "dingtalk": "md-forum",
@@ -81,9 +81,9 @@ OVERRIDES = {
     "line": "md-message_text",
     "messenger": "md-message_text",
     "mattermost": "md-forum",
-    "wecom": "md-wechat",                # WeChat Work
-    "signal": "md-message_text",         # md-signal is the BARS glyph — wrong
-    "bilibili": "md-play_box",           # video platform
+    "wecom": "md-wechat",  # WeChat Work
+    "signal": "md-message_text",  # md-signal is the BARS glyph - wrong
+    "bilibili": "md-play_box",  # video platform
     # terminals without glyphs
     "kitty": "md-console",
     "iterm": "md-console",
@@ -94,14 +94,14 @@ OVERRIDES = {
     "kakoune": "md-console",
     "zoc": "md-console",
     # editors/IDEs
-    "sublime_text": "md-code_tags",      # no Sublime glyph in NF
+    "sublime_text": "md-code_tags",  # no Sublime glyph in NF
     "zed": "md-code_tags",
     "nova": "md-code_tags",
-    "tower": "md-source_branch",         # Git Tower
+    "tower": "md-source_branch",  # Git Tower
     "vscodium": "cod-vscode",
     "code": "cod-vscode",
     "web_storm": "dev-webstorm",
-    "idea": "md-code_tags",             # no dev-idea in VMNF; generic IDE
+    "idea": "md-code_tags",  # no dev-idea in VMNF; generic IDE
     # Apple system apps
     "app_store": "md-apple",
     "sf_symbols": "md-apple_keyboard_command",
@@ -111,19 +111,19 @@ OVERRIDES = {
     "maps": "md-map",
     "notes": "md-notebook",
     "reminders": "md-calendar_clock",
-    "things": "md-calendar_check",       # assert present
-    "pages": "md-file_document_edit",    # assert present
-    "keynote": "md-presentation",        # assert present
+    "things": "md-calendar_check",  # assert present
+    "pages": "md-file_document_edit",  # assert present
+    "keynote": "md-presentation",  # assert present
     "numbers": "md-chart_bar",
     "preview": "md-file_pdf_box",
     "pdf": "md-file_pdf_box",
     "pdf_expert": "md-file_pdf_box",
     "finder": "md-apple_finder",
-    "default": "md-window_maximize",     # generic window
+    "default": "md-window_maximize",  # generic window
     "power": "md-power",
     # security/passwords
     "one_password": "md-onepassword",
-    "bit_warden": "md-shield_lock",      # dev-bitwarden absent in VMNF
+    "bit_warden": "md-shield_lock",  # dev-bitwarden absent in VMNF
     "kee_pass_x_c": "md-key",
     # media
     "mpv": "md-play_circle",
@@ -133,7 +133,7 @@ OVERRIDES = {
     "qqmusic": "md-music",
     "podcasts": "md-podcast",
     "music": "md-music",
-    # MS brand fixes (some exist, some don't — pin them all)
+    # MS brand fixes (some exist, some don't - pin them all)
     "microsoft_power_point": "md-microsoft_powerpoint",
     "microsoft_word": "md-microsoft_word",
     "microsoft_excel": "md-microsoft_excel",
@@ -173,7 +173,7 @@ OVERRIDES = {
     "orcaslicer": "md-cube",
     "bambu_studio": "md-cube",
     "fusion": "md-cube",
-    "godot": "md-cube",                  # game engine
+    "godot": "md-cube",  # game engine
     "league_of_legends": "md-controller_classic",
     "steam": "md-steam",
     "minecraft": "md-minecraft",
@@ -190,8 +190,8 @@ OVERRIDES = {
     "obs": "md-video",
     "obsstudio": "md-video",
     "team_speak": "md-headphones",
-    "toggl_track": "md-timer",           # assert present
-    "raindrop_io": "md-bookmark",        # assert present
+    "toggl_track": "md-timer",  # assert present
+    "raindrop_io": "md-bookmark",  # assert present
     "reeder5": "md-newspaper",
     "zotero": "md-book_open",
     "joplin": "md-notebook",
@@ -215,31 +215,31 @@ OVERRIDES = {
     "miro": "md-palette",
     "linear": "md-layers",
     "notion": "dev-notion",
-    "click_up": "md-check_bold",         # assert present
+    "click_up": "md-check_bold",  # assert present
     "trello": "md-layers",
     "grammarly": "md-pen",
-    "matlab": "md-math_integral",        # wait: probed md-math_integral OK
+    "matlab": "md-math_integral",  # wait: probed md-math_integral OK
     "noodl": "md-widgets",
     "quantumult_x": "md-shield_lock",
     "yuque": "md-notebook",
     "xcode": "md-language_swift",
     # second curation pass (archive names that fell through)
-    "adobe_bridge": "md-image",          # Adobe asset browser
+    "adobe_bridge": "md-image",  # Adobe asset browser
     "airmail": "md-email",
     "app_eraser": "md-eraser",
     "bluos_controller": "md-speaker",
-    "caprine": "md-message_text",        # FB Messenger wrapper
+    "caprine": "md-message_text",  # FB Messenger wrapper
     "color_picker": "md-eyedropper_variant",
-    "coteditor": "md-text_box",          # plain-text editor
-    "ableton": "md-music",               # Ableton Live
-    "orion": "md-web_box",               # Orion browser
-    "parsec": "md-monitor",              # remote desktop
+    "coteditor": "md-text_box",  # plain-text editor
+    "ableton": "md-music",  # Ableton Live
+    "orion": "md-web_box",  # Orion browser
+    "parsec": "md-monitor",  # remote desktop
     "setapp": "md-apps",
-    "spark": "md-email",                 # Spark mail
+    "spark": "md-email",  # Spark mail
     "tana": "md-notebook",
     "zeplin": "md-layers",
     "zulip": "md-forum",
-    "folx": "md-download",               # assert present
+    "folx": "md-download",  # assert present
     "doublecmd": "md-folder",
     "transmit": "md-folder",
     "audacity": "md-microphone",
@@ -252,7 +252,7 @@ OVERRIDES = {
     "zoom": "md-video",
     "firefox": "md-firefox",
     "firefox_developer_edition": "md-firefox",
-    "google_chrome": "md-google_chrome", # assert present
+    "google_chrome": "md-google_chrome",  # assert present
     "opera": "md-opera",
     "telegram": "fa-telegram",
     "whats_app": "md-whatsapp",
@@ -262,14 +262,14 @@ OVERRIDES = {
     "yandex_music": "md-music",
     "spotify": "md-spotify",
     "docker": "md-docker",
-    "postman": "md-flask",               # hmm: probed md-flask OK
+    "postman": "md-flask",  # hmm: probed md-flask OK
     "insomnia": "md-flask",
     "cypress": "md-flask",
     "replit": "md-code_tags",
     "cloud": "md-cloud",
     "dropbox": "md-cloud",
     "evernote_legacy": "md-notebook",
-    "vim": "custom-vim",                 # official Vim logo (nicer than dev-vim)
+    "vim": "custom-vim",  # official Vim logo (nicer than dev-vim)
     "neovim": "custom-neovim",
     "neovide": "custom-neovim",
     "emacs": "custom-emacs",
@@ -277,7 +277,7 @@ OVERRIDES = {
     "thunderbird": "linux-thunderbird",
     "localsend": "md-cellphone",
     "lm_studio": "md-brain",
-    "openai": "md-robot",                # ChatGPT archive ligature
+    "openai": "md-robot",  # ChatGPT archive ligature
     "wallpaper": "md-image",
     "weather": "md-weather_partly_rainy",
 }
@@ -287,7 +287,7 @@ OVERRIDES = {
 # names not otherwise resolved.
 
 CATEGORIES = [
-    # (token set — match if ANY token of the ligature name is in the set, glyph)
+    # (token set - match if ANY token of the ligature name is in the set, glyph)
     ({"browser", "wolf", "tor"}, "md-web_box"),
     ({"terminal", "console", "shell"}, "md-console"),
     ({"mail"}, "md-email"),
@@ -334,6 +334,7 @@ def parse_lua_apps(path):
 
 def resolve(name, by_name):
     """Return (glyph_name, tier)."""
+
     def exists(g):
         return g if g in by_name else None
 
@@ -344,7 +345,7 @@ def resolve(name, by_name):
             return g, "override"
         if g is None:
             del OVERRIDES[name]  # scrubbed placeholder
-        # a missing override glyph falls through — the assert pass below
+        # a missing override glyph falls through - the assert pass below
         # will catch it separately
 
     # 2. exact with prefix preference
@@ -370,7 +371,7 @@ def resolve(name, by_name):
             if g:
                 return g, "normalized"
 
-    # 4/5. categories (token match) — overrides table above covers the
+    # 4/5. categories (token match) - overrides table above covers the
     # archive's generic ligatures explicitly
     tok = set(tokens)
     for members, glyph in CATEGORIES:
@@ -407,12 +408,12 @@ def main():
             fell_back.append(f"{app} -> {apps[app]}")
 
     lines = [
-        "-- helpers/icons.lua — app-name → VictorMono Nerd Font glyph map.",
-        "-- GENERATED by tools/gen_icon_map.py — do not hand-edit; curate the",
+        "-- helpers/icons.lua - app-name → VictorMono Nerd Font glyph map.",
+        "-- GENERATED by tools/gen_icon_map.py - do not hand-edit; curate the",
         "--   generator's OVERRIDES/CATEGORIES tables instead, then regen:",
         "--     python3 tools/gen_icon_map.py",
         f"--   (archive ligature table + legacy map → VMNF cmap, {len(resolved)} apps;",
-        "--    every codepoint verified against the font's cmap — no tofu)",
+        "--    every codepoint verified against the font's cmap - no tofu)",
         "",
         "local map = {",
     ]
@@ -455,7 +456,7 @@ def main():
         for f in fell_back:
             print("  ", f)
     else:
-        print("no fallbacks — full coverage")
+        print("no fallbacks - full coverage")
 
 
 if __name__ == "__main__":

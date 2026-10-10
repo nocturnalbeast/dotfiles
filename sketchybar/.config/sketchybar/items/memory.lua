@@ -1,13 +1,13 @@
--- items/memory.lua — used memory % via vm_stat (machine fact 12:
+-- items/memory.lua - used memory % via vm_stat (machine fact 12:
 -- `memory_pressure -Q` free% includes purgeable, so used% understates
 -- Activity Monitor). used = (Pages wired down + Pages active + Pages
 -- occupied by compressor) × page-size ÷ hw.memsize, batched in one exec
 -- and grep-narrowed to stay well under the sbar.exec truncation limit
 -- (fact 3). 10s poll. fg normally, yellow >60%, red >85%.
 -- Hover → absolute "16.2 / 64 GB" append (helpers/hover; GB math from
--- the same vm_stat parse — cache-only, no new execs).
+-- the same vm_stat parse - cache-only, no new execs).
 -- Monitor-exclusive: born hidden + updates off in main mode (reload-free
--- mode swap via mode_changed — AGENT.md facts 16–18).
+-- mode swap via mode_changed - AGENT.md facts 16-18).
 local colors = require("colors")
 local settings = require("settings")
 local pill = require("helpers.pill")
@@ -96,7 +96,7 @@ end, { base = function()
 end })
 
 -- ============================================================================
--- Mode gating (Lua poll chain gated by `polling` — fact 16; no popup)
+-- Mode gating (Lua poll chain gated by `polling` - fact 16; no popup)
 -- ============================================================================
 
 local polling = false

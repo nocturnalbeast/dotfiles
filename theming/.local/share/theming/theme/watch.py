@@ -45,7 +45,7 @@ DAEMON_LOCK = CACHE_DIR / "watch.lock"
 
 
 def watch_daemon(tracker: str, on_change: list[str], sync: bool = True) -> None:
-    """Single long-lived daemon (supervised by wm/autostart); holds an exclusive flock for its lifetime — a second instance exits."""
+    """Single long-lived daemon (supervised by wm/autostart); holds an exclusive flock for its lifetime - a second instance exits."""
     import fcntl
     from theme.helpers import logio
 
@@ -54,10 +54,10 @@ def watch_daemon(tracker: str, on_change: list[str], sync: bool = True) -> None:
     try:
         fcntl.flock(_daemon_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
-        fail("another watch daemon holds the lock — exiting")
+        fail("another watch daemon holds the lock - exiting")
         sys.exit(0)
 
-    # force plain append-only output — in-process applies must not spawn spinners/colors
+    # force plain append-only output - in-process applies must not spawn spinners/colors
     logio.configure(verbosity=0, progress=False)
 
     tracker_path = Path(os.path.expanduser(tracker))
@@ -68,7 +68,7 @@ def watch_daemon(tracker: str, on_change: list[str], sync: bool = True) -> None:
         not subprocess.run(["which", "inotifywait"], capture_output=True).returncode
         == 0
     ):
-        fail("inotifywait not found — daemon refusing to start")
+        fail("inotifywait not found - daemon refusing to start")
         sys.exit(1)
 
     proc = subprocess.Popen(
@@ -91,12 +91,12 @@ def watch_daemon(tracker: str, on_change: list[str], sync: bool = True) -> None:
     )
     stdout = proc.stdout
     if stdout is None:
-        fail("inotifywait produced no stdout — daemon cannot watch")
+        fail("inotifywait produced no stdout - daemon cannot watch")
         sys.exit(1)
 
     STATE_DIR.mkdir(parents=True, exist_ok=True)
 
-    # heartbeat is per-event AND periodic — events-only makes quiet sessions look stale to doctor's liveness probe
+    # heartbeat is per-event AND periodic - events-only makes quiet sessions look stale to doctor's liveness probe
     import threading
 
     def _heartbeat_loop():
@@ -120,15 +120,15 @@ def watch_daemon(tracker: str, on_change: list[str], sync: bool = True) -> None:
 
             resolved = resolve_tracker(tracker)
             if not resolved:
-                warn("tracker missing/invalid — skipping")
+                warn("tracker missing/invalid - skipping")
                 continue
 
             # same-value skip: `background restore` re-creates the tracker symlink for the
-            # same image — without this check apply → awesome restart → rc.lua autostart →
+            # same image - without this check apply → awesome restart → rc.lua autostart →
             # symlink event would loop the chain forever.
             if resolved == last_processed:
                 action(
-                    f"{time.strftime('%H:%M:%S')} · symlink event, same wallpaper — skipping"
+                    f"{time.strftime('%H:%M:%S')} · symlink event, same wallpaper - skipping"
                 )
                 continue
             last_processed = resolved
@@ -138,7 +138,7 @@ def watch_daemon(tracker: str, on_change: list[str], sync: bool = True) -> None:
             )
 
             if not sync:
-                action(f"{time.strftime('%H:%M:%S')} · sync disabled — logging only")
+                action(f"{time.strftime('%H:%M:%S')} · sync disabled - logging only")
                 continue
 
             try:
@@ -160,14 +160,14 @@ def watch_daemon(tracker: str, on_change: list[str], sync: bool = True) -> None:
                             warn(f"unknown on_change target: {target}")
             except Exception as e:
                 fail(
-                    f"chain failed: {e} — event NOT dropped, "
+                    f"chain failed: {e} - event NOT dropped, "
                     "will retry on next wallpaper change"
                 )
 
             coalesced = _drain_pending(stdout)
             if coalesced:
                 action(
-                    f"{time.strftime('%H:%M:%S')} · coalesced {coalesced} queued event(s) — "
+                    f"{time.strftime('%H:%M:%S')} · coalesced {coalesced} queued event(s) - "
                     "latest-wins, tracker state is current"
                 )
 

@@ -1,4 +1,4 @@
-"""Qt member: Q1–Q6 — qt6ct platformtheme, Kvantum/Fusion dual-mode, kdeglobals, managed env line."""
+"""Qt member: Q1-Q6 - qt6ct platformtheme, Kvantum/Fusion dual-mode, kdeglobals, managed env line."""
 
 from __future__ import annotations
 
@@ -245,14 +245,14 @@ class QtComponent(Component):
 
     def write_effects(self, ctx: Context) -> Effects:
         if not shutil.which("qt6ct"):
-            fail("qt6ct not found — the platformtheme for both modes")
+            fail("qt6ct not found - the platformtheme for both modes")
             return Effects(code=1)
 
         style_cfg = ctx.config["qt"]["style"]
         style = style_cfg
         if style_cfg == "kvantum" and not KVANTUM_ENGINE.exists():
             warn(
-                "kvantum engine absent — falling back to fusion for this apply "
+                "kvantum engine absent - falling back to fusion for this apply "
                 "(install: zypper in kvantum-qt6,)"
             )
             style = "fusion"

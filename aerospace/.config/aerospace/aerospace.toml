@@ -8,8 +8,8 @@ start-at-login = true
 auto-reload-config = true
 
 after-startup-command = [
-    'exec-and-forget sketchybar',
-    'exec-and-forget ~/.config/aerospace/borders.sh',
+  'exec-and-forget sketchybar',
+  'exec-and-forget ~/.config/aerospace/borders.sh',
 ]
 after-login-command = []
 
@@ -23,11 +23,13 @@ default-root-container-orientation = 'auto'
 
 on-focused-monitor-changed = ['move-mouse monitor-lazy-center']
 on-focus-changed = [
-    'exec-and-forget sketchybar --trigger aerospace_focus_change',
-    'exec-and-forget sketchybar --trigger aerospace_update_windows',
+  'exec-and-forget sketchybar --trigger aerospace_focus_change',
+  'exec-and-forget sketchybar --trigger aerospace_update_windows',
 ]
-exec-on-workspace-change = ['/bin/bash', '-c',
-    'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE',
+exec-on-workspace-change = [
+  '/bin/bash',
+  '-c',
+  'sketchybar --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE',
 ]
 on-mode-changed = []
 
@@ -35,66 +37,75 @@ automatically-unhide-macos-hidden-apps = false
 
 # 10 workspaces; 1=main, 2=inet, 3=code, 4=data, 5=play, 6=docs, 7=draw, 8=txns, 9=info, 0=misc
 persistent-workspaces = [
-    'main', 'inet', 'code', 'data', 'play', 'docs', 'draw', 'txns', 'info', 'misc',
+  'main',
+  'inet',
+  'code',
+  'data',
+  'play',
+  'docs',
+  'draw',
+  'txns',
+  'info',
+  'misc',
 ]
 
 # on-window-detected rules. Routes by bundle ID, then floaters last.
 on-window-detected = [
-    # main
-    { if = 'test %{app-bundle-id} = com.microsoft.Outlook', run = 'move-node-to-workspace main' },
-    { if = 'test %{app-bundle-id} = com.microsoft.teams2', run = 'move-node-to-workspace main' },
-    { if = 'test %{app-bundle-id} = com.tinyspeck.slackmacgap', run = 'move-node-to-workspace main' },
-    # inet
-    { if = 'test %{app-bundle-id} = org.mozilla.firefox', run = 'move-node-to-workspace inet' },
-    { if = 'test %{app-bundle-id} = com.google.Chrome', run = 'move-node-to-workspace inet' },
-    { if = 'test %{app-bundle-id} = com.apple.Safari', run = 'move-node-to-workspace inet' },
-    # code
-    { if = 'test %{app-bundle-id} = net.kovidgoyal.kitty', run = 'move-node-to-workspace code' },
-    { if = 'test %{app-bundle-id} = com.googlecode.iterm2', run = 'move-node-to-workspace code' },
-    { if = 'test %{app-bundle-id} = dev.zed.Zed', run = 'move-node-to-workspace code' },
-    { if = 'test %{app-bundle-id} = com.microsoft.VSCode', run = 'move-node-to-workspace code' },
-    { if = 'test %{app-bundle-id} = com.sublimemerge', run = 'move-node-to-workspace code' },
-    { if = 'test %{app-bundle-id} = dev.openchamber.desktop', run = 'move-node-to-workspace code' },
-    # data
-    { if = 'test %{app-bundle-id} = com.mongodb.compass', run = 'move-node-to-workspace data' },
-    { if = 'test %{app-bundle-id} = me.qii404.another-redis-desktop-manager', run = 'move-node-to-workspace data' },
-    { if = 'test %{app-bundle-id} = org.localsend.localsendApp', run = 'move-node-to-workspace data' },
-    { if = 'test %{app-bundle-id} = com.emtec.zoc9', run = 'move-node-to-workspace data' },
-    # play
-    { if = 'test %{app-bundle-id} = org.kde.Kdenlive', run = 'move-node-to-workspace play' },
-    { if = 'test %{app-bundle-id} = com.apple.iMovieApp', run = 'move-node-to-workspace play' },
-    # docs
-    { if = 'test %{app-bundle-id} = org.libreoffice.script', run = 'move-node-to-workspace docs' },
-    { if = 'test %{app-bundle-id} = com.microsoft.Word', run = 'move-node-to-workspace docs' },
-    { if = 'test %{app-bundle-id} = com.microsoft.Excel', run = 'move-node-to-workspace docs' },
-    { if = 'test %{app-bundle-id} = com.microsoft.Powerpoint', run = 'move-node-to-workspace docs' },
-    { if = 'test %{app-bundle-id} = com.microsoft.onenote.mac', run = 'move-node-to-workspace docs' },
-    { if = 'test %{app-bundle-id} = com.apple.iWork.Pages', run = 'move-node-to-workspace docs' },
-    { if = 'test %{app-bundle-id} = com.apple.iWork.Keynote', run = 'move-node-to-workspace docs' },
-    { if = 'test %{app-bundle-id} = com.logseq.logseq', run = 'move-node-to-workspace docs' },
-    # draw
-    { if = 'test %{app-bundle-id} = com.jgraph.drawio.desktop', run = 'move-node-to-workspace draw' },
-    # txns
-    { if = 'test %{app-bundle-id} = net.whatsapp.WhatsApp', run = 'move-node-to-workspace txns' },
-    # info
-    { if = 'test %{app-bundle-id} = com.apple.ActivityMonitor', run = 'move-node-to-workspace info' },
-    { if = 'test %{app-bundle-id} = ai.elementlabs.lmstudio', run = 'move-node-to-workspace info' },
-    { if = 'test %{app-bundle-id} = com.dalcu.mlx-core', run = 'move-node-to-workspace info' },
-    { if = 'test %{app-bundle-id} = com.youssofal.mtplx', run = 'move-node-to-workspace info' },
-    { if = 'test %{app-bundle-id} = dev.kdrag0n.MacVirt', run = 'move-node-to-workspace info' },
-    # misc
-    # check-further-callbacks: first-match-wins otherwise; 1Password both moves AND floats
-    { if = 'test %{app-bundle-id} = com.1password.1password', run = 'move-node-to-workspace misc', check-further-callbacks = true },
-    { if = 'test %{app-bundle-id} = pro.betterdisplay.BetterDisplay', run = 'move-node-to-workspace misc' },
-    { if = 'test %{app-bundle-id} = org.hammerspoon.Hammerspoon', run = 'move-node-to-workspace misc' },
-    { if = 'test %{app-bundle-id} = com.box.desktop', run = 'move-node-to-workspace misc' },
-    { if = 'test %{app-bundle-id} = org.openvpn.client.app', run = 'move-node-to-workspace misc' },
-    { if = 'test %{app-bundle-id} = org.zaproxy.zap.ZAP', run = 'move-node-to-workspace misc' },
-    { if = 'test %{app-bundle-id} = com.cisco.secureclient.gui', run = 'move-node-to-workspace misc' },
-    # floaters
-    { if = 'test %{app-bundle-id} = com.apple.finder', run = 'layout floating' },
-    { if = 'test %{app-bundle-id} = com.1password.1password', run = 'layout floating' },
-    { if = 'test %{app-bundle-id} = com.apple.systempreferences', run = 'layout floating' },
+  # main
+  { if = 'test %{app-bundle-id} = com.microsoft.Outlook', run = 'move-node-to-workspace main' },
+  { if = 'test %{app-bundle-id} = com.microsoft.teams2', run = 'move-node-to-workspace main' },
+  { if = 'test %{app-bundle-id} = com.tinyspeck.slackmacgap', run = 'move-node-to-workspace main' },
+  # inet
+  { if = 'test %{app-bundle-id} = org.mozilla.firefox', run = 'move-node-to-workspace inet' },
+  { if = 'test %{app-bundle-id} = com.google.Chrome', run = 'move-node-to-workspace inet' },
+  { if = 'test %{app-bundle-id} = com.apple.Safari', run = 'move-node-to-workspace inet' },
+  # code
+  { if = 'test %{app-bundle-id} = net.kovidgoyal.kitty', run = 'move-node-to-workspace code' },
+  { if = 'test %{app-bundle-id} = com.googlecode.iterm2', run = 'move-node-to-workspace code' },
+  { if = 'test %{app-bundle-id} = dev.zed.Zed', run = 'move-node-to-workspace code' },
+  { if = 'test %{app-bundle-id} = com.microsoft.VSCode', run = 'move-node-to-workspace code' },
+  { if = 'test %{app-bundle-id} = com.sublimemerge', run = 'move-node-to-workspace code' },
+  { if = 'test %{app-bundle-id} = dev.openchamber.desktop', run = 'move-node-to-workspace code' },
+  # data
+  { if = 'test %{app-bundle-id} = com.mongodb.compass', run = 'move-node-to-workspace data' },
+  { if = 'test %{app-bundle-id} = me.qii404.another-redis-desktop-manager', run = 'move-node-to-workspace data' },
+  { if = 'test %{app-bundle-id} = org.localsend.localsendApp', run = 'move-node-to-workspace data' },
+  { if = 'test %{app-bundle-id} = com.emtec.zoc9', run = 'move-node-to-workspace data' },
+  # play
+  { if = 'test %{app-bundle-id} = org.kde.Kdenlive', run = 'move-node-to-workspace play' },
+  { if = 'test %{app-bundle-id} = com.apple.iMovieApp', run = 'move-node-to-workspace play' },
+  # docs
+  { if = 'test %{app-bundle-id} = org.libreoffice.script', run = 'move-node-to-workspace docs' },
+  { if = 'test %{app-bundle-id} = com.microsoft.Word', run = 'move-node-to-workspace docs' },
+  { if = 'test %{app-bundle-id} = com.microsoft.Excel', run = 'move-node-to-workspace docs' },
+  { if = 'test %{app-bundle-id} = com.microsoft.Powerpoint', run = 'move-node-to-workspace docs' },
+  { if = 'test %{app-bundle-id} = com.microsoft.onenote.mac', run = 'move-node-to-workspace docs' },
+  { if = 'test %{app-bundle-id} = com.apple.iWork.Pages', run = 'move-node-to-workspace docs' },
+  { if = 'test %{app-bundle-id} = com.apple.iWork.Keynote', run = 'move-node-to-workspace docs' },
+  { if = 'test %{app-bundle-id} = com.logseq.logseq', run = 'move-node-to-workspace docs' },
+  # draw
+  { if = 'test %{app-bundle-id} = com.jgraph.drawio.desktop', run = 'move-node-to-workspace draw' },
+  # txns
+  { if = 'test %{app-bundle-id} = net.whatsapp.WhatsApp', run = 'move-node-to-workspace txns' },
+  # info
+  { if = 'test %{app-bundle-id} = com.apple.ActivityMonitor', run = 'move-node-to-workspace info' },
+  { if = 'test %{app-bundle-id} = ai.elementlabs.lmstudio', run = 'move-node-to-workspace info' },
+  { if = 'test %{app-bundle-id} = com.dalcu.mlx-core', run = 'move-node-to-workspace info' },
+  { if = 'test %{app-bundle-id} = com.youssofal.mtplx', run = 'move-node-to-workspace info' },
+  { if = 'test %{app-bundle-id} = dev.kdrag0n.MacVirt', run = 'move-node-to-workspace info' },
+  # misc
+  # check-further-callbacks: first-match-wins otherwise; 1Password both moves AND floats
+  { if = 'test %{app-bundle-id} = com.1password.1password', run = 'move-node-to-workspace misc', check-further-callbacks = true },
+  { if = 'test %{app-bundle-id} = pro.betterdisplay.BetterDisplay', run = 'move-node-to-workspace misc' },
+  { if = 'test %{app-bundle-id} = org.hammerspoon.Hammerspoon', run = 'move-node-to-workspace misc' },
+  { if = 'test %{app-bundle-id} = com.box.desktop', run = 'move-node-to-workspace misc' },
+  { if = 'test %{app-bundle-id} = org.openvpn.client.app', run = 'move-node-to-workspace misc' },
+  { if = 'test %{app-bundle-id} = org.zaproxy.zap.ZAP', run = 'move-node-to-workspace misc' },
+  { if = 'test %{app-bundle-id} = com.cisco.secureclient.gui', run = 'move-node-to-workspace misc' },
+  # floaters
+  { if = 'test %{app-bundle-id} = com.apple.finder', run = 'layout floating' },
+  { if = 'test %{app-bundle-id} = com.1password.1password', run = 'layout floating' },
+  { if = 'test %{app-bundle-id} = com.apple.systempreferences', run = 'layout floating' },
 ]
 
 # Odd-numbered workspaces always live on the secondary monitor.
@@ -113,19 +124,16 @@ enabled = false
 
 [gaps]
 inner.horizontal = 10
-inner.vertical   = 10
-outer.left       = 10
-outer.bottom     = 10
-outer.right      = 10
+inner.vertical = 10
+outer.left = 10
+outer.bottom = 10
+outer.right = 10
 # Per-monitor (AeroSpace ≥0.8.0): the built-in already reserves 38pt of
 # notch safe-area, so it only needs a small top-up under the floating bar;
 # notchless externals need the full clearance. Pattern matches the panel
-# NAME ("Built-in Retina Display") — survives dock/undock, unlike
+# NAME ("Built-in Retina Display") - survives dock/undock, unlike
 # monitor.main which flips to the laptop when externals unplug.
-outer.top        = [
-    { monitor."built-in.*" = 4 },
-    42,
-]
+outer.top = [{ monitor."built-in.*" = 4 }, 42]
 
 [exec]
 inherit-env-vars = true

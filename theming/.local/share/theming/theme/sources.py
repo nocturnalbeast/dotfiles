@@ -45,7 +45,7 @@ def ensure_source(
 
     Offline + missing clone is a hard error; pull failure downgrades to
     a warning when a usable clone exists; dry_run reports only. Cache
-    dirs are namespaced by family — same-key clones (colloid gtk vs
+    dirs are namespaced by family - same-key clones (colloid gtk vs
     icons) would shadow each other; flat clones migrate on access.
     """
     path = SOURCES_DIR / key

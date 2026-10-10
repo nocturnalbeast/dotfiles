@@ -147,10 +147,10 @@ set_picture_macos() {
 
     case "$OSA_ERROR" in
         *-1743* | *"Not authorized"* | *"not authorized"*)
-            # Automation permission missing — warning, not a failure: the
+            # Automation permission missing - warning, not a failure: the
             # tracker was already updated and the wallpaper will apply
             # once permission is granted.
-            echo "Warning: wallpaper not set — System Events automation not authorized." >&2
+            echo "Warning: wallpaper not set - System Events automation not authorized." >&2
             echo "  $OSA_ERROR" >&2
             echo "Approve the System Events prompt for your terminal app" >&2
             echo "(System Settings > Privacy & Security > Automation), then re-run." >&2
@@ -204,7 +204,7 @@ set_wallpaper() {
     fi
 
     if is_macos; then
-        # ~/.config/wm is not stow-managed on macOS — ensure it exists
+        # ~/.config/wm is not stow-managed on macOS - ensure it exists
         mkdir -p "${XDG_CONFIG_HOME:-$HOME/.config}/wm"
         # ln -sfr is GNU coreutils only; on darwin link to an absolute
         # target with ln -sfn instead

@@ -11,7 +11,7 @@ from theme.resources.base import Context
 
 @dataclass
 class Effects:
-    """What write_effects produced: S1–S4 shared-surface kv (written
+    """What write_effects produced: S1-S4 shared-surface kv (written
     centrally, never by members), managed S6 env lines, (kind, params)
     reloads, restart hints, and a member stamp record."""
 
@@ -41,7 +41,7 @@ class Component(ABC):
 
     @abstractmethod
     def write_effects(self, ctx: Context) -> Effects:
-        """Builds + member-owned writes; returns contributions — NO
+        """Builds + member-owned writes; returns contributions - NO
         shared-surface writes, NO reload signals (runner owns those)."""
 
     @abstractmethod

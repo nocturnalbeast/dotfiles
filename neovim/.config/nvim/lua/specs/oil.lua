@@ -1,4 +1,4 @@
--- oil.nvim — buffer-based file manager (decision 10: oil ONLY, no sidebar tree).
+-- oil.nvim - buffer-based file manager (decision 10: oil ONLY, no sidebar tree).
 -- Harvested from ~/desktop/nvim-from-dots/lua/plugins/config/oil.lua; modernized:
 --   · DiagnosticSign{Warn,Error,Ok} -> Diagnostic{Warn,Error,Ok} (0.10+ names)
 --   · '-'/'_' maps call the lua API instead of :Oil ex commands

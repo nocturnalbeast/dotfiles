@@ -1,8 +1,8 @@
--- items/cpu.lua — total CPU % via ps top-sum (plan §4: NOT `top -l1` —
+-- items/cpu.lua - total CPU % via ps top-sum (plan §4: NOT `top -l1` -
 -- slow spawn). 10s poll. fg normally, yellow >60%, red >85%.
 -- Click → popup with top 5 processes.
 -- Monitor-exclusive: born hidden + updates off in main mode (reload-free
--- mode swap via mode_changed — AGENT.md facts 16–18).
+-- mode swap via mode_changed - AGENT.md facts 16-18).
 local colors = require("colors")
 local settings = require("settings")
 local pill = require("helpers.pill")
@@ -49,7 +49,7 @@ local function color_for(v)
 	return colors.fg
 end
 
--- Core count fetched once at load — ps %cpu sums across ALL cores (M4 Max
+-- Core count fetched once at load - ps %cpu sums across ALL cores (M4 Max
 -- = 16c → raw sums up to 1600%); normalize to a 0-100% figure like
 -- Activity Monitor.
 local ncpu = 8
@@ -86,7 +86,7 @@ local function refresh()
 end
 
 -- ============================================================================
--- Top-processes popup (helpers/popup lifecycle — rows built async on
+-- Top-processes popup (helpers/popup lifecycle - rows built async on
 -- open, tracked + removed on close; a close while ps is in flight
 -- generation-guards the adds away)
 -- ============================================================================
@@ -112,7 +112,7 @@ cpu:subscribe("mouse.clicked", ctl:clicked(build_popup))
 cpu:subscribe("mouse.exited.global", ctl:exited())
 
 -- ============================================================================
--- Mode gating (Lua poll chain gated by `polling` — fact 16)
+-- Mode gating (Lua poll chain gated by `polling` - fact 16)
 -- ============================================================================
 
 local polling = false

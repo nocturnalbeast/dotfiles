@@ -15,7 +15,7 @@ from theme.helpers.deltae import (
     scheme_distance,
 )
 
-# (L1, a1, b1, L2, a2, b2, expected ΔE00) — Sharma 2005 Table 1.
+# (L1, a1, b1, L2, a2, b2, expected ΔE00) - Sharma 2005 Table 1.
 SHARMA_PAIRS = [
     (50.0000, 2.6772, -79.7751, 50.0000, 0.0000, -82.7485, 2.0425),
     (50.0000, 3.1571, -77.2803, 50.0000, 0.0000, -82.7485, 2.8615),

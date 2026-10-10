@@ -8,7 +8,7 @@ Item {
 
     default property alias content: shadowedModule.content
 
-    // Popup configuration — set popupComponent to enable the popup.
+    // Popup configuration - set popupComponent to enable the popup.
     property Component popupComponent: null
     property real anchorOverrideX: -1
     property real anchorOverrideWidth: -1

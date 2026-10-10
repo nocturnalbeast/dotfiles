@@ -169,7 +169,7 @@ Item {
         }
         // Variant that collapses (Qt positioners skip invisible items) when
         // the clock module hides on an empty workspace. Uses a distinct role
-        // value instead of reading modelData in the delegate — under
+        // value instead of reading modelData in the delegate - under
         // `pragma ComponentBehavior: Bound` the unqualified modelData context
         // property does not resolve in delegates.
         DelegateChoice {

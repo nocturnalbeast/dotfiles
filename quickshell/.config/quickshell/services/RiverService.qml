@@ -46,7 +46,7 @@ Singleton {
         _occupancyConsumers = Math.max(0, _occupancyConsumers - 1);
     }
 
-    // Poll occupancy only — focus tracking is impossible because
+    // Poll occupancy only - focus tracking is impossible because
     // riverctl get-focused-tags does not exist (see river.md §4e).
     // Workspace focus state stays at the initial assumption (tag 1).
     Timer {

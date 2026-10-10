@@ -20,7 +20,7 @@ Item {
     // When set (x >= 0), these replace the default full-item anchor rect
     property real anchorOverrideX: -1
     property real anchorOverrideWidth: -1
-    // The PanelWindow (Bar.qml) — must be set by the parent layout
+    // The PanelWindow (Bar.qml) - must be set by the parent layout
     property var barWindow: null
     // The popup's content component
     property Component contentComponent: null

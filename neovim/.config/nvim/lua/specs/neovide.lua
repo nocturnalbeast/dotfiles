@@ -1,4 +1,4 @@
--- Neovide GUI block — guarded so the whole module is inert outside Neovide.
+-- Neovide GUI block - guarded so the whole module is inert outside Neovide.
 if not vim.g.neovide then
     return
 end

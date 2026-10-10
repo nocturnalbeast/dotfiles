@@ -80,7 +80,7 @@ class SchemeComponent(Component):
         self, ctx: Context, gen_name: str
     ) -> tuple[str, list[tuple[str, float]]]:
         """Catalog snap: nearest within τ → catalog name, else the
-        generated scheme (pure function — status/apply parity)."""
+        generated scheme (pure function - status/apply parity)."""
         from theme.helpers.deltae import load_catalog, nearest_schemes
 
         query = self._query_slots(gen_name)
@@ -90,7 +90,7 @@ class SchemeComponent(Component):
 
         catalog = load_catalog(TINTY_CATALOG_DIR)
         if not catalog:
-            warn("approx: catalog unreadable — degrading to follow")
+            warn("approx: catalog unreadable - degrading to follow")
             return gen_name, []
 
         top = nearest_schemes(query, catalog, self._resolved_mode(ctx), k=3)
@@ -137,7 +137,7 @@ class SchemeComponent(Component):
     def _auto_emit(self, ctx: Context) -> None:
         from theme.generate import emit_only
 
-        action("artifacts stale — auto-invoking palette emit")
+        action("artifacts stale - auto-invoking palette emit")
         emit_only()
 
     def _auto_regenerate(self, ctx: Context, stored: str, configured: str) -> bool:
@@ -161,7 +161,7 @@ class SchemeComponent(Component):
         if ctx.dry_run:
             action(f"would regenerate for engine switch: {stored} → {configured}")
             return True
-        action(f"engine switch {stored} → {configured} — auto-invoking generation")
+        action(f"engine switch {stored} → {configured} - auto-invoking generation")
         mode = ctx.config.get("palette", {}).get("mode", "auto")
         try:
             generate(image, mode, engines=ctx.config.get("engines"))
@@ -191,7 +191,7 @@ class SchemeComponent(Component):
         later member) → tinty apply."""
 
         if not shutil.which("tinty"):
-            fail("tinty not found — the engine is required")
+            fail("tinty not found - the engine is required")
             return Effects(code=1)
 
         if ctx.config["tui"]["scheme"] in ("follow", "approx"):
@@ -216,7 +216,7 @@ class SchemeComponent(Component):
             scheme_file = TINTY_SCHEME_DIR / f"{scheme.removeprefix('base24-')}.yaml"
             if not scheme_file.exists():
                 fail(
-                    f"thaim engine unavailable — scheme {scheme} not emitted "
+                    f"thaim engine unavailable - scheme {scheme} not emitted "
                     f"(prerequisites, /)"
                 )
                 return Effects(code=1)
@@ -285,7 +285,7 @@ class SchemeComponent(Component):
         if ctx.config["tui"]["scheme"] == "approx":
             gen_name = self._generated_scheme_name(ctx)
             if self._query_slots(gen_name) is None:
-                warn("approx: query artifacts missing — apply needed")
+                warn("approx: query artifacts missing - apply needed")
                 detail = detail or "approx query artifacts missing"
             else:
                 _, top3 = self._approx(ctx, gen_name)
@@ -293,7 +293,7 @@ class SchemeComponent(Component):
                 if top3:
                     verdict = "snap" if scheme != gen_name else "fallback"
                     lines = ", ".join(f"{n} ({d:.2f})" for n, d in top3)
-                    action(f"approx (τ={tau}): {verdict} — top-3: {lines}")
+                    action(f"approx (τ={tau}): {verdict} - top-3: {lines}")
         note_state(self.group, self.key, code, detail)
         return code
 
@@ -334,7 +334,7 @@ def suggest(config: dict[str, Any], image: str | None = None) -> int:
             if slots is None:
                 warn(
                     f"{m}: query artifacts missing "
-                    f"({gen}) — apply first, or pass --image"
+                    f"({gen}) - apply first, or pass --image"
                 )
             queries[m] = slots
 
@@ -349,7 +349,7 @@ def suggest(config: dict[str, Any], image: str | None = None) -> int:
         table.add_column("d(ΔE00)", justify="right")
     table.add_column("verdict @ τ", style="dim")
 
-    console_header = f"tui suggest — engine: {tui_engine_name}, τ = {tau}"
+    console_header = f"tui suggest - engine: {tui_engine_name}, τ = {tau}"
     action(console_header)
     for m in ("dark", "light"):
         slots = queries.get(m)

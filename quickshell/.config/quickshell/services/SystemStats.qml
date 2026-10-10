@@ -66,7 +66,7 @@ Singleton {
         _pollConsumers = Math.max(0, _pollConsumers - 1);
     }
 
-    // ─── Timer — 2s polling interval ─────────────
+    // ─── Timer - 2s polling interval ─────────────
     Timer {
         id: statsTimer
         interval: 2000
@@ -84,7 +84,7 @@ Singleton {
         }
     }
 
-    // ─── CPU — /proc/stat ────────────────────────
+    // ─── CPU - /proc/stat ────────────────────────
     FileView {
         id: cpuFile
         path: "/proc/stat"
@@ -126,7 +126,7 @@ Singleton {
         }
     }
 
-    // ─── Memory — /proc/meminfo ──────────────────
+    // ─── Memory - /proc/meminfo ──────────────────
     FileView {
         id: meminfoFile
         path: "/proc/meminfo"
@@ -166,7 +166,7 @@ Singleton {
         }
     }
 
-    // ─── Temperature — /sys/class/thermal/ ────────
+    // ─── Temperature - /sys/class/thermal/ ────────
     FileView {
         id: tempFile
         path: root.thermalZonePath
@@ -180,7 +180,7 @@ Singleton {
         }
     }
 
-    // ─── Load Average — /proc/loadavg ─────────────
+    // ─── Load Average - /proc/loadavg ─────────────
     FileView {
         id: loadavgFile
         path: "/proc/loadavg"
@@ -195,7 +195,7 @@ Singleton {
         }
     }
 
-    // ─── Uptime — /proc/uptime ────────────────────
+    // ─── Uptime - /proc/uptime ────────────────────
     FileView {
         id: uptimeFile
         path: "/proc/uptime"
@@ -217,7 +217,7 @@ Singleton {
         }
     }
 
-    // ─── CPU Frequency — sysfs with /proc/cpuinfo fallback ─
+    // ─── CPU Frequency - sysfs with /proc/cpuinfo fallback ─
     FileView {
         id: freqFile
         path: "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"

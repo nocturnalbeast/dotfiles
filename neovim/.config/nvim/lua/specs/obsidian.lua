@@ -1,4 +1,4 @@
--- obsidian.nvim (obsidian-nvim fork) — decision 7/19: full notes workflow,
+-- obsidian.nvim (obsidian-nvim fork) - decision 7/19: full notes workflow,
 -- mac vault active + Linux placeholder. Harvested from
 -- ~/desktop/nvim-mac/lua/kickstart/plugins/obsidian.lua.
 -- No dependencies: obsidian's completion is an in-process LSP that blink

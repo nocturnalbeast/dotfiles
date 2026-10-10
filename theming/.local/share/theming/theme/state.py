@@ -82,7 +82,7 @@ def update_member(
 
 
 def commit_members(records: list[tuple[str, str, dict[str, Any]]]) -> None:
-    """Batch stamp commit: one read+write per group file — parallel members cannot race it."""
+    """Batch stamp commit: one read+write per group file - parallel members cannot race it."""
     by_group: dict[str, dict[str, Any]] = {}
     for group, member, record in records:
         by_group.setdefault(group, {})[member] = record

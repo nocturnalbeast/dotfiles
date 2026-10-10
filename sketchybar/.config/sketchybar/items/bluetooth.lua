@@ -1,10 +1,10 @@
--- items/bluetooth.lua — power state + connected devices via blueutil.
--- 30s poll (sbar.delay timer idiom; was 10s — the sweep costs 3 spawns
+-- items/bluetooth.lua - power state + connected devices via blueutil.
+-- 30s poll (sbar.delay timer idiom; was 10s - the sweep costs 3 spawns
 -- per tick for user-action-paced data). Click → dropdown menu listing
 -- connected devices + power toggle. All blueutil calls guarded (TCC/Bluetooth permission
 -- failures → dim icon, never crash).
 -- Main-exclusive: born hidden + updates off in monitor mode (reload-free
--- mode swap via mode_changed — AGENT.md facts 16–18).
+-- mode swap via mode_changed - AGENT.md facts 16-18).
 local colors = require("colors")
 local settings = require("settings")
 local pill = require("helpers.pill")
@@ -90,21 +90,21 @@ local function render()
 end
 
 -- ============================================================================
--- State sweep — ONE batched exec, COMPACT protocol.
+-- State sweep - ONE batched exec, COMPACT protocol.
 --
 -- The old passthrough shipped blueutil's verbose lines whole (137B per
--- paired device — 695B for five, over the sbar.exec transport limit):
+-- paired device - 695B for five, over the sbar.exec transport limit):
 -- output truncated AND the closed pipe EPIPE'd the shell writers
 -- ("/bin/sh: echo: write error: Broken pipe"). Now awk reduces each
 -- --paired line to `state|address|name` (~40B) and power becomes a
 -- single `P0`/`P1` line; head caps the device count. Worst case
--- (6 devices) ≈ 250B — nothing truncates, nothing EPIPEs. Every
+-- (6 devices) ≈ 250B - nothing truncates, nothing EPIPEs. Every
 -- stage's stderr is silenced so the head() cap can never leak noise.
 --
 -- Protocol:  `P0`|`P1` power line, then per paired device
 --            `C|addr|name` (connected) or `-|addr|name` (not).
 --            Connection state comes from the --paired listing itself
---            (blueutil reports it per device) — the separate
+--            (blueutil reports it per device) - the separate
 --            --connected spawn is gone (3 spawns → 2, still one exec).
 -- ============================================================================
 -- blueutil 2.14 quirk (2026-09-04): under a launchd context --paired
@@ -121,11 +121,11 @@ end
 -- nil → io.open(nil) crashed every sweep (log: bluetooth.lua:139)
 local BT_CONN_FILE = (os.getenv("HOME") or "/tmp") .. "/.cache/sketchybar/bt_connected.txt"
 -- blueutil 2.14 under the launchd context (brew services): the live
--- connection-state is written LATE — piping --connected into awk races
+-- connection-state is written LATE - piping --connected into awk races
 -- the reader (the sweep saw P1-only while the data landed in the file
--- milliseconds later, verified twice). Fix: redirect to a FILE — the
+-- milliseconds later, verified twice). Fix: redirect to a FILE - the
 -- shell's `;` sequencing guarantees it is complete before the exec
--- callback fires — and parse it Lua-side. --connected carries address +
+-- callback fires - and parse it Lua-side. --connected carries address +
 -- name for exactly the devices we care about; every row is connected.
 local SWEEP_CMD = BLUEUTIL .. [[ --connected > ]] .. BT_CONN_FILE
 	.. [[ 2>/dev/null; printf 'P%s\n' "$(]] .. BLUEUTIL .. [[ --power 2>/dev/null)"]]
@@ -140,7 +140,7 @@ local function sweep()
 			end
 		end
 		-- device list from the file (complete: the printf marker runs
-		-- strictly after blueutil exits — see SWEEP_CMD note)
+		-- strictly after blueutil exits - see SWEEP_CMD note)
 		local f = io.open(BT_CONN_FILE, "r")
 		local data = f and f:read("*a") or ""
 		if f then
@@ -149,7 +149,7 @@ local function sweep()
 		local paired = {}
 		for line in string.gmatch(data, "[^\r\n]+") do
 			-- .-: state fields ("connected (…)", "not favourite", …) sit
-			-- between the address and the name — skip them lazily
+			-- between the address and the name - skip them lazily
 			local addr, name = line:match('^address: ([^,]*).-name: "(.*)"')
 			if addr then
 				name = name:gsub("%s+$", "")
@@ -180,7 +180,7 @@ local function sweep()
 end
 
 -- ============================================================================
--- Popup menu (helpers/popup lifecycle — rows built on open, tracked by
+-- Popup menu (helpers/popup lifecycle - rows built on open, tracked by
 -- exact name in Lua and removed on close; the old sbar.remove("/bt%.…/")
 -- regexes were silent no-ops, see AGENT.md fact 13). prefix "bt." covers
 -- the legacy row names for the stale-row sweeps. Subscriptions are NAME-
@@ -240,7 +240,7 @@ bluetooth:subscribe("bt_refresh", function()
 end)
 
 -- ============================================================================
--- Mode gating (Lua poll chain gated by `polling` — fact 16; sweep on
+-- Mode gating (Lua poll chain gated by `polling` - fact 16; sweep on
 -- re-show so the pill reflects any state change from the hidden period)
 -- ============================================================================
 

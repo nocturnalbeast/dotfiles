@@ -1,11 +1,11 @@
--- items/vol.lua — output volume. Event-driven via the BUILTIN volume_change
--- event (P1-4: no polling — a 5s poll would spawn osascript 17k×/day) plus
+-- items/vol.lua - output volume. Event-driven via the BUILTIN volume_change
+-- event (P1-4: no polling - a 5s poll would spawn osascript 17k×/day) plus
 -- the Hammerspoon bridge `hs_audio` event (instant + carries MUTED).
 -- Scroll = ±5, click = toggle mute, initial read at load.
--- Hover → output-device name append (helpers/hover, hs_audio cache only —
+-- Hover → output-device name append (helpers/hover, hs_audio cache only -
 -- no execs; empty cache = no-op reveal).
 -- Main-exclusive: born hidden + updates off in monitor mode (reload-free
--- mode swap via mode_changed — AGENT.md facts 16–18). updates=false stops
+-- mode swap via mode_changed - AGENT.md facts 16-18). updates=false stops
 -- volume_change dispatch while hidden (fact 16); read_volume() on re-show
 -- resyncs.
 local colors = require("colors")
@@ -70,7 +70,7 @@ local function read_volume()
 			return
 		end
 		-- read mute state in the same pass (two quick calls, only on
-		-- events/interaction — never on a timer)
+		-- events/interaction - never on a timer)
 		sbar.exec(OSASCRIPT .. [[ -e 'output muted of (get volume settings)']], function(m)
 			local muted = (m or ""):match("true") ~= nil
 			render(volume, muted)
@@ -82,7 +82,7 @@ vol:subscribe("volume_change", function(env)
 	local volume = tonumber(env.INFO)
 	if volume then
 		render(volume, false)
-		-- volume_change carries the level, not the mute flag — cheap
+		-- volume_change carries the level, not the mute flag - cheap
 		-- follow-up read keeps the mute glyph truthful.
 		sbar.exec(OSASCRIPT .. [[ -e 'output muted of (get volume settings)']], function(m)
 			local muted = (m or ""):match("true") ~= nil
@@ -95,13 +95,13 @@ vol:subscribe("volume_change", function(env)
 	end
 end)
 
--- Hammerspoon bridge — hs_audio (instant volume/mute pushes; see AGENT.md
+-- Hammerspoon bridge - hs_audio (instant volume/mute pushes; see AGENT.md
 -- "Hammerspoon event bridge"). The builtin volume_change above stays the
 -- daemon-side truth for the level; this just makes updates instant and
 -- carries the mute flag the builtin lacks. VOLUME="-1" = device doesn't
 -- expose volume (unsupported) → keep the last known level, if any.
 -- (Subscription on this mode-gated item is dispatched only while
--- updates=true — server-side block while hidden, resync on re-show.)
+-- updates=true - server-side block while hidden, resync on re-show.)
 local last_volume
 local device = nil -- hs_audio DEVICE cache (hover payload; no execs)
 
@@ -120,7 +120,7 @@ vol:subscribe("hs_audio", function(env)
 end)
 
 -- Hover append: "56%  ·  MacBook Pro Speakers" (cache-only; empty cache →
--- no-op reveal — hover on vol never spawns an exec)
+-- no-op reveal - hover on vol never spawns an exec)
 hover.new(vol, function()
 	return device or ""
 end, { base = function()
@@ -145,7 +145,7 @@ vol:subscribe("mouse.scrolled", popup.guard(vol.name, function(env)
 	)
 end))
 
--- Mute toggle may not fire volume_change with a useful payload — manual
+-- Mute toggle may not fire volume_change with a useful payload - manual
 -- re-read after toggling (idempotent if the event also fires).
 vol:subscribe("mouse.clicked", popup.guard(vol.name, function()
 	sbar.exec(

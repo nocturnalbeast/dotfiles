@@ -41,7 +41,7 @@ _DUMP_CACHE: dict[tuple[str, str], dict[str, Any]] = {}
 
 
 def derive_brights(slots: dict[str, str], mode: str) -> dict[str, str]:
-    """base10–base17: HSL lightness shift of base08–base0F."""
+    """base10-base17: HSL lightness shift of base08-base0F."""
     result = dict(slots)
     for i in range(8, 16):
         src = f"base{i:02X}"
@@ -174,7 +174,7 @@ def resolve_mode(mode_preference: str, dump: dict[str, Any]) -> str:
 def build_variant(
     dump: dict[str, Any], mode: str, flavor: str = "faithful"
 ) -> dict[str, str]:
-    """Materialize one base16 map (base00–base0F) from a matugen dump."""
+    """Materialize one base16 map (base00-base0F) from a matugen dump."""
 
     b16_src = dump.get("base16", {})
     colors = dump.get("colors", {})

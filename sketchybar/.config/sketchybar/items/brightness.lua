@@ -1,5 +1,5 @@
--- items/brightness.lua — display brightness via /opt/homebrew/bin/brightness.
--- P1-2: ~/.local/bin/brightness is a broken Linux leftover — absolute path.
+-- items/brightness.lua - display brightness via /opt/homebrew/bin/brightness.
+-- P1-2: ~/.local/bin/brightness is a broken Linux leftover - absolute path.
 --
 -- DEVIATION from plan §4: brew's brightness 1.2 (and the `-g` flag the plan
 -- assumed) is broken on this machine's XDR panel (error -536870201 for BOTH
@@ -7,10 +7,10 @@
 -- supports modern CoreDisplay): reads via `brightness -l` ("display 0:
 -- brightness 0.422500"), sets via `brightness 0.8`. No `-g` on this build.
 --
--- No event source — 30s poll (sbar.delay timer, aerospace safety-refresh
+-- No event source - 30s poll (sbar.delay timer, aerospace safety-refresh
 -- idiom), updating the label only when the value changes (no label churn).
 -- Main-exclusive: born hidden + updates off in monitor mode (reload-free
--- mode swap via mode_changed — AGENT.md facts 16–18).
+-- mode swap via mode_changed - AGENT.md facts 16-18).
 local colors = require("colors")
 local settings = require("settings")
 local pill = require("helpers.pill")
@@ -52,7 +52,7 @@ local brightness_item = sbar.add("item", "brightness", {
 local last_percent = nil
 
 local function read_brightness()
-	-- 2>/dev/null: external DDC displays (MSI) can't report brightness —
+	-- 2>/dev/null: external DDC displays (MSI) can't report brightness -
 	-- stderr noise only, value comes from the built-in display's line
 	sbar.exec(BRIGHTNESS .. " -l 2>/dev/null", function(out)
 		-- "display 0: brightness 0.422500"
@@ -84,7 +84,7 @@ brightness_item:subscribe("mouse.scrolled", popup.guard(brightness_item.name, fu
 end))
 
 -- ============================================================================
--- Mode gating (Lua poll chain gated by `polling` — fact 16; no popup)
+-- Mode gating (Lua poll chain gated by `polling` - fact 16; no popup)
 -- ============================================================================
 
 local polling = false

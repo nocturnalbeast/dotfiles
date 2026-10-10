@@ -765,7 +765,7 @@ vim.keymap.set("n", "<leader>bp", function()
 end, { desc = "Buffer pick" })
 
 -- Transparent bar: bg = "NONE" passes through heirline's hex()/get_color()
--- untouched (highlights.lua:66-80), so only the chips paint — gaps, springs
+-- untouched (highlights.lua:66-80), so only the chips paint - gaps, springs
 -- and the trailing region show the editor background.
 -- Zone order: mode·position || file·git-stats || branch·diag·lsp·search·macro.
 local StatusLine = {

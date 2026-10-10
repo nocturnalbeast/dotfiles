@@ -88,7 +88,7 @@ Singleton {
     readonly property var wifiNetworks: root.wifiDevice ? root.wifiDevice.networks.values : []
 
     // ═══════════════════════════════════════════
-    // IP ADDRESS (no native API — fallback to ip command)
+    // IP ADDRESS (no native API - fallback to ip command)
     // ═══════════════════════════════════════════
 
     property string localIp: ""
@@ -133,7 +133,7 @@ Singleton {
     }
 
     // ═══════════════════════════════════════════
-    // SPEED TRACKING (no native API — /proc/net/dev)
+    // SPEED TRACKING (no native API - /proc/net/dev)
     // ═══════════════════════════════════════════
 
     property string upSpeed: ""

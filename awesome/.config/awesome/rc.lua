@@ -105,13 +105,13 @@ if bling_ok and flash_focus then
 elseif bling_ok then
     naughty.notify({ title = "Awesome WM", text = "bling flash_focus failed to load", timeout = 5 })
 else
-    naughty.notify({ title = "Awesome WM", text = "bling module not found — check installation", timeout = 5 })
+    naughty.notify({ title = "Awesome WM", text = "bling module not found - check installation", timeout = 5 })
 end
 
 -- rubato
 local rubato_ok = pcall(require, "rubato")
 if not rubato_ok then
-    naughty.notify({ title = "Awesome WM", text = "rubato module not found — check installation", timeout = 5 })
+    naughty.notify({ title = "Awesome WM", text = "rubato module not found - check installation", timeout = 5 })
 end
 
 -- Load tags (workspaces)

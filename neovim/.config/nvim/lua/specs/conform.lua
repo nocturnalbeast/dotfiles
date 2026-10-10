@@ -1,4 +1,4 @@
--- conform.nvim — formatting: stylua (lua), ruff_format (python), LSP fallback.
+-- conform.nvim - formatting: stylua (lua), ruff_format (python), LSP fallback.
 -- The <leader>f format keymap lives in config/keymaps.lua, not here.
 require("conform").setup({
     notify_on_error = false,

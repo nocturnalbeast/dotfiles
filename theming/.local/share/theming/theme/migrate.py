@@ -40,7 +40,7 @@ def needs_migration(path: Path) -> bool:
 
 
 def migrate(path: Path) -> bool:
-    """Returns True when a rewrite happened; idempotent — v2 configs pass through untouched."""
+    """Returns True when a rewrite happened; idempotent - v2 configs pass through untouched."""
     yaml = YAML()
     yaml.preserve_quotes = True
     with path.open(encoding="utf-8") as fh:
@@ -81,7 +81,7 @@ def migrate(path: Path) -> bool:
         changed = True
         warn(
             "migrated palette section v1 → v2 (stored data; the stored "
-            "terminal reflects matugen-faithful — run `theme palette "
+            "terminal reflects matugen-faithful - run `theme palette "
             "generate` to populate the selected engines)"
         )
 

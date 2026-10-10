@@ -118,7 +118,7 @@ def write_back(palette: dict[str, Any]) -> None:
 
     if CONFIG_YAML.exists() and CONFIG_YAML.stat().st_mtime != mtime:
         raise GenerationError(
-            "config.yaml changed during generation — write-back aborted"
+            "config.yaml changed during generation - write-back aborted"
         )
 
     if "palette" not in data:
@@ -208,7 +208,7 @@ def emit_artifacts(palette: dict[str, Any]) -> tuple[list[Path], dict[str, Any]]
             atomic_write(nvim_path, _nvim_palette_lua(m, terminal))
             written.append(nvim_path)
     else:
-        warn("tui engine output absent — tui scheme family not emitted")
+        warn("tui engine output absent - tui scheme family not emitted")
 
     MATUGEN_COLORS_JSON.parent.mkdir(parents=True, exist_ok=True)
     effective = palette.get("effective_mode") or palette.get("mode") or "dark"
@@ -384,7 +384,7 @@ def emit_only() -> list[Path]:
         raise GenerationError("palette.variants missing or incomplete")
     if "core" not in next(iter(variants.values()), {}):
         raise GenerationError(
-            "palette section is v1 (no core) — run `theme palette generate`"
+            "palette section is v1 (no core) - run `theme palette generate`"
         )
 
     artifacts, engines_emitted = emit_artifacts(dict(palette))

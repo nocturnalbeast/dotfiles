@@ -8,7 +8,7 @@ Rectangle {
 
     property int maxChars: 45
     property string currentTitle: WmBackend.focusedWindowTitle
-    // Displayed text is decoupled from currentTitle — only updated by swapAnim
+    // Displayed text is decoupled from currentTitle - only updated by swapAnim
     property string displayText: ""
     property real titleOpacity: 1.0
     property real titleOffset: 0

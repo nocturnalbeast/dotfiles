@@ -1,4 +1,4 @@
--- gitsigns.nvim — signs per current-config harvest; blame formatter harvested
+-- gitsigns.nvim - signs per current-config harvest; blame formatter harvested
 -- from ~/desktop/nvim-from-dots/lua/plugins/config/gitsigns.lua L24-54.
 -- FFI verdict (nvim 0.12.5, verified 2026-09-27): curwin_col_off via ffi FAILS
 -- (pcall -> false), so width-aware truncation is dropped; formatter keeps the

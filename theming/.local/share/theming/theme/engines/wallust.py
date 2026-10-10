@@ -61,7 +61,7 @@ _TEMPLATE_JSON = (
 
 
 def wallust_version() -> str | None:
-    """`wallust 3.5.2 (sha date)` — the second token is the semver."""
+    """`wallust 3.5.2 (sha date)` - the second token is the semver."""
     if not shutil.which("wallust"):
         return None
     r = subprocess.run(["wallust", "--version"], capture_output=True, text=True)
@@ -122,7 +122,7 @@ def extract_wallust(image: str, mode: str, target: Path) -> dict[str, str]:
         "XDG_CONFIG_HOME": str(cache_dir / "xdg-config"),
         "XDG_CACHE_HOME": str(cache_dir / "xdg-cache"),
     }
-    # wallust ANSI-prints to stdout even when piped — output comes from the rendered target file
+    # wallust ANSI-prints to stdout even when piped - output comes from the rendered target file
     r = subprocess.run(
         [
             "wallust",
@@ -149,7 +149,7 @@ def extract_wallust(image: str, mode: str, target: Path) -> dict[str, str]:
         )
     if not target.exists():
         raise GenerationError(
-            f"wallust ({mode}) wrote no output (template warning — see stderr)"
+            f"wallust ({mode}) wrote no output (template warning - see stderr)"
         )
 
     try:
@@ -161,7 +161,7 @@ def extract_wallust(image: str, mode: str, target: Path) -> dict[str, str]:
         value = data.get(key)
         if not isinstance(value, str) or not _HEX_RE.match(value):
             raise GenerationError(
-                f"wallust ({mode}): {key!r} missing/invalid ({value!r}) — "
+                f"wallust ({mode}): {key!r} missing/invalid ({value!r}) - "
                 "template variables must never be trusted"
             )
     return data
@@ -186,11 +186,11 @@ def wallust_slots(
     for key, slot in WALLUST_SLOT_MAP.items():
         slots[slot] = keys[key].upper()
 
-    # base09: +30° hue-shift of base08 — ANSI palettes have no orange.
+    # base09: +30° hue-shift of base08 - ANSI palettes have no orange.
     slots["base09"] = _hue_shift(slots["base08"], 30)
     derived: dict[str, str] = {"base09": "hue-shift:+30"}
 
-    # check_contrast can't rescue light-mode gray-on-gray; AA-shift with an EMPTY wheel — gray character is wallust's honest output.
+    # check_contrast can't rescue light-mode gray-on-gray; AA-shift with an EMPTY wheel - gray character is wallust's honest output.
     shifted = post_process_contrast(slots, mode, {})
     for slot, value in shifted.items():
         if slots.get(slot) != value:

@@ -75,7 +75,7 @@ def run_doctor(
             note = f"thaimeleon {ver}"
             if not good:
                 note += (
-                    f" — pinned {THAIM_PINNED_VERSION} (slot-mapping contract); "
+                    f" - pinned {THAIM_PINNED_VERSION} (slot-mapping contract); "
                     f"flavor 'thaim' unavailable"
                 )
             check("ok" if good else "warn", "tui", note)
@@ -83,7 +83,7 @@ def run_doctor(
             check(
                 "warn",
                 "tui",
-                "thaimeleon absent — flavor 'thaim' unavailable "
+                "thaimeleon absent - flavor 'thaim' unavailable "
                 "(cargo install thaimeleon --version 0.1.2 --locked)",
             )
         if _which("wallust"):
@@ -97,14 +97,14 @@ def run_doctor(
                 + (
                     ""
                     if ver == WALLUST_PINNED_VERSION
-                    else f" — pinned {WALLUST_PINNED_VERSION}; engine 'wallust' gated"
+                    else f" - pinned {WALLUST_PINNED_VERSION}; engine 'wallust' gated"
                 ),
             )
         else:
             check(
                 "warn",
                 "tui",
-                "wallust absent — engine 'wallust' unavailable "
+                "wallust absent - engine 'wallust' unavailable "
                 "(cargo install --git https://codeberg.org/explosion-mental/wallust.git "
                 "--tag 3.5.2 --locked)",
             )
@@ -173,7 +173,7 @@ def run_doctor(
             + (
                 ""
                 if Path("/usr/lib64/qt6/plugins/styles/libkvantum.so").exists()
-                else " absent — fusion fallback (zypper in kvantum-qt6)"
+                else " absent - fusion fallback (zypper in kvantum-qt6)"
             ),
         )
 
@@ -214,13 +214,13 @@ def run_doctor(
             "ok" if live else "warn",
             "fallback-shim",
             f"default → {inherits or 'nothing'}"
-            + ("" if live else " (dangling Inherits — cursor fallback broken)"),
+            + ("" if live else " (dangling Inherits - cursor fallback broken)"),
         )
     else:
         check(
             "warn",
             "fallback-shim",
-            "icons/default shim missing — apps requesting theme 'default' "
+            "icons/default shim missing - apps requesting theme 'default' "
             "fall to hicolor",
         )
 
@@ -250,7 +250,7 @@ def run_doctor(
         check(
             "ok" if fresh else "fail",
             "watch",
-            "heartbeat" + ("" if fresh else " stale (>120s — daemon dead?)"),
+            "heartbeat" + ("" if fresh else " stale (>120s - daemon dead?)"),
         )
 
     # -- report --------
