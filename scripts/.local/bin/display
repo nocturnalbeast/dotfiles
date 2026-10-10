@@ -305,7 +305,7 @@ layout_create() {
             [[ -z $lname ]] && return 0
 
             sl_name="$LAYOUTS_DIR/$(hostname)_$lname"
-            $TERMINAL -c "$EDITOR $sl_name"
+            terminal -e "$EDITOR" "$sl_name"
             chmod +x "$sl_name" 2> /dev/null || true
             ;;
     esac
@@ -361,7 +361,7 @@ layout_edit() {
             fi
             ;;
         'command-line')
-            $TERMINAL -c "$EDITOR $lselected_full"
+            terminal -e "$EDITOR" "$lselected_full"
             ;;
     esac
 
