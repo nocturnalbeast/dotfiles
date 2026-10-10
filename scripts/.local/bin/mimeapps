@@ -160,6 +160,19 @@ get_desktop_mimetypes() {
 
 # Resolves term_exec_args for a terminal binary into TERM_ARGS.
 term_exec_args() {
+    # Consume the canonical flag table from the terminal wrapper (single
+    # source of truth: `terminal -l`). Falls back to the built-in table when
+    # the wrapper is absent (fresh machine before scripts pkg is stowed) or
+    # the backend is not in the wrapper's table.
+    if command -v terminal > /dev/null 2>&1; then
+        TEA_ROW=$(terminal -l 2> /dev/null | awk -F: -v b="$1" '$1 == b { print; exit }')
+        if [ -n "$TEA_ROW" ]; then
+            TERM_ARGS=${TEA_ROW#*:}
+            TERM_ARGS=${TERM_ARGS#exec=}
+            TERM_ARGS=${TERM_ARGS%%:*}
+            return 0
+        fi
+    fi
     case "$1" in
         kitty) TERM_ARGS="" ;;
         foot | alacritty | xterm | xfce4-terminal) TERM_ARGS="-e" ;;
@@ -620,6 +633,58 @@ cmd_list() {
 
 # Regenerates mimeapps.list and handlr.toml: staged generation, normalize,
 # diff vs live, backup, atomic install.
+# Prints the expected gsettings "default applications" values, one
+# "schema key value" triple per line (values must be single tokens),
+# derived from the declared defaults. These schemas are the last non-XDG
+# default-resolution mechanism: nemo's terminal action reads the cinnamon
+# terminal schema directly, and cinnamon/gnome apps consult the calculator
+# and office calendar/tasks schemas - none of them look at mimeapps.list.
+# Optional vars (CALC, CALENDAR, TASKS) sync only when declared.
+gsettings_expected() {
+    echo "org.cinnamon.desktop.default-applications.terminal exec terminal"
+    [ -n "$TERMINAL" ] &&
+        echo "org.gnome.desktop.default-applications.terminal exec $TERMINAL"
+    [ -n "${CALC:-}" ] &&
+        echo "org.cinnamon.desktop.default-applications.calculator exec $CALC"
+    [ -n "${CALENDAR:-}" ] && {
+        echo "org.cinnamon.desktop.default-applications.office.calendar exec $CALENDAR"
+        echo "org.gnome.desktop.default-applications.office.calendar exec $CALENDAR"
+    }
+    [ -n "${TASKS:-}" ] && {
+        echo "org.cinnamon.desktop.default-applications.office.tasks exec $TASKS"
+        echo "org.gnome.desktop.default-applications.office.tasks exec $TASKS"
+    }
+    return 0
+}
+
+# Syncs the gsettings default-applications schemas from the declared
+# defaults. Idempotent (equal values are skipped), dry-run aware, and
+# degrades to warnings when gsettings or a schema is unavailable.
+sync_gsettings_defaults() {
+    command -v gsettings > /dev/null 2>&1 || {
+        warn "gsettings not found - skipping default-apps schema sync"
+        return 0
+    }
+    gsettings_expected | while IFS=' ' read -r SG_SCHEMA SG_KEY SG_VALUE; do
+        [ -n "$SG_SCHEMA" ] || continue
+        if ! gsettings list-schemas 2> /dev/null | grep -qx "$SG_SCHEMA"; then
+            warn "schema $SG_SCHEMA not installed - skipping"
+            continue
+        fi
+        SG_CURRENT=$(gsettings get "$SG_SCHEMA" "$SG_KEY" 2> /dev/null | tr -d "'")
+        [ "$SG_CURRENT" = "$SG_VALUE" ] && continue
+        if [ "${DRY_RUN:-0}" = "1" ]; then
+            echo "gsettings: $SG_SCHEMA $SG_KEY '$SG_CURRENT' -> '$SG_VALUE' (dry-run)"
+        else
+            if gsettings set "$SG_SCHEMA" "$SG_KEY" "$SG_VALUE"; then
+                echo "gsettings: $SG_SCHEMA $SG_KEY -> '$SG_VALUE'"
+            else
+                warn "gsettings set $SG_SCHEMA $SG_KEY failed"
+            fi
+        fi
+    done
+}
+
 cmd_apply() {
     case ${1:-} in
         "") DRY_RUN=0 ;;
@@ -659,6 +724,7 @@ cmd_apply() {
         diff /dev/null "$TMP" || true
     fi
     echo "== $(grep -c '=' "$TMP" || true) entries =="
+    sync_gsettings_defaults
     if [ "$DRY_RUN" -eq 1 ]; then
         echo "dry-run: nothing written"
         rm -f "$TMP"
@@ -791,6 +857,24 @@ cmd_status() {
         rm -f "$ST_CACHE"
     fi
     [ "$ST_D" -eq 0 ] && echo "    clean"
+    echo "(e) gsettings default-apps drift"
+    if command -v gsettings > /dev/null 2>&1; then
+        ST_E=0
+        while IFS=' ' read -r ST_GS ST_GK ST_GV; do
+            [ -n "$ST_GS" ] || continue
+            gsettings list-schemas 2> /dev/null | grep -qx "$ST_GS" || continue
+            ST_GCUR=$(gsettings get "$ST_GS" "$ST_GK" 2> /dev/null | tr -d "'")
+            if [ "$ST_GCUR" != "$ST_GV" ]; then
+                echo "    $ST_GS $ST_GK = '$ST_GCUR' (expected '$ST_GV')"
+                ST_E=1
+            fi
+        done << EOF
+$(gsettings_expected)
+EOF
+        [ "$ST_E" -eq 0 ] && echo "    clean"
+    else
+        echo "    (gsettings unavailable)"
+    fi
     rm -f "$ST_GEN" "$ST_LIVE" "$ST_KEYG" "$ST_KEYL"
     rm -rf "$STAGE"
     STAGE=""
