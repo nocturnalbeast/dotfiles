@@ -51,7 +51,7 @@ get_apps() {
     done
     for PATH_EXCLUDE in "${PATHS_EXCLUDE[@]}"; do
         for ENTRY_IDX in "${!APPS_LIST[@]}"; do
-            if [[ ${APPS_LIST[$ENTRY_IDX]} == "$PATHS_EXCLUDE"* ]]; then
+            if [[ ${APPS_LIST[$ENTRY_IDX]} == "$PATH_EXCLUDE"* ]]; then
                 unset 'APPS_LIST[ENTRY_IDX]'
             fi
         done

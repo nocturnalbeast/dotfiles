@@ -222,7 +222,7 @@ add_songs() {
             done
 
             if [[ -n $SELECTION_KEY ]]; then
-                unset RESULTS_ARR[$SELECTION_KEY]
+                unset 'RESULTS_ARR[SELECTION_KEY]'
                 if [[ $COUNT -eq 0 ]]; then
                     CURR_LENGTH=$(mpc playlist | wc -l)
                     mpc -q add "$SELECTION_KEY"

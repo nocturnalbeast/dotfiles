@@ -36,8 +36,6 @@ guake \
 tilda \
 hyper"
 
-DEPENDENCIES=()
-
 usage() {
     cat << EOF
 Usage: $(basename "$0") [ARGUMENTS]

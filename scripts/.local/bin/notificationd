@@ -3,7 +3,7 @@
 # A script to manage notification daemons with automatic detection.
 
 # Global configuration
-DEPENDENCIES=(pgrep)
+DEPENDENCIES="pgrep"
 WAYLAND_DAEMONS="mako"
 X11_DAEMONS="dunst notify-osd"
 

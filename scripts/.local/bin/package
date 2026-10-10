@@ -4,7 +4,6 @@
 # A distribution-agnostic wrapper for common package management operations.
 
 # Global configuration
-DEPENDENCIES=()
 
 usage() {
     cat << EOF

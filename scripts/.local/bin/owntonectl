@@ -103,7 +103,7 @@ enable_default_output() {
 
 build() {
     echo "Building OwnTone image with PulseAudio support..."
-    cd "$BUILD_DIR"
+    cd "$BUILD_DIR" || return 1
     "$CONTAINER_RUNTIME" build -t "$IMAGE_NAME" .
     echo "Build complete: $IMAGE_NAME"
 }

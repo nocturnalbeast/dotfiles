@@ -3,7 +3,7 @@
 # A script to open files and URLs using various handlers.
 
 # Global configuration
-DEPENDENCIES=(handlr mimeo xdg-open)
+DEPENDENCIES="handlr mimeo xdg-open"
 
 usage() {
     cat << EOF
@@ -19,7 +19,7 @@ EOF
 # Check for required dependencies
 check_dependencies() {
     local found=0
-    for DEPENDENCY in "${DEPENDENCIES[@]}"; do
+    for DEPENDENCY in $DEPENDENCIES; do
         if command -v "$DEPENDENCY" > /dev/null 2>&1; then
             found=1
             break

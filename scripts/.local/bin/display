@@ -77,7 +77,7 @@ get_focused_display() {
 
 get_display_for_window() {
     local focus_mon=""
-    local x y w h
+    local x y
     if [[ -z $1 ]]; then
         echo "Error: Window ID required" >&2
         return 1
@@ -86,8 +86,6 @@ get_display_for_window() {
     xwin_out=$(xwininfo -id "$1")
     x=$(echo "$xwin_out" | sed -n 's/^  *Absolute upper-left X:  *\([0-9]\+\).*/\1/p')
     y=$(echo "$xwin_out" | sed -n 's/^  *Absolute upper-left Y:  *\([0-9]\+\).*/\1/p')
-    w=$(echo "$xwin_out" | sed -n 's/^  *Width:  *\([0-9]\+\).*/\1/p')
-    h=$(echo "$xwin_out" | sed -n 's/^  *Height:  *\([0-9]\+\).*/\1/p')
     while IFS= read -r entry; do
         read -r mon_name mon_width mon_height mon_x_start mon_y_start < <(
             echo "$entry" | awk -F'-' '{for(i=1;i<=NF-4;i++) printf $i (i<NF-4?"-":" "); printf "%s %s %s %s\n", $(NF-3), $(NF-2), $(NF-1), $NF;}'

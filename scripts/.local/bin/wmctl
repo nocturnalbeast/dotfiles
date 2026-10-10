@@ -35,7 +35,7 @@ Commands:
   window {list|focused|focus|cycle}
   monitor {list|count|current}
 EOF
-    exit 0
+    exit "${1:-0}"
 }
 
 # ============================================================
@@ -1018,8 +1018,7 @@ main() {
         help | --help | -h) usage ;;
         *)
             echo "error: unknown command '$command'" >&2
-            usage
-            exit 1
+            usage 1
             ;;
     esac
 }

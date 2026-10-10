@@ -3,7 +3,7 @@
 # A MPRIS-based media playback contoller script with player prioritization.
 
 # Global configuration
-DEPENDENCIES=(playerctl)
+DEPENDENCIES="playerctl"
 PRIORITY="mopidy DeaDBeeF mpv"
 TRACK_CHG_EXCLUDE="mpv"
 VOL_CHG_EXCLUDE=""
