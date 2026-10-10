@@ -27,6 +27,7 @@ set-dpi :: hot :: x11 :: oneshot :: display ::  ::  :: display set-dpi
 wallpaper :: hot :: both :: oneshot :: background ::  ::  :: background restore
 pipewire :: cold :: both :: daemon :: systemctl pipewire :: pipewire ::  :: systemctl --user is-active --quiet pipewire.service 2>/dev/null || systemctl --user start pipewire.service 2>/dev/null || pipewire
 notificationd :: cold :: both :: daemon :: notificationd :: dunst mako ::  :: notificationd start
+polkit-agent :: cold :: both :: daemon :: polkit-gnome-authentication-agent-1 :: polkit-gnome-authentication-agent-1 ::  :: /usr/libexec/polkit-gnome-authentication-agent-1
 picom :: hot :: x11 :: daemon ::  ::  ::  :: picom -b
 clipcatd :: cold :: both :: daemon ::  ::  ::  :: clipcatd
 lockctl :: cold :: both :: daemon :: lockctl :: xss-lock swayidle hypridle ::  :: lockctl start
