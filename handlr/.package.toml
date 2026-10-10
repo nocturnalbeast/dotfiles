@@ -1,0 +1,6 @@
+enabled = true
+description = "handlr: MIME type handler"
+tags = ["cli", "gui", "mime"]
+os = ["linux"]
+arch = []
+condition = ""
