@@ -146,10 +146,32 @@ def _ensure_scaled_background(ctx, display_w, display_h):
     return result
 
 
+def _overlay_palette():
+    """Inverse-of-wallpaper overlay colors (SAVER_MODE = wallpaper's mode).
+
+    Text and vignette invert against the wallpaper; shadow and bottom
+    gradient stay wallpaper-toned so inverted text keeps its contrast.
+    """
+    if os.getenv("XSECURELOCK_SAVER_MODE", "dark") == "light":
+        return {
+            "text": (0.05, 0.05, 0.05),
+            "shadow": (1, 1, 1),
+            "vignette": (0, 0, 0),
+            "gradient": (1, 1, 1),
+        }
+    return {
+        "text": (1, 1, 1),
+        "shadow": (0, 0, 0),
+        "vignette": (1, 1, 1),
+        "gradient": (0, 0, 0),
+    }
+
+
 def on_win_draw(widget, cctx, ctx):
     """Draw background image with vignette and gradient overlays."""
     wwidth, wheight = widget.get_size()
     scale = widget.get_scale_factor()
+    pal = _overlay_palette()
 
     bg = _ensure_scaled_background(ctx, wwidth * scale, wheight * scale)
 
@@ -178,17 +200,19 @@ def on_win_draw(widget, cctx, ctx):
         wheight / 2,
         max_radius,
     )
-    vignette.add_color_stop_rgba(0, 0, 0, 0, 0)
-    vignette.add_color_stop_rgba(0.5, 0, 0, 0, 0)
-    vignette.add_color_stop_rgba(0.8, 0, 0, 0, 0.25)
-    vignette.add_color_stop_rgba(1.0, 0, 0, 0, 0.6)
+    vr, vg, vb = pal["vignette"]
+    vignette.add_color_stop_rgba(0, vr, vg, vb, 0)
+    vignette.add_color_stop_rgba(0.5, vr, vg, vb, 0)
+    vignette.add_color_stop_rgba(0.8, vr, vg, vb, 0.25)
+    vignette.add_color_stop_rgba(1.0, vr, vg, vb, 0.6)
     cctx.set_source(vignette)
     cctx.paint()
 
     # Bottom gradient: darkens lower portion for status bar readability.
     bottom_grad = cairo.LinearGradient(0, wheight * 0.7, 0, wheight)
-    bottom_grad.add_color_stop_rgba(0, 0, 0, 0, 0)
-    bottom_grad.add_color_stop_rgba(1, 0, 0, 0, 0.5)
+    gr, gg, gb = pal["gradient"]
+    bottom_grad.add_color_stop_rgba(0, gr, gg, gb, 0)
+    bottom_grad.add_color_stop_rgba(1, gr, gg, gb, 0.5)
     cctx.set_source(bottom_grad)
     cctx.paint()
 
@@ -197,6 +221,7 @@ def on_overlay_draw(widget, cctx, ctx):
     """Draw overlay (clock and status)."""
     wwidth, wheight = widget.get_parent().get_size()
     cctx.set_operator(cairo.OPERATOR_OVER)
+    pal = _overlay_palette()
 
     # Enable subpixel antialiasing for sharper text
     font_options = cairo.FontOptions()
@@ -214,14 +239,16 @@ def on_overlay_draw(widget, cctx, ctx):
         (0, 1),
         (1, 1),
     ]
+    sr, sg, sb = pal["shadow"]
+    tr, tg, tb = pal["text"]
 
     def draw(text, x, y):
         """Draw text with a soft multi-pass shadow."""
         for dx, dy in shadow_offsets:
-            cctx.set_source_rgba(0, 0, 0, 0.12)
+            cctx.set_source_rgba(sr, sg, sb, 0.12)
             cctx.move_to(x + dx, y + dy)
             cctx.show_text(text)
-        cctx.set_source_rgb(1, 1, 1)
+        cctx.set_source_rgb(tr, tg, tb)
         cctx.move_to(x, y)
         cctx.show_text(text)
 

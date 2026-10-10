@@ -31,12 +31,18 @@ def derive(image: str) -> str:
 
     out = MatugenEngine("faithful").extract(image)
     mode = out.get("detected_mode") or "dark"
-    core = out["variants"][mode]["core"]
+    # elements invert against the wallpaper: dark image -> white input
+    # box (and vice versa); the accent fg comes from the OPPOSITE
+    # variant so it contrasts the pure-tone background by construction
+    inverse = "light" if mode == "dark" else "dark"
+    core = out["variants"][inverse]["core"]
+    box_bg = "rgb:d9/d9/d9" if mode == "dark" else "rgb:26/26/26"
     env = {
-        "XSECURELOCK_AUTH_BACKGROUND_COLOR": rgb_colon(core["background"]),
-        "XSECURELOCK_AUTH_FOREGROUND_COLOR": rgb_colon(core["foreground"]),
+        "XSECURELOCK_AUTH_BACKGROUND_COLOR": box_bg,
+        "XSECURELOCK_AUTH_FOREGROUND_COLOR": rgb_colon(core["accent"]),
         "XSECURELOCK_AUTH_WARNING_COLOR": rgb_colon(core["status.error"]),
-        "XSECURELOCK_DIM_COLOR": rgb_colon(core["background"]),
+        "XSECURELOCK_DIM_COLOR": box_bg,
+        "XSECURELOCK_SAVER_MODE": mode,
     }
     return " ".join(f"{k}={v}" for k, v in env.items())
 
