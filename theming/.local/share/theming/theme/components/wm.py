@@ -34,7 +34,6 @@ def _ini_value(key: str, value: str) -> str:
 
 
 MAKO_CONFIG = HOME / ".config/mako/config"
-SCREENLOCK_ENV = HOME / ".config/profile.d/gui/20-screenlock.sh"
 MENU_ENV = HOME / ".config/profile.d/gui/10-menu.sh.nosource"
 QS_DEFAULTS = HOME / ".config/quickshell/config/Defaults.qml"
 
@@ -45,14 +44,6 @@ def _ramp16(ctx: Context) -> dict[str, str]:
 
 def _slot(ctx: Context, name: str) -> str:
     return slot16(ctx.palette, name)
-
-
-def _rgb_colon(hex_color: str) -> str:
-    """#0d0d0d → rgb:0d/0d/0d (xsecurelock format, W8)."""
-    h = hex_color.lstrip("#").lower()
-    if len(h) != 6 or not re.fullmatch(r"[0-9a-f]{6}", h):
-        raise RuntimeError(f"malformed hex for rgb: conversion: {hex_color!r}")
-    return f"rgb:{h[0:2]}/{h[2:4]}/{h[4:6]}"
 
 
 class WMMember(Component):
@@ -466,24 +457,12 @@ class LockMember(WMMember):
 
     def write_effects(self, ctx: Context) -> Effects:
         if ctx.dry_run:
-            ok("lock: would write xsecurelock env + hyprlock colors")
+            ok("lock: would write hyprlock colors")
             return Effects()
 
-        # W8: xsecurelock managed env lines (rgb: conversion)
-        conversions = {
-            "XSECURELOCK_AUTH_BACKGROUND_COLOR": _rgb_colon(_slot(ctx, "base00")),
-            "XSECURELOCK_AUTH_FOREGROUND_COLOR": _rgb_colon(_slot(ctx, "base06")),
-            "XSECURELOCK_AUTH_WARNING_COLOR": _rgb_colon(_slot(ctx, "base08")),
-            "XSECURELOCK_DIM_COLOR": _rgb_colon(_slot(ctx, "base00")),
-            "XSECURELOCK_FONT": "sans:style=Bold:antialias=true",
-        }
-        text = writers.read_surface(SCREENLOCK_ENV) if SCREENLOCK_ENV.exists() else ""
-        for var, value in conversions.items():
-            text, _ = writers.managed_line_set(text, var, f'"{value}"')
-        atomic_write(SCREENLOCK_ENV, text)
-        ok("xsecurelock env written (W8 - next lock)")
-
         # W5: hyprlock - key-scoped color writes in widget blocks
+        # (xsecurelock is independent: its colors derive from the random
+        # wallpaper lockctl picks - see the xsecurelock-theme helper)
         if HYPRLOCK_CONF.exists():
             conf = HYPRLOCK_CONF.read_text()
             accent = core_token(ctx.palette, "accent")
@@ -511,7 +490,7 @@ class LockMember(WMMember):
             atomic_write(HYPRLOCK_CONF, conf)
             ok("hyprlock colors written (W5 - next lock)")
 
-        return self._eff(ctx, {"xsecurelock": "written", "hyprlock": "written"})
+        return self._eff(ctx, {"hyprlock": "written"})
 
     def status(self, ctx: Context) -> int:
         from theme.helpers.logio import note_state
