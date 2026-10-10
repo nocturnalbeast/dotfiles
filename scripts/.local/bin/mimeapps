@@ -1,0 +1,832 @@
+#!/usr/bin/env sh
+
+# A CLI to manage XDG MIME associations. Generates mimeapps.list through a
+# staged handlr run driven by the category env vars declared in
+# profile.d/50-defaults.sh, and regenerates the handlr settings file.
+
+# Byte-wise collation everywhere: sort/comm/diff must agree on ordering or
+# the drift report false-positives, and normalized output must be
+# deterministic byte-for-byte.
+LC_ALL=C
+export LC_ALL
+
+# Global configuration (plain globals so sandbox tests can source this file
+# and re-point the paths before invoking the cmd_* functions directly)
+DEPENDENCIES="handlr mktemp find grep sed awk sort diff readlink comm"
+
+DEFAULTS_FILE="$HOME/.config/profile.d/50-defaults.sh"
+LIVE_MIMEAPPS="$HOME/.config/mimeapps.list"
+LIVE_HANDLR_TOML="$HOME/.config/handlr/handlr.toml"
+LIVE_MIMEINFO_CACHE="$HOME/.local/share/applications/mimeinfo.cache"
+USR_APPS="$HOME/.local/share/applications"
+SYS_APPS="/usr/share/applications"
+ZATHURA_LIBDIR="/usr/lib64/zathura"
+DOTFILES_ROOT="$HOME/.dotfiles"
+BACKUP_ROOT="$HOME/.local/share/backups"
+STAGE_PARENT="$HOME/.config"
+STAGE=""
+HANDLR=$(command -v handlr 2> /dev/null)
+
+# Precedence order (last write wins). Wildcard categories run first with
+# expand_wildcards = true; concrete categories and carve-outs run afterwards
+# with expand_wildcards = false, because handlr validates concrete types
+# against its embedded mime-db and silently drops unknowns (magnet,
+# x-extension-*, yaml, cb*, x-xcf, ...). Verified empirically 2026-10-10.
+WILDCARD_CATEGORIES="guieditor image video audio"
+CONCRETE_CATEGORIES="archives office ebook reader files torrent mail terminal browser"
+CATEGORIES="$WILDCARD_CATEGORIES $CONCRETE_CATEGORIES"
+
+usage() {
+    cat << EOF
+Usage: $(basename "$0") COMMAND [ARGS]
+
+A CLI to manage XDG MIME associations from profile.d defaults,
+generated via staged handlr runs.
+
+Commands:
+    list                  pretty table of categories, apps and coverage
+    update CATEGORY APP   rewrite a category's env var in 50-defaults.sh,
+                          then apply
+    apply [--dry-run]     regenerate mimeapps.list and handlr.toml
+                          (dry-run shows the diff, writes nothing)
+    status                drift report: pipeline vs live state
+
+Categories: $CATEGORIES
+EOF
+}
+
+# Check for required dependencies.
+check_dependencies() {
+    for DEPENDENCY in $DEPENDENCIES; do
+        command -v "$DEPENDENCY" > /dev/null 2>&1 && continue
+        echo "error: missing dependency: $DEPENDENCY" >&2
+        return 1
+    done
+}
+
+die() {
+    echo "error: $*" >&2
+    exit 1
+}
+
+warn() {
+    echo "warning: $*" >&2
+}
+
+# Sources the defaults file (through symlinks) and asserts that every
+# category env var is non-empty. Ambient environment is never trusted.
+source_defaults() {
+    DEFAULTS_REAL=$(readlink -f "$DEFAULTS_FILE" 2> /dev/null)
+    if [ -z "$DEFAULTS_REAL" ] || [ ! -f "$DEFAULTS_REAL" ]; then
+        die "defaults file not found: $DEFAULTS_FILE (run stow/bootstrap first?)"
+    fi
+    # shellcheck disable=SC1090
+    . "$DEFAULTS_REAL"
+    MISSING_VARS=""
+    for CATEGORY in $CATEGORIES; do
+        CATEGORY_VAR=$(category_var "$CATEGORY") || exit 1
+        eval "CATEGORY_VAL=\$$CATEGORY_VAR"
+        [ -n "$CATEGORY_VAL" ] || MISSING_VARS="$MISSING_VARS $CATEGORY_VAR"
+    done
+    [ -z "$MISSING_VARS" ] || die "empty category vars in $DEFAULTS_FILE:$MISSING_VARS"
+}
+
+# Maps a category name to its env var name. Returns 1 when unknown.
+category_var() {
+    case "$1" in
+        browser) echo "BROWSER" ;;
+        files) echo "FILES" ;;
+        image) echo "IMAGE" ;;
+        video) echo "VIDEO" ;;
+        audio) echo "AUDIO" ;;
+        reader) echo "READER" ;;
+        guieditor) echo "GUI_EDITOR" ;;
+        archives) echo "ARCHIVES" ;;
+        office) echo "OFFICE" ;;
+        torrent) echo "TORRENT" ;;
+        ebook) echo "EBOOK" ;;
+        mail) echo "MAIL" ;;
+        terminal) echo "TERMINAL" ;;
+        *) return 1 ;;
+    esac
+}
+
+# Maps an app binary name to its desktop file name (no .desktop suffix).
+# Prints "<flag> <name>" where flag is 1 when the binary is unknown and the
+# name is a plain guess (flags cannot cross $( ) subshells in POSIX sh).
+desktop_for_binary() {
+    case "$1" in
+        firefox) echo "0 firefox" ;;
+        nemo) echo "0 nemo" ;;
+        imv) echo "0 imv-dir" ;;
+        mpv) echo "0 mpv" ;;
+        neovide) echo "0 neovide" ;;
+        zathura) echo "0 org.pwmt.zathura" ;;
+        engrampa) echo "0 engrampa" ;;
+        deluge) echo "0 deluge" ;;
+        libreoffice) echo "0 libreoffice-startcenter" ;;
+        foliate) echo "0 com.github.johnfactotum.Foliate" ;;
+        thunderbird)
+            # distro variants verified on openSUSE TW 2026-10: package is
+            # MozillaThunderbird but the desktop file is thunderbird-esr;
+            # Arch/upstream uses thunderbird.desktop
+            for DF_TB in thunderbird MozillaThunderbird thunderbird-esr; do
+                if desktop_exists "$DF_TB"; then
+                    echo "0 $DF_TB"
+                    return 0
+                fi
+            done
+            echo "0 thunderbird"
+            ;;
+        kitty) echo "0 kitty" ;;
+        *) echo "1 $1" ;;
+    esac
+}
+
+# Checks that a desktop file exists (user-local or system).
+desktop_exists() {
+    [ -e "$USR_APPS/$1.desktop" ] || [ -e "$SYS_APPS/$1.desktop" ]
+}
+
+# Prints the MimeType= entries of a desktop file, one per line.
+get_desktop_mimetypes() {
+    GM_FILE=""
+    for GM_DIR in "$USR_APPS" "$SYS_APPS"; do
+        [ -e "$GM_DIR/$1.desktop" ] && GM_FILE="$GM_DIR/$1.desktop" && break
+    done
+    [ -n "$GM_FILE" ] && sed -n 's/^MimeType=//p' "$GM_FILE" | tr ';' '\n' | sed '/^$/d'
+    return 0
+}
+
+# Resolves term_exec_args for a terminal binary into TERM_ARGS.
+term_exec_args() {
+    case "$1" in
+        kitty) TERM_ARGS="" ;;
+        foot | alacritty | xterm | xfce4-terminal) TERM_ARGS="-e" ;;
+        wezterm) TERM_ARGS="start --" ;;
+        *)
+            TERM_ARGS="-e"
+            warn "unknown terminal '$1' - defaulting term_exec_args to '-e'"
+            ;;
+    esac
+}
+
+# Prints the handlr.toml content (settings only, no [[handlers]]).
+gen_handlr_toml() {
+    term_exec_args "$TERMINAL"
+    cat << EOF
+enable_selector = false
+selector = "rofi -dmenu -i -p 'Open With: '"
+term_exec_args = '$TERM_ARGS'
+expand_wildcards = $1
+EOF
+}
+
+# Prints the ordered "MIME desktop" target pairs for a category (current
+# env). Wildcard categories yield a single "prefix/* desktop" pair.
+category_targets() {
+    CT_CAT=$1
+    CT_VAR=$(category_var "$CT_CAT") || return 1
+    eval "CT_APP=\$$CT_VAR"
+    CT_RES=$(desktop_for_binary "$CT_APP")
+    CT_NAME=${CT_RES#* }
+    CT_ID="$CT_NAME.desktop"
+    case "$CT_CAT" in
+        guieditor) echo "text/* $CT_ID" ;;
+        image) echo "image/* $CT_ID" ;;
+        video) echo "video/* $CT_ID" ;;
+        audio) echo "audio/* $CT_ID" ;;
+        browser)
+            for CT_T in x-scheme-handler/http x-scheme-handler/https \
+                x-scheme-handler/chrome text/html application/xhtml+xml \
+                application/x-extension-htm application/x-extension-html \
+                application/x-extension-shtml application/x-extension-xhtml \
+                application/x-extension-xht; do echo "$CT_T $CT_ID"; done
+            ;;
+        files)
+            echo "inode/directory $CT_ID"
+            echo "application/x-gnome-saved-search $CT_ID"
+            ;;
+        reader)
+            for CT_T in application/pdf application/vnd.comicbook+zip \
+                application/x-cbz application/x-cbr application/x-cbt \
+                application/x-cb7; do echo "$CT_T $CT_ID"; done
+            ;;
+        # self-describing: the archive app's own desktop declares its types
+        archives)
+            get_desktop_mimetypes "$CT_NAME" | sort -u |
+                while IFS= read -r CT_T; do echo "$CT_T $CT_ID"; done
+            ;;
+        # union of the LibreOffice components (startcenter is a launcher).
+        # text/image/video/audio types are filtered out: those namespaces
+        # belong to the wildcard categories (writer declares text/plain,
+        # calc text/csv - the contract pins those to $GUI_EDITOR).
+        office)
+            for CT_COMP in writer calc impress draw base math; do
+                get_desktop_mimetypes "libreoffice-$CT_COMP"
+            done | sort -u | grep -v -E '^(text|image|video|audio)/' |
+                while IFS= read -r CT_T; do echo "$CT_T $CT_ID"; done
+            ;;
+        ebook)
+            {
+                echo "application/epub+zip"
+                get_desktop_mimetypes "$CT_NAME"
+            } |
+                sort -u | while IFS= read -r CT_T; do echo "$CT_T $CT_ID"; done
+            ;;
+        mail)
+            echo "x-scheme-handler/mailto $CT_ID"
+            echo "message/rfc822 $CT_ID"
+            ;;
+        torrent)
+            echo "x-scheme-handler/magnet $CT_ID"
+            echo "application/x-bittorrent $CT_ID"
+            ;;
+        terminal)
+            echo "x-scheme-handler/terminal $CT_ID"
+            [ "$CT_APP" = "kitty" ] && echo "x-scheme-handler/ssh kitty-open.desktop"
+            ;;
+    esac
+}
+
+# Creates the staging sandbox: config/data dirs, a symlink farm of
+# user-local desktop files, and a handlr.toml with expand_wildcards = true.
+stage_create() {
+    STAGE=$(mktemp -d "$STAGE_PARENT/.mimeapps-stage.XXXXXX") ||
+        die "cannot create staging dir under $STAGE_PARENT"
+    mkdir -p "$STAGE/config/handlr" "$STAGE/data/applications"
+    if [ -d "$USR_APPS" ]; then
+        find "$USR_APPS" -maxdepth 1 -name '*.desktop' \
+            -exec ln -s {} "$STAGE/data/applications/" \;
+    fi
+    gen_handlr_toml true > "$STAGE/config/handlr/handlr.toml"
+}
+
+# Runs one staged `handlr set`. handlr exits 0 even on failure, so the
+# expected key(s) are verified in the staged file afterwards instead.
+staged_set() {
+    SS_MIME=$1
+    SS_DESK=$2
+    if [ -e "$STAGE/config/mimeapps.list" ]; then
+        SS_BEFORE=$(grep -Fc "=$SS_DESK;" "$STAGE/config/mimeapps.list" || true)
+    else
+        SS_BEFORE=0
+    fi
+    (
+        export XDG_CONFIG_HOME="$STAGE/config" XDG_DATA_HOME="$STAGE/data"
+        "$HANDLR" set "$SS_MIME" "$SS_DESK" > /dev/null 2>&1
+    )
+    case $SS_MIME in
+        *\*)
+            SS_AFTER=$(grep -Fc "=$SS_DESK;" "$STAGE/config/mimeapps.list" || true)
+            [ "${SS_AFTER:-0}" -gt "$SS_BEFORE" ] ||
+                warn "staged set '$SS_MIME' -> $SS_DESK expanded to nothing"
+            ;;
+        *)
+            # handlr lowercases subtypes on serialization - match loosely
+            grep -Fqix "$SS_MIME=$SS_DESK;" "$STAGE/config/mimeapps.list" 2> /dev/null ||
+                warn "staged set failed: $SS_MIME -> $SS_DESK"
+            ;;
+    esac
+}
+
+# Runs one staged `handlr unset` (exact key removal).
+stage_unset() {
+    (
+        export XDG_CONFIG_HOME="$STAGE/config" XDG_DATA_HOME="$STAGE/data"
+        "$HANDLR" unset "$1" > /dev/null 2>&1
+    )
+}
+
+# Applies one category's targets in the staging sandbox, skipping with a
+# warning when the category's desktop file is missing (degrade, not die).
+apply_category() {
+    AC_CAT=$1
+    AC_VAR=$(category_var "$AC_CAT") || return 1
+    eval "AC_APP=\$$AC_VAR"
+    AC_RES=$(desktop_for_binary "$AC_APP")
+    AC_DESK=${AC_RES#* }
+    [ "${AC_RES%% *}" -eq 1 ] && warn "$AC_CAT: unknown app '$AC_APP' - guessing '$AC_DESK.desktop'"
+    if ! desktop_exists "$AC_DESK"; then
+        warn "skip $AC_CAT: no desktop file '$AC_DESK.desktop' ($AC_APP not installed?)"
+        return 0
+    fi
+    AC_PAIRS=$(mktemp) || die "mktemp failed"
+    category_targets "$AC_CAT" > "$AC_PAIRS"
+    while IFS= read -r AC_PAIR; do
+        [ -n "$AC_PAIR" ] || continue
+        staged_set "${AC_PAIR%% *}" "${AC_PAIR#* }"
+    done < "$AC_PAIRS"
+    rm -f "$AC_PAIRS"
+}
+
+# Applies the carve-out table LAST: types whose category default would be a
+# runtime failure, plus types owned by no category.
+apply_carveouts() {
+    CO_RES=$(desktop_for_binary "$GUI_EDITOR")
+    CO_NAME=${CO_RES#* }
+    CO_ID="$CO_NAME.desktop"
+    if desktop_exists "$CO_NAME"; then
+        for CO_T in application/json application/xml application/x-yaml application/yaml; do
+            staged_set "$CO_T" "$CO_ID"
+        done
+    else
+        warn "skip carve-outs json/xml/yaml: no desktop file '$CO_ID'"
+    fi
+    if [ -e "$ZATHURA_LIBDIR/libdjvu.so" ] && desktop_exists "org.pwmt.zathura"; then
+        staged_set image/vnd.djvu org.pwmt.zathura.desktop
+        staged_set image/x-djvu org.pwmt.zathura.desktop
+    else
+        # no djvu plugin: leave the type unassigned (the image/* expansion
+        # already gave it to the image viewer, which cannot render djvu)
+        stage_unset image/vnd.djvu
+        stage_unset image/x-djvu
+    fi
+    if desktop_exists "gimp"; then
+        staged_set image/x-xcf gimp.desktop
+        staged_set image/vnd.adobe.photoshop gimp.desktop
+    else
+        warn "skip carve-out xcf/psd: no gimp.desktop"
+    fi
+    if desktop_exists "timidity"; then
+        staged_set audio/midi timidity.desktop
+        staged_set audio/x-midi timidity.desktop
+    else
+        warn "skip carve-out midi: no timidity.desktop"
+    fi
+}
+
+# Restores the intended spelling of staged keys containing uppercase: the
+# mime crate inside handlr lowercases subtypes on serialization, but
+# gio/nemo match mimeapps.list keys exactly against shared-mime-info's
+# canonical spelling (e.g. application/vnd.ms-*.macroEnabled.12).
+stage_fix_case() {
+    SF_PAIRS=$(mktemp) || die "mktemp failed"
+    SF_TMPF=$(mktemp) || die "mktemp failed"
+    for CATEGORY in $CATEGORIES; do
+        category_targets "$CATEGORY"
+    done > "$SF_PAIRS"
+    while IFS= read -r SF_PAIR; do
+        [ -n "$SF_PAIR" ] || continue
+        SF_MIME=${SF_PAIR%% *}
+        case $SF_MIME in
+            *[A-Z]*) ;;
+            *) continue ;;
+        esac
+        SF_DESK=${SF_PAIR#* }
+        awk -v m="$SF_MIME" -v d="$SF_DESK;" '
+            BEGIN { lm = tolower(m) "=" d }
+            tolower($0) == lm { print m "=" d; next }
+            { print }
+        ' "$STAGE/config/mimeapps.list" > "$SF_TMPF" && mv "$SF_TMPF" "$STAGE/config/mimeapps.list"
+    done < "$SF_PAIRS"
+    rm -f "$SF_PAIRS" "$SF_TMPF"
+}
+
+# Runs the full ordered generation sequence into the staging sandbox.
+stage_run() {
+    stage_create
+    for CATEGORY in $WILDCARD_CATEGORIES; do apply_category "$CATEGORY"; done
+    gen_handlr_toml false > "$STAGE/config/handlr/handlr.toml"
+    close_wildcard_gaps
+    for CATEGORY in $CONCRETE_CATEGORIES; do apply_category "$CATEGORY"; done
+    apply_carveouts
+    stage_fix_case
+}
+
+# handlr's embedded MIME database misses types that shared-mime-info knows
+# (verified: audio/flac is absent, so the audio/* expansion silently skipped
+# it and handlr/gio then disagreed via their separate fallbacks). Fill any
+# wildcard-namespace gaps verbatim (expand=false inserts without DB checks)
+# with the namespace category's handler, never overriding existing keys.
+close_wildcard_gaps() {
+    [ -r /usr/share/mime/types ] || return 0
+    CG_T=$(mktemp) || return 0
+    CG_S=$(mktemp) || {
+        rm -f "$CG_T"
+        return 0
+    }
+    sed -n 's/^\([^=]*\)=.*/\1/p' "$STAGE/config/mimeapps.list" 2> /dev/null | sort -u > "$CG_S"
+    for CG_NS in image video audio text; do
+        case $CG_NS in
+            image) CG_VAR=IMAGE ;;
+            video) CG_VAR=VIDEO ;;
+            audio) CG_VAR=AUDIO ;;
+            text) CG_VAR=GUI_EDITOR ;;
+        esac
+        eval "CG_APP=\$$CG_VAR"
+        CG_RES=$(desktop_for_binary "$CG_APP")
+        CG_DESK=${CG_RES#* }
+        desktop_exists "$CG_DESK" || continue
+        CG_ID="$CG_DESK.desktop"
+        grep "^$CG_NS/" /usr/share/mime/types | sort -u > "$CG_T"
+        comm -23 "$CG_T" "$CG_S" | while read -r CG_MIME; do
+            staged_set "$CG_MIME" "$CG_ID"
+        done
+        sed -n 's/^\([^=]*\)=.*/\1/p' "$STAGE/config/mimeapps.list" 2> /dev/null | sort -u > "$CG_S"
+    done
+    rm -f "$CG_T" "$CG_S"
+}
+
+# Normalizes an INI file: preserves section order, sorts keys within each
+# section, drops blank lines (handlr serializes in HashMap order; unsorted
+# output would make the status drift-diff false-positive forever).
+normalize_ini() {
+    NI_IN=$1
+    NI_OUT=$2
+    NI_DIR=$(mktemp -d) || die "mktemp failed"
+    awk -v d="$NI_DIR" '
+        BEGIN { sec = 0 }
+        /^\[.*\][[:space:]]*$/ { sec++; print > (d "/h" sec); next }
+        { if (sec == 0) print > (d "/pre"); else print > (d "/s" sec) }
+    ' "$NI_IN"
+    : > "$NI_OUT"
+    [ -s "$NI_DIR/pre" ] && cat "$NI_DIR/pre" >> "$NI_OUT"
+    NI_I=1
+    while [ -e "$NI_DIR/h$NI_I" ]; do
+        cat "$NI_DIR/h$NI_I" >> "$NI_OUT"
+        sed '/^[[:space:]]*$/d' "$NI_DIR/s$NI_I" | sort >> "$NI_OUT"
+        NI_I=$((NI_I + 1))
+    done
+    rm -rf "$NI_DIR"
+}
+
+# Writes stdin to TARGET with the stowed-file discipline: resolve through
+# symlinks, write a temp next to the real file, chmod to match, atomic mv.
+# Never writes onto a symlink path (sed -i style renames destroy stow).
+#   $1 - target path; $2 - fallback mode; $3 - "strict" refuses unmanaged
+#   targets with a stow hint, "lenient" warns and writes anyway
+write_stowed_file() {
+    WS_TARGET=$1
+    WS_MODE=$2
+    WS_STRICT=$3
+    WS_REAL=$(readlink -f "$WS_TARGET" 2> /dev/null) || WS_REAL="$WS_TARGET"
+    if [ -L "$WS_TARGET" ]; then
+        case $WS_REAL in
+            "$DOTFILES_ROOT"/*) ;;
+            *)
+                [ "$WS_STRICT" = "strict" ] && {
+                    warn "refusing: $WS_TARGET is a symlink resolving outside $DOTFILES_ROOT"
+                    return 1
+                }
+                warn "$WS_TARGET: symlink outside dotfiles - writing through it"
+                ;;
+        esac
+    elif [ -e "$WS_REAL" ]; then
+        case $WS_REAL in
+            "$DOTFILES_ROOT"/*) ;;
+            *)
+                [ "$WS_STRICT" = "strict" ] && {
+                    warn "refusing to write unmanaged file $WS_TARGET - run stow/bootstrap first"
+                    return 1
+                }
+                warn "$WS_TARGET is not stowed (unmanaged real file) - writing it directly"
+                ;;
+        esac
+    elif [ "$WS_STRICT" = "strict" ]; then
+        warn "refusing: $WS_TARGET does not exist - run stow/bootstrap first"
+        return 1
+    fi
+    WS_DIR=$(dirname "$WS_REAL")
+    mkdir -p "$WS_DIR" || return 1
+    WS_TMP=$(mktemp "$WS_DIR/.mimeapps-write.XXXXXX") || return 1
+    cat > "$WS_TMP" || {
+        rm -f "$WS_TMP"
+        return 1
+    }
+    if [ -e "$WS_REAL" ]; then
+        chmod --reference="$WS_REAL" "$WS_TMP" 2> /dev/null || chmod "$WS_MODE" "$WS_TMP"
+    else
+        chmod "$WS_MODE" "$WS_TMP"
+    fi
+    mv -f "$WS_TMP" "$WS_REAL"
+}
+
+# Rewrites `export VAR="value"` in a defaults file via the stowed discipline.
+rewrite_var() {
+    RV_FILE=$1
+    RV_VAR=$2
+    RV_VAL=$3
+    if grep -q "^export $RV_VAR=" "$RV_FILE" 2> /dev/null; then
+        sed "s|^export $RV_VAR=.*|export $RV_VAR=\"$RV_VAL\"|" "$RV_FILE" |
+            write_stowed_file "$RV_FILE" 644 strict
+    else
+        {
+            cat "$RV_FILE"
+            echo "export $RV_VAR=\"$RV_VAL\""
+        } |
+            write_stowed_file "$RV_FILE" 644 strict
+    fi
+}
+
+# Counts how many "mime desktop" pairs on stdin the given desktop file
+# declares support for (a wildcard pair counts when any declared type shares
+# its prefix). Writes the count to stdout.
+coverage_count() {
+    CC_DESK=$1
+    CC_N=0
+    CC_TYPES=$(mktemp) || die "mktemp failed"
+    CC_PAIRS=$(mktemp) || die "mktemp failed"
+    cat > "$CC_PAIRS"
+    get_desktop_mimetypes "$CC_DESK" > "$CC_TYPES"
+    while IFS= read -r CC_PAIR; do
+        [ -n "$CC_PAIR" ] || continue
+        CC_MIME=${CC_PAIR%% *}
+        case $CC_MIME in
+            *\*)
+                CC_PRE=${CC_MIME%\*}
+                grep -q "^$CC_PRE" "$CC_TYPES" && CC_N=$((CC_N + 1))
+                ;;
+            *) grep -qx "$CC_MIME" "$CC_TYPES" && CC_N=$((CC_N + 1)) ;;
+        esac
+    done < "$CC_PAIRS"
+    rm -f "$CC_TYPES" "$CC_PAIRS"
+    echo "$CC_N"
+}
+
+# Counts the staged-file entries for one "mime desktop" pair (exact key, or
+# prefix match for wildcards). Writes the count to stdout.
+count_pair() {
+    case $2 in
+        *\*) awk -F= -v p="${2%\*}" -v d="$3;" \
+            'index($1, p) == 1 && $2 == d { n++ } END { print n + 0 }' "$1" ;;
+        *) awk -F= -v k="$2" -v d="$3;" \
+            '$1 == k && $2 == d { n++ } END { print n + 0 }' "$1" ;;
+    esac
+}
+
+# Pretty-prints the category table, with target counts computed by running
+# the full pipeline into a staging sandbox.
+cmd_list() {
+    source_defaults
+    stage_run
+    LST=$(mktemp) || die "mktemp failed"
+    normalize_ini "$STAGE/config/mimeapps.list" "$LST"
+    printf '%-10s %-11s %-12s %-28s %7s  %s\n' \
+        "CATEGORY" "ENV" "APP" "DESKTOP" "TARGETS" "WARNINGS"
+    for CATEGORY in $CATEGORIES; do
+        CATEGORY_VAR=$(category_var "$CATEGORY")
+        eval "LIST_APP=\$$CATEGORY_VAR"
+        LIST_RES=$(desktop_for_binary "$LIST_APP")
+        LIST_DESK=${LIST_RES#* }
+        LIST_WARN=""
+        [ "${LIST_RES%% *}" -eq 1 ] && LIST_WARN="unknown binary - guessed desktop name"
+        desktop_exists "$LIST_DESK" ||
+            LIST_WARN="${LIST_WARN:+$LIST_WARN; }no desktop file (sets skipped)"
+        LIST_N=0
+        LIST_PAIRS=$(mktemp) || die "mktemp failed"
+        category_targets "$CATEGORY" > "$LIST_PAIRS"
+        while IFS= read -r LIST_PAIR; do
+            [ -n "$LIST_PAIR" ] || continue
+            LIST_C=$(count_pair "$LST" "${LIST_PAIR%% *}" "${LIST_PAIR#* }")
+            LIST_N=$((LIST_N + LIST_C))
+        done < "$LIST_PAIRS"
+        rm -f "$LIST_PAIRS"
+        printf '%-10s %-11s %-12s %-28s %7s  %s\n' \
+            "$CATEGORY" "$CATEGORY_VAR" "$LIST_APP" "$LIST_DESK.desktop" \
+            "$LIST_N" "$LIST_WARN"
+    done
+    rm -f "$LST"
+    rm -rf "$STAGE"
+    STAGE=""
+}
+
+# Regenerates mimeapps.list and handlr.toml: staged generation, normalize,
+# diff vs live, backup, atomic install.
+cmd_apply() {
+    case ${1:-} in
+        "") DRY_RUN=0 ;;
+        --dry-run) DRY_RUN=1 ;;
+        *)
+            usage >&2
+            exit 1
+            ;;
+    esac
+    source_defaults
+    stage_run
+    # implementation gate: no live mimeapps.list may change during staging.
+    # Checks the concrete live paths directly (-nt) rather than scanning for
+    # "anything newer" - immune to find/grep quirks and stray stage artifacts.
+    GATE=""
+    for GATE_LIVE in "$LIVE_MIMEAPPS" "$HOME/.local/share/applications/mimeapps.list"; do
+        if [ -e "$GATE_LIVE" ] && [ "$GATE_LIVE" -nt "$STAGE" ]; then
+            GATE="$GATE$GATE_LIVE "
+        fi
+    done
+    if [ -n "$GATE" ]; then
+        rm -rf "$STAGE"
+        STAGE=""
+        die "handlr wrote outside the sandbox: $GATE"
+    fi
+    TMP=$(mktemp "$(dirname "$LIVE_MIMEAPPS")/.mimeapps.XXXXXX") || {
+        rm -rf "$STAGE"
+        die "mktemp failed"
+    }
+    normalize_ini "$STAGE/config/mimeapps.list" "$TMP"
+    chmod 600 "$TMP"
+    echo "== diff: $LIVE_MIMEAPPS -> generated =="
+    if [ -e "$LIVE_MIMEAPPS" ]; then
+        diff "$LIVE_MIMEAPPS" "$TMP" || true
+    else
+        echo "(live file absent - full install)"
+        diff /dev/null "$TMP" || true
+    fi
+    echo "== $(grep -c '=' "$TMP" || true) entries =="
+    if [ "$DRY_RUN" -eq 1 ]; then
+        echo "dry-run: nothing written"
+        rm -f "$TMP"
+        rm -rf "$STAGE"
+        STAGE=""
+        return 0
+    fi
+    BACKUP_DIR="$BACKUP_ROOT/mimeapps-apply-$(date +%Y%m%d%H%M%S)"
+    mkdir -p "$BACKUP_DIR" || {
+        rm -f "$TMP"
+        rm -rf "$STAGE"
+        die "cannot create $BACKUP_DIR"
+    }
+    for BACKUP_FILE in "$LIVE_MIMEAPPS" "$LIVE_HANDLR_TOML"; do
+        [ -e "$BACKUP_FILE" ] && cp -p "$BACKUP_FILE" "$BACKUP_DIR/"
+    done
+    mv -f "$TMP" "$LIVE_MIMEAPPS" || {
+        rm -rf "$STAGE"
+        die "install failed"
+    }
+    gen_handlr_toml true | write_stowed_file "$LIVE_HANDLR_TOML" 644 lenient ||
+        warn "could not regenerate $LIVE_HANDLR_TOML"
+    rm -rf "$STAGE"
+    STAGE=""
+    echo "applied: $LIVE_MIMEAPPS (backup: $BACKUP_DIR)"
+}
+
+# Validates and applies a category switch: rewrites the env var in the
+# defaults file, then regenerates everything.
+cmd_update() {
+    [ $# -eq 2 ] || {
+        usage >&2
+        exit 1
+    }
+    UP_CAT=$1
+    UP_APP=$2
+    category_var "$UP_CAT" > /dev/null 2>&1 ||
+        die "unknown category '$UP_CAT' (valid: $CATEGORIES)"
+    source_defaults
+    command -v "$UP_APP" > /dev/null 2>&1 || die "binary '$UP_APP' not found in PATH"
+    UP_RES=$(desktop_for_binary "$UP_APP")
+    UP_DESK=${UP_RES#* }
+    [ "${UP_RES%% *}" -eq 1 ] &&
+        warn "unknown app '$UP_APP' - guessing desktop file '$UP_DESK.desktop'"
+    desktop_exists "$UP_DESK" || die "no desktop file '$UP_DESK.desktop' for '$UP_APP'"
+    UP_VAR=$(category_var "$UP_CAT")
+    eval "UP_OLD=\$$UP_VAR"
+    UP_OLDDESK=$(desktop_for_binary "$UP_OLD")
+    UP_OLDDESK=${UP_OLDDESK#* }
+    UP_TOTAL=$(category_targets "$UP_CAT" | grep -c . || true)
+    UP_OLDN=$(category_targets "$UP_CAT" | coverage_count "$UP_OLDDESK")
+    UP_NEWN=$(category_targets "$UP_CAT" | coverage_count "$UP_DESK")
+    [ "$UP_NEWN" -lt "$UP_OLDN" ] &&
+        warn "'$UP_APP' covers $UP_NEWN/$UP_TOTAL category targets (current '$UP_OLD': $UP_OLDN) - coverage shrinks"
+    rewrite_var "$DEFAULTS_FILE" "$UP_VAR" "$UP_APP" ||
+        die "failed to rewrite $UP_VAR in $DEFAULTS_FILE"
+    echo "updated: $UP_VAR '$UP_OLD' -> '$UP_APP'; applying"
+    cmd_apply
+}
+
+# Reports drift between the pipeline and the live state. Always exits 0;
+# findings are printed.
+cmd_status() {
+    source_defaults
+    ST_GEN=$(mktemp) || die "mktemp failed"
+    ST_LIVE=$(mktemp) || die "mktemp failed"
+    ST_KEYG=$(mktemp) || die "mktemp failed"
+    ST_KEYL=$(mktemp) || die "mktemp failed"
+    stage_run
+    normalize_ini "$STAGE/config/mimeapps.list" "$ST_GEN"
+    if [ -e "$LIVE_MIMEAPPS" ]; then
+        normalize_ini "$LIVE_MIMEAPPS" "$ST_LIVE"
+    else
+        : > "$ST_LIVE"
+    fi
+    echo "(a) drift: regenerated vs live mimeapps.list"
+    if diff -q "$ST_LIVE" "$ST_GEN" > /dev/null 2>&1; then
+        echo "    clean"
+    else
+        diff "$ST_LIVE" "$ST_GEN" | sed 's/^/    /' || true
+    fi
+    echo "(b) apps behind category env vars"
+    ST_B=0
+    for CATEGORY in $CATEGORIES; do
+        CATEGORY_VAR=$(category_var "$CATEGORY")
+        eval "ST_APP=\$$CATEGORY_VAR"
+        if ! command -v "$ST_APP" > /dev/null 2>&1; then
+            echo "    $CATEGORY: binary '$ST_APP' not found"
+            ST_B=1
+        fi
+        ST_RES=$(desktop_for_binary "$ST_APP")
+        ST_DESK=${ST_RES#* }
+        if [ "${ST_RES%% *}" -eq 1 ]; then
+            echo "    $CATEGORY: unknown binary '$ST_APP' (desktop name guessed)"
+            ST_B=1
+        fi
+        if ! desktop_exists "$ST_DESK"; then
+            echo "    $CATEGORY: no desktop file '$ST_DESK.desktop' (sets skipped)"
+            ST_B=1
+        fi
+    done
+    [ "$ST_B" -eq 0 ] && echo "    clean"
+    echo "(c) live entries not produced by the pipeline (manual drift)"
+    sed -n '/^\[/d; s/=.*//p' "$ST_LIVE" | sort -u > "$ST_KEYL"
+    sed -n '/^\[/d; s/=.*//p' "$ST_GEN" | sort -u > "$ST_KEYG"
+    if [ -z "$(comm -23 "$ST_KEYL" "$ST_KEYG")" ]; then
+        echo "    clean"
+    else
+        comm -23 "$ST_KEYL" "$ST_KEYG" | sed 's/^/    /'
+    fi
+    echo "(d) stale mimeinfo.cache references"
+    ST_D=0
+    if [ -e "$LIVE_MIMEINFO_CACHE" ]; then
+        ST_CACHE=$(mktemp) || die "mktemp failed"
+        grep -v '^\[' "$LIVE_MIMEINFO_CACHE" | grep '=' > "$ST_CACHE" || true
+        while IFS='=' read -r ST_MIME ST_DESKS; do
+            [ -n "$ST_MIME" ] || continue
+            ST_STALE=""
+            for ST_DK in $(echo "$ST_DESKS" | tr ';' ' '); do
+                [ -n "$ST_DK" ] || continue
+                if [ ! -e "$USR_APPS/$ST_DK" ] && [ ! -e "$SYS_APPS/$ST_DK" ]; then
+                    ST_STALE="$ST_STALE $ST_DK"
+                fi
+            done
+            if [ -n "$ST_STALE" ]; then
+                echo "    $ST_MIME: missing$ST_STALE"
+                ST_D=1
+            fi
+        done < "$ST_CACHE"
+        rm -f "$ST_CACHE"
+    fi
+    [ "$ST_D" -eq 0 ] && echo "    clean"
+    rm -f "$ST_GEN" "$ST_LIVE" "$ST_KEYG" "$ST_KEYL"
+    rm -rf "$STAGE"
+    STAGE=""
+}
+
+# Main entry point that processes command-line arguments.
+main() {
+    if [ $# -eq 0 ]; then
+        usage >&2
+        exit 1
+    fi
+    case $1 in
+        -h | --help)
+            usage
+            exit 0
+            ;;
+        list)
+            [ $# -eq 1 ] || {
+                usage >&2
+                exit 1
+            }
+            check_dependencies || exit 1
+            cmd_list
+            ;;
+        update)
+            check_dependencies || exit 1
+            shift
+            cmd_update "$@"
+            ;;
+        apply)
+            check_dependencies || exit 1
+            shift
+            cmd_apply "$@"
+            ;;
+        status)
+            [ $# -eq 1 ] || {
+                usage >&2
+                exit 1
+            }
+            check_dependencies || exit 1
+            cmd_status
+            ;;
+        *)
+            usage >&2
+            exit 1
+            ;;
+    esac
+}
+
+# Remove the staging sandbox and any pending temp file on any exit path
+# (SIGPIPE from `| head`, interrupts, errors) - never leaves strays behind.
+cleanup() {
+    [ -n "${STAGE:-}" ] && [ -d "$STAGE" ] && rm -rf "$STAGE"
+    [ -n "${TMP:-}" ] && [ -f "$TMP" ] && rm -f "$TMP"
+    return 0
+}
+trap cleanup EXIT
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 143' TERM
+trap 'cleanup; exit 129' HUP
+
+# Only dispatch when executed, not when sourced (sandbox tests source this
+# file and re-point the path globals before calling cmd_* directly).
+case $0 in
+    *mimeapps) main "$@" ;;
+esac
