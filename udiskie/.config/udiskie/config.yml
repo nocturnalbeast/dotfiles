@@ -5,7 +5,7 @@ program_options:
   notify: true
   password_cache: 30
   file_manager: xdg-open
-  terminal: terminal
+  terminal: [terminal, -e, sh, -c, 'cd "$0" && exec "$SHELL"']
 
 notifications:
   timeout: -1
@@ -21,4 +21,3 @@ notification_actions:
     - browse
   device_added:
     - mount
-
