@@ -1,6 +1,20 @@
 #!/usr/bin/env sh
 
 # A script to launch a terminal emulator with automatic detection and prioritization.
+#
+# Presents an xterm-compatible command surface for maximum compatibility with
+# terminal-spawning tools (xterm's flags are the de-facto contract):
+#
+#   terminal                    launch the detected terminal
+#   terminal -e CMD [ARGS...]   run CMD (xterm -e semantics: rest of argv)
+#   terminal -T TITLE           set the window title
+#   terminal -l                 print the backend lookup table
+#   terminal -g                 print the detected terminal and exit
+#
+# Also translated (used by the scratchpad call site, not advertised):
+#   terminal -class NAME        set WM_CLASS / app_id (xterm -class)
+#
+# Unknown leading arguments are passed through to the backend untranslated.
 
 # Global configuration
 # Terminals are listed in order of preference for each display server
@@ -36,12 +50,23 @@ guake \
 tilda \
 hyper"
 
+# Backends with a known translation (see print_lookup_table). Anything else
+# falls back to raw argument passthrough.
+TRANSLATED_BACKENDS="kitty alacritty foot wezterm xterm"
+
 usage() {
     cat << EOF
-Usage: $(basename "$0") [ARGUMENTS]
+Usage: $(basename "$0") [-T TITLE] [-class NAME] [-e COMMAND [ARGS...]]
 
 A script to launch a terminal emulator with automatic detection.
-Any provided arguments will be passed to the terminal command.
+
+Options:
+    -T, --title TITLE    Set the window title
+    -e, --execute        Execute the remainder of the command line instead of
+                         the shell (xterm -e semantics)
+    -l, --list           Print the backend flag-translation table and exit
+    -g, --get            Print the detected terminal and exit
+    -h, --help           Show this help
 
 Detection order:
     1. \$TERMINAL environment variable if set and valid
@@ -140,20 +165,23 @@ get_first_available() {
 # Outputs:
 #   Writes default terminal name to stdout if found, empty string otherwise.
 get_default_terminal() {
+    # Guard: never resolve to ourselves (the DE schema may point at this
+    # wrapper, e.g. via nemo's terminal wiring) - that would recurse forever.
+    SELF_NAME=$(basename "$0")
     if command_exists "gsettings"; then
         terminal=$(gsettings get org.gnome.desktop.default-applications.terminal exec | tr -d "'")
-        if [ -n "$terminal" ] && command_exists "$terminal"; then
+        if [ -n "$terminal" ] && [ "$terminal" != "$SELF_NAME" ] && command_exists "$terminal"; then
             echo "$terminal"
             return 0
         fi
         terminal=$(gsettings get org.cinnamon.desktop.default-applications.terminal exec | tr -d "'")
-        if [ -n "$terminal" ] && command_exists "$terminal"; then
+        if [ -n "$terminal" ] && [ "$terminal" != "$SELF_NAME" ] && command_exists "$terminal"; then
             echo "$terminal"
             return 0
         fi
     elif [ -f "${XDG_CONFIG_HOME:-~/.config}/xfce4/helpers.rc" ]; then
         terminal=$(grep -E -o 'TerminalEmulator=\w+' "${XDG_CONFIG_HOME:-~/.config}/xfce4/helpers.rc" | head -1 | cut -d'=' -f2)
-        if [ -n "$terminal" ] && command_exists "$terminal"; then
+        if [ -n "$terminal" ] && [ "$terminal" != "$SELF_NAME" ] && command_exists "$terminal"; then
             echo "$terminal"
             return 0
         fi
@@ -219,27 +247,152 @@ detect_terminal() {
     return 1
 }
 
+# Prints the backend flag-translation table, one line per backend:
+#   name:exec=<args>:title=<flag>:class=<flag>:cwd=<flag>:hold=<flag>
+# Verified against upstream CLIs (kitty/alacritty/foot/wezterm/xterm,
+# master + latest releases, 2026-10). Consumers (mimeapps, other tools)
+# should parse this instead of hardcoding.
+print_lookup_table() {
+    cat << 'EOF'
+kitty:exec=:title=-T:class=--class:cwd=-d:hold=--hold
+alacritty:exec=-e:title=-T:class=--class:cwd=--working-directory:hold=--hold
+foot:exec=:title=-T:class=--app-id:cwd=-D:hold=-H
+wezterm:exec=start --:title=NONE:class=start --class:cwd=start --cwd:hold=NONE
+xterm:exec=-e:title=-T:class=-class:cwd=NONE:hold=-hold
+EOF
+}
+
+# Translates the xterm-style surface into backend-specific arguments and
+# execs the backend. Flags are PREPENDED in reverse final order so that
+# exec-style separators (-e / --) end up immediately before the command.
+#
+# Inputs (globals set by main):
+#   TERM_TITLE   - title string or empty
+#   TERM_CLASS   - class/app-id string or empty
+#   TERM_HAS_CMD - 1 when -e was used (rest of argv is the command)
+#   TERM_TAIL    - raw passthrough args preceding the command
+#   TERM_ORIGINAL_ARGS - verbatim argv, used for unknown-backend passthrough
+#
+# Arguments:
+#   $1 - detected backend name
+#   $@ - command args (when TERM_HAS_CMD=1), else nothing
+translate_and_exec() {
+    TR_BACKEND=$1
+    shift
+
+    case " $TRANSLATED_BACKENDS " in
+        *" $TR_BACKEND "*) ;;
+        *)
+            # Unknown backend: verbatim passthrough, preserve legacy behavior
+            echo "$(basename "$0"): no translation for '$TR_BACKEND', passing arguments through as-is" >&2
+            exec "$TR_BACKEND" $TERM_ORIGINAL_ARGS
+            ;;
+    esac
+
+    # Merge passthrough args in front of the command
+    set -- $TERM_TAIL "$@"
+
+    # Exec separator first (must sit directly before the command)
+    if [ "$TERM_HAS_CMD" = "1" ]; then
+        case "$TR_BACKEND" in
+            alacritty | xterm) set -- -e "$@" ;;
+            wezterm) set -- -- "$@" ;;
+        esac
+        # kitty: command is positional; foot: trailing positionals (-e ignored)
+    fi
+
+    # Class flag
+    if [ -n "$TERM_CLASS" ]; then
+        case "$TR_BACKEND" in
+            foot) set -- --app-id "$TERM_CLASS" "$@" ;;
+            wezterm) set -- --class "$TERM_CLASS" "$@" ;;
+            xterm) set -- -class "$TERM_CLASS" "$@" ;;
+            *) set -- --class "$TERM_CLASS" "$@" ;;
+        esac
+    fi
+
+    # wezterm needs the start subcommand before everything
+    [ "$TR_BACKEND" = "wezterm" ] && set -- start "$@"
+
+    # Title flag last (frontmost)
+    if [ -n "$TERM_TITLE" ]; then
+        case "$TR_BACKEND" in
+            wezterm)
+                echo "$(basename "$0"): wezterm has no title flag; dropping title '$TERM_TITLE'" >&2
+                ;;
+            *) set -- -T "$TERM_TITLE" "$@" ;;
+        esac
+    fi
+
+    exec "$TR_BACKEND" "$@"
+}
+
 # Main entry point that processes command-line arguments.
 #
 # Arguments:
-#   $@ - Arguments to pass to the terminal command
+#   $@ - Options and command to run
 main() {
+    TERM_TITLE=""
+    TERM_CLASS=""
+    TERM_HAS_CMD=0
+    TERM_TAIL=""
+    TERM_ORIGINAL_ARGS="$*"
+
+    while [ $# -gt 0 ]; do
+        case $1 in
+            "-h" | "--help")
+                usage
+                exit 0
+                ;;
+            "-l" | "--list")
+                print_lookup_table
+                exit 0
+                ;;
+            "-g" | "--get")
+                SELECTED_TERMINAL=$(detect_terminal) || exit 1
+                exit 0
+                ;;
+            "-T" | "--title")
+                [ $# -ge 2 ] || {
+                    echo "error: $1 requires an argument" >&2
+                    exit 1
+                }
+                TERM_TITLE=$2
+                shift
+                ;;
+            "-class" | "--class")
+                [ $# -ge 2 ] || {
+                    echo "error: $1 requires an argument" >&2
+                    exit 1
+                }
+                TERM_CLASS=$2
+                shift
+                ;;
+            "-e" | "--execute")
+                shift
+                TERM_HAS_CMD=1
+                break
+                ;;
+            "--")
+                shift
+                while [ $# -gt 0 ]; do
+                    TERM_TAIL="$TERM_TAIL $1"
+                    shift
+                done
+                break
+                ;;
+            *)
+                # Unrecognized argument: raw passthrough to the backend
+                TERM_TAIL="$TERM_TAIL $1"
+                ;;
+        esac
+        shift
+    done
+
     check_dependencies || exit 1
 
-    case "$1" in
-        -h | --help)
-            usage
-            exit 0
-            ;;
-        -g | --get)
-            detect_terminal
-            exit 0
-            ;;
-        *)
-            SELECTED_TERMINAL=$(detect_terminal) || exit 1
-            exec "$SELECTED_TERMINAL" "$@"
-            ;;
-    esac
+    SELECTED_TERMINAL=$(detect_terminal) || exit 1
+    translate_and_exec "$SELECTED_TERMINAL" "$@"
 }
 
 main "$@"
