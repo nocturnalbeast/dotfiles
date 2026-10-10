@@ -1,0 +1,33 @@
+#!/usr/bin/env sh
+
+# Bootstrap for the environment package: (re)generate MIME associations from
+# the declared defaults in profile.d/50-defaults.sh.
+#
+# The mimeapps script is invoked by its direct path in the dotfiles repo so
+# this works on a fresh machine even before the scripts package is stowed
+# onto PATH.
+
+MIMEAPPS_SCRIPT="$HOME/.dotfiles/scripts/.local/bin/mimeapps"
+
+case "$1" in
+    "install" | "reinstall")
+        echo "Applying MIME associations..."
+        if [ ! -x "$MIMEAPPS_SCRIPT" ]; then
+            echo "Warning: mimeapps script not found at $MIMEAPPS_SCRIPT - skipping associations"
+            echo "Check out the dotfiles repo, then re-run this bootstrap"
+        elif ! command -v handlr > /dev/null 2>&1; then
+            # handlr is not rpm-managed and not carried in dotfiles; without it
+            # there is nothing to generate through (xdg-open keeps working with
+            # system defaults as the floor).
+            echo "Warning: handlr not found - skipping associations"
+            echo "Install handlr (see plan: pin from cargo or OBS), then run: $MIMEAPPS_SCRIPT apply"
+        else
+            "$MIMEAPPS_SCRIPT" apply
+        fi
+        ;;
+    "uninstall") ;;
+    *)
+        echo "Unknown action: $1"
+        exit 1
+        ;;
+esac
