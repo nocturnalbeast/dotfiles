@@ -1,0 +1,76 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["ruamel.yaml>=0.18", "rich>=13"]
+# ///
+"""Derive xsecurelock auth-screen colors from ITS OWN wallpaper.
+
+Prints env(1)-ready assignments (rgb:rr/gg/bb) derived via the
+matugen engine from the given image - the image's detected mode
+decides dark/light. Results are cached per (path, mtime); compute
+on miss. Failures print nothing and exit 0 so a lock never breaks.
+"""
+
+import hashlib
+import os
+import sys
+from pathlib import Path
+
+CACHE_DIR = Path.home() / ".cache/xsecurelock/palettes"
+THEMING = Path.home() / ".local/share/theming"
+
+
+def rgb_colon(hex_color: str) -> str:
+    h = hex_color.lstrip("#").lower()
+    return f"rgb:{h[0:2]}/{h[2:4]}/{h[4:6]}"
+
+
+def derive(image: str) -> str:
+    sys.path.insert(0, str(THEMING))
+    from theme.engines.matugen import MatugenEngine
+
+    out = MatugenEngine("faithful").extract(image)
+    mode = out.get("detected_mode") or "dark"
+    core = out["variants"][mode]["core"]
+    env = {
+        "XSECURELOCK_AUTH_BACKGROUND_COLOR": rgb_colon(core["background"]),
+        "XSECURELOCK_AUTH_FOREGROUND_COLOR": rgb_colon(core["foreground"]),
+        "XSECURELOCK_AUTH_WARNING_COLOR": rgb_colon(core["status.error"]),
+        "XSECURELOCK_DIM_COLOR": rgb_colon(core["background"]),
+    }
+    return " ".join(f"{k}={v}" for k, v in env.items())
+
+
+def main() -> int:
+    args = [a for a in sys.argv[1:] if a != "--clear"]
+    if "--clear" in sys.argv:
+        import shutil
+
+        shutil.rmtree(CACHE_DIR, ignore_errors=True)
+        return 0
+    if len(args) != 1:
+        print("usage: xsecurelock-theme <image> [--clear]", file=sys.stderr)
+        return 0
+    image = Path(args[0]).resolve()
+    if not image.exists():
+        return 0
+    mtime = image.stat().st_mtime
+    key = hashlib.sha1(f"{image}:{mtime}".encode()).hexdigest()
+    cache = CACHE_DIR / f"{key}.env"
+
+    if cache.exists():
+        print(cache.read_text().strip())
+        return 0
+    try:
+        result = derive(str(image))
+    except Exception as e:
+        print(f"xsecurelock-theme: {e}", file=sys.stderr)
+        return 0
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache.write_text(result + "\n")
+    print(result)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

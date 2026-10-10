@@ -305,7 +305,11 @@ xsecurelock_lock() {
 
     notificationd pause
 
-    env XSECURELOCK_SAVER_IMAGE="$(get_random_wallpaper)" xsecurelock
+    local lock_wallpaper lock_palette
+    lock_wallpaper="$(get_random_wallpaper)"
+    lock_palette="$(xsecurelock-theme "$lock_wallpaper" 2> /dev/null)"
+
+    env ${lock_palette} XSECURELOCK_SAVER_IMAGE="$lock_wallpaper" xsecurelock
 
     if [ "$current_player_state" = "Playing" ]; then
         mediactl toggle
