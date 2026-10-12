@@ -68,6 +68,6 @@ o.scrolloff = 10
 o.confirm = true
 
 -- Additions for nvim-unified
-o.winborder = "rounded" -- rounded borders on floating windows
+o.winborder = "single"
 o.wildmode = "lastused,full" -- completion menu shows recents first
 opt.iskeyword:append("-") -- treat dash-joined words as one keyword
